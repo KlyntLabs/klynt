@@ -7,7 +7,7 @@ default:
 # One-time setup for new contributors
 setup:
     rustup component add rustfmt clippy
-    cargo install cargo-watch
+    cargo install cargo-watch cargo-nextest --locked
     cd frontend && npm install
 
 # Copy environment template
@@ -30,7 +30,7 @@ dev-frontend:
 
 # Run all tests
 test:
-    cd backend && cargo test
+    cd backend && cargo nextest run --all-features
     cd frontend && npm run test
 
 # Format everything (mutating)

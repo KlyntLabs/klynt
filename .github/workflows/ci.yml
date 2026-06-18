@@ -69,6 +69,9 @@ jobs:
         with:
           workspaces: ./backend
 
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@nextest
+
       - name: Check formatting
         run: cargo fmt --all -- --check
 
@@ -76,7 +79,7 @@ jobs:
         run: cargo clippy --locked --all-targets --all-features -- -D warnings
 
       - name: Run tests
-        run: cargo test --locked --all-features
+        run: cargo nextest run --locked --all-features
 
       - name: Build release binary
         run: cargo build --locked --release --bin klynt-server

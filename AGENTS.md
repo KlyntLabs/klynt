@@ -139,7 +139,7 @@ The repository is a root-level monorepo with `backend/` and `frontend/` director
 
 ```bash
 git clone <repo-url> && cd klynt-edu
-just setup          # Installs Rust components, cargo-watch, and npm deps
+just setup          # Installs Rust components, cargo-watch, cargo-nextest, and npm deps
 cp .env.example .env
 just dev            # Runs backend + frontend together
 ```
@@ -175,7 +175,7 @@ All common tasks are exposed through `just`. Run `just` or `just --list` to see 
 | `just dev` | Run backend + frontend together with hot reload |
 | `just dev-backend` | Run backend only with `cargo watch` |
 | `just dev-frontend` | Run frontend dev server only |
-| `just test` | Run backend `cargo test` and frontend `npm run test` |
+| `just test` | Run backend `cargo nextest run --all-features` and frontend `npm run test` |
 | `just fmt` | Format all code (Rust + TypeScript) |
 | `just fmt-check` | Check formatting without mutating |
 | `just lint` | Run clippy and Biome lint |
@@ -211,7 +211,7 @@ Run from `backend/`:
 |---------|-------------|
 | `cargo run --bin klynt-server` | Run the API |
 | `cargo watch -x 'run --bin klynt-server'` | Run with hot reload (requires `cargo-watch`) |
-| `cargo test --workspace --all-features` | Run unit and integration tests |
+| `cargo nextest run --all-features` | Run unit and integration tests |
 | `cargo fmt --all` | Format Rust code |
 | `cargo clippy --workspace --all-targets --all-features -- -D warnings` | Run Clippy |
 | `cargo build --release --bin klynt-server` | Build release binary |

@@ -70,4 +70,4 @@ pre-push:
           echo "⏭️  backend-test skipped (no backend changes)"
           exit 0
         fi
-        cd backend && cargo test
+        cd backend && cargo nextest run --all-features

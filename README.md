@@ -63,7 +63,7 @@ For real deployments, put this behind a reverse proxy that terminates TLS (e.g. 
 | Command | Description |
 |---------|-------------|
 | `just dev` | Run backend + frontend together |
-| `just test` | Run all tests |
+| `just test` | Run backend (`cargo nextest`) and frontend tests |
 | `just fmt` | Format all code |
 | `just lint` | Run all linters |
 | `just check` | Run fast pre-push checks |
