@@ -10,4 +10,10 @@ describe("ToastContainer", () => {
     render(<ToastContainer />);
     expect(screen.getByText("saved")).toBeInTheDocument();
   });
+
+  it("renders nothing when there are no toasts", () => {
+    useToastStore.getState().reset();
+    const { container } = render(<ToastContainer />);
+    expect(container.firstChild).toBeNull();
+  });
 });

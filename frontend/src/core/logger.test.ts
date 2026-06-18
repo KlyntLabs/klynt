@@ -12,4 +12,33 @@ describe("logger", () => {
     expect(entry.context).toEqual({ requestId: "abc" });
     errorSpy.mockRestore();
   });
+
+  it("logs structured entry at warn level", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    logger.warn("something suspicious", { requestId: "abc" });
+    expect(warnSpy).toHaveBeenCalledOnce();
+    const entry = warnSpy.mock.calls[0][0];
+    expect(entry.level).toBe("warn");
+    expect(entry.message).toBe("something suspicious");
+    warnSpy.mockRestore();
+  });
+
+  it("logs structured entry at info level", () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    logger.info("something happened", { requestId: "abc" });
+    expect(logSpy).toHaveBeenCalledOnce();
+    const entry = logSpy.mock.calls[0][0];
+    expect(entry.level).toBe("info");
+    expect(entry.message).toBe("something happened");
+    logSpy.mockRestore();
+  });
+
+  it("logs debug entry in non-production environments", () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    logger.debug("debug detail", { requestId: "abc" });
+    expect(logSpy).toHaveBeenCalledOnce();
+    const entry = logSpy.mock.calls[0][0];
+    expect(entry.level).toBe("debug");
+    logSpy.mockRestore();
+  });
 });

@@ -72,4 +72,83 @@ describe("route guards", () => {
     );
     expect(screen.getByText("Dashboard")).toBeInTheDocument();
   });
+
+  it("ProtectedRoute shows loading state", () => {
+    setup();
+    useAuthStore.getState().setLoading(true);
+    render(
+      <Routes>
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <div>Dashboard</div>
+            </ProtectedRoute>
+          }
+        />
+      </Routes>,
+      { initialEntries: ["/dashboard"] }
+    );
+    expect(screen.getByLabelText(/loading/i)).toBeInTheDocument();
+  });
+
+  it("ProtectedRoute renders children when authenticated", () => {
+    setup();
+    useAuthStore
+      .getState()
+      .setSession({ id: "u-1", email: "a@b.com", name: "A", role: "student" }, "token");
+    render(
+      <Routes>
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <div>Dashboard</div>
+            </ProtectedRoute>
+          }
+        />
+      </Routes>,
+      { initialEntries: ["/dashboard"] }
+    );
+    expect(screen.getByText("Dashboard")).toBeInTheDocument();
+  });
+
+  it("GuestRoute renders children when unauthenticated", () => {
+    setup();
+    render(
+      <Routes>
+        <Route
+          path="/register"
+          element={
+            <GuestRoute>
+              <div>Register page</div>
+            </GuestRoute>
+          }
+        />
+      </Routes>,
+      { initialEntries: ["/register"] }
+    );
+    expect(screen.getByText("Register page")).toBeInTheDocument();
+  });
+
+  it("RoleGuard renders children for allowed role", () => {
+    setup();
+    useAuthStore
+      .getState()
+      .setSession({ id: "u-1", email: "a@b.com", name: "A", role: "admin" }, "token");
+    render(
+      <Routes>
+        <Route
+          path="/admin"
+          element={
+            <RoleGuard allowedRoles={["admin"]}>
+              <div>Admin</div>
+            </RoleGuard>
+          }
+        />
+      </Routes>,
+      { initialEntries: ["/admin"] }
+    );
+    expect(screen.getByText("Admin")).toBeInTheDocument();
+  });
 });

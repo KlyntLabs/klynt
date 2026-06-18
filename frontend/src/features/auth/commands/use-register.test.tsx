@@ -1,3 +1,4 @@
+import { useToastStore } from "@/core/notifications/toast-store";
 import { server } from "@/test/msw/server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
@@ -98,5 +99,27 @@ describe("useRegister", () => {
 
     expect(keys.length).toBe(2);
     expect(keys[0]).not.toBe(keys[1]);
+  });
+
+  it("shows a toast when registration is rate limited", async () => {
+    useToastStore.getState().reset();
+
+    server.use(
+      http.post("/api/v1/users", () =>
+        HttpResponse.json({ code: "rate_limited", message: "too many requests" }, { status: 429 })
+      )
+    );
+
+    const { result } = renderHook(() => useRegister(), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isIdle).toBe(true));
+
+    await expect(result.current.mutateAsync(validInput)).rejects.toBeDefined();
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    expect(useToastStore.getState().toasts).toHaveLength(1);
+    expect(useToastStore.getState().toasts[0].type).toBe("error");
   });
 });

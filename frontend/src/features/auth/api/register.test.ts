@@ -36,4 +36,17 @@ describe("registerUser", () => {
     await registerUser(input, "my-stable-key");
     expect(capturedKey).toBe("my-stable-key");
   });
+
+  it("throws an ApiError for rate limited response", async () => {
+    server.use(
+      http.post("/api/v1/users", () =>
+        HttpResponse.json({ code: "rate_limited", message: "too many requests" }, { status: 429 })
+      )
+    );
+
+    await expect(registerUser(input, "key")).rejects.toMatchObject({
+      status: 429,
+      code: "rate_limited",
+    });
+  });
 });

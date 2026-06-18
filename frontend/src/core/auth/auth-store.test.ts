@@ -25,4 +25,12 @@ describe("auth store", () => {
     useAuthStore.getState().reset();
     expect(useAuthStore.getState().isAuthenticated).toBe(false);
   });
+
+  it("tracks loading state", () => {
+    useAuthStore.getState().reset();
+    useAuthStore.getState().setLoading(true);
+    expect(useAuthStore.getState().isLoading).toBe(true);
+    useAuthStore.getState().setLoading(false);
+    expect(useAuthStore.getState().isLoading).toBe(false);
+  });
 });

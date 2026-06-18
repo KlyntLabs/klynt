@@ -20,10 +20,10 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
+      exclude: ["src/locales/**/*.json"],
       thresholds: {
         lines: 92,
         functions: 87,
-        // Current suite (jsdom only in CI) measures ~73.5% branches.
         branches: 73,
         statements: 92,
       },
