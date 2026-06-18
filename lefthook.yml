@@ -1,5 +1,9 @@
 # Docs: https://lefthook.dev/configuration/
 # Installed automatically via `npm run prepare` in frontend/
+#
+# Policy:
+# - pre-commit: fast staged-only checks (format/lint)
+# - pre-push: full local CI gate (typecheck, tests, build) with change detection
 
 pre-commit:
   parallel: true
@@ -10,21 +14,60 @@ pre-commit:
     biome-check:
       glob: "**/*.{js,ts,tsx,json,jsonc,css}"
       run: cd frontend && npx @biomejs/biome check --error-on-warnings --no-errors-on-unmatched $(for f in {staged_files}; do echo "${f#frontend/}"; done)
-    frontend-typecheck:
-      glob: "**/*.{js,ts,tsx}"
-      run: cd frontend && npm run typecheck
-    frontend-test:
-      glob: "**/*.{js,ts,tsx}"
-      run: cd frontend && npm run test
 
 pre-push:
   commands:
-    clippy:
-      glob: "**/*.rs"
-      run: cd backend && cargo clippy --all-targets --all-features -- -D warnings
-    rust-tests:
-      glob: "**/*.rs"
-      run: cd backend && cargo test
-    frontend-check:
+    frontend-typecheck:
       glob: "**/*.{js,ts,tsx}"
-      run: cd frontend && npm run check
+      run: |
+        PUSH_TARGET=$(git rev-parse @{push} 2>/dev/null || echo "")
+        if [ -n "$PUSH_TARGET" ] && ! git diff --name-only "$PUSH_TARGET"..HEAD | grep -qE '^frontend/'; then
+          echo "⏭️  frontend-typecheck skipped (no frontend changes)"
+          exit 0
+        fi
+        cd frontend && npm run typecheck
+    frontend-test:
+      glob: "**/*.{js,ts,tsx}"
+      run: |
+        PUSH_TARGET=$(git rev-parse @{push} 2>/dev/null || echo "")
+        if [ -n "$PUSH_TARGET" ] && ! git diff --name-only "$PUSH_TARGET"..HEAD | grep -qE '^frontend/'; then
+          echo "⏭️  frontend-test skipped (no frontend changes)"
+          exit 0
+        fi
+        cd frontend && npm run test
+    frontend-build:
+      glob: "**/*.{js,ts,tsx}"
+      run: |
+        PUSH_TARGET=$(git rev-parse @{push} 2>/dev/null || echo "")
+        if [ -n "$PUSH_TARGET" ] && ! git diff --name-only "$PUSH_TARGET"..HEAD | grep -qE '^frontend/'; then
+          echo "⏭️  frontend-build skipped (no frontend changes)"
+          exit 0
+        fi
+        cd frontend && npm run build
+    backend-format:
+      glob: "**/*.rs"
+      run: |
+        PUSH_TARGET=$(git rev-parse @{push} 2>/dev/null || echo "")
+        if [ -n "$PUSH_TARGET" ] && ! git diff --name-only "$PUSH_TARGET"..HEAD | grep -qE '^backend/'; then
+          echo "⏭️  backend-format skipped (no backend changes)"
+          exit 0
+        fi
+        cd backend && cargo fmt --all -- --check
+    backend-clippy:
+      glob: "**/*.rs"
+      run: |
+        PUSH_TARGET=$(git rev-parse @{push} 2>/dev/null || echo "")
+        if [ -n "$PUSH_TARGET" ] && ! git diff --name-only "$PUSH_TARGET"..HEAD | grep -qE '^backend/'; then
+          echo "⏭️  backend-clippy skipped (no backend changes)"
+          exit 0
+        fi
+        cd backend && cargo clippy --all-targets --all-features -- -D warnings
+    backend-test:
+      glob: "**/*.rs"
+      run: |
+        PUSH_TARGET=$(git rev-parse @{push} 2>/dev/null || echo "")
+        if [ -n "$PUSH_TARGET" ] && ! git diff --name-only "$PUSH_TARGET"..HEAD | grep -qE '^backend/'; then
+          echo "⏭️  backend-test skipped (no backend changes)"
+          exit 0
+        fi
+        cd backend && cargo test
