@@ -1,4 +1,6 @@
-use klynt_api::domain::repositories::conformance::run_user_repository_conformance_tests;
+mod common;
+
+use common::repository_conformance::run_user_repository_conformance_tests;
 use klynt_api::infrastructure::repositories::in_memory_user::InMemoryUserRepository;
 
 #[tokio::test]
