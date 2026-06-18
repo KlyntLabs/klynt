@@ -1,4 +1,5 @@
 import { RootLayout } from "@/app/layout/root-layout";
+import { RegisterPage } from "@/routes/register";
 import { routePaths } from "@/routes/route-paths";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 
@@ -18,6 +19,10 @@ const router = createBrowserRouter([
       {
         path: routePaths.login,
         element: <div className="p-6">Login (coming soon)</div>,
+      },
+      {
+        path: routePaths.register,
+        element: <RegisterPage />,
       },
     ],
   },

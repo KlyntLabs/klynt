@@ -21,6 +21,7 @@
     "prepare": "lefthook install"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.4.0",
     "@tanstack/react-query": "^5.74.0",
     "@tanstack/react-query-devtools": "^5.74.0",
     "axios": "^1.8.0",
