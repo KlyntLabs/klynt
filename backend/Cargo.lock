@@ -686,21 +686,81 @@ name = "klynt-api"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "argon2",
- "async-trait",
  "axum",
  "chrono",
- "config",
- "dotenvy",
- "futures",
  "http-body-util",
- "rand_core",
+ "klynt-application",
+ "klynt-domain",
  "serde",
  "serde_json",
  "thiserror",
  "tokio",
  "tower",
  "tower-http",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "klynt-application"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "argon2",
+ "async-trait",
+ "chrono",
+ "klynt-domain",
+ "klynt-infrastructure",
+ "rand_core",
+ "thiserror",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
+name = "klynt-domain"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "serde",
+ "thiserror",
+ "uuid",
+]
+
+[[package]]
+name = "klynt-infrastructure"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "config",
+ "klynt-domain",
+ "serde",
+ "thiserror",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
+name = "klynt-server"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "dotenvy",
+ "futures",
+ "http-body-util",
+ "klynt-api",
+ "klynt-application",
+ "klynt-domain",
+ "klynt-infrastructure",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tower",
  "tracing",
  "tracing-subscriber",
  "uuid",

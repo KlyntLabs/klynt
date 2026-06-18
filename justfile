@@ -17,12 +17,12 @@ env:
 # Run backend + frontend together
 dev:
     cd frontend && npx concurrently --names "api,web" --prefix-colors "cyan,yellow" \
-        "cd ../backend && cargo watch -x run" \
+        "cd ../backend && cargo watch -x 'run --bin klynt-server'" \
         "npm run dev"
 
 # Run backend only (hot reload)
 dev-backend:
-    cd backend && cargo watch -x run
+    cd backend && cargo watch -x 'run --bin klynt-server'
 
 # Run frontend only
 dev-frontend:
@@ -55,7 +55,7 @@ typecheck:
 # Build production artifacts
 build:
     cd frontend && npm run build
-    cd backend && cargo build --release
+    cd backend && cargo build --release --bin klynt-server
 
 # Run all fast checks (useful before pushing)
 check:

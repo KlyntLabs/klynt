@@ -53,33 +53,18 @@ The repository is a root-level monorepo with `backend/` and `frontend/` director
 
 ```
 .
-├── backend/                 # Rust API
-│   ├── Cargo.toml
+├── backend/                 # Rust API workspace
+│   ├── Cargo.toml           # Workspace manifest
 │   ├── rustfmt.toml
 │   ├── config/
 │   │   └── default.toml     # Default non-secret config
-│   ├── src/
-│   │   ├── main.rs          # Entry point
-│   │   ├── lib.rs           # Public module exports
-│   │   ├── config.rs        # AppConfig / ApiConfig loading
-│   │   ├── startup.rs       # build_router(): middleware + routes
-│   │   ├── state.rs         # AppState (shared application state)
-│   │   ├── telemetry.rs     # tracing subscriber setup
-│   │   ├── error.rs         # AppError and IntoResponse
-│   │   ├── api/             # HTTP layer
-│   │   │   ├── responses.rs # ApiResponse wrapper
-│   │   │   └── v1/          # API v1 routes
-│   │   │       ├── mod.rs
-│   │   │       └── health.rs
-│   │   ├── application/     # Use cases (currently a placeholder)
-│   │   ├── domain/          # Entities, value objects, repository traits
-│   │   │   ├── models.rs
-│   │   │   └── repositories.rs
-│   │   └── infrastructure/  # Concrete implementations (DB, external services)
-│   │       └── repositories/
-│   └── tests/               # Integration tests
-│       ├── health_check.rs
-│       └── helpers.rs
+│   ├── crates/              # Workspace crates
+│   │   ├── klynt-domain/    # Domain entities, errors, ports/traits, config types
+│   │   ├── klynt-application/ # Use cases and orchestration
+│   │   ├── klynt-infrastructure/ # Concrete adapters (config loader, in-memory repos)
+│   │   ├── klynt-api/       # HTTP handlers, routing, DTOs, error mapping
+│   │   └── klynt-server/    # Binary entrypoint, telemetry, dependency wiring
+│   └── Cargo.lock
 ├── frontend/                # React SPA
 │   ├── package.json
 │   ├── vite.config.ts
@@ -194,12 +179,12 @@ Run from `backend/`:
 
 | Command | Description |
 |---------|-------------|
-| `cargo run` | Run the API |
-| `cargo watch -x run` | Run with hot reload (requires `cargo-watch`) |
-| `cargo test` | Run unit and integration tests |
+| `cargo run --bin klynt-server` | Run the API |
+| `cargo watch -x 'run --bin klynt-server'` | Run with hot reload (requires `cargo-watch`) |
+| `cargo test --workspace --all-features` | Run unit and integration tests |
 | `cargo fmt --all` | Format Rust code |
-| `cargo clippy --all-targets --all-features -- -D warnings` | Run Clippy |
-| `cargo build --release` | Build release binary |
+| `cargo clippy --workspace --all-targets --all-features -- -D warnings` | Run Clippy |
+| `cargo build --release --bin klynt-server` | Build release binary |
 
 ## Code Style Guidelines
 
@@ -248,10 +233,11 @@ Recommended extensions are in `.vscode/extensions.json`:
 
 ### Backend Tests
 
-- Unit tests live next to source code or in `backend/tests/` for integration tests.
+- Unit tests live next to source code inside each crate.
+- Integration tests live in `crates/klynt-server/tests/` (full-stack HTTP) and `crates/klynt-infrastructure/tests/` (adapter conformance).
 - Integration tests use `tower::ServiceExt::oneshot` to test the Axum router in-process.
-- Run: `cd backend && cargo test`
-- Current integration tests cover `/api/v1/health/live` and `/api/v1/health/ready`.
+- Run: `cd backend && cargo test --workspace --all-features`
+- Current integration tests cover `/api/v1/health/live`, `/api/v1/health/ready`, and `POST /api/v1/users`.
 
 ### Frontend Tests
 
@@ -338,16 +324,19 @@ VITE_APP_NAME=Klynt
 
 ## Backend Architecture
 
-The backend is a single Cargo crate named `klynt-api` with Clean Architecture modules:
+The backend is a Cargo workspace with five focused crates. Dependency direction is enforced by the compiler:
 
-- `api/` — HTTP handlers, routing, middleware, and response wrappers
-- `application/` — use cases and orchestration (placeholder)
-- `domain/` — entities, value objects, and repository traits (placeholder)
-- `infrastructure/` — concrete implementations such as database adapters (placeholder)
+- `klynt-domain` — domain entities, value objects, domain errors, repository ports, unit-of-work trait, rate-limiter/idempotency ports, and config value types. Has no dependency on Axum, HTTP, SQL, or external frameworks.
+- `klynt-application` — use cases and orchestration (`UserService`, `RequestGate`). Depends only on `klynt-domain`.
+- `klynt-infrastructure` — concrete adapters: in-memory repositories, in-memory unit of work, in-memory rate limiter, in-memory idempotency store, and config loading. Depends only on `klynt-domain`.
+- `klynt-api` — HTTP handlers, routing, request/response DTOs, `AppError` + `IntoResponse`, `AppState`, and middleware wiring. Depends on `klynt-application` and `klynt-domain`.
+- `klynt-server` — binary entrypoint, telemetry initialization, and dependency wiring. Depends on all other backend crates.
+
+Dependency graph: `klynt-server` → `klynt-api` → `klynt-application` → `klynt-domain`, and `klynt-infrastructure` → `klynt-domain`.
 
 ### Current Middleware Stack
 
-Applied globally in `startup.rs`:
+Applied globally in `klynt-api::startup::build_router`:
 
 - `TraceLayer` — request/response logging
 - `CompressionLayer` — gzip compression
@@ -357,10 +346,12 @@ Applied globally in `startup.rs`:
 
 ### Error Handling
 
-`AppError` is the centralized error enum:
+`klynt_domain::errors::DomainError` is the domain error enum. `klynt_api::error::AppError` maps domain errors to HTTP responses:
 
 - `NotFound` → 404
 - `BadRequest(String)` → 400
+- `Conflict(String)` → 409
+- `RateLimited` → 429
 - `Validation(String)` → 422
 - `Internal(anyhow::Error)` → 500 (internal details are logged, not exposed)
 
@@ -368,7 +359,7 @@ All errors serialize to `{ code, message }` JSON.
 
 ### State
 
-`AppState` holds shared application state. Currently it only holds `Arc<AppConfig>`. It is passed to handlers via Axum's state extractor.
+`klynt_api::state::AppState` holds the Axum state (`Arc<AppConfig>` and `Arc<RequestGate>`). It is constructed in `klynt-server` and passed to handlers via Axum's state extractor.
 
 ## Frontend Architecture
 
@@ -455,7 +446,7 @@ The pull request template asks contributors to confirm:
 
 ## Important Notes for Agents
 
-- This is a foundation scaffold. Many modules (`application`, `domain`, `infrastructure`) are placeholders.
+- This is a foundation scaffold. The `klynt-application`, `klynt-domain`, and `klynt-infrastructure` crates contain minimal real logic (user creation, in-memory adapters) and are structured for future features.
 - No database is connected yet. The readiness health check does not verify a real dependency.
 - Authentication exists only as a `features/auth/api/types.ts` placeholder (`User`, `LoginInput`).
 - Deployment workflows are placeholders; do not assume a deployed environment.

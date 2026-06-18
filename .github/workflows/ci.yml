@@ -79,7 +79,7 @@ jobs:
         run: cargo test --locked --all-features
 
       - name: Build release binary
-        run: cargo build --locked --release
+        run: cargo build --locked --release --bin klynt-server
 
   frontend-checks:
     name: Frontend checks
