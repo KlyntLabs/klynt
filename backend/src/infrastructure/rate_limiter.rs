@@ -5,15 +5,30 @@ use std::time::{Duration, Instant};
 
 #[derive(Debug, Default)]
 pub struct RateLimiter {
+    enabled: bool,
     buckets: Mutex<HashMap<IpAddr, Vec<Instant>>>,
 }
 
 impl RateLimiter {
     pub fn new() -> Self {
-        Self::default()
+        Self {
+            enabled: true,
+            ..Self::default()
+        }
+    }
+
+    pub fn disabled() -> Self {
+        Self {
+            enabled: false,
+            ..Self::default()
+        }
     }
 
     pub fn is_allowed(&self, ip: IpAddr, max_requests: usize, window: Duration) -> bool {
+        if !self.enabled {
+            return true;
+        }
+
         let mut buckets = self.buckets.lock().unwrap();
         let now = Instant::now();
         let cutoff = now - window;
