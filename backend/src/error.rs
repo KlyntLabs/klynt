@@ -6,6 +6,8 @@ use axum::{
 use serde::Serialize;
 use tracing::error;
 
+use crate::domain::errors::DomainError;
+
 #[derive(Debug, Serialize)]
 pub struct ApiErrorBody {
     pub code: String,
@@ -27,10 +29,35 @@ pub enum AppError {
     NotFound,
     #[error("bad request: {0}")]
     BadRequest(String),
+    #[error("conflict: {0}")]
+    Conflict(String),
+    #[error("too many requests")]
+    RateLimited,
     #[error("unprocessable entity: {0}")]
     Validation(String),
     #[error("internal server error")]
     Internal(#[from] anyhow::Error),
+}
+
+impl From<DomainError> for AppError {
+    fn from(err: DomainError) -> Self {
+        match err {
+            DomainError::NotFound => AppError::NotFound,
+            DomainError::AlreadyExists { email } => {
+                AppError::Conflict(format!("email already registered: {email}"))
+            }
+            DomainError::InvalidEmail(e) => AppError::BadRequest(e.to_string()),
+            DomainError::WeakPassword(e) => AppError::BadRequest(e.to_string()),
+            DomainError::InvalidRole(e) => AppError::BadRequest(e.to_string()),
+            DomainError::InstitutionRequired(role) => {
+                AppError::BadRequest(format!("institution_id is required for role {:?}", role))
+            }
+            DomainError::TermsNotAccepted => {
+                AppError::BadRequest("terms must be accepted".to_string())
+            }
+            DomainError::Internal(e) => AppError::Internal(e),
+        }
+    }
 }
 
 impl IntoResponse for AppError {
@@ -45,6 +72,14 @@ impl IntoResponse for AppError {
             AppError::BadRequest(msg) => (
                 StatusCode::BAD_REQUEST,
                 ApiErrorBody::new("bad_request", msg.clone()),
+            ),
+            AppError::Conflict(msg) => (
+                StatusCode::CONFLICT,
+                ApiErrorBody::new("conflict", msg.clone()),
+            ),
+            AppError::RateLimited => (
+                StatusCode::TOO_MANY_REQUESTS,
+                ApiErrorBody::new("rate_limited", "too many requests"),
             ),
             AppError::Validation(msg) => (
                 StatusCode::UNPROCESSABLE_ENTITY,
