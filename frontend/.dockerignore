@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.vite/
+coverage/
+test-results/
+playwright-report/
+storybook-static/
+.env
+.env.local
+*.log
+.DS_Store

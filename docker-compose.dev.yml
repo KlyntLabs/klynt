@@ -1,0 +1,113 @@
+# Development orchestration with hot reload for the full Klynt stack.
+# Run everything with one command:
+#   docker compose -f docker-compose.dev.yml up --build
+#
+# Code changes on the host are reflected immediately inside the containers.
+
+name: klynt-dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: klynt-postgres-dev
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-klynt}
+      POSTGRES_USER: ${POSTGRES_USER:-klynt}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-klynt}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-klynt} -d ${POSTGRES_DB:-klynt}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: klynt-redis-dev
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: klynt-backend-dev
+    working_dir: /app/backend
+    volumes:
+      - ./backend:/app/backend
+      # Persist Rust build artifacts in a named volume so rebuilds are fast
+      # and the host target/ directory is not polluted.
+      - backend-target:/app/backend/target
+    env_file:
+      - .env
+    environment:
+      # The backend must bind to all interfaces inside the container.
+      # Note: the backend config loader uses "__" as the nested-key separator.
+      - KLYNT_API__HOST=0.0.0.0
+      - KLYNT_API__PORT=3001
+      # Placeholders for when the backend is wired to Postgres / Redis.
+      - DATABASE_URL=${DATABASE_URL:-postgresql://klynt:klynt@postgres:5432/klynt}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+    ports:
+      - "127.0.0.1:${KLYNT_BACKEND_PORT:-3001}:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3001/api/v1/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: klynt-frontend-dev
+    working_dir: /app/frontend
+    volumes:
+      - ./frontend:/app/frontend
+      # Persist node_modules in a named volume so the host node_modules is not
+      # mounted into the container and cross-platform issues are avoided.
+      - frontend-node-modules:/app/frontend/node_modules
+    env_file:
+      - .env
+    environment:
+      - VITE_API_BASE_URL=http://localhost:3001/api/v1
+      - VITE_APP_NAME=Klynt
+    ports:
+      - "127.0.0.1:${KLYNT_FRONTEND_PORT:-5174}:5174"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  storybook:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: klynt-storybook-dev
+    working_dir: /app/frontend
+    volumes:
+      - ./frontend:/app/frontend
+      - frontend-node-modules:/app/frontend/node_modules
+    environment:
+      - VITE_API_BASE_URL=http://localhost:3001/api/v1
+    ports:
+      - "127.0.0.1:${KLYNT_STORYBOOK_PORT:-6006}:6006"
+    command: ["sh", "-c", "npm install --ignore-scripts && npm run storybook -- --host 0.0.0.0"]
+
+volumes:
+  postgres-data:
+  backend-target:
+  frontend-node-modules:

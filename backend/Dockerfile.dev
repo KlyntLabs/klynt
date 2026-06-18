@@ -1,0 +1,15 @@
+# syntax=docker/dockerfile:1
+
+# Development image for the Rust backend with hot reload.
+FROM rust:1-bookworm
+
+# Pre-install cargo-watch so container startup is fast after the first build.
+RUN cargo install cargo-watch
+
+# curl is used by the Compose healthcheck.
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app/backend
+
+CMD ["cargo", "watch", "-x", "run --bin klynt-server"]

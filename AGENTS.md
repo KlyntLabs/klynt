@@ -56,6 +56,9 @@ The repository is a root-level monorepo with `backend/` and `frontend/` director
 ├── backend/                 # Rust API workspace
 │   ├── Cargo.toml           # Workspace manifest
 │   ├── rustfmt.toml
+│   ├── Dockerfile           # Production multi-stage build
+│   ├── Dockerfile.dev       # Dev image with cargo-watch
+│   ├── .dockerignore
 │   ├── config/
 │   │   └── default.toml     # Default non-secret config
 │   ├── crates/              # Workspace crates
@@ -71,6 +74,10 @@ The repository is a root-level monorepo with `backend/` and `frontend/` director
 │   ├── vitest.config.ts
 │   ├── playwright.config.ts
 │   ├── biome.json
+│   ├── Dockerfile           # Production multi-stage build (Node + nginx)
+│   ├── Dockerfile.dev       # Dev image
+│   ├── nginx.conf           # Static server + SPA fallback
+│   ├── .dockerignore
 │   ├── tsconfig.json
 │   ├── tsconfig.app.json
 │   ├── tsconfig.node.json
@@ -106,6 +113,9 @@ The repository is a root-level monorepo with `backend/` and `frontend/` director
 │   ├── dependabot.yml
 │   ├── HOOKS.md
 │   └── pull_request_template.md
+├── docker-compose.yml       # Production-like full-stack orchestration
+├── docker-compose.dev.yml   # Development orchestration (hot reload + storybook)
+├── .dockerignore            # Root Docker build context exclusions
 ├── justfile                 # Task runner commands
 ├── lefthook.yml             # Git hooks configuration
 ├── rust-toolchain.toml      # Rust toolchain specification
@@ -123,6 +133,7 @@ The repository is a root-level monorepo with `backend/` and `frontend/` director
 - Node.js 24+ (use `.nvmrc`)
 - `just`: `cargo install just`
 - `lefthook`: `cargo install lefthook`
+- Docker + Docker Compose (optional, for containerized development/deployment)
 
 ### Initial Setup
 
@@ -133,10 +144,27 @@ cp .env.example .env
 just dev            # Runs backend + frontend together
 ```
 
+### Docker Setup
+
+The full stack (backend, frontend, Postgres, Redis) can also be run with Docker Compose:
+
+```bash
+cp .env.example .env
+
+# Development (hot reload, storybook, source mounts)
+docker compose -f docker-compose.dev.yml up --build
+
+# Production-like (release builds, no dev tools)
+docker compose up --build
+```
+
 ### Default Local URLs
 
 - Frontend: http://localhost:5174
 - Backend health check: http://localhost:3001/api/v1/health/live
+- Storybook (dev compose): http://localhost:6006
+- Postgres: `postgresql://klynt:klynt@localhost:5432/klynt`
+- Redis: `redis://localhost:6379`
 
 ## Build and Test Commands
 
@@ -154,6 +182,8 @@ All common tasks are exposed through `just`. Run `just` or `just --list` to see 
 | `just typecheck` | Type-check the frontend |
 | `just build` | Build production artifacts (frontend + backend release) |
 | `just check` | Fast pre-push gate: fmt-check, lint, typecheck |
+| `docker compose up --build` | Run the full production-like stack in Docker |
+| `docker compose -f docker-compose.dev.yml up --build` | Run the full dev stack in Docker (hot reload + storybook) |
 
 ### Frontend-Specific Commands
 
@@ -305,9 +335,11 @@ Current variables in `.env.example`:
 ```
 # Backend
 RUST_LOG=debug
-KLYNT_API_HOST=127.0.0.1
-KLYNT_API_PORT=3001
-KLYNT_API_ALLOWED_ORIGINS=http://localhost:5174
+# Note: the backend config loader uses "__" as the nested-key separator.
+KLYNT_API__HOST=127.0.0.1
+KLYNT_API__PORT=3001
+# `api.allowed_origins` is a list; use JSON array syntax to override it:
+# KLYNT_API__ALLOWED_ORIGINS='["http://localhost:5174"]'
 # KLYNT_RATE_LIMITER__ENABLED=true
 # KLYNT_RATE_LIMITER__MAX_REQUESTS=5
 # KLYNT_RATE_LIMITER__WINDOW_SECONDS=900
@@ -315,12 +347,27 @@ KLYNT_API_ALLOWED_ORIGINS=http://localhost:5174
 # Frontend
 VITE_API_BASE_URL=http://localhost:3001/api/v1
 VITE_APP_NAME=Klynt
+
+# Infrastructure (used by Docker Compose)
+POSTGRES_DB=klynt
+POSTGRES_USER=klynt
+POSTGRES_PASSWORD=klynt
+POSTGRES_PORT=5432
+DATABASE_URL=postgresql://klynt:klynt@postgres:5432/klynt
+REDIS_URL=redis://redis:6379
+REDIS_PORT=6379
+
+# Docker Compose port overrides
+KLYNT_BACKEND_PORT=3001
+KLYNT_FRONTEND_PORT=5174
+KLYNT_STORYBOOK_PORT=6006
 ```
 
-- `KLYNT_API_ALLOWED_ORIGINS` is a comma-separated list of CORS origins.
+- `KLYNT_API__ALLOWED_ORIGINS` must be a JSON array (e.g. `'["http://localhost:5174"]'`).
 - `KLYNT_RATE_LIMITER__ENABLED` toggles request rate limiting (default `false` in `config/default.toml` for local development).
 - `VITE_API_BASE_URL` is the base URL the frontend Axios client uses.
 - In development, Vite proxies `/api/*` to `http://localhost:3001` (see `frontend/vite.config.ts`).
+- `POSTGRES_*`, `DATABASE_URL`, `REDIS_URL`, and `*_PORT` variables are consumed by `docker-compose.yml` and `docker-compose.dev.yml`.
 
 ## Backend Architecture
 
@@ -482,13 +529,14 @@ The pull request template asks contributors to confirm:
 ## Important Notes for Agents
 
 - This is a foundation scaffold. The `klynt-application`, `klynt-domain`, and `klynt-infrastructure` crates contain minimal real logic (user creation, in-memory adapters) and are structured for future features.
-- No database is connected yet. The readiness health check does not verify a real dependency.
+- No database is connected yet. The readiness health check does not verify a real dependency. Postgres and Redis services are provided by Docker Compose for future wiring.
 - Authentication exists only as a `features/auth/api/types.ts` placeholder (`User`, `LoginInput`).
 - Deployment workflows are placeholders; do not assume a deployed environment.
 - Always run `just check` before claiming work is complete.
 - If you add a new environment variable, document it in `.env.example` and update this file if it changes agent workflow.
 - Follow the existing Clean Architecture module boundaries in the backend and feature-based organization in the frontend.
 - Do not install new global tools without confirming they are needed; prefer adding them via `Cargo.toml` or `package.json`.
+- When modifying Docker files, validate both `docker-compose.yml` and `docker-compose.dev.yml` with `docker compose config` and test a full `docker compose up --build` when possible.
 
 ## Documentation References
 

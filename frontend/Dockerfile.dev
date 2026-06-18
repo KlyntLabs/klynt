@@ -1,0 +1,12 @@
+# syntax=docker/dockerfile:1
+
+# Development image for the Vite + React frontend with hot reload.
+FROM node:24-bookworm-slim
+
+WORKDIR /app/frontend
+
+# Install dependencies on startup so the host and container stay in sync,
+# then start the Vite dev server. --ignore-scripts avoids lefthook's prepare
+# script, which requires git (not present in the slim image).
+# --host 0.0.0.0 is required so Docker's port mapping can reach the dev server.
+CMD ["sh", "-c", "npm install --ignore-scripts && npm run dev -- --host 0.0.0.0"]
