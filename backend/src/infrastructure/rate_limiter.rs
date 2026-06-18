@@ -3,40 +3,46 @@ use std::net::IpAddr;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
-#[derive(Debug, Default)]
+use crate::config::RateLimiterConfig;
+
+#[derive(Debug)]
 pub struct RateLimiter {
-    enabled: bool,
+    config: RateLimiterConfig,
     buckets: Mutex<HashMap<IpAddr, Vec<Instant>>>,
 }
 
 impl RateLimiter {
-    pub fn new() -> Self {
+    pub fn new(config: RateLimiterConfig) -> Self {
         Self {
-            enabled: true,
-            ..Self::default()
+            config,
+            buckets: Mutex::default(),
         }
     }
 
     pub fn disabled() -> Self {
         Self {
-            enabled: false,
-            ..Self::default()
+            config: RateLimiterConfig {
+                enabled: false,
+                ..RateLimiterConfig::default()
+            },
+            buckets: Mutex::default(),
         }
     }
 
-    pub fn is_allowed(&self, ip: IpAddr, max_requests: usize, window: Duration) -> bool {
-        if !self.enabled {
+    pub fn is_allowed(&self, ip: IpAddr) -> bool {
+        if !self.config.enabled {
             return true;
         }
 
         let mut buckets = self.buckets.lock().unwrap();
         let now = Instant::now();
+        let window = Duration::from_secs(self.config.window_seconds);
         let cutoff = now - window;
 
         let entries = buckets.entry(ip).or_default();
         entries.retain(|t| *t > cutoff);
 
-        if entries.len() >= max_requests {
+        if entries.len() >= self.config.max_requests {
             return false;
         }
 

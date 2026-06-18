@@ -12,8 +12,25 @@ impl Default for ApiConfig {
     fn default() -> Self {
         Self {
             host: "127.0.0.1".to_string(),
-            port: 3000,
-            allowed_origins: vec!["http://localhost:5173".to_string()],
+            port: 3001,
+            allowed_origins: vec!["http://localhost:5174".to_string()],
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct RateLimiterConfig {
+    pub enabled: bool,
+    pub max_requests: usize,
+    pub window_seconds: u64,
+}
+
+impl Default for RateLimiterConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            max_requests: 5,
+            window_seconds: 900,
         }
     }
 }
@@ -21,6 +38,7 @@ impl Default for ApiConfig {
 #[derive(Debug, Clone, Deserialize)]
 pub struct AppConfig {
     pub api: ApiConfig,
+    pub rate_limiter: RateLimiterConfig,
     pub log_level: String,
 }
 
@@ -38,11 +56,14 @@ impl AppConfig {
                     .separator("__"),
             )
             .set_default("api.host", "127.0.0.1")?
-            .set_default("api.port", 3000)?
+            .set_default("api.port", 3001)?
             .set_default(
                 "api.allowed_origins",
-                vec!["http://localhost:5173".to_string()],
+                vec!["http://localhost:5174".to_string()],
             )?
+            .set_default("rate_limiter.enabled", true)?
+            .set_default("rate_limiter.max_requests", 5)?
+            .set_default("rate_limiter.window_seconds", 900)?
             .set_default("log_level", "info")?
             .build()?;
 

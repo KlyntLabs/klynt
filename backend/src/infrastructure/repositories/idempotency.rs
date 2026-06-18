@@ -11,6 +11,10 @@ use crate::domain::errors::DomainError;
 pub trait IdempotencyStore: Send + Sync {
     async fn get(&self, key: Uuid) -> Result<Option<UserDto>, DomainError>;
     async fn set(&self, key: Uuid, user: UserDto) -> Result<(), DomainError>;
+
+    /// Insert `user` only if `key` is absent. Returns the existing value when one is present.
+    async fn get_or_insert(&self, key: Uuid, user: UserDto)
+        -> Result<Option<UserDto>, DomainError>;
 }
 
 #[derive(Debug, Default)]
@@ -35,5 +39,18 @@ impl IdempotencyStore for InMemoryIdempotencyStore {
         let mut cache = self.cache.lock().unwrap();
         cache.insert(key, user);
         Ok(())
+    }
+
+    async fn get_or_insert(
+        &self,
+        key: Uuid,
+        user: UserDto,
+    ) -> Result<Option<UserDto>, DomainError> {
+        let mut cache = self.cache.lock().unwrap();
+        if let Some(existing) = cache.get(&key) {
+            return Ok(Some(existing.clone()));
+        }
+        cache.insert(key, user);
+        Ok(None)
     }
 }
