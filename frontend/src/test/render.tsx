@@ -1,4 +1,4 @@
-import { queryClient } from "@/lib/query-client";
+import { queryClient } from "@/core/api/query-client";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { render as rtlRender } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";

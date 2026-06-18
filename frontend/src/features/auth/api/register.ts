@@ -1,4 +1,4 @@
-import { type RegisterInput, type RegisterResponse, registerUser } from "@/lib/api-client";
+import { type RegisterInput, type RegisterResponse, registerUser } from "@/core/api/api-client";
 
 export type { RegisterInput, RegisterResponse };
 
