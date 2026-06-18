@@ -13,7 +13,7 @@ export function FormField({ label, htmlFor, error, children }: FormFieldProps) {
       <Label htmlFor={htmlFor}>{label}</Label>
       {children}
       {error && (
-        <p id={`${htmlFor}-error`} className="mt-1 text-sm text-red-600" role="alert">
+        <p id={`${htmlFor}-error`} className="mt-1 text-sm text-destructive" role="alert">
           {error}
         </p>
       )}

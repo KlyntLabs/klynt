@@ -70,18 +70,18 @@ export function RegisterForm() {
           label={
             <>
               I agree to the{" "}
-              <a href="/privacy" className="text-blue-600 hover:underline">
+              <a href="/privacy" className="text-primary hover:underline">
                 Privacy Policy
               </a>{" "}
               and{" "}
-              <a href="/terms" className="text-blue-600 hover:underline">
+              <a href="/terms" className="text-primary hover:underline">
                 Terms of Service
               </a>
             </>
           }
         />
         {form.formState.errors.root && (
-          <p className="text-sm text-red-600" role="alert">
+          <p className="text-sm text-destructive" role="alert">
             {form.formState.errors.root.message}
           </p>
         )}

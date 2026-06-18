@@ -16,11 +16,11 @@ function Fallback({
   return (
     <div className="p-6" role="alert">
       <h2 className="text-lg font-semibold">Something went wrong</h2>
-      <pre className="mt-2 text-sm text-red-600">{message}</pre>
+      <pre className="mt-2 text-sm text-destructive">{message}</pre>
       <button
         type="button"
         onClick={resetErrorBoundary}
-        className="mt-4 rounded bg-slate-900 px-4 py-2 text-white"
+        className="mt-4 rounded bg-primary px-4 py-2 text-primary-foreground"
       >
         Try again
       </button>

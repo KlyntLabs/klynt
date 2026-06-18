@@ -2,8 +2,8 @@ import { render } from "@/test/render";
 import { screen } from "@testing-library/react";
 import { Route, Routes } from "react-router-dom";
 import { describe, expect, it } from "vitest";
-import { useAuthStore } from "./auth-store";
 import { GuestRoute, ProtectedRoute, RoleGuard } from "./auth-identity";
+import { useAuthStore } from "./auth-store";
 
 function setup() {
   useAuthStore.getState().reset();

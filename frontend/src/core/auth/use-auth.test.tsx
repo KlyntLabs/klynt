@@ -1,7 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { useAuthStore } from "./auth-store";
 import { useAuth } from "./auth-identity";
+import { useAuthStore } from "./auth-store";
 
 describe("useAuth", () => {
   it("reflects auth store state", () => {

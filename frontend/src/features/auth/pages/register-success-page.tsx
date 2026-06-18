@@ -13,13 +13,13 @@ export default function RegisterSuccessPage() {
     <div className="mx-auto max-w-md p-6">
       <h1 className="mb-4 text-2xl font-semibold">Account created</h1>
       {state?.user ? (
-        <p className="text-slate-700">
+        <p className="text-muted-foreground">
           Welcome, {state.user.name}. A verification link has been sent to {state.user.email}.
         </p>
       ) : (
-        <p className="text-slate-700">A verification link has been sent to your email.</p>
+        <p className="text-muted-foreground">A verification link has been sent to your email.</p>
       )}
-      <Link to={routePaths.home} className="mt-4 inline-block text-blue-600 hover:underline">
+      <Link to={routePaths.home} className="mt-4 inline-block text-primary hover:underline">
         Go home
       </Link>
     </div>

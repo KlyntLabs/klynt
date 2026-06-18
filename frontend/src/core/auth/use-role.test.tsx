@@ -1,7 +1,7 @@
 import { renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { useAuthStore } from "./auth-store";
 import { useRole } from "./auth-identity";
+import { useAuthStore } from "./auth-store";
 
 describe("useRole", () => {
   it("identifies admin role", () => {

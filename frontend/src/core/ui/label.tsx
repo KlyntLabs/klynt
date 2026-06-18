@@ -1,14 +1,19 @@
-interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
-  children: React.ReactNode;
+import { cn } from "@/lib/utils";
+
+export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
+  ref?: React.Ref<HTMLLabelElement>;
 }
 
-export function Label({ children, ...props }: LabelProps) {
+export function Label({ className, ref, ...props }: LabelProps) {
   return (
-    <>
-      {/* biome-ignore lint/a11y/noLabelWithoutControl: reusable label primitive */}
-      <label className="mb-1 block text-sm font-medium" {...props}>
-        {children}
-      </label>
-    </>
+    // biome-ignore lint/a11y/noLabelWithoutControl: reusable label primitive
+    <label
+      ref={ref}
+      className={cn(
+        "mb-1 block text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+        className
+      )}
+      {...props}
+    />
   );
 }

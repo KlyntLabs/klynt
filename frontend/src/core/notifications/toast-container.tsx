@@ -20,13 +20,17 @@ function ToastItem({
   }, [id, duration, removeToast]);
 
   const color =
-    type === "error" ? "bg-red-600" : type === "success" ? "bg-green-600" : "bg-slate-800";
+    type === "error"
+      ? "bg-destructive text-destructive-foreground"
+      : type === "success"
+        ? "bg-success text-success-foreground"
+        : "bg-primary text-primary-foreground";
 
   return (
     <output
       aria-live="polite"
       aria-atomic="true"
-      className={`rounded px-4 py-2 text-white shadow ${color}`}
+      className={`rounded-md px-4 py-2 shadow ${color}`}
     >
       {message}
     </output>

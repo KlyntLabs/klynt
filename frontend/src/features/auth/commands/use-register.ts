@@ -1,12 +1,12 @@
-import { useCallback, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
-import { ApiError } from "@/core/api/api-error";
 import { generateIdempotencyKey } from "@/core/api/api-client";
+import { ApiError } from "@/core/api/api-error";
 import { useToastStore } from "@/core/notifications/toast-store";
 import { routePaths } from "@/core/routing/route-paths";
 import { registerUser } from "@/features/auth/api/register";
 import type { RegisterInput, RegisterResponse } from "@/features/auth/api/types";
+import { useMutation } from "@tanstack/react-query";
+import { useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 
 export interface UseRegisterResult {
   isPending: boolean;
