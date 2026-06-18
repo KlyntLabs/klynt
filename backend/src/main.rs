@@ -1,3 +1,4 @@
+use std::net::SocketAddr;
 use std::sync::Arc;
 
 use axum::serve;
@@ -20,6 +21,10 @@ async fn main() -> anyhow::Result<()> {
 
     info!("server listening on http://{}", addr);
 
-    serve(listener, app).await?;
+    serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await?;
     Ok(())
 }
