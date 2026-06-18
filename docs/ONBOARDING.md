@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Rust (latest stable) via rustup
-- Node.js 22+ (use `.nvmrc`)
+- Node.js 24+ (use `.nvmrc`)
 - `just`: `cargo install just`
 - `lefthook`: `cargo install lefthook`
 
