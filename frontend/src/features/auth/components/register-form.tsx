@@ -1,12 +1,12 @@
-import { FormProvider } from "react-hook-form";
-import { Button } from "@/core/ui/button";
+import { ApiError } from "@/core/api/api-error";
+import { CheckboxField } from "@/core/forms/checkbox-field";
 import { InputField } from "@/core/forms/input-field";
 import { SelectField } from "@/core/forms/select-field";
-import { CheckboxField } from "@/core/forms/checkbox-field";
 import { useZodForm } from "@/core/forms/use-zod-form";
-import { registerSchema } from "@/features/auth/schemas/register-schema";
+import { Button } from "@/core/ui/button";
 import { useRegister } from "@/features/auth/hooks/use-register";
-import { ApiError } from "@/core/api/api-error";
+import { registerSchema } from "@/features/auth/schemas/register-schema";
+import { FormProvider } from "react-hook-form";
 
 const ROLE_OPTIONS = [
   { value: "student", label: "Student" },
@@ -37,7 +37,10 @@ export function RegisterForm() {
     try {
       await register.mutateAsync(data);
     } catch (error) {
-      if (error instanceof ApiError && (error.code === "bad_request" || error.code === "conflict")) {
+      if (
+        error instanceof ApiError &&
+        (error.code === "bad_request" || error.code === "conflict")
+      ) {
         form.setError("root", { message: error.message });
       }
     }

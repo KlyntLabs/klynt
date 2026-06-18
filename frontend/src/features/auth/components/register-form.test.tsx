@@ -1,8 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { render } from "@/test/render";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { describe, expect, it } from "vitest";
 import { RegisterForm } from "./register-form";
-import { render } from "@/test/render";
 
 describe("RegisterForm", () => {
   it("validates required fields", async () => {

@@ -1,10 +1,10 @@
-import { useMutation } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
-import { useToastStore } from "@/core/notifications/toast-store";
 import { ApiError } from "@/core/api/api-error";
+import { useToastStore } from "@/core/notifications/toast-store";
+import { routePaths } from "@/core/routing/route-paths";
 import { registerUser } from "@/features/auth/api/register";
 import type { RegisterInput } from "@/features/auth/api/types";
-import { routePaths } from "@/core/routing/route-paths";
+import { useMutation } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 
 export function useRegister() {
   const navigate = useNavigate();

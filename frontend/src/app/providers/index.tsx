@@ -1,6 +1,6 @@
+import { createQueryClient } from "@/core/api/query-client";
 import { AuthProvider } from "@/core/auth/auth-provider";
 import { ErrorBoundary } from "@/core/error-boundary";
-import { createQueryClient } from "@/core/api/query-client";
 import { ToastContainer } from "@/core/notifications/toast-container";
 import { useToastStore } from "@/core/notifications/toast-store";
 import { QueryClientProvider } from "@tanstack/react-query";
