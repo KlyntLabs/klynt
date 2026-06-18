@@ -106,6 +106,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
       - name: Check formatting
         run: npm run format:check
 
@@ -134,10 +137,11 @@ jobs:
           fetch-depth: 0
 
       - name: Run gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # For private repositories, set GITLEAKS_LICENSE in repository secrets.
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/repo" \
+            -w /repo \
+            ghcr.io/gitleaks/gitleaks:v8.24.2 detect --source /repo --verbose
 
       - name: Run Semgrep
         uses: semgrep/semgrep-action@v1
