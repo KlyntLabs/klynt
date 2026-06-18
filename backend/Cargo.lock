@@ -710,7 +710,6 @@ dependencies = [
  "async-trait",
  "chrono",
  "klynt-domain",
- "klynt-infrastructure",
  "rand_core",
  "thiserror",
  "tokio",

@@ -9,16 +9,21 @@ use klynt_domain::errors::DomainError;
 use klynt_domain::models::UserDto;
 use klynt_domain::ports::{IdempotencyStore, RateLimiter};
 
-pub struct RequestGate {
+/// Orchestrates user-registration requests.
+///
+/// This is intentionally a dedicated gate for the user-creation flow rather
+/// than a generic catch-all. Cross-cutting concerns such as rate limiting can
+/// later be lifted into Tower middleware once more endpoints need them.
+pub struct UserRequestGate {
     rate_limiter: Arc<dyn RateLimiter>,
-    idempotency_store: Arc<dyn IdempotencyStore>,
+    idempotency_store: Arc<dyn IdempotencyStore<UserDto>>,
     user_service: Arc<UserService>,
 }
 
-impl RequestGate {
+impl UserRequestGate {
     pub fn new(
         rate_limiter: Arc<dyn RateLimiter>,
-        idempotency_store: Arc<dyn IdempotencyStore>,
+        idempotency_store: Arc<dyn IdempotencyStore<UserDto>>,
         user_service: Arc<UserService>,
     ) -> Self {
         Self {
@@ -31,6 +36,7 @@ impl RequestGate {
     pub async fn create_user(
         &self,
         ip: IpAddr,
+        request_id: Uuid,
         idempotency_key: Uuid,
         req: CreateUserRequest,
     ) -> Result<UserDto, DomainError> {
@@ -38,7 +44,7 @@ impl RequestGate {
             return Err(DomainError::RateLimited);
         }
 
-        let ctx = Ctx::new(Uuid::new_v4());
+        let ctx = Ctx::new(request_id);
 
         if let Some(cached) = self.idempotency_store.get(idempotency_key).await? {
             return Ok(cached);
@@ -56,21 +62,21 @@ impl RequestGate {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
     use std::net::{IpAddr, Ipv4Addr};
-    use std::sync::Arc;
+    use std::sync::{Arc, Mutex};
 
+    use async_trait::async_trait;
     use uuid::Uuid;
 
-    use crate::request_gate::RequestGate;
+    use crate::request_gate::UserRequestGate;
     use crate::users::{CreateUserRequest, UserService};
-    use klynt_domain::config::RateLimiterConfig;
+    use klynt_domain::ctx::Ctx;
     use klynt_domain::errors::DomainError;
-    use klynt_domain::ports::IdempotencyStore;
-    use klynt_domain::unit_of_work::UnitOfWork;
-    use klynt_infrastructure::rate_limiter::RateLimiter as InMemoryRateLimiter;
-    use klynt_infrastructure::repositories::idempotency::InMemoryIdempotencyStore;
-    use klynt_infrastructure::repositories::in_memory_user::InMemoryUserRepository;
-    use klynt_infrastructure::unit_of_work::InMemoryUnitOfWork;
+    use klynt_domain::models::{Email, User, UserDto, UserId};
+    use klynt_domain::ports::{IdempotencyStore, RateLimiter};
+    use klynt_domain::repositories::{CreateResult, UserRepository};
+    use klynt_domain::unit_of_work::{Transaction, UnitOfWork};
 
     fn sample_request() -> CreateUserRequest {
         CreateUserRequest {
@@ -84,14 +90,127 @@ mod tests {
         }
     }
 
-    fn disabled_gate() -> RequestGate {
-        let user_repo = InMemoryUserRepository::new();
-        let uow: Arc<dyn UnitOfWork> = Arc::new(InMemoryUnitOfWork::new(user_repo));
+    // Local test doubles so this crate's unit tests do not depend on infrastructure.
+
+    #[derive(Debug, Default)]
+    struct FakeUserRepository {
+        users: Mutex<HashMap<Email, User>>,
+    }
+
+    #[async_trait]
+    impl UserRepository for FakeUserRepository {
+        async fn create_if_not_exists(
+            &self,
+            _ctx: &Ctx,
+            email: &Email,
+            user: &User,
+        ) -> Result<CreateResult, DomainError> {
+            let mut users = self.users.lock().unwrap();
+            if let Some(existing) = users.get(email) {
+                return Ok(CreateResult::AlreadyExists(existing.clone()));
+            }
+            users.insert(email.clone(), user.clone());
+            Ok(CreateResult::Created)
+        }
+
+        async fn find_by_email(
+            &self,
+            _ctx: &Ctx,
+            email: &Email,
+        ) -> Result<Option<User>, DomainError> {
+            let users = self.users.lock().unwrap();
+            Ok(users.get(email).cloned())
+        }
+
+        async fn find_by_id(&self, _ctx: &Ctx, id: UserId) -> Result<Option<User>, DomainError> {
+            let users = self.users.lock().unwrap();
+            Ok(users.values().find(|u| u.id == id).cloned())
+        }
+    }
+
+    #[derive(Debug, Clone, Default)]
+    struct FakeUnitOfWork {
+        users: Arc<FakeUserRepository>,
+    }
+
+    #[async_trait]
+    impl UnitOfWork for FakeUnitOfWork {
+        async fn begin(&self) -> Result<Box<dyn Transaction>, DomainError> {
+            Ok(Box::new(FakeTransaction {
+                users: self.users.clone(),
+            }))
+        }
+    }
+
+    struct FakeTransaction {
+        users: Arc<FakeUserRepository>,
+    }
+
+    #[async_trait]
+    impl Transaction for FakeTransaction {
+        fn users(&self) -> &dyn UserRepository {
+            &*self.users
+        }
+
+        async fn commit(self: Box<Self>) -> Result<(), DomainError> {
+            Ok(())
+        }
+
+        async fn rollback(self: Box<Self>) -> Result<(), DomainError> {
+            Ok(())
+        }
+    }
+
+    #[derive(Debug)]
+    struct FakeRateLimiter {
+        allowed: bool,
+    }
+
+    impl RateLimiter for FakeRateLimiter {
+        fn is_allowed(&self, _ip: IpAddr) -> bool {
+            self.allowed
+        }
+    }
+
+    #[derive(Debug, Default)]
+    struct FakeIdempotencyStore {
+        cache: Mutex<HashMap<Uuid, UserDto>>,
+    }
+
+    #[async_trait]
+    impl IdempotencyStore<UserDto> for FakeIdempotencyStore {
+        async fn get(&self, key: Uuid) -> Result<Option<UserDto>, DomainError> {
+            let cache = self.cache.lock().unwrap();
+            Ok(cache.get(&key).cloned())
+        }
+
+        async fn set(&self, key: Uuid, value: UserDto) -> Result<(), DomainError> {
+            let mut cache = self.cache.lock().unwrap();
+            cache.insert(key, value);
+            Ok(())
+        }
+
+        async fn get_or_insert(
+            &self,
+            key: Uuid,
+            value: UserDto,
+        ) -> Result<Option<UserDto>, DomainError> {
+            let mut cache = self.cache.lock().unwrap();
+            if let Some(existing) = cache.get(&key) {
+                return Ok(Some(existing.clone()));
+            }
+            cache.insert(key, value);
+            Ok(None)
+        }
+    }
+
+    fn disabled_gate() -> UserRequestGate {
+        let uow: Arc<dyn UnitOfWork> = Arc::new(FakeUnitOfWork::default());
         let user_service = Arc::new(UserService::new(uow));
-        let idempotency_store: Arc<dyn IdempotencyStore> =
-            Arc::new(InMemoryIdempotencyStore::new());
-        RequestGate::new(
-            Arc::new(InMemoryRateLimiter::disabled()),
+        let idempotency_store: Arc<dyn IdempotencyStore<UserDto>> =
+            Arc::new(FakeIdempotencyStore::default());
+        UserRequestGate::new(
+            Arc::new(FakeRateLimiter { allowed: true }),
             idempotency_store,
             user_service,
         )
@@ -101,31 +220,29 @@ mod tests {
     async fn creates_user_and_replays_idempotent_request() {
         let gate = disabled_gate();
         let key = Uuid::new_v4();
+        let request_id = Uuid::new_v4();
         let ip = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
         let req = sample_request();
         let email = req.email.clone();
 
-        let first = gate.create_user(ip, key, req.clone()).await.unwrap();
+        let first = gate
+            .create_user(ip, request_id, key, req.clone())
+            .await
+            .unwrap();
         assert_eq!(first.email, email);
 
-        let second = gate.create_user(ip, key, req).await.unwrap();
+        let second = gate.create_user(ip, request_id, key, req).await.unwrap();
         assert_eq!(second.id, first.id);
     }
 
     #[tokio::test]
-    async fn returns_rate_limited_when_over_limit() {
-        let user_repo = InMemoryUserRepository::new();
-        let uow: Arc<dyn UnitOfWork> = Arc::new(InMemoryUnitOfWork::new(user_repo));
+    async fn returns_rate_limited_when_blocked() {
+        let uow: Arc<dyn UnitOfWork> = Arc::new(FakeUnitOfWork::default());
         let user_service = Arc::new(UserService::new(uow));
-        let config = RateLimiterConfig {
-            enabled: true,
-            max_requests: 1,
-            window_seconds: 900,
-        };
-        let idempotency_store: Arc<dyn IdempotencyStore> =
-            Arc::new(InMemoryIdempotencyStore::new());
-        let gate = RequestGate::new(
-            Arc::new(InMemoryRateLimiter::new(config)),
+        let idempotency_store: Arc<dyn IdempotencyStore<UserDto>> =
+            Arc::new(FakeIdempotencyStore::default());
+        let gate = UserRequestGate::new(
+            Arc::new(FakeRateLimiter { allowed: false }),
             idempotency_store,
             user_service,
         );
@@ -133,12 +250,9 @@ mod tests {
         let ip = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
         let req = sample_request();
         let key = Uuid::new_v4();
+        let request_id = Uuid::new_v4();
 
-        let first = gate.create_user(ip, key, req.clone()).await;
-        assert!(first.is_ok());
-
-        let second_key = Uuid::new_v4();
-        let second = gate.create_user(ip, second_key, req).await;
-        assert!(matches!(second, Err(DomainError::RateLimited)));
+        let result = gate.create_user(ip, request_id, key, req).await;
+        assert!(matches!(result, Err(DomainError::RateLimited)));
     }
 }

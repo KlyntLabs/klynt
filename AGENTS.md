@@ -327,22 +327,24 @@ VITE_APP_NAME=Klynt
 The backend is a Cargo workspace with five focused crates. Dependency direction is enforced by the compiler:
 
 - `klynt-domain` — domain entities, value objects, domain errors, repository ports, unit-of-work trait, rate-limiter/idempotency ports, and config value types. Has no dependency on Axum, HTTP, SQL, or external frameworks.
-- `klynt-application` — use cases and orchestration (`UserService`, `RequestGate`). Depends only on `klynt-domain`.
+- `klynt-application` — use cases and orchestration (`UserService`, `UserRequestGate`). Depends only on `klynt-domain`.
 - `klynt-infrastructure` — concrete adapters: in-memory repositories, in-memory unit of work, in-memory rate limiter, in-memory idempotency store, and config loading. Depends only on `klynt-domain`.
 - `klynt-api` — HTTP handlers, routing, request/response DTOs, `AppError` + `IntoResponse`, `AppState`, and middleware wiring. Depends on `klynt-application` and `klynt-domain`.
 - `klynt-server` — binary entrypoint, telemetry initialization, and dependency wiring. Depends on all other backend crates.
 
 Dependency graph: `klynt-server` → `klynt-api` → `klynt-application` → `klynt-domain`, and `klynt-infrastructure` → `klynt-domain`.
 
+`klynt-server::composition` is the single composition root. It exposes `build_app(config)` for both production and integration tests, and `build_request_gate(config)` for the Axum state. Keeping wiring here prevents the application layer from depending on infrastructure.
+
 ### Current Middleware Stack
 
 Applied globally in `klynt-api::startup::build_router`:
 
+- `propagate_request_id` — reads `x-request-id` or generates a UUID, attaches it to request extensions, and echoes it in response headers
 - `TraceLayer` — request/response logging
 - `CompressionLayer` — gzip compression
 - `TimeoutLayer` — 30-second request timeout
-- `CorsLayer` — configured from `allowed_origins`
-- `RequestId` layer — request ID propagation
+- `CorsLayer` — configured from `allowed_origins`; no permissive `Any` fallback in production
 
 ### Error Handling
 
@@ -359,7 +361,7 @@ All errors serialize to `{ code, message }` JSON.
 
 ### State
 
-`klynt_api::state::AppState` holds the Axum state (`Arc<AppConfig>` and `Arc<RequestGate>`). It is constructed in `klynt-server` and passed to handlers via Axum's state extractor.
+`klynt_api::state::AppState` holds the Axum state (`Arc<AppConfig>` and `Arc<UserRequestGate>`). It is constructed by `klynt_server::composition::build_app` and passed to handlers via Axum's state extractor.
 
 ## Frontend Architecture
 

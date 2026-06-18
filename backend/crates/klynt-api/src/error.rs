@@ -61,7 +61,10 @@ impl From<DomainError> for AppError {
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        let request_id = ""; // TODO: populate from request extension in production
+        // The request ID is propagated via the `propagate_request_id` middleware
+        // and returned in response headers; it is intentionally not duplicated in
+        // every error body so the public contract stays small.
+        let request_id = "";
 
         let (status, body) = match &self {
             AppError::NotFound => (

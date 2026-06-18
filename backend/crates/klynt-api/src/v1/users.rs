@@ -4,17 +4,15 @@ use axum::{
     extract::{ConnectInfo, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
-    Json,
+    Extension, Json,
 };
-use chrono::{DateTime, Utc};
 use serde::Deserialize;
-use serde::Serialize;
 use uuid::Uuid;
 
 use klynt_application::users::CreateUserRequest;
-use klynt_domain::models::{Role, UserDto, UserStatus};
 
 use crate::error::AppError;
+use crate::middleware::RequestId;
 use crate::state::AppState;
 
 #[derive(Debug, Deserialize)]
@@ -42,29 +40,20 @@ impl From<CreateUserBody> for CreateUserRequest {
     }
 }
 
-#[derive(Debug, Serialize)]
-pub struct UserResponse {
-    pub id: Uuid,
-    pub name: String,
-    pub email: String,
-    pub role: String,
-    pub status: String,
-    pub created_at: DateTime<Utc>,
-}
-
 pub async fn create_user(
     State(state): State<Arc<AppState>>,
     ConnectInfo(addr): ConnectInfo<std::net::SocketAddr>,
+    Extension(request_id): Extension<RequestId>,
     headers: HeaderMap,
     Json(req): Json<CreateUserBody>,
 ) -> Result<impl IntoResponse, AppError> {
     let idempotency_key = parse_idempotency_key(&headers)?;
     let user_dto = state
         .request_gate
-        .create_user(addr.ip(), idempotency_key, req.into())
+        .create_user(addr.ip(), request_id.0, idempotency_key, req.into())
         .await?;
 
-    Ok((StatusCode::CREATED, Json(UserResponse::from(&user_dto))))
+    Ok((StatusCode::CREATED, Json(user_dto)))
 }
 
 fn parse_idempotency_key(headers: &HeaderMap) -> Result<Uuid, AppError> {
@@ -78,26 +67,4 @@ fn parse_idempotency_key(headers: &HeaderMap) -> Result<Uuid, AppError> {
 
     Uuid::parse_str(text)
         .map_err(|_| AppError::BadRequest("Idempotency-Key must be a UUID".to_string()))
-}
-
-impl From<&UserDto> for UserResponse {
-    fn from(dto: &UserDto) -> Self {
-        Self {
-            id: dto.id.0,
-            name: dto.name.clone(),
-            email: dto.email.clone(),
-            role: match dto.role {
-                Role::Student => "student".to_string(),
-                Role::Teacher => "teacher".to_string(),
-                Role::Admin => "admin".to_string(),
-                Role::Parent => "parent".to_string(),
-            },
-            status: match dto.status {
-                UserStatus::PendingVerification => "pending_verification".to_string(),
-                UserStatus::Active => "active".to_string(),
-                UserStatus::Suspended => "suspended".to_string(),
-            },
-            created_at: dto.created_at,
-        }
-    }
 }
