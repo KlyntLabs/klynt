@@ -78,7 +78,7 @@ services:
     container_name: klynt-frontend
     restart: unless-stopped
     ports:
-      - "127.0.0.1:${KLYNT_FRONTEND_PORT:-5174}:80"
+      - "127.0.0.1:${KLYNT_FRONTEND_PORT:-5174}:8080"
     depends_on:
       backend:
         condition: service_healthy

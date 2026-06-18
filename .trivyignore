@@ -1,0 +1,6 @@
+# DS-0002: Dockerfile USER should be non-root.
+# - backend/Dockerfile already sets USER nobody.
+# - frontend/Dockerfile uses nginxinc/nginx-unprivileged (runs as uid 101).
+# - Dev images intentionally run as root so host volume mounts align with the
+#   local filesystem without UID/GID gymnastics.
+DS-0002

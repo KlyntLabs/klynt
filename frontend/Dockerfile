@@ -22,7 +22,7 @@ ENV VITE_APP_NAME=${VITE_APP_NAME}
 RUN npm run build
 
 # ── Runtime stage ────────────────────────────────────────────────────────────
-FROM nginx:alpine
+FROM nginxinc/nginx-unprivileged:alpine
 
 # Copy custom nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
@@ -31,6 +31,8 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # i18n locales are already bundled into dist/locales by the Vite build
-EXPOSE 80
+EXPOSE 8080
+
+USER 101
 
 CMD ["nginx", "-g", "daemon off;"]
