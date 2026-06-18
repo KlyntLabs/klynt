@@ -4,12 +4,11 @@ interface SpinnerProps {
 
 export function Spinner({ className }: SpinnerProps) {
   return (
-    <div
-      role="status"
+    <output
       aria-label="Loading"
       className={`inline-block h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent ${className ?? ""}`}
     >
       <span className="sr-only">Loading</span>
-    </div>
+    </output>
   );
 }
