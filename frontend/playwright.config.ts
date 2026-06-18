@@ -17,8 +17,18 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
     },
   ],
-  webServer: {
-    command: "npm run preview",
-    port: 5173,
-  },
+  webServer: [
+    {
+      command: "cd ../backend && cargo run",
+      url: "http://localhost:3000/api/v1/health/live",
+      timeout: 120_000,
+      reuseExistingServer: !process.env.CI,
+    },
+    {
+      command: "npm run dev",
+      url: "http://localhost:5173",
+      timeout: 120_000,
+      reuseExistingServer: !process.env.CI,
+    },
+  ],
 });

@@ -8,9 +8,10 @@ use chrono::Utc;
 
 use crate::contracts::users::CreateUserRequest;
 use crate::domain::ctx::Ctx;
-use crate::domain::errors::DomainError;
+use crate::domain::errors::{DomainError, NameError};
 use crate::domain::models::{validate_password, Email, Role, User, UserId, UserStatus};
-use crate::domain::repositories::{CreateResult, UserRepository};
+use crate::domain::repositories::CreateResult;
+use crate::domain::unit_of_work::UnitOfWork;
 
 #[derive(Debug, Clone)]
 pub struct UserDto {
@@ -36,12 +37,12 @@ impl From<&User> for UserDto {
 }
 
 pub struct UserService {
-    user_repo: Arc<dyn UserRepository>,
+    uow: Arc<dyn UnitOfWork>,
 }
 
 impl UserService {
-    pub fn new(user_repo: Arc<dyn UserRepository>) -> Self {
-        Self { user_repo }
+    pub fn new(uow: Arc<dyn UnitOfWork>) -> Self {
+        Self { uow }
     }
 
     pub async fn create_user(
@@ -51,6 +52,14 @@ impl UserService {
     ) -> Result<UserDto, DomainError> {
         if !req.terms_accepted {
             return Err(DomainError::TermsNotAccepted);
+        }
+
+        let name = req.name.trim().to_string();
+        if name.is_empty() {
+            return Err(DomainError::InvalidName(NameError::Empty));
+        }
+        if name.chars().count() > 200 {
+            return Err(DomainError::InvalidName(NameError::TooLong));
         }
 
         let email = Email::parse(&req.email)?;
@@ -66,7 +75,7 @@ impl UserService {
 
         let user = User {
             id: UserId::new(),
-            name: req.name,
+            name,
             email: email.clone(),
             role,
             institution_id: req.institution_id,
@@ -77,15 +86,18 @@ impl UserService {
             created_at: Utc::now(),
         };
 
-        match self
-            .user_repo
-            .create_if_not_exists(ctx, &email, &user)
-            .await?
-        {
-            CreateResult::Created => Ok(UserDto::from(&user)),
-            CreateResult::AlreadyExists(_) => Err(DomainError::AlreadyExists {
-                email: email.as_str().to_string(),
-            }),
+        let tx = self.uow.begin().await?;
+        match tx.users().create_if_not_exists(ctx, &email, &user).await? {
+            CreateResult::Created => {
+                tx.commit().await?;
+                Ok(UserDto::from(&user))
+            }
+            CreateResult::AlreadyExists(existing) => {
+                tx.rollback().await?;
+                Err(DomainError::AlreadyExists {
+                    email: existing.email.as_str().to_string(),
+                })
+            }
         }
     }
 }

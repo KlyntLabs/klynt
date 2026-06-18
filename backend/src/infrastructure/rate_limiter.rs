@@ -36,6 +36,11 @@ impl RateLimiter {
         let entries = buckets.entry(ip).or_default();
         entries.retain(|t| *t > cutoff);
 
+        if entries.is_empty() {
+            buckets.remove(&ip);
+            return true;
+        }
+
         if entries.len() >= max_requests {
             return false;
         }

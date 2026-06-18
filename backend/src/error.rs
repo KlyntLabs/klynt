@@ -55,6 +55,7 @@ impl From<DomainError> for AppError {
             DomainError::TermsNotAccepted => {
                 AppError::BadRequest("terms must be accepted".to_string())
             }
+            DomainError::InvalidName(e) => AppError::BadRequest(e.to_string()),
             DomainError::Internal(e) => AppError::Internal(e),
         }
     }

@@ -7,9 +7,11 @@ use axum::Router;
 use klynt_api::{
     application::users::UserService,
     config::{ApiConfig, AppConfig},
+    domain::unit_of_work::UnitOfWork,
     infrastructure::rate_limiter::RateLimiter,
     infrastructure::repositories::idempotency::InMemoryIdempotencyStore,
     infrastructure::repositories::in_memory_user::InMemoryUserRepository,
+    infrastructure::unit_of_work::InMemoryUnitOfWork,
     startup::build_router,
     state::AppState,
 };
@@ -27,8 +29,9 @@ pub fn test_config() -> AppConfig {
 
 pub fn test_app() -> Router {
     let config = test_config();
-    let user_repo = Arc::new(InMemoryUserRepository::new());
-    let user_service = Arc::new(UserService::new(user_repo));
+    let user_repo = InMemoryUserRepository::new();
+    let uow: Arc<dyn UnitOfWork> = Arc::new(InMemoryUnitOfWork::new(user_repo));
+    let user_service = Arc::new(UserService::new(uow));
     let state = Arc::new(AppState {
         config: Arc::new(config),
         user_service,

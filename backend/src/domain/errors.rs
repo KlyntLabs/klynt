@@ -17,6 +17,14 @@ pub enum PasswordError {
 }
 
 #[derive(Debug, Error, PartialEq)]
+pub enum NameError {
+    #[error("name is empty")]
+    Empty,
+    #[error("name is too long")]
+    TooLong,
+}
+
+#[derive(Debug, Error, PartialEq)]
 pub enum RoleError {
     #[error("unknown role")]
     Unknown,
@@ -32,6 +40,8 @@ pub enum DomainError {
     WeakPassword(#[from] PasswordError),
     #[error("invalid role")]
     InvalidRole(#[from] RoleError),
+    #[error("invalid name")]
+    InvalidName(#[from] NameError),
     #[error("not found")]
     NotFound,
     #[error("institution is required for role {0:?}")]
