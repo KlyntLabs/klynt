@@ -1,0 +1,23 @@
+{
+  "appName": "Klynt 教育平台",
+  "nav": {
+    "home": "Klynt",
+    "dashboard": "仪表板",
+    "register": "注册"
+  },
+  "actions": {
+    "submit": "提交",
+    "save": "保存",
+    "cancel": "取消",
+    "close": "关闭",
+    "tryAgain": "重试",
+    "goHome": "返回首页",
+    "createAccount": "创建账户"
+  },
+  "language": {
+    "label": "语言",
+    "en": "English",
+    "vi": "Tiếng Việt",
+    "cn": "中文"
+  }
+}

@@ -1,4 +1,4 @@
-import { cn, disabled, focusRing } from "@/lib/utils";
+import { cn, disabledStyles, focusRing } from "@/lib/utils";
 import { type VariantProps, cva } from "class-variance-authority";
 import { Spinner } from "./spinner";
 
@@ -45,7 +45,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
-      className={cn(buttonVariants({ variant, size, className }), focusRing, disabled)}
+      className={cn(buttonVariants({ variant, size, className }), focusRing, disabledStyles)}
       disabled={disabled || isLoading}
       aria-busy={isLoading}
       {...props}

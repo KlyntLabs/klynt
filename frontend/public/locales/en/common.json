@@ -1,0 +1,23 @@
+{
+  "appName": "Klynt Education Platform",
+  "nav": {
+    "home": "Klynt",
+    "dashboard": "Dashboard",
+    "register": "Register"
+  },
+  "actions": {
+    "submit": "Submit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "tryAgain": "Try again",
+    "goHome": "Go home",
+    "createAccount": "Create account"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "vi": "Tiếng Việt",
+    "cn": "中文"
+  }
+}

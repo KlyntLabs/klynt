@@ -1,0 +1,15 @@
+{
+  "generic": {
+    "title": "出了点问题",
+    "message": "我们无法加载此数据。请重试。"
+  },
+  "boundary": {
+    "title": "出了点问题",
+    "tryAgain": "重试",
+    "unknownError": "未知错误"
+  },
+  "api": {
+    "unauthorized": "未授权 API 响应；清除会话",
+    "serverError": "服务器错误"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "loading": "加载中",
+  "spinnerLabel": "加载中",
+  "queryError": {
+    "title": "出了点问题",
+    "message": "我们无法加载此数据。请重试。",
+    "retry": "重试"
+  },
+  "notFound": {
+    "title": "页面未找到",
+    "goHome": "返回首页"
+  },
+  "dashboard": {
+    "title": "仪表板",
+    "welcome": "欢迎回来。"
+  }
+}

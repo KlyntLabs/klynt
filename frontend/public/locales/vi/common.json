@@ -1,0 +1,23 @@
+{
+  "appName": "Nền tảng Giáo dục Klynt",
+  "nav": {
+    "home": "Klynt",
+    "dashboard": "Bảng điều khiển",
+    "register": "Đăng ký"
+  },
+  "actions": {
+    "submit": "Gửi",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "close": "Đóng",
+    "tryAgain": "Thử lại",
+    "goHome": "Về trang chủ",
+    "createAccount": "Tạo tài khoản"
+  },
+  "language": {
+    "label": "Ngôn ngữ",
+    "en": "English",
+    "vi": "Tiếng Việt",
+    "cn": "中文"
+  }
+}

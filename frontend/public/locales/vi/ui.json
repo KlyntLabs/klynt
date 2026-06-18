@@ -1,0 +1,17 @@
+{
+  "loading": "Đang tải",
+  "spinnerLabel": "Đang tải",
+  "queryError": {
+    "title": "Đã xảy ra lỗi",
+    "message": "Chúng tôi không thể tải dữ liệu này. Vui lòng thử lại.",
+    "retry": "Thử lại"
+  },
+  "notFound": {
+    "title": "Không tìm thấy trang",
+    "goHome": "Về trang chủ"
+  },
+  "dashboard": {
+    "title": "Bảng điều khiển",
+    "welcome": "Chào mừng trở lại."
+  }
+}

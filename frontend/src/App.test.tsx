@@ -1,9 +1,10 @@
-import { AppRouter } from "@/core/routing/app-router";
-import { render, screen } from "@testing-library/react";
+import HomePage from "@/core/routing/home-page";
+import { render } from "@/test/render";
+import { screen } from "@testing-library/react";
 
 describe("App", () => {
   it("renders the home page", () => {
-    render(<AppRouter />);
-    expect(screen.getByText("Welcome to Klynt")).toBeInTheDocument();
+    render(<HomePage />);
+    expect(screen.getByText("Klynt")).toBeInTheDocument();
   });
 });

@@ -1,0 +1,17 @@
+{
+  "loading": "Loading",
+  "spinnerLabel": "Loading",
+  "queryError": {
+    "title": "Something went wrong",
+    "message": "We couldn't load this data. Please try again.",
+    "retry": "Try again"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "goHome": "Go home"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back."
+  }
+}

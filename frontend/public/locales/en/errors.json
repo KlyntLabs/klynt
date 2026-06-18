@@ -1,0 +1,15 @@
+{
+  "generic": {
+    "title": "Something went wrong",
+    "message": "We couldn't load this data. Please try again."
+  },
+  "boundary": {
+    "title": "Something went wrong",
+    "tryAgain": "Try again",
+    "unknownError": "Unknown error"
+  },
+  "api": {
+    "unauthorized": "Unauthorized API response; clearing session",
+    "serverError": "Server error"
+  }
+}

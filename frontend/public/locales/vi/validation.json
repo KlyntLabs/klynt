@@ -1,0 +1,11 @@
+{
+  "nameRequired": "Vui lòng nhập họ và tên",
+  "nameMax": "Họ và tên không được quá 200 ký tự",
+  "emailInvalid": "Vui lòng nhập email hợp lệ",
+  "passwordMin": "Mật khẩu phải có ít nhất 12 ký tự",
+  "roleRequired": "Vui lòng chọn vai trò",
+  "institutionIdInvalid": "Vui lòng nhập mã tổ chức hợp lệ",
+  "institutionIdRequired": "Vui lòng nhập mã tổ chức cho vai trò này",
+  "termsRequired": "Bạn phải đồng ý với các điều khoản",
+  "termsVersionRequired": "Vui lòng cung cấp phiên bản điều khoản"
+}

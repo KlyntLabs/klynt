@@ -5,6 +5,7 @@ import { Suspense, lazy } from "react";
 import { Outlet, createBrowserRouter } from "react-router-dom";
 import { routePaths } from "./route-paths";
 
+const HomePage = lazy(() => import("./home-page"));
 const RegisterPage = lazy(() => import("@/features/auth/pages/register-page"));
 const RegisterSuccessPage = lazy(() => import("@/features/auth/pages/register-success-page"));
 const DashboardPage = lazy(() => import("@/features/dashboard/pages/dashboard-page"));
@@ -49,7 +50,7 @@ export const router = createBrowserRouter([
     element: <RootLayout />,
     hydrateFallbackElement: <Spinner />,
     children: [
-      { index: true, element: <div className="p-6">Welcome to Klynt</div> },
+      { index: true, element: <HomePage /> },
       {
         element: <GuestLayout />,
         children: [

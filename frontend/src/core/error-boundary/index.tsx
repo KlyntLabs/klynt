@@ -1,5 +1,6 @@
 import { logger } from "@/core/logger";
 import { ErrorBoundary as ReactErrorBoundary } from "react-error-boundary";
+import { useTranslation } from "react-i18next";
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -12,17 +13,19 @@ function Fallback({
   error: unknown;
   resetErrorBoundary: () => void;
 }) {
-  const message = error instanceof Error ? error.message : "Unknown error";
+  const { t } = useTranslation("errors");
+  const message = error instanceof Error ? error.message : t("boundary.unknownError");
+
   return (
     <div className="p-6" role="alert">
-      <h2 className="text-lg font-semibold">Something went wrong</h2>
+      <h2 className="text-lg font-semibold">{t("boundary.title")}</h2>
       <pre className="mt-2 text-sm text-destructive">{message}</pre>
       <button
         type="button"
         onClick={resetErrorBoundary}
         className="mt-4 rounded bg-primary px-4 py-2 text-primary-foreground"
       >
-        Try again
+        {t("boundary.tryAgain")}
       </button>
     </div>
   );

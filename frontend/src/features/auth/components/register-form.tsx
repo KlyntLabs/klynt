@@ -5,19 +5,15 @@ import { SelectField } from "@/core/forms/select-field";
 import { useZodForm } from "@/core/forms/use-zod-form";
 import { Button } from "@/core/ui/button";
 import { useRegister } from "@/features/auth/commands/use-register";
-import { registerSchema } from "@/features/auth/schemas/register-schema";
+import { useRegisterSchema } from "@/features/auth/schemas/register-schema";
 import { FormProvider } from "react-hook-form";
-
-const ROLE_OPTIONS = [
-  { value: "student", label: "Student" },
-  { value: "teacher", label: "Teacher" },
-  { value: "admin", label: "Admin" },
-  { value: "parent", label: "Parent" },
-];
+import { Trans, useTranslation } from "react-i18next";
 
 const CURRENT_TERMS_VERSION = "2026-06-18";
 
 export function RegisterForm() {
+  const { t } = useTranslation(["auth", "common"]);
+  const registerSchema = useRegisterSchema();
   const register = useRegister();
   const form = useZodForm(registerSchema, {
     defaultValues: {
@@ -49,35 +45,49 @@ export function RegisterForm() {
   return (
     <FormProvider {...form}>
       <form onSubmit={onSubmit} className="space-y-4">
-        <InputField name="name" label="Full name" placeholder="Ada Lovelace" />
-        <InputField name="email" label="Email" type="email" placeholder="ada@example.com" />
-        <InputField name="password" label="Password" type="password" />
+        <InputField
+          name="name"
+          label={t("auth:register.name.label")}
+          placeholder={t("auth:register.name.placeholder")}
+        />
+        <InputField
+          name="email"
+          label={t("auth:register.email.label")}
+          type="email"
+          placeholder={t("auth:register.email.placeholder")}
+        />
+        <InputField name="password" label={t("auth:register.password.label")} type="password" />
         <SelectField
           name="role"
-          label="I am a"
-          options={ROLE_OPTIONS}
-          placeholder="Select a role"
+          label={t("auth:register.role.label")}
+          options={[
+            { value: "student", label: t("auth:register.roles.student") },
+            { value: "teacher", label: t("auth:register.roles.teacher") },
+            { value: "admin", label: t("auth:register.roles.admin") },
+            { value: "parent", label: t("auth:register.roles.parent") },
+          ]}
+          placeholder={t("auth:register.role.placeholder")}
         />
         {requiresInstitution && (
           <InputField
             name="institutionId"
-            label="Institution ID"
-            placeholder="550e8400-e29b-41d4-a716-446655440001"
+            label={t("auth:register.institutionId.label")}
+            placeholder={t("auth:register.institutionId.placeholder")}
           />
         )}
         <CheckboxField
           name="termsAccepted"
           label={
-            <>
-              I agree to the{" "}
-              <a href="/privacy" className="text-primary hover:underline">
-                Privacy Policy
-              </a>{" "}
-              and{" "}
-              <a href="/terms" className="text-primary hover:underline">
-                Terms of Service
-              </a>
-            </>
+            <Trans
+              ns="auth"
+              i18nKey="register.terms.label"
+              components={{
+                // biome-ignore lint/a11y/useAnchorContent: link text is injected by the Trans component from i18n
+                privacy: <a href="/privacy" className="text-primary hover:underline" />,
+                // biome-ignore lint/a11y/useAnchorContent: link text is injected by the Trans component from i18n
+                terms: <a href="/terms" className="text-primary hover:underline" />,
+              }}
+            />
           }
         />
         {form.formState.errors.root && (
@@ -86,7 +96,7 @@ export function RegisterForm() {
           </p>
         )}
         <Button type="submit" isLoading={register.isPending} className="w-full">
-          Create account
+          {t("auth:register.submit")}
         </Button>
       </form>
     </FormProvider>

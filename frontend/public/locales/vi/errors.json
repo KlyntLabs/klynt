@@ -1,0 +1,15 @@
+{
+  "generic": {
+    "title": "Đã xảy ra lỗi",
+    "message": "Chúng tôi không thể tải dữ liệu này. Vui lòng thử lại."
+  },
+  "boundary": {
+    "title": "Đã xảy ra lỗi",
+    "tryAgain": "Thử lại",
+    "unknownError": "Lỗi không xác định"
+  },
+  "api": {
+    "unauthorized": "Phản hồi API không được ủy quyền; đang xóa phiên",
+    "serverError": "Lỗi máy chủ"
+  }
+}

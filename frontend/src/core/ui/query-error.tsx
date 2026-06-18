@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 import { Button } from "./button";
 
 interface QueryErrorProps {
@@ -8,12 +9,9 @@ interface QueryErrorProps {
   className?: string;
 }
 
-export function QueryError({
-  title = "Something went wrong",
-  message = "We couldn't load this data. Please try again.",
-  onRetry,
-  className,
-}: QueryErrorProps) {
+export function QueryError({ title, message, onRetry, className }: QueryErrorProps) {
+  const { t } = useTranslation("ui");
+
   return (
     <div
       className={cn(
@@ -21,11 +19,11 @@ export function QueryError({
         className
       )}
     >
-      <h3 className="font-semibold">{title}</h3>
-      <p className="mt-1 text-sm opacity-90">{message}</p>
+      <h3 className="font-semibold">{title ?? t("queryError.title")}</h3>
+      <p className="mt-1 text-sm opacity-90">{message ?? t("queryError.message")}</p>
       {onRetry && (
         <Button variant="secondary" size="sm" className="mt-3" onClick={onRetry}>
-          Try again
+          {t("queryError.retry")}
         </Button>
       )}
     </div>
