@@ -1,5 +1,6 @@
 {
   "loading": "加载中",
+  "skipLink": "跳转到主要内容",
   "spinnerLabel": "加载中",
   "queryError": {
     "title": "出了点问题",

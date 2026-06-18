@@ -1,5 +1,6 @@
 {
   "loading": "Đang tải",
+  "skipLink": "Chuyển đến nội dung chính",
   "spinnerLabel": "Đang tải",
   "queryError": {
     "title": "Đã xảy ra lỗi",

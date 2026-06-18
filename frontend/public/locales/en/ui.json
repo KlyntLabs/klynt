@@ -1,5 +1,6 @@
 {
   "loading": "Loading",
+  "skipLink": "Skip to main content",
   "spinnerLabel": "Loading",
   "queryError": {
     "title": "Something went wrong",
