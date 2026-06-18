@@ -21,32 +21,9 @@ pub struct CreateUserRequest {
 }
 use crate::domain::ctx::Ctx;
 use crate::domain::errors::{DomainError, NameError};
-use crate::domain::models::{validate_password, Email, Role, User, UserId, UserStatus};
+use crate::domain::models::{validate_password, Email, Role, User, UserDto, UserId, UserStatus};
 use crate::domain::repositories::CreateResult;
 use crate::domain::unit_of_work::UnitOfWork;
-
-#[derive(Debug, Clone)]
-pub struct UserDto {
-    pub id: UserId,
-    pub name: String,
-    pub email: String,
-    pub role: Role,
-    pub status: UserStatus,
-    pub created_at: chrono::DateTime<Utc>,
-}
-
-impl From<&User> for UserDto {
-    fn from(user: &User) -> Self {
-        Self {
-            id: user.id,
-            name: user.name.clone(),
-            email: user.email.as_str().to_string(),
-            role: user.role,
-            status: user.status,
-            created_at: user.created_at,
-        }
-    }
-}
 
 pub struct UserService {
     uow: Arc<dyn UnitOfWork>,

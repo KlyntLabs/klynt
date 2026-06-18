@@ -106,6 +106,29 @@ pub struct User {
     pub created_at: DateTime<Utc>,
 }
 
+#[derive(Debug, Clone)]
+pub struct UserDto {
+    pub id: UserId,
+    pub name: String,
+    pub email: String,
+    pub role: Role,
+    pub status: UserStatus,
+    pub created_at: chrono::DateTime<Utc>,
+}
+
+impl From<&User> for UserDto {
+    fn from(user: &User) -> Self {
+        Self {
+            id: user.id,
+            name: user.name.clone(),
+            email: user.email.as_str().to_string(),
+            role: user.role,
+            status: user.status,
+            created_at: user.created_at,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

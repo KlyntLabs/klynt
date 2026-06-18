@@ -4,18 +4,9 @@ use std::sync::Mutex;
 use async_trait::async_trait;
 use uuid::Uuid;
 
-use crate::application::users::UserDto;
 use crate::domain::errors::DomainError;
-
-#[async_trait]
-pub trait IdempotencyStore: Send + Sync {
-    async fn get(&self, key: Uuid) -> Result<Option<UserDto>, DomainError>;
-    async fn set(&self, key: Uuid, user: UserDto) -> Result<(), DomainError>;
-
-    /// Insert `user` only if `key` is absent. Returns the existing value when one is present.
-    async fn get_or_insert(&self, key: Uuid, user: UserDto)
-        -> Result<Option<UserDto>, DomainError>;
-}
+use crate::domain::models::UserDto;
+use crate::domain::ports::IdempotencyStore;
 
 #[derive(Debug, Default)]
 pub struct InMemoryIdempotencyStore {

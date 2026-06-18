@@ -50,3 +50,9 @@ impl RateLimiter {
         true
     }
 }
+
+impl crate::domain::ports::RateLimiter for RateLimiter {
+    fn is_allowed(&self, ip: IpAddr) -> bool {
+        self.is_allowed(ip)
+    }
+}

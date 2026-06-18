@@ -1,24 +1,23 @@
 use std::net::IpAddr;
 use std::sync::Arc;
 
-use axum::http::HeaderMap;
 use uuid::Uuid;
 
-use crate::application::users::{CreateUserRequest, UserDto, UserService};
+use crate::application::users::{CreateUserRequest, UserService};
 use crate::domain::ctx::Ctx;
+use crate::domain::models::UserDto;
+use crate::domain::ports::{IdempotencyStore, RateLimiter};
 use crate::error::AppError;
-use crate::infrastructure::rate_limiter::RateLimiter;
-use crate::infrastructure::repositories::idempotency::IdempotencyStore;
 
 pub struct RequestGate {
-    rate_limiter: Arc<RateLimiter>,
+    rate_limiter: Arc<dyn RateLimiter>,
     idempotency_store: Arc<dyn IdempotencyStore>,
     user_service: Arc<UserService>,
 }
 
 impl RequestGate {
     pub fn new(
-        rate_limiter: Arc<RateLimiter>,
+        rate_limiter: Arc<dyn RateLimiter>,
         idempotency_store: Arc<dyn IdempotencyStore>,
         user_service: Arc<UserService>,
     ) -> Self {
@@ -32,20 +31,19 @@ impl RequestGate {
     pub async fn create_user(
         &self,
         ip: IpAddr,
-        headers: &HeaderMap,
+        idempotency_key: Uuid,
         req: CreateUserRequest,
     ) -> Result<UserDto, AppError> {
         if !self.rate_limiter.is_allowed(ip) {
             return Err(AppError::RateLimited);
         }
 
-        let idempotency_key = parse_idempotency_key(headers)?;
+        let ctx = Ctx::new(Uuid::new_v4());
 
         if let Some(cached) = self.idempotency_store.get(idempotency_key).await? {
             return Ok(cached);
         }
 
-        let ctx = Ctx::new(Uuid::new_v4());
         let user_dto = self.user_service.create_user(&ctx, req).await?;
         let cached = self
             .idempotency_store
@@ -56,35 +54,20 @@ impl RequestGate {
     }
 }
 
-fn parse_idempotency_key(headers: &HeaderMap) -> Result<Uuid, AppError> {
-    let header = headers
-        .get("Idempotency-Key")
-        .ok_or_else(|| AppError::BadRequest("Idempotency-Key header is required".to_string()))?;
-
-    let text = header
-        .to_str()
-        .map_err(|_| AppError::BadRequest("Idempotency-Key is not valid UTF-8".to_string()))?;
-
-    Uuid::parse_str(text)
-        .map_err(|_| AppError::BadRequest("Idempotency-Key must be a UUID".to_string()))
-}
-
 #[cfg(test)]
 mod tests {
     use std::net::{IpAddr, Ipv4Addr};
     use std::sync::Arc;
 
-    use axum::http::HeaderMap;
     use uuid::Uuid;
 
     use crate::application::request_gate::RequestGate;
     use crate::application::users::{CreateUserRequest, UserService};
     use crate::config::RateLimiterConfig;
+    use crate::domain::ports::IdempotencyStore;
     use crate::domain::unit_of_work::UnitOfWork;
-    use crate::infrastructure::rate_limiter::RateLimiter;
-    use crate::infrastructure::repositories::idempotency::{
-        IdempotencyStore, InMemoryIdempotencyStore,
-    };
+    use crate::infrastructure::rate_limiter::RateLimiter as InMemoryRateLimiter;
+    use crate::infrastructure::repositories::idempotency::InMemoryIdempotencyStore;
     use crate::infrastructure::repositories::in_memory_user::InMemoryUserRepository;
     use crate::infrastructure::unit_of_work::InMemoryUnitOfWork;
 
@@ -107,16 +90,10 @@ mod tests {
         let idempotency_store: Arc<dyn IdempotencyStore> =
             Arc::new(InMemoryIdempotencyStore::new());
         RequestGate::new(
-            Arc::new(RateLimiter::disabled()),
+            Arc::new(InMemoryRateLimiter::disabled()),
             idempotency_store,
             user_service,
         )
-    }
-
-    fn headers_with_key(key: Uuid) -> HeaderMap {
-        let mut headers = HeaderMap::new();
-        headers.insert("Idempotency-Key", key.to_string().parse().unwrap());
-        headers
     }
 
     #[tokio::test]
@@ -127,16 +104,10 @@ mod tests {
         let req = sample_request();
         let email = req.email.clone();
 
-        let first = gate
-            .create_user(ip, &headers_with_key(key), req.clone())
-            .await
-            .unwrap();
+        let first = gate.create_user(ip, key, req.clone()).await.unwrap();
         assert_eq!(first.email, email);
 
-        let second = gate
-            .create_user(ip, &headers_with_key(key), req)
-            .await
-            .unwrap();
+        let second = gate.create_user(ip, key, req).await.unwrap();
         assert_eq!(second.id, first.id);
     }
 
@@ -153,7 +124,7 @@ mod tests {
         let idempotency_store: Arc<dyn IdempotencyStore> =
             Arc::new(InMemoryIdempotencyStore::new());
         let gate = RequestGate::new(
-            Arc::new(RateLimiter::new(config)),
+            Arc::new(InMemoryRateLimiter::new(config)),
             idempotency_store,
             user_service,
         );
@@ -162,15 +133,11 @@ mod tests {
         let req = sample_request();
         let key = Uuid::new_v4();
 
-        let first = gate
-            .create_user(ip, &headers_with_key(key), req.clone())
-            .await;
+        let first = gate.create_user(ip, key, req.clone()).await;
         assert!(first.is_ok());
 
         let second_key = Uuid::new_v4();
-        let second = gate
-            .create_user(ip, &headers_with_key(second_key), req)
-            .await;
+        let second = gate.create_user(ip, second_key, req).await;
         assert!(matches!(second, Err(crate::error::AppError::RateLimited)));
     }
 }
