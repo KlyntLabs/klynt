@@ -1,7 +1,5 @@
 import { RootLayout } from "@/app/layout/root-layout";
-import { GuestRoute } from "@/core/auth/guest-route";
-import { ProtectedRoute } from "@/core/auth/protected-route";
-import { RoleGuard } from "@/core/auth/role-guard";
+import { GuestRoute, ProtectedRoute, RoleGuard } from "@/core/auth";
 import { Spinner } from "@/core/ui/spinner";
 import { Suspense, lazy } from "react";
 import { Outlet, createBrowserRouter } from "react-router-dom";

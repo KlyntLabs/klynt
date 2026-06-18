@@ -3,9 +3,7 @@ import { screen } from "@testing-library/react";
 import { Route, Routes } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import { useAuthStore } from "./auth-store";
-import { GuestRoute } from "./guest-route";
-import { ProtectedRoute } from "./protected-route";
-import { RoleGuard } from "./role-guard";
+import { GuestRoute, ProtectedRoute, RoleGuard } from "./auth-identity";
 
 function setup() {
   useAuthStore.getState().reset();

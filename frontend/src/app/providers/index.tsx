@@ -1,5 +1,4 @@
 import { createQueryClient } from "@/core/api/query-client";
-import { AuthProvider } from "@/core/auth/auth-provider";
 import { ErrorBoundary } from "@/core/error-boundary";
 import { ToastContainer } from "@/core/notifications/toast-container";
 import { useToastStore } from "@/core/notifications/toast-store";
@@ -27,11 +26,9 @@ export function AppProviders({ children }: AppProvidersProps) {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          {children}
-          <ToastContainer />
-          <ReactQueryDevtools initialIsOpen={false} />
-        </AuthProvider>
+        {children}
+        <ToastContainer />
+        <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
     </ErrorBoundary>
   );
