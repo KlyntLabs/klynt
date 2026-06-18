@@ -10,7 +10,7 @@ use klynt_domain::repositories::{CreateResult, UserRepository};
 
 #[derive(Debug, Default, Clone)]
 pub struct InMemoryUserRepository {
-    users: Arc<Mutex<HashMap<Email, User>>>,
+    pub(crate) users: Arc<Mutex<HashMap<Email, User>>>,
 }
 
 impl InMemoryUserRepository {

@@ -326,10 +326,10 @@ VITE_APP_NAME=Klynt
 
 The backend is a Cargo workspace with five focused crates. Dependency direction is enforced by the compiler:
 
-- `klynt-domain` — domain entities, value objects, domain errors, repository ports, unit-of-work trait, rate-limiter/idempotency ports, and config value types. Has no dependency on Axum, HTTP, SQL, or external frameworks.
-- `klynt-application` — use cases and orchestration (`UserService`, `UserRequestGate`). Depends only on `klynt-domain`.
-- `klynt-infrastructure` — concrete adapters: in-memory repositories, in-memory unit of work, in-memory rate limiter, in-memory idempotency store, and config loading. Depends only on `klynt-domain`.
-- `klynt-api` — HTTP handlers, routing, request/response DTOs, `AppError` + `IntoResponse`, `AppState`, and middleware wiring. Depends on `klynt-application` and `klynt-domain`.
+- `klynt-domain` — domain entities, value objects, domain errors, repository ports, unit-of-work trait, session store port, rate-limiter/idempotency/health-check ports, request context (`Ctx`), and config value types. Has no dependency on Axum, HTTP, SQL, or external frameworks.
+- `klynt-application` — use cases and orchestration (`UserService`, `AuthService`, `UserRequestGate`). Depends only on `klynt-domain`.
+- `klynt-infrastructure` — concrete adapters: in-memory repositories, in-memory unit of work with snapshot rollback, in-memory rate limiter, in-memory idempotency store, in-memory session store, health-check implementations, and config loading. Depends only on `klynt-domain`.
+- `klynt-api` — HTTP handlers, routing, request/response DTOs, `AppError` + `IntoResponse`, `AppState`, auth/rate-limit middleware, and middleware wiring. Depends on `klynt-application` and `klynt-domain`.
 - `klynt-server` — binary entrypoint, telemetry initialization, and dependency wiring. Depends on all other backend crates.
 
 Dependency graph: `klynt-server` → `klynt-api` → `klynt-application` → `klynt-domain`, and `klynt-infrastructure` → `klynt-domain`.
@@ -341,27 +341,42 @@ Dependency graph: `klynt-server` → `klynt-api` → `klynt-application` → `kl
 Applied globally in `klynt-api::startup::build_router`:
 
 - `propagate_request_id` — reads `x-request-id` or generates a UUID, attaches it to request extensions, and echoes it in response headers
+- `rate_limit` — rejects requests when the client IP exceeds the configured rate limit
+- `ctx_resolve` — resolves `Ctx` from the `Authorization: Bearer <token>` header and stores it in request extensions (guest context when missing/invalid)
 - `TraceLayer` — request/response logging
 - `CompressionLayer` — gzip compression
 - `TimeoutLayer` — 30-second request timeout
 - `CorsLayer` — configured from `allowed_origins`; no permissive `Any` fallback in production
 
+Protected routes additionally use `ctx_require`, which rejects guest contexts with 401.
+
 ### Error Handling
 
-`klynt_domain::errors::DomainError` is the domain error enum. `klynt_api::error::AppError` maps domain errors to HTTP responses:
+`klynt_domain::errors::DomainError` is the domain error enum. `klynt_api::error::AppError` wraps an `AppErrorKind` plus the request ID and maps domain errors to HTTP responses:
 
 - `NotFound` → 404
 - `BadRequest(String)` → 400
 - `Conflict(String)` → 409
+- `Unauthorized` → 401
 - `RateLimited` → 429
 - `Validation(String)` → 422
 - `Internal(anyhow::Error)` → 500 (internal details are logged, not exposed)
 
-All errors serialize to `{ code, message }` JSON.
+All errors serialize to `{ code, message, request_id }` JSON. Handlers attach the real request ID via `.with_request_id(...)`; the `From<DomainError>` impl defaults to a nil UUID for the rare case where `?` is used without one.
 
 ### State
 
-`klynt_api::state::AppState` holds the Axum state (`Arc<AppConfig>` and `Arc<UserRequestGate>`). It is constructed by `klynt_server::composition::build_app` and passed to handlers via Axum's state extractor.
+`klynt_api::state::AppState` holds the Axum state: `Arc<AppConfig>`, `Arc<UserService>`, `Arc<UserRequestGate>`, `Arc<AuthService>`, `Arc<dyn SessionStore>`, `Arc<dyn RateLimiter>`, and a list of `Arc<dyn HealthCheck>` dependencies. It is constructed by `klynt_server::composition::build_app` and passed to handlers via Axum's state extractor.
+
+### Routes
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| `GET` | `/api/v1/health/live` | public | Liveness probe |
+| `GET` | `/api/v1/health/ready` | public | Readiness probe (runs all `HealthCheck` adapters) |
+| `POST` | `/api/v1/sessions` | public | Login, returns bearer token |
+| `POST` | `/api/v1/users` | public | Register a new user |
+| `GET` | `/api/v1/users/me` | required | Return the authenticated user |
 
 ## Frontend Architecture
 

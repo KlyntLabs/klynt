@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use axum::{
-    extract::{ConnectInfo, State},
+    extract::State,
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
     Extension, Json,
@@ -10,9 +10,10 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use klynt_application::users::CreateUserRequest;
+use klynt_domain::models::UserDto;
 
-use crate::error::AppError;
-use crate::middleware::RequestId;
+use crate::error::{AppError, AppErrorKind, WithRequestId};
+use crate::middleware::{CtxW, RequestId};
 use crate::state::AppState;
 
 #[derive(Debug, Deserialize)]
@@ -42,29 +43,57 @@ impl From<CreateUserBody> for CreateUserRequest {
 
 pub async fn create_user(
     State(state): State<Arc<AppState>>,
-    ConnectInfo(addr): ConnectInfo<std::net::SocketAddr>,
     Extension(request_id): Extension<RequestId>,
     headers: HeaderMap,
     Json(req): Json<CreateUserBody>,
 ) -> Result<impl IntoResponse, AppError> {
-    let idempotency_key = parse_idempotency_key(&headers)?;
+    let idempotency_key = parse_idempotency_key(&headers, request_id.0)?;
     let user_dto = state
         .request_gate
-        .create_user(addr.ip(), request_id.0, idempotency_key, req.into())
-        .await?;
+        .create_user(request_id.0, idempotency_key, req.into())
+        .await
+        .with_request_id(request_id.0)?;
 
     Ok((StatusCode::CREATED, Json(user_dto)))
 }
 
-fn parse_idempotency_key(headers: &HeaderMap) -> Result<Uuid, AppError> {
-    let header = headers
-        .get("Idempotency-Key")
-        .ok_or_else(|| AppError::BadRequest("Idempotency-Key header is required".to_string()))?;
+pub async fn get_me(
+    State(state): State<Arc<AppState>>,
+    Extension(request_id): Extension<RequestId>,
+    CtxW(ctx): CtxW,
+) -> Result<impl IntoResponse, AppError> {
+    let user_id = ctx
+        .user_id
+        .ok_or_else(|| klynt_domain::errors::DomainError::AuthenticationRequired)?;
 
-    let text = header
-        .to_str()
-        .map_err(|_| AppError::BadRequest("Idempotency-Key is not valid UTF-8".to_string()))?;
+    let user = state
+        .user_service
+        .find_by_id(&ctx, user_id)
+        .await
+        .with_request_id(request_id.0)?;
 
-    Uuid::parse_str(text)
-        .map_err(|_| AppError::BadRequest("Idempotency-Key must be a UUID".to_string()))
+    Ok((StatusCode::OK, Json(UserDto::from(&user))))
+}
+
+fn parse_idempotency_key(headers: &HeaderMap, request_id: Uuid) -> Result<Uuid, AppError> {
+    let header = headers.get("Idempotency-Key").ok_or_else(|| {
+        AppError::new(
+            AppErrorKind::BadRequest("Idempotency-Key header is required".to_string()),
+            request_id,
+        )
+    })?;
+
+    let text = header.to_str().map_err(|_| {
+        AppError::new(
+            AppErrorKind::BadRequest("Idempotency-Key is not valid UTF-8".to_string()),
+            request_id,
+        )
+    })?;
+
+    Uuid::parse_str(text).map_err(|_| {
+        AppError::new(
+            AppErrorKind::BadRequest("Idempotency-Key must be a UUID".to_string()),
+            request_id,
+        )
+    })
 }

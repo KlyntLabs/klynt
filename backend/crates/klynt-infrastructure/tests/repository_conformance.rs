@@ -7,7 +7,7 @@ use klynt_infrastructure::repositories::in_memory_user::InMemoryUserRepository;
 use uuid::Uuid;
 
 fn ctx() -> Ctx {
-    Ctx::new(Uuid::new_v4())
+    Ctx::guest(Uuid::new_v4())
 }
 
 fn sample_user(email: &str) -> Result<User, DomainError> {

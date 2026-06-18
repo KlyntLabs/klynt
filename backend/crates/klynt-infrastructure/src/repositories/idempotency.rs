@@ -9,7 +9,7 @@ use klynt_domain::ports::IdempotencyStore;
 
 #[derive(Debug)]
 pub struct InMemoryIdempotencyStore<T> {
-    cache: Mutex<HashMap<Uuid, T>>,
+    pub(crate) cache: Mutex<HashMap<Uuid, T>>,
 }
 
 impl<T> Default for InMemoryIdempotencyStore<T> {

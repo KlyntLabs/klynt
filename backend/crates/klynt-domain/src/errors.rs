@@ -36,6 +36,7 @@ pub enum ErrorKind {
     Conflict,
     NotFound,
     RateLimited,
+    AuthenticationRequired,
     Internal,
 }
 
@@ -59,6 +60,10 @@ pub enum DomainError {
     TermsNotAccepted,
     #[error("too many requests")]
     RateLimited,
+    #[error("invalid session token")]
+    InvalidSessionToken,
+    #[error("authentication required")]
+    AuthenticationRequired,
     #[error("internal domain error")]
     Internal(#[from] anyhow::Error),
 }
@@ -73,8 +78,10 @@ impl DomainError {
             | DomainError::InvalidRole(_)
             | DomainError::InvalidName(_)
             | DomainError::InstitutionRequired(_)
-            | DomainError::TermsNotAccepted => ErrorKind::Validation,
+            | DomainError::TermsNotAccepted
+            | DomainError::InvalidSessionToken => ErrorKind::Validation,
             DomainError::RateLimited => ErrorKind::RateLimited,
+            DomainError::AuthenticationRequired => ErrorKind::AuthenticationRequired,
             DomainError::Internal(_) => ErrorKind::Internal,
         }
     }
@@ -152,5 +159,21 @@ mod classification_tests {
     fn internal_maps_to_internal() {
         let err = DomainError::Internal(anyhow::anyhow!("boom"));
         assert_eq!(err.kind(), ErrorKind::Internal);
+    }
+
+    #[test]
+    fn invalid_session_token_is_validation() {
+        assert_eq!(
+            DomainError::InvalidSessionToken.kind(),
+            ErrorKind::Validation
+        );
+    }
+
+    #[test]
+    fn authentication_required_is_authentication_required() {
+        assert_eq!(
+            DomainError::AuthenticationRequired.kind(),
+            ErrorKind::AuthenticationRequired
+        );
     }
 }

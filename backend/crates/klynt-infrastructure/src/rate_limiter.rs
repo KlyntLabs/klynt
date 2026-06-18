@@ -9,7 +9,7 @@ use klynt_domain::ports::RateLimiter as RateLimiterPort;
 #[derive(Debug)]
 pub struct RateLimiter {
     config: RateLimiterConfig,
-    buckets: Mutex<HashMap<IpAddr, Vec<Instant>>>,
+    pub(crate) buckets: Mutex<HashMap<IpAddr, Vec<Instant>>>,
 }
 
 impl RateLimiter {

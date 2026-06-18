@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use argon2::{
     password_hash::{rand_core::OsRng, SaltString},
-    Argon2, PasswordHasher,
+    Argon2, PasswordHash, PasswordHasher, PasswordVerifier,
 };
 use chrono::Utc;
 use uuid::Uuid;
@@ -88,6 +88,39 @@ impl UserService {
             }
         }
     }
+
+    pub async fn authenticate(
+        &self,
+        ctx: &Ctx,
+        email: &Email,
+        password: &str,
+    ) -> Result<User, DomainError> {
+        let tx = self.uow.begin().await?;
+        let user = tx
+            .users()
+            .find_by_email(ctx, email)
+            .await?
+            .ok_or(DomainError::AuthenticationRequired)?;
+
+        if verify_password(password, &user.password_hash).is_err() {
+            // Do not reveal whether the email exists.
+            return Err(DomainError::AuthenticationRequired);
+        }
+
+        tx.commit().await?;
+        Ok(user)
+    }
+
+    pub async fn find_by_id(&self, ctx: &Ctx, id: UserId) -> Result<User, DomainError> {
+        let tx = self.uow.begin().await?;
+        let user = tx
+            .users()
+            .find_by_id(ctx, id)
+            .await?
+            .ok_or(DomainError::NotFound)?;
+        tx.commit().await?;
+        Ok(user)
+    }
 }
 
 fn hash_password(password: &str) -> Result<String, argon2::password_hash::Error> {
@@ -95,4 +128,9 @@ fn hash_password(password: &str) -> Result<String, argon2::password_hash::Error>
     let argon2 = Argon2::default();
     let hash = argon2.hash_password(password.as_bytes(), &salt)?;
     Ok(hash.to_string())
+}
+
+fn verify_password(password: &str, hash: &str) -> Result<(), argon2::password_hash::Error> {
+    let parsed_hash = PasswordHash::new(hash)?;
+    Argon2::default().verify_password(password.as_bytes(), &parsed_hash)
 }

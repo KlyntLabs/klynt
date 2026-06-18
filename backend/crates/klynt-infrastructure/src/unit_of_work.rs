@@ -1,3 +1,5 @@
+use std::sync::{Arc, Mutex};
+
 use async_trait::async_trait;
 
 use klynt_domain::errors::DomainError;
@@ -6,45 +8,58 @@ use klynt_domain::unit_of_work::{Transaction, UnitOfWork};
 
 use crate::repositories::in_memory_user::InMemoryUserRepository;
 
-/// In-memory UnitOfWork implementation.
+/// In-memory UnitOfWork implementation with snapshot isolation.
 ///
-/// Note: The in-memory transaction uses a no-op commit/rollback. Writes are applied
-/// directly to the shared repository storage, so rollback cannot undo them.
-#[derive(Debug, Default, Clone)]
+/// When a transaction begins, the current repository state is cloned into a
+/// snapshot. All writes inside the transaction go to the snapshot. On commit,
+/// the snapshot replaces the shared state; on rollback, the snapshot is dropped
+/// and the shared state remains unchanged.
+#[derive(Debug, Clone)]
 pub struct InMemoryUnitOfWork {
-    users: InMemoryUserRepository,
+    pub(crate) users: Arc<Mutex<InMemoryUserRepository>>,
 }
 
 impl InMemoryUnitOfWork {
     pub fn new(users: InMemoryUserRepository) -> Self {
-        Self { users }
+        Self {
+            users: Arc::new(Mutex::new(users)),
+        }
     }
 }
 
 #[async_trait]
 impl UnitOfWork for InMemoryUnitOfWork {
     async fn begin(&self) -> Result<Box<dyn Transaction>, DomainError> {
+        let snapshot = self.users.lock().unwrap().clone();
         Ok(Box::new(InMemoryTransaction {
-            users: self.users.clone(),
+            snapshot: Some(snapshot),
+            parent: Arc::clone(&self.users),
         }))
     }
 }
 
 struct InMemoryTransaction {
-    users: InMemoryUserRepository,
+    snapshot: Option<InMemoryUserRepository>,
+    parent: Arc<Mutex<InMemoryUserRepository>>,
 }
 
 #[async_trait]
 impl Transaction for InMemoryTransaction {
     fn users(&self) -> &dyn UserRepository {
-        &self.users
+        self.snapshot
+            .as_ref()
+            .expect("snapshot present until commit")
     }
 
-    async fn commit(self: Box<Self>) -> Result<(), DomainError> {
+    async fn commit(mut self: Box<Self>) -> Result<(), DomainError> {
+        if let Some(snapshot) = self.snapshot.take() {
+            *self.parent.lock().unwrap() = snapshot;
+        }
         Ok(())
     }
 
     async fn rollback(self: Box<Self>) -> Result<(), DomainError> {
+        // Snapshot is dropped; parent remains unchanged.
         Ok(())
     }
 }

@@ -5,6 +5,13 @@ use uuid::Uuid;
 
 use crate::errors::DomainError;
 
+/// Health-check port for readiness probes.
+#[async_trait]
+pub trait HealthCheck: Send + Sync {
+    /// Returns `Ok(())` if the dependency is healthy.
+    async fn check(&self) -> Result<(), DomainError>;
+}
+
 /// A generic idempotency cache.
 ///
 /// The store is parameterized by the payload type so the same port can be

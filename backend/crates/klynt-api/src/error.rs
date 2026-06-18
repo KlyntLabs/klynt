@@ -5,6 +5,7 @@ use axum::{
 };
 use serde::Serialize;
 use tracing::error;
+use uuid::Uuid;
 
 use klynt_domain::errors::{DomainError, ErrorKind};
 
@@ -12,25 +13,34 @@ use klynt_domain::errors::{DomainError, ErrorKind};
 pub struct ApiErrorBody {
     pub code: String,
     pub message: String,
+    pub request_id: String,
 }
 
 impl ApiErrorBody {
-    pub fn new(code: impl Into<String>, message: impl Into<String>) -> Self {
+    pub fn new(
+        code: impl Into<String>,
+        message: impl Into<String>,
+        request_id: impl Into<String>,
+    ) -> Self {
         Self {
             code: code.into(),
             message: message.into(),
+            request_id: request_id.into(),
         }
     }
 }
 
+/// The classification of an API error, without request-scoped metadata.
 #[derive(Debug, thiserror::Error)]
-pub enum AppError {
+pub enum AppErrorKind {
     #[error("resource not found")]
     NotFound,
     #[error("bad request: {0}")]
     BadRequest(String),
     #[error("conflict: {0}")]
     Conflict(String),
+    #[error("unauthorized")]
+    Unauthorized,
     #[error("too many requests")]
     RateLimited,
     /// Reserved for application-layer validation errors that should return 422.
@@ -41,17 +51,18 @@ pub enum AppError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<DomainError> for AppError {
+impl From<DomainError> for AppErrorKind {
     fn from(err: DomainError) -> Self {
         match err {
-            DomainError::Internal(e) => AppError::Internal(e),
+            DomainError::Internal(e) => AppErrorKind::Internal(e),
             other => {
                 let message = other.to_string();
                 match other.kind() {
-                    ErrorKind::NotFound => AppError::NotFound,
-                    ErrorKind::Conflict => AppError::Conflict(message),
-                    ErrorKind::Validation => AppError::BadRequest(message),
-                    ErrorKind::RateLimited => AppError::RateLimited,
+                    ErrorKind::NotFound => AppErrorKind::NotFound,
+                    ErrorKind::Conflict => AppErrorKind::Conflict(message),
+                    ErrorKind::Validation => AppErrorKind::BadRequest(message),
+                    ErrorKind::RateLimited => AppErrorKind::RateLimited,
+                    ErrorKind::AuthenticationRequired => AppErrorKind::Unauthorized,
                     ErrorKind::Internal => unreachable!("internal variant handled above"),
                 }
             }
@@ -59,44 +70,85 @@ impl From<DomainError> for AppError {
     }
 }
 
+/// An API-level error carrying request-scoped metadata.
+///
+/// Handlers can attach the request ID with `.with_request_id(...)` so error
+/// responses include correlation data. The `From<DomainError>` impl defaults to
+/// a nil UUID for the rare cases where `?` is used without an explicit request
+/// ID; in practice every handler should attach the real ID.
+#[derive(Debug)]
+pub struct AppError {
+    kind: AppErrorKind,
+    request_id: Uuid,
+}
+
+impl AppError {
+    pub fn new(kind: AppErrorKind, request_id: Uuid) -> Self {
+        Self { kind, request_id }
+    }
+
+    pub fn with_request_id(mut self, request_id: Uuid) -> Self {
+        self.request_id = request_id;
+        self
+    }
+}
+
+impl From<DomainError> for AppError {
+    fn from(err: DomainError) -> Self {
+        Self::new(err.into(), Uuid::nil())
+    }
+}
+
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        // The request ID is propagated via the `propagate_request_id` middleware
-        // and returned in response headers; it is intentionally not duplicated in
-        // every error body so the public contract stays small.
-        let request_id = "";
+        let request_id = self.request_id.to_string();
 
-        let (status, body) = match &self {
-            AppError::NotFound => (
+        let (status, body) = match &self.kind {
+            AppErrorKind::NotFound => (
                 StatusCode::NOT_FOUND,
-                ApiErrorBody::new("not_found", self.to_string()),
+                ApiErrorBody::new("not_found", self.kind.to_string(), &request_id),
             ),
-            AppError::BadRequest(msg) => (
+            AppErrorKind::BadRequest(msg) => (
                 StatusCode::BAD_REQUEST,
-                ApiErrorBody::new("bad_request", msg.clone()),
+                ApiErrorBody::new("bad_request", msg.clone(), &request_id),
             ),
-            AppError::Conflict(msg) => (
+            AppErrorKind::Conflict(msg) => (
                 StatusCode::CONFLICT,
-                ApiErrorBody::new("conflict", msg.clone()),
+                ApiErrorBody::new("conflict", msg.clone(), &request_id),
             ),
-            AppError::RateLimited => (
+            AppErrorKind::Unauthorized => (
+                StatusCode::UNAUTHORIZED,
+                ApiErrorBody::new("unauthorized", "authentication required", &request_id),
+            ),
+            AppErrorKind::RateLimited => (
                 StatusCode::TOO_MANY_REQUESTS,
-                ApiErrorBody::new("rate_limited", "too many requests"),
+                ApiErrorBody::new("rate_limited", "too many requests", &request_id),
             ),
-            AppError::Validation(msg) => (
+            AppErrorKind::Validation(msg) => (
                 StatusCode::UNPROCESSABLE_ENTITY,
-                ApiErrorBody::new("validation_error", msg.clone()),
+                ApiErrorBody::new("validation_error", msg.clone(), &request_id),
             ),
-            AppError::Internal(err) => {
+            AppErrorKind::Internal(err) => {
                 error!(error = ?err, request_id, "internal server error");
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    ApiErrorBody::new("internal_error", "something went wrong"),
+                    ApiErrorBody::new("internal_error", "something went wrong", &request_id),
                 )
             }
         };
 
         (status, Json(body)).into_response()
+    }
+}
+
+/// Convenience trait to attach a request ID to a `DomainError` at the handler.
+pub trait WithRequestId<T> {
+    fn with_request_id(self, request_id: Uuid) -> Result<T, AppError>;
+}
+
+impl<T> WithRequestId<T> for Result<T, DomainError> {
+    fn with_request_id(self, request_id: Uuid) -> Result<T, AppError> {
+        self.map_err(|err| AppError::from(err).with_request_id(request_id))
     }
 }
 
@@ -137,10 +189,16 @@ mod conversion_tests {
     }
 
     #[test]
+    fn authentication_required_becomes_401() {
+        let app_err = AppError::from(DomainError::AuthenticationRequired);
+        assert_eq!(status_of(app_err), StatusCode::UNAUTHORIZED);
+    }
+
+    #[test]
     fn bad_request_preserves_inner_message() {
         let app_err = AppError::from(DomainError::InvalidName(NameError::Empty));
-        match app_err {
-            AppError::BadRequest(msg) => assert_eq!(msg, "name is empty"),
+        match app_err.kind {
+            AppErrorKind::BadRequest(msg) => assert_eq!(msg, "name is empty"),
             other => panic!("expected BadRequest, got {other:?}"),
         }
     }
@@ -150,8 +208,8 @@ mod conversion_tests {
         let app_err = AppError::from(DomainError::AlreadyExists {
             email: "ada@example.com".to_string(),
         });
-        match app_err {
-            AppError::Conflict(msg) => assert!(msg.contains("email already registered")),
+        match app_err.kind {
+            AppErrorKind::Conflict(msg) => assert!(msg.contains("email already registered")),
             other => panic!("expected Conflict, got {other:?}"),
         }
     }
@@ -159,11 +217,22 @@ mod conversion_tests {
     #[test]
     fn internal_error_becomes_500_and_sanitizes_message() {
         let app_err = AppError::from(DomainError::Internal(anyhow::anyhow!("secrets")));
-        match app_err {
-            app_err @ AppError::Internal(_) => {
-                assert_eq!(status_of(app_err), StatusCode::INTERNAL_SERVER_ERROR);
+        match app_err.kind {
+            kind @ AppErrorKind::Internal(_) => {
+                assert_eq!(
+                    status_of(AppError::new(kind, Uuid::nil())),
+                    StatusCode::INTERNAL_SERVER_ERROR
+                );
             }
             other => panic!("expected Internal, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn request_id_appears_in_error_body() {
+        let request_id = Uuid::new_v4();
+        let app_err = AppError::new(AppErrorKind::BadRequest("boom".to_string()), request_id);
+        let response = app_err.into_response();
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
     }
 }

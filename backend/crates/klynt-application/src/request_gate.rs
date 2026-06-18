@@ -1,4 +1,3 @@
-use std::net::IpAddr;
 use std::sync::Arc;
 
 use uuid::Uuid;
@@ -7,27 +6,24 @@ use crate::users::{CreateUserRequest, UserService};
 use klynt_domain::ctx::Ctx;
 use klynt_domain::errors::DomainError;
 use klynt_domain::models::UserDto;
-use klynt_domain::ports::{IdempotencyStore, RateLimiter};
+use klynt_domain::ports::IdempotencyStore;
 
 /// Orchestrates user-registration requests.
 ///
 /// This is intentionally a dedicated gate for the user-creation flow rather
-/// than a generic catch-all. Cross-cutting concerns such as rate limiting can
-/// later be lifted into Tower middleware once more endpoints need them.
+/// than a generic catch-all. Cross-cutting concerns such as rate limiting are
+/// handled by Tower middleware in the API layer.
 pub struct UserRequestGate {
-    rate_limiter: Arc<dyn RateLimiter>,
     idempotency_store: Arc<dyn IdempotencyStore<UserDto>>,
     user_service: Arc<UserService>,
 }
 
 impl UserRequestGate {
     pub fn new(
-        rate_limiter: Arc<dyn RateLimiter>,
         idempotency_store: Arc<dyn IdempotencyStore<UserDto>>,
         user_service: Arc<UserService>,
     ) -> Self {
         Self {
-            rate_limiter,
             idempotency_store,
             user_service,
         }
@@ -35,16 +31,11 @@ impl UserRequestGate {
 
     pub async fn create_user(
         &self,
-        ip: IpAddr,
         request_id: Uuid,
         idempotency_key: Uuid,
         req: CreateUserRequest,
     ) -> Result<UserDto, DomainError> {
-        if !self.rate_limiter.is_allowed(ip) {
-            return Err(DomainError::RateLimited);
-        }
-
-        let ctx = Ctx::new(request_id);
+        let ctx = Ctx::guest(request_id);
 
         if let Some(cached) = self.idempotency_store.get(idempotency_key).await? {
             return Ok(cached);
@@ -63,7 +54,6 @@ impl UserRequestGate {
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
-    use std::net::{IpAddr, Ipv4Addr};
     use std::sync::{Arc, Mutex};
 
     use async_trait::async_trait;
@@ -74,7 +64,7 @@ mod tests {
     use klynt_domain::ctx::Ctx;
     use klynt_domain::errors::DomainError;
     use klynt_domain::models::{Email, User, UserDto, UserId};
-    use klynt_domain::ports::{IdempotencyStore, RateLimiter};
+    use klynt_domain::ports::IdempotencyStore;
     use klynt_domain::repositories::{CreateResult, UserRepository};
     use klynt_domain::unit_of_work::{Transaction, UnitOfWork};
 
@@ -161,17 +151,6 @@ mod tests {
         }
     }
 
-    #[derive(Debug)]
-    struct FakeRateLimiter {
-        allowed: bool,
-    }
-
-    impl RateLimiter for FakeRateLimiter {
-        fn is_allowed(&self, _ip: IpAddr) -> bool {
-            self.allowed
-        }
-    }
-
     #[derive(Debug, Default)]
     struct FakeIdempotencyStore {
         cache: Mutex<HashMap<Uuid, UserDto>>,
@@ -209,11 +188,7 @@ mod tests {
         let user_service = Arc::new(UserService::new(uow));
         let idempotency_store: Arc<dyn IdempotencyStore<UserDto>> =
             Arc::new(FakeIdempotencyStore::default());
-        UserRequestGate::new(
-            Arc::new(FakeRateLimiter { allowed: true }),
-            idempotency_store,
-            user_service,
-        )
+        UserRequestGate::new(idempotency_store, user_service)
     }
 
     #[tokio::test]
@@ -221,38 +196,16 @@ mod tests {
         let gate = disabled_gate();
         let key = Uuid::new_v4();
         let request_id = Uuid::new_v4();
-        let ip = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
         let req = sample_request();
         let email = req.email.clone();
 
         let first = gate
-            .create_user(ip, request_id, key, req.clone())
+            .create_user(request_id, key, req.clone())
             .await
             .unwrap();
         assert_eq!(first.email, email);
 
-        let second = gate.create_user(ip, request_id, key, req).await.unwrap();
+        let second = gate.create_user(request_id, key, req).await.unwrap();
         assert_eq!(second.id, first.id);
-    }
-
-    #[tokio::test]
-    async fn returns_rate_limited_when_blocked() {
-        let uow: Arc<dyn UnitOfWork> = Arc::new(FakeUnitOfWork::default());
-        let user_service = Arc::new(UserService::new(uow));
-        let idempotency_store: Arc<dyn IdempotencyStore<UserDto>> =
-            Arc::new(FakeIdempotencyStore::default());
-        let gate = UserRequestGate::new(
-            Arc::new(FakeRateLimiter { allowed: false }),
-            idempotency_store,
-            user_service,
-        );
-
-        let ip = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
-        let req = sample_request();
-        let key = Uuid::new_v4();
-        let request_id = Uuid::new_v4();
-
-        let result = gate.create_user(ip, request_id, key, req).await;
-        assert!(matches!(result, Err(DomainError::RateLimited)));
     }
 }

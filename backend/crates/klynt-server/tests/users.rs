@@ -287,3 +287,132 @@ async fn empty_or_too_long_name_returns_400() {
         .unwrap();
     assert_eq!(long_response.status(), StatusCode::BAD_REQUEST);
 }
+
+fn login_payload(email: &str, password: &str) -> String {
+    serde_json::json!({
+        "email": email,
+        "password": password,
+    })
+    .to_string()
+}
+
+fn post_sessions_request(body: String) -> Request<Body> {
+    Request::builder()
+        .method("POST")
+        .uri("/api/v1/sessions")
+        .header("Content-Type", "application/json")
+        .body(Body::from(body))
+        .unwrap()
+}
+
+fn get_me_request(token: &str) -> Request<Body> {
+    Request::builder()
+        .method("GET")
+        .uri("/api/v1/users/me")
+        .header("Authorization", format!("Bearer {token}"))
+        .body(Body::empty())
+        .unwrap()
+}
+
+#[tokio::test]
+async fn get_me_without_token_returns_401() {
+    let app = helpers::test_app();
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri("/api/v1/users/me")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+}
+
+#[tokio::test]
+async fn login_and_get_me_round_trip_works() {
+    let app = helpers::test_app();
+    let email = "ada-auth@example.com";
+
+    // Register
+    let register_response = app
+        .clone()
+        .oneshot(post_users_request(
+            Uuid::new_v4(),
+            register_payload_with(
+                "Ada Lovelace",
+                email,
+                "str0ng!passphrase",
+                "student",
+                true,
+                None,
+            ),
+        ))
+        .await
+        .unwrap();
+    assert_eq!(register_response.status(), StatusCode::CREATED);
+
+    // Login
+    let login_response = app
+        .clone()
+        .oneshot(post_sessions_request(login_payload(
+            email,
+            "str0ng!passphrase",
+        )))
+        .await
+        .unwrap();
+    assert_eq!(login_response.status(), StatusCode::OK);
+
+    let login_body = login_response
+        .into_body()
+        .collect()
+        .await
+        .unwrap()
+        .to_bytes();
+    let login_json: serde_json::Value = serde_json::from_slice(&login_body).unwrap();
+    let token = login_json["token"].as_str().unwrap();
+    assert_eq!(login_json["user"]["email"], email);
+
+    // Get me
+    let me_response = app.oneshot(get_me_request(token)).await.unwrap();
+    assert_eq!(me_response.status(), StatusCode::OK);
+
+    let me_body = me_response.into_body().collect().await.unwrap().to_bytes();
+    let me_json: serde_json::Value = serde_json::from_slice(&me_body).unwrap();
+    assert_eq!(me_json["email"], email);
+}
+
+#[tokio::test]
+async fn login_with_wrong_password_returns_401() {
+    let app = helpers::test_app();
+    let email = "ada-wrong@example.com";
+
+    let register_response = app
+        .clone()
+        .oneshot(post_users_request(
+            Uuid::new_v4(),
+            register_payload_with(
+                "Ada Lovelace",
+                email,
+                "str0ng!passphrase",
+                "student",
+                true,
+                None,
+            ),
+        ))
+        .await
+        .unwrap();
+    assert_eq!(register_response.status(), StatusCode::CREATED);
+
+    let login_response = app
+        .oneshot(post_sessions_request(login_payload(
+            email,
+            "wrong-password",
+        )))
+        .await
+        .unwrap();
+    assert_eq!(login_response.status(), StatusCode::UNAUTHORIZED);
+}

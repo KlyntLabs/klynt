@@ -9,7 +9,8 @@ use tower_http::{
     compression::CompressionLayer, cors::CorsLayer, timeout::TimeoutLayer, trace::TraceLayer,
 };
 
-use crate::middleware::propagate_request_id;
+use crate::middleware::{ctx_resolve, propagate_request_id};
+use crate::rate_limit::rate_limit;
 use crate::state::AppState;
 use crate::v1;
 
@@ -38,6 +39,15 @@ pub fn build_router(state: Arc<AppState>) -> Router {
 
     Router::new()
         .nest("/api/v1", v1::router())
+        .with_state(Arc::clone(&state))
+        .layer(middleware::from_fn_with_state(
+            Arc::clone(&state),
+            ctx_resolve,
+        ))
+        .layer(middleware::from_fn_with_state(
+            Arc::clone(&state),
+            rate_limit,
+        ))
         .layer(middleware::from_fn(propagate_request_id))
         .layer(TraceLayer::new_for_http())
         .layer(CompressionLayer::new())
@@ -46,5 +56,4 @@ pub fn build_router(state: Arc<AppState>) -> Router {
             Duration::from_secs(30),
         ))
         .layer(cors)
-        .with_state(state)
 }
