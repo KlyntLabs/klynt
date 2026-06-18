@@ -37,7 +37,7 @@ cd frontend && npm run build
 ```bash
 just check
 ./backend/target/release/klynt-api &
-curl -s http://127.0.0.1:3000/api/v1/health/live
+curl -s http://127.0.0.1:3001/api/v1/health/live
 ```
 
 ## Results

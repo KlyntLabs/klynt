@@ -28,9 +28,9 @@ pub struct RateLimiterConfig {
 impl Default for RateLimiterConfig {
     fn default() -> Self {
         Self {
-            enabled: true,
+            enabled: false,
             max_requests: 5,
-            window_seconds: 900,
+            window_seconds: 15 * 60,
         }
     }
 }
@@ -61,9 +61,9 @@ impl AppConfig {
                 "api.allowed_origins",
                 vec!["http://localhost:5174".to_string()],
             )?
-            .set_default("rate_limiter.enabled", true)?
+            .set_default("rate_limiter.enabled", false)?
             .set_default("rate_limiter.max_requests", 5)?
-            .set_default("rate_limiter.window_seconds", 900)?
+            .set_default("rate_limiter.window_seconds", 15 * 60)?
             .set_default("log_level", "info")?
             .build()?;
 

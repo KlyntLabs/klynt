@@ -11,7 +11,7 @@ cp .env.example .env
 just dev
 ```
 
-Open http://localhost:5173 for the frontend and http://localhost:3000/api/v1/health/live for the backend health check.
+Open http://localhost:5174 for the frontend and http://localhost:3001/api/v1/health/live for the backend health check.
 
 ## Commands
 

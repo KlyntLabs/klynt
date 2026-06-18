@@ -20,7 +20,7 @@ pub fn test_config() -> AppConfig {
         rate_limiter: RateLimiterConfig {
             enabled: false,
             max_requests: 5,
-            window_seconds: 900,
+            window_seconds: 15 * 60,
         },
         log_level: "error".to_string(),
     }

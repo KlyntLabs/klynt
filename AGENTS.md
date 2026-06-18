@@ -150,8 +150,8 @@ just dev            # Runs backend + frontend together
 
 ### Default Local URLs
 
-- Frontend: http://localhost:5173
-- Backend health check: http://localhost:3000/api/v1/health/live
+- Frontend: http://localhost:5174
+- Backend health check: http://localhost:3001/api/v1/health/live
 
 ## Build and Test Commands
 
@@ -320,17 +320,21 @@ Current variables in `.env.example`:
 # Backend
 RUST_LOG=debug
 KLYNT_API_HOST=127.0.0.1
-KLYNT_API_PORT=3000
-KLYNT_API_ALLOWED_ORIGINS=http://localhost:5173
+KLYNT_API_PORT=3001
+KLYNT_API_ALLOWED_ORIGINS=http://localhost:5174
+# KLYNT_RATE_LIMITER__ENABLED=true
+# KLYNT_RATE_LIMITER__MAX_REQUESTS=5
+# KLYNT_RATE_LIMITER__WINDOW_SECONDS=900
 
 # Frontend
-VITE_API_BASE_URL=http://localhost:3000/api/v1
+VITE_API_BASE_URL=http://localhost:3001/api/v1
 VITE_APP_NAME=Klynt
 ```
 
 - `KLYNT_API_ALLOWED_ORIGINS` is a comma-separated list of CORS origins.
+- `KLYNT_RATE_LIMITER__ENABLED` toggles request rate limiting (default `false` in `config/default.toml` for local development).
 - `VITE_API_BASE_URL` is the base URL the frontend Axios client uses.
-- In development, Vite proxies `/api/*` to `http://localhost:3000` (see `frontend/vite.config.ts`).
+- In development, Vite proxies `/api/*` to `http://localhost:3001` (see `frontend/vite.config.ts`).
 
 ## Backend Architecture
 

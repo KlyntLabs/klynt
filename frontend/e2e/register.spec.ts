@@ -16,7 +16,7 @@ test.describe("/register", () => {
 
     await expect(page).toHaveURL("/register/success");
     await expect(page.getByText("Account created")).toBeVisible();
-    await expect(page.getByText("Welcome, Ada Lovelace")).toBeVisible();
+    await expect(page.getByText(/Welcome, Ada Lovelace/i)).toBeVisible();
     await expect(page.getByText(email)).toBeVisible();
   });
 
