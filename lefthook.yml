@@ -1,0 +1,27 @@
+# Install: lefthook install
+# Docs: https://lefthook.dev/configuration/
+
+pre-commit:
+  parallel: true
+  commands:
+    rustfmt:
+      glob: "*.rs"
+      run: cd backend && cargo fmt --all -- --check
+    frontend-format-check:
+      glob: "*.{js,ts,tsx,json,jsonc,css}"
+      run: cd frontend && npm run format:check -- --no-errors-on-unmatched {staged_files}
+    frontend-lint:
+      glob: "*.{js,ts,tsx}"
+      run: cd frontend && npm run lint -- --no-errors-on-unmatched {staged_files}
+
+pre-push:
+  commands:
+    clippy:
+      glob: "*.rs"
+      run: cd backend && cargo clippy --all-targets --all-features -- -D warnings
+    rust-tests:
+      glob: "*.rs"
+      run: cd backend && cargo test
+    frontend-typecheck:
+      glob: "*.{js,ts,tsx}"
+      run: cd frontend && npm run typecheck
