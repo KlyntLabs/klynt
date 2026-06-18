@@ -3,8 +3,8 @@ import { GuestRoute } from "@/core/auth/guest-route";
 import { ProtectedRoute } from "@/core/auth/protected-route";
 import { RoleGuard } from "@/core/auth/role-guard";
 import { Spinner } from "@/core/ui/spinner";
-import { lazy, Suspense } from "react";
-import { createBrowserRouter, Outlet } from "react-router-dom";
+import { Suspense, lazy } from "react";
+import { Outlet, createBrowserRouter } from "react-router-dom";
 import { routePaths } from "./route-paths";
 
 const RegisterPage = lazy(() => import("@/features/auth/pages/register-page"));

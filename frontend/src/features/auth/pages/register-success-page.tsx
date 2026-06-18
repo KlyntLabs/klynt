@@ -1,5 +1,5 @@
-import { useLocation, Link } from "react-router-dom";
 import { routePaths } from "@/core/routing/route-paths";
+import { Link, useLocation } from "react-router-dom";
 
 interface LocationState {
   user?: { name: string; email: string };

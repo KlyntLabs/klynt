@@ -20,8 +20,7 @@ export const useAuthStore = create<AuthStore>()(
   devtools(
     (set) => ({
       ...initialState,
-      setSession: (user, token) =>
-        set({ user, token, isAuthenticated: true, isLoading: false }),
+      setSession: (user, token) => set({ user, token, isAuthenticated: true, isLoading: false }),
       clearSession: () => set({ ...initialState, isLoading: false }),
       setLoading: (isLoading) => set({ isLoading }),
       reset: () => set(initialState),

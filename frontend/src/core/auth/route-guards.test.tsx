@@ -1,11 +1,11 @@
-import { describe, expect, it } from "vitest";
-import { screen } from "@testing-library/react";
 import { render } from "@/test/render";
-import { ProtectedRoute } from "./protected-route";
-import { GuestRoute } from "./guest-route";
-import { RoleGuard } from "./role-guard";
+import { screen } from "@testing-library/react";
+import { Route, Routes } from "react-router-dom";
+import { describe, expect, it } from "vitest";
 import { useAuthStore } from "./auth-store";
-import { Routes, Route } from "react-router-dom";
+import { GuestRoute } from "./guest-route";
+import { ProtectedRoute } from "./protected-route";
+import { RoleGuard } from "./role-guard";
 
 function setup() {
   useAuthStore.getState().reset();
@@ -33,10 +33,9 @@ describe("route guards", () => {
 
   it("GuestRoute redirects when authenticated", () => {
     setup();
-    useAuthStore.getState().setSession(
-      { id: "u-1", email: "a@b.com", name: "A", role: "student" },
-      "token"
-    );
+    useAuthStore
+      .getState()
+      .setSession({ id: "u-1", email: "a@b.com", name: "A", role: "student" }, "token");
     render(
       <Routes>
         <Route path="/dashboard" element={<div>Dashboard</div>} />
@@ -56,10 +55,9 @@ describe("route guards", () => {
 
   it("RoleGuard blocks non-admins from admin route", () => {
     setup();
-    useAuthStore.getState().setSession(
-      { id: "u-1", email: "a@b.com", name: "A", role: "student" },
-      "token"
-    );
+    useAuthStore
+      .getState()
+      .setSession({ id: "u-1", email: "a@b.com", name: "A", role: "student" }, "token");
     render(
       <Routes>
         <Route path="/dashboard" element={<div>Dashboard</div>} />

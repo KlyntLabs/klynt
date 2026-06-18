@@ -1,8 +1,8 @@
+import { useAuthStore } from "@/core/auth/auth-store";
+import { server } from "@/test/msw/server";
+import { http, HttpResponse } from "msw";
 import { describe, expect, it, vi } from "vitest";
 import { apiClient, generateIdempotencyKey } from "./api-client";
-import { useAuthStore } from "@/core/auth/auth-store";
-import { http, HttpResponse } from "msw";
-import { server } from "@/test/msw/server";
 
 describe("apiClient", () => {
   it("clears session on 401 for protected endpoint", async () => {

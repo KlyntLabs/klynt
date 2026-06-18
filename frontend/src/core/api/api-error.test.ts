@@ -1,6 +1,6 @@
+import { AxiosError } from "axios";
 import { describe, expect, it } from "vitest";
 import { ApiError, createApiError } from "./api-error";
-import { AxiosError } from "axios";
 
 describe("createApiError", () => {
   it("creates error from axios error with response body", () => {

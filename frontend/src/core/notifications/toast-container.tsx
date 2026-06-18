@@ -1,7 +1,12 @@
-import { useToastStore } from "./toast-store";
 import { useEffect } from "react";
+import { useToastStore } from "./toast-store";
 
-function ToastItem({ id, message, type, duration }: {
+function ToastItem({
+  id,
+  message,
+  type,
+  duration,
+}: {
   id: string;
   message: string;
   type: string;
@@ -18,14 +23,13 @@ function ToastItem({ id, message, type, duration }: {
     type === "error" ? "bg-red-600" : type === "success" ? "bg-green-600" : "bg-slate-800";
 
   return (
-    <div
-      role="status"
+    <output
       aria-live="polite"
       aria-atomic="true"
       className={`rounded px-4 py-2 text-white shadow ${color}`}
     >
       {message}
-    </div>
+    </output>
   );
 }
 
