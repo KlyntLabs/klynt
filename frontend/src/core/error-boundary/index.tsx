@@ -1,3 +1,4 @@
+import { logger } from "@/core/logger";
 import { ErrorBoundary as ReactErrorBoundary } from "react-error-boundary";
 
 interface ErrorBoundaryProps {
@@ -31,9 +32,11 @@ export function ErrorBoundary({ children }: ErrorBoundaryProps) {
   return (
     <ReactErrorBoundary
       FallbackComponent={Fallback}
-      onError={(error) => {
-        // TODO: send to error tracking service
-        console.error("Uncaught error:", error);
+      onError={(error, info) => {
+        logger.error("Uncaught render error", {
+          error: error instanceof Error ? error.message : String(error),
+          componentStack: info.componentStack,
+        });
       }}
     >
       {children}
