@@ -406,6 +406,24 @@ Route paths are centralized in `routes/route-paths.ts`:
 
 - Use React Hook Form for forms.
 - Use Zod for schema validation.
+- Validation messages must use the `validation` i18n namespace so they can be translated.
+
+### Internationalization (i18n)
+
+- Supported languages: `en`, `vi`, `cn`.
+- Namespaces: `common`, `auth`, `errors`, `ui`, `validation`.
+- Use `useTranslation('namespace')` and the `t('key')` function for all user-facing strings.
+- For JSX with embedded links or formatting, use `<Trans ns="namespace" i18nKey="key" components={{ ... }} />`.
+- Add new keys to the English source file first, then mirror them in `vi` and `cn`.
+- Tests use `frontend/src/core/i18n/test-config.ts` with inline resources.
+
+### Performance
+
+- Web Vitals are reported from `src/core/performance/web-vitals.ts`.
+- Analyze the bundle with `npm run analyze`.
+- Use the `Image` component in `src/core/ui/image.tsx` for all images to enforce explicit dimensions and lazy loading.
+- Keep fonts as a system stack with `font-display: swap`.
+- React Router links support `prefetch="intent"` for route-level code preloading.
 
 ## CI/CD
 

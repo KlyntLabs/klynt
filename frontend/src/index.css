@@ -132,6 +132,7 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    font-display: swap;
     min-width: 320px;
     min-height: 100vh;
   }
