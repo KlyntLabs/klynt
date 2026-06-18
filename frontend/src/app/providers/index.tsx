@@ -1,7 +1,7 @@
+import { ErrorBoundary } from "@/app/error-boundary";
+import { queryClient } from "@/lib/query-client";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { queryClient } from "@/lib/query-client";
-import { ErrorBoundary } from "@/app/error-boundary";
 
 interface AppProvidersProps {
   children: React.ReactNode;

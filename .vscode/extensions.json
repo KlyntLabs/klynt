@@ -1,8 +1,7 @@
 {
   "recommendations": [
     "rust-lang.rust-analyzer",
-    "dbaeumer.vscode-eslint",
-    "esbenp.prettier-vscode",
+    "biomejs.biome",
     "bradlc.vscode-tailwindcss",
     "tamasfe.even-better-toml",
     "editorconfig.editorconfig"

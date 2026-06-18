@@ -7,12 +7,9 @@ pre-commit:
     rustfmt:
       glob: "*.rs"
       run: cd backend && cargo fmt --all -- --check
-    frontend-format-check:
+    biome-check:
       glob: "*.{js,ts,tsx,json,jsonc,css}"
-      run: cd frontend && npm run format:check -- --no-errors-on-unmatched {staged_files}
-    frontend-lint:
-      glob: "*.{js,ts,tsx}"
-      run: cd frontend && npm run lint -- --no-errors-on-unmatched {staged_files}
+      run: cd frontend && npx @biomejs/biome check --no-errors-on-unmatched {staged_files}
 
 pre-push:
   commands:
@@ -22,6 +19,6 @@ pre-push:
     rust-tests:
       glob: "*.rs"
       run: cd backend && cargo test
-    frontend-typecheck:
+    frontend-check:
       glob: "*.{js,ts,tsx}"
-      run: cd frontend && npm run typecheck
+      run: cd frontend && npm run check

@@ -12,7 +12,7 @@
 ## Code Standards
 
 - Rust: `cargo fmt` and `cargo clippy -D warnings`
-- TypeScript: `prettier` and `eslint` with type-aware rules
+- TypeScript: `biome` for linting and formatting
 - All code must pass pre-commit hooks (`lefthook install`)
 - All PRs must pass CI
 

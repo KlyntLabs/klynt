@@ -1,6 +1,6 @@
 {
   "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.defaultFormatter": "biomejs.biome",
   "[rust]": {
     "editor.defaultFormatter": "rust-lang.rust-analyzer"
   },
@@ -8,6 +8,5 @@
     "editor.defaultFormatter": "tamasfe.even-better-toml"
   },
   "rust-analyzer.check.command": "clippy",
-  "rust-analyzer.check.extraArgs": ["--", "-D", "warnings"],
-  "eslint.workingDirectories": ["frontend"]
+  "rust-analyzer.check.extraArgs": ["--", "-D", "warnings"]
 }

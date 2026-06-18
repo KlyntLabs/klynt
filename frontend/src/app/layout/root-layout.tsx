@@ -1,5 +1,5 @@
-import { Outlet, Link } from "react-router-dom";
 import { routePaths } from "@/routes/route-paths";
+import { Link, Outlet } from "react-router-dom";
 
 export function RootLayout() {
   return (

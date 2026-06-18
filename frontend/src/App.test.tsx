@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
 import { AppRoutes } from "@/routes";
+import { render, screen } from "@testing-library/react";
 
 describe("App", () => {
   it("renders the home page", () => {

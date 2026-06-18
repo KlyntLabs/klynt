@@ -1,6 +1,6 @@
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { RootLayout } from "@/app/layout/root-layout";
 import { routePaths } from "@/routes/route-paths";
+import { RouterProvider, createBrowserRouter } from "react-router-dom";
 
 const router = createBrowserRouter([
   {
