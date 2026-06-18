@@ -1,1 +1,2 @@
-// Repository implementations will live here.
+pub mod idempotency;
+pub mod in_memory_user;
