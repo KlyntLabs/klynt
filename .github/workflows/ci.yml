@@ -62,15 +62,15 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          components: rustfmt, clippy
+          components: rustfmt, clippy, llvm-tools-preview
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: ./backend
 
-      - name: Install cargo-nextest
-        uses: taiki-e/install-action@nextest
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
 
       - name: Check formatting
         run: cargo fmt --all -- --check
@@ -78,8 +78,8 @@ jobs:
       - name: Run Clippy
         run: cargo clippy --locked --all-targets --all-features -- -D warnings
 
-      - name: Run tests
-        run: cargo nextest run --locked --all-features
+      - name: Run tests with coverage
+        run: cargo llvm-cov --locked --workspace --all-features --no-clean --fail-under-lines 84
 
       - name: Build release binary
         run: cargo build --locked --release --bin klynt-server
@@ -115,15 +115,47 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Run tests
-        run: npm run test
+      - name: Run tests with coverage
+        run: npm run test:coverage
 
       - name: Production build
         run: npm run build
 
+  security-checks:
+    name: Security checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # For private repositories, set GITLEAKS_LICENSE in repository secrets.
+
+      - name: Run Semgrep
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: >-
+            p/default
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scanners: vuln,secret,misconfig
+          severity: HIGH,CRITICAL
+          exit-code: 1
+
   ci-status:
     name: CI status
-    needs: [detect-changes, backend-checks, frontend-checks]
+    needs: [detect-changes, backend-checks, frontend-checks, security-checks]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -133,6 +165,7 @@ jobs:
             "${{ needs.detect-changes.result }}"
             "${{ needs.backend-checks.result }}"
             "${{ needs.frontend-checks.result }}"
+            "${{ needs.security-checks.result }}"
           )
           for result in "${results[@]}"; do
             if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then

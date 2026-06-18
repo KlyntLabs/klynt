@@ -6,9 +6,10 @@ default:
 
 # One-time setup for new contributors
 setup:
-    rustup component add rustfmt clippy
-    cargo install cargo-watch cargo-nextest --locked
+    rustup component add rustfmt clippy llvm-tools-preview
+    cargo install cargo-watch cargo-nextest cargo-llvm-cov --locked
     cd frontend && npm install
+    @echo "Optional security tools (CI also runs these): brew install gitleaks semgrep trivy"
 
 # Copy environment template
 env:
@@ -32,6 +33,21 @@ dev-frontend:
 test:
     cd backend && cargo nextest run --all-features
     cd frontend && npm run test
+
+# Run all tests with coverage gates
+# Thresholds are ratchets: raise them only when current coverage improves.
+test-coverage:
+    cd backend && cargo llvm-cov --workspace --all-features --no-clean --fail-under-lines 84
+    cd frontend && npm run test:coverage
+
+# Run secret scan on the whole repo (requires gitleaks)
+secret-scan:
+    gitleaks detect --source . --verbose
+
+# Run lightweight SAST locally (requires semgrep and trivy)
+security-scan:
+    semgrep --config=p/default --error
+    trivy fs --scanners vuln,secret,misconfig --severity HIGH,CRITICAL .
 
 # Format everything (mutating)
 fmt:
