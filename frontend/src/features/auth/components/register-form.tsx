@@ -10,7 +10,10 @@ const registerSchema = z
     email: z.string().email("Invalid email"),
     password: z.string().min(12, "Password must be at least 12 characters"),
     role: z.enum(["student", "teacher", "admin", "parent"]),
-    institutionId: z.string().uuid().optional(),
+    institutionId: z.preprocess(
+      (val) => (val === "" ? undefined : val),
+      z.string().uuid().optional()
+    ),
     termsAccepted: z.literal(true, {
       errorMap: () => ({ message: "You must accept the terms" }),
     }),
