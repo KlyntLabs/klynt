@@ -32,3 +32,6 @@ frontend/playwright-report/
 
 # Local config overrides
 backend/config/local.toml
+
+*storybook.log
+storybook-static

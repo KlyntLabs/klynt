@@ -2,6 +2,7 @@
   "loading": "Loading",
   "skipLink": "Skip to main content",
   "spinnerLabel": "Loading",
+  "close": "Close",
   "queryError": {
     "title": "Something went wrong",
     "message": "We couldn't load this data. Please try again.",

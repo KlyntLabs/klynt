@@ -2,6 +2,7 @@
   "loading": "Đang tải",
   "skipLink": "Chuyển đến nội dung chính",
   "spinnerLabel": "Đang tải",
+  "close": "Đóng",
   "queryError": {
     "title": "Đã xảy ra lỗi",
     "message": "Chúng tôi không thể tải dữ liệu này. Vui lòng thử lại.",

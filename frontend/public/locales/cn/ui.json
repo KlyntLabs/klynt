@@ -2,6 +2,7 @@
   "loading": "加载中",
   "skipLink": "跳转到主要内容",
   "spinnerLabel": "加载中",
+  "close": "关闭",
   "queryError": {
     "title": "出了点问题",
     "message": "我们无法加载此数据。请重试。",
