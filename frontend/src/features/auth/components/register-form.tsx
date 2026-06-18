@@ -4,7 +4,7 @@ import { InputField } from "@/core/forms/input-field";
 import { SelectField } from "@/core/forms/select-field";
 import { useZodForm } from "@/core/forms/use-zod-form";
 import { Button } from "@/core/ui/button";
-import { useRegister } from "@/features/auth/hooks/use-register";
+import { useRegister } from "@/features/auth/commands/use-register";
 import { registerSchema } from "@/features/auth/schemas/register-schema";
 import { FormProvider } from "react-hook-form";
 

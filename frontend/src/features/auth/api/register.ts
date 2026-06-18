@@ -1,8 +1,10 @@
-import { apiClient, generateIdempotencyKey } from "@/core/api/api-client";
+import { apiClient } from "@/core/api/api-client";
 import type { RegisterInput, RegisterResponse } from "./types";
 
-export async function registerUser(input: RegisterInput): Promise<RegisterResponse> {
-  const idempotencyKey = generateIdempotencyKey();
+export async function registerUser(
+  input: RegisterInput,
+  idempotencyKey: string,
+): Promise<RegisterResponse> {
   const { data } = await apiClient.post<RegisterResponse>(
     "/users",
     {
@@ -18,7 +20,7 @@ export async function registerUser(input: RegisterInput): Promise<RegisterRespon
       headers: {
         "Idempotency-Key": idempotencyKey,
       },
-    }
+    },
   );
   return data;
 }
