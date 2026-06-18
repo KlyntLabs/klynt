@@ -6,7 +6,19 @@ use argon2::{
 };
 use chrono::Utc;
 
-use crate::contracts::users::CreateUserRequest;
+use serde::Deserialize;
+use uuid::Uuid;
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct CreateUserRequest {
+    pub name: String,
+    pub email: String,
+    pub password: String,
+    pub role: String,
+    pub institution_id: Option<Uuid>,
+    pub terms_accepted: bool,
+    pub terms_version: String,
+}
 use crate::domain::ctx::Ctx;
 use crate::domain::errors::{DomainError, NameError};
 use crate::domain::models::{validate_password, Email, Role, User, UserId, UserStatus};
