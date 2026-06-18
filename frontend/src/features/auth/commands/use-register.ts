@@ -48,7 +48,7 @@ export function useRegister(): UseRegisterResult {
       idempotencyKeyRef.current = generateIdempotencyKey();
       return mutation.mutateAsync(input);
     },
-    [mutation],
+    [mutation]
   );
 
   return {

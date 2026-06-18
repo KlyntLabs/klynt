@@ -28,9 +28,9 @@ describe("registerUser", () => {
             status: "pending_verification",
             created_at: "2026-06-18T04:24:34Z",
           },
-          { status: 201 },
+          { status: 201 }
         );
-      }),
+      })
     );
 
     await registerUser(input, "my-stable-key");

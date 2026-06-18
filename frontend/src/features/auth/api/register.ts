@@ -3,7 +3,7 @@ import type { RegisterInput, RegisterResponse } from "./types";
 
 export async function registerUser(
   input: RegisterInput,
-  idempotencyKey: string,
+  idempotencyKey: string
 ): Promise<RegisterResponse> {
   const { data } = await apiClient.post<RegisterResponse>(
     "/users",
@@ -20,7 +20,7 @@ export async function registerUser(
       headers: {
         "Idempotency-Key": idempotencyKey,
       },
-    },
+    }
   );
   return data;
 }

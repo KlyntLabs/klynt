@@ -43,7 +43,7 @@ function successResponse() {
       status: "pending_verification",
       created_at: "2026-06-18T04:24:34Z",
     },
-    { status: 201 },
+    { status: 201 }
   );
 }
 
@@ -58,7 +58,7 @@ describe("useRegister", () => {
           return new HttpResponse(null, { status: 500 });
         }
         return successResponse();
-      }),
+      })
     );
 
     const { result } = renderHook(() => useRegister(), {
@@ -81,7 +81,7 @@ describe("useRegister", () => {
       http.post("/api/v1/users", async ({ request }) => {
         keys.push(request.headers.get("Idempotency-Key") ?? "");
         return successResponse();
-      }),
+      })
     );
 
     const { result } = renderHook(() => useRegister(), {
