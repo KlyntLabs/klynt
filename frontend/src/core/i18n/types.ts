@@ -1,9 +1,9 @@
 import "i18next";
-import type auth from "../../../public/locales/en/auth.json";
-import type common from "../../../public/locales/en/common.json";
-import type errors from "../../../public/locales/en/errors.json";
-import type ui from "../../../public/locales/en/ui.json";
-import type validation from "../../../public/locales/en/validation.json";
+import type auth from "@/locales/en/auth.json";
+import type common from "@/locales/en/common.json";
+import type errors from "@/locales/en/errors.json";
+import type ui from "@/locales/en/ui.json";
+import type validation from "@/locales/en/validation.json";
 
 export type SupportedLanguage = "en" | "vi" | "cn";
 export const SUPPORTED_LANGUAGES: SupportedLanguage[] = ["en", "vi", "cn"];
