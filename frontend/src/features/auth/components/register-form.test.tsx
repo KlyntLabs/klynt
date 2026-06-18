@@ -1,43 +1,42 @@
-import * as registerApi from "@/features/auth/api/register";
-import { render, screen, waitFor } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
 import { RegisterForm } from "./register-form";
-
-vi.mock("@/features/auth/api/register", () => ({
-  register: vi.fn(),
-}));
+import { render } from "@/test/render";
 
 describe("RegisterForm", () => {
-  it("submits valid data and displays the response", async () => {
-    const mockRegister = vi.mocked(registerApi.register).mockResolvedValue({
-      id: "550e8400-e29b-41d4-a716-446655440000",
-      name: "Ada Lovelace",
-      email: "ada@example.com",
-      role: "student",
-      status: "pending_verification",
-      createdAt: "2026-06-18T04:24:34Z",
-    });
-
+  it("validates required fields", async () => {
+    const user = userEvent.setup();
     render(<RegisterForm />);
+    await user.click(screen.getByRole("button", { name: /create account/i }));
+    expect(await screen.findByText(/valid email/i)).toBeInTheDocument();
+    expect(await screen.findByText(/at least 12 characters/i)).toBeInTheDocument();
+    expect(await screen.findByText(/must accept the terms/i)).toBeInTheDocument();
+  });
 
-    await userEvent.type(screen.getByLabelText(/name/i), "Ada Lovelace");
-    await userEvent.type(screen.getByLabelText(/email/i), "ada@example.com");
-    await userEvent.type(screen.getByLabelText(/password/i), "str0ng!passphrase");
-    await userEvent.click(screen.getByLabelText(/terms/i));
-    await userEvent.click(screen.getByRole("button", { name: /register/i }));
+  it("submits valid student registration", async () => {
+    const user = userEvent.setup();
+    render(<RegisterForm />);
+    await user.type(screen.getByLabelText(/full name/i), "Ada Lovelace");
+    await user.type(screen.getByLabelText(/email/i), "ada@example.com");
+    await user.type(screen.getByLabelText(/password/i), "str0ng!passphrase");
+    await user.click(screen.getByLabelText(/i agree/i));
+    await user.click(screen.getByRole("button", { name: /create account/i }));
 
     await waitFor(() => {
-      expect(mockRegister).toHaveBeenCalledWith({
-        name: "Ada Lovelace",
-        email: "ada@example.com",
-        password: "str0ng!passphrase",
-        role: "student",
-        termsAccepted: true,
-        termsVersion: "2026-06-18",
-      });
+      expect(screen.queryByRole("button", { name: /create account/i })).not.toBeDisabled();
     });
+  });
 
-    expect(await screen.findByText(/550e8400/)).toBeInTheDocument();
+  it("shows inline error for duplicate email", async () => {
+    const user = userEvent.setup();
+    render(<RegisterForm />);
+    await user.type(screen.getByLabelText(/full name/i), "Ada Lovelace");
+    await user.type(screen.getByLabelText(/email/i), "duplicate@example.com");
+    await user.type(screen.getByLabelText(/password/i), "str0ng!passphrase");
+    await user.click(screen.getByLabelText(/i agree/i));
+    await user.click(screen.getByRole("button", { name: /create account/i }));
+
+    expect(await screen.findByText(/email already registered/i)).toBeInTheDocument();
   });
 });

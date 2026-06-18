@@ -1,30 +1,24 @@
 import { apiClient, generateIdempotencyKey } from "@/core/api/api-client";
+import type { RegisterInput, RegisterResponse } from "./types";
 
-export interface RegisterInput {
-  name: string;
-  email: string;
-  password: string;
-  role: string;
-  institutionId?: string;
-  termsAccepted: boolean;
-  termsVersion: string;
-}
-
-export interface RegisterResponse {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  status: string;
-  createdAt: string;
-}
-
-export async function register(input: RegisterInput): Promise<RegisterResponse> {
+export async function registerUser(input: RegisterInput): Promise<RegisterResponse> {
   const idempotencyKey = generateIdempotencyKey();
-  const { data } = await apiClient.post<RegisterResponse>("/users", input, {
-    headers: {
-      "Idempotency-Key": idempotencyKey,
+  const { data } = await apiClient.post<RegisterResponse>(
+    "/users",
+    {
+      name: input.name,
+      email: input.email,
+      password: input.password,
+      role: input.role,
+      institution_id: input.institutionId ?? null,
+      terms_accepted: input.termsAccepted,
+      terms_version: input.termsVersion,
     },
-  });
+    {
+      headers: {
+        "Idempotency-Key": idempotencyKey,
+      },
+    }
+  );
   return data;
 }
