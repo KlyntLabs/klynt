@@ -1,13 +1,16 @@
-import { queryClient } from "@/core/api/query-client";
 import { ErrorBoundary } from "@/core/error-boundary";
+import { createQueryClient } from "@/core/api/query-client";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { useState } from "react";
 
 interface AppProvidersProps {
   children: React.ReactNode;
 }
 
 export function AppProviders({ children }: AppProvidersProps) {
+  const [queryClient] = useState(() => createQueryClient());
+
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>

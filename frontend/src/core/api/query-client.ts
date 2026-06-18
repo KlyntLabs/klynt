@@ -1,11 +1,28 @@
-import { QueryClient } from "@tanstack/react-query";
+import { Mutation, MutationCache, QueryClient } from "@tanstack/react-query";
+import type { ApiError } from "./api-error";
 
-export const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: 1,
-      refetchOnWindowFocus: false,
+export interface QueryClientOptions {
+  onMutationError?: (
+    error: ApiError,
+    mutation: Mutation<unknown, unknown, unknown, unknown>
+  ) => void;
+}
+
+export function createQueryClient({ onMutationError }: QueryClientOptions = {}) {
+  return new QueryClient({
+    mutationCache: new MutationCache({
+      onError: (error, _variables, _context, mutation) => {
+        if (onMutationError && error instanceof Error) {
+          onMutationError(error as ApiError, mutation);
+        }
+      },
+    }),
+    defaultOptions: {
+      queries: {
+        staleTime: 1000 * 60 * 5,
+        retry: 1,
+        refetchOnWindowFocus: false,
+      },
     },
-  },
-});
+  });
+}
