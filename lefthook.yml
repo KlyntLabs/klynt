@@ -1,24 +1,30 @@
-# Install: lefthook install
 # Docs: https://lefthook.dev/configuration/
+# Installed automatically via `npm run prepare` in frontend/
 
 pre-commit:
   parallel: true
   commands:
     rustfmt:
-      glob: "*.rs"
+      glob: "**/*.rs"
       run: cd backend && cargo fmt --all -- --check
     biome-check:
-      glob: "*.{js,ts,tsx,json,jsonc,css}"
-      run: cd frontend && npx @biomejs/biome check --no-errors-on-unmatched {staged_files}
+      glob: "**/*.{js,ts,tsx,json,jsonc,css}"
+      run: cd frontend && npx @biomejs/biome check --error-on-warnings --no-errors-on-unmatched $(for f in {staged_files}; do echo "${f#frontend/}"; done)
+    frontend-typecheck:
+      glob: "**/*.{js,ts,tsx}"
+      run: cd frontend && npm run typecheck
+    frontend-test:
+      glob: "**/*.{js,ts,tsx}"
+      run: cd frontend && npm run test
 
 pre-push:
   commands:
     clippy:
-      glob: "*.rs"
+      glob: "**/*.rs"
       run: cd backend && cargo clippy --all-targets --all-features -- -D warnings
     rust-tests:
-      glob: "*.rs"
+      glob: "**/*.rs"
       run: cd backend && cargo test
     frontend-check:
-      glob: "*.{js,ts,tsx}"
+      glob: "**/*.{js,ts,tsx}"
       run: cd frontend && npm run check

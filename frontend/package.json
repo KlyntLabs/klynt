@@ -17,7 +17,8 @@
     "lint:fix": "biome lint --write .",
     "format": "biome format --write .",
     "format:check": "biome format .",
-    "check": "biome check ."
+    "check": "biome check .",
+    "prepare": "lefthook install"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.74.0",
@@ -42,6 +43,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
     "jsdom": "^29.1.1",
+    "lefthook": "^2.1.9",
     "msw": "^2.7.0",
     "playwright": "^1.54.0",
     "tailwindcss": "^4.3.1",
