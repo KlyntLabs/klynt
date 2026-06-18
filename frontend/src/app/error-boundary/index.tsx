@@ -1,0 +1,35 @@
+import { ErrorBoundary as ReactErrorBoundary } from "react-error-boundary";
+
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+
+function Fallback({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) {
+  return (
+    <div className="p-6" role="alert">
+      <h2 className="text-lg font-semibold">Something went wrong</h2>
+      <pre className="mt-2 text-sm text-red-600">{error.message}</pre>
+      <button
+        type="button"
+        onClick={resetErrorBoundary}
+        className="mt-4 rounded bg-slate-900 px-4 py-2 text-white"
+      >
+        Try again
+      </button>
+    </div>
+  );
+}
+
+export function ErrorBoundary({ children }: ErrorBoundaryProps) {
+  return (
+    <ReactErrorBoundary
+      FallbackComponent={Fallback}
+      onError={(error) => {
+        // TODO: send to error tracking service
+        console.error("Uncaught error:", error);
+      }}
+    >
+      {children}
+    </ReactErrorBoundary>
+  );
+}
