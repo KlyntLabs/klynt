@@ -29,7 +29,7 @@ export function RootLayout() {
   useFocusOnRouteChange(mainRef);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
       <SkipLink targetId={MAIN_ID} />
       <header className="border-b px-6 py-4">
         <nav className="flex items-center gap-4" aria-label={t("nav.home")}>
@@ -41,7 +41,7 @@ export function RootLayout() {
           </div>
         </nav>
       </header>
-      <main id={MAIN_ID} ref={mainRef} tabIndex={-1} className="outline-none">
+      <main id={MAIN_ID} ref={mainRef} tabIndex={-1} className="flex flex-1 flex-col outline-none">
         <Outlet />
       </main>
     </div>

@@ -5,7 +5,7 @@ import { GuestRoute, ProtectedRoute, RoleGuard } from "@/core/auth";
 import { Spinner } from "@/core/ui/spinner";
 import { routePaths } from "./route-paths";
 
-const HomePage = lazy(() => import("./home-page"));
+const HomePage = lazy(() => import("@/features/home/pages/home-page"));
 const RegisterPage = lazy(() =>
   import("@/features/auth").then((module) => ({ default: module.RegisterPage }))
 );
