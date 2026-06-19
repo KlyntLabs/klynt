@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
+import { requiresInstitution } from "@/features/auth/lib/role-rules";
 
 const ROLES = ["student", "teacher", "admin", "parent"] as const;
 
@@ -19,7 +20,7 @@ export function useRegisterSchema() {
       termsVersion: z.string().min(1, t("termsVersionRequired")),
     })
     .superRefine((data, ctx) => {
-      if ((data.role === "teacher" || data.role === "admin") && !data.institutionId) {
+      if (requiresInstitution(data.role) && !data.institutionId) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["institutionId"],

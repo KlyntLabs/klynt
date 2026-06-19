@@ -7,6 +7,7 @@ import { SelectField } from "@/core/forms/select-field";
 import { useZodForm } from "@/core/forms/use-zod-form";
 import { Button } from "@/core/ui/button";
 import { useRegister } from "@/features/auth/commands/use-register";
+import { requiresInstitution } from "@/features/auth/lib/role-rules";
 import { useRegisterSchema } from "@/features/auth/schemas/register-schema";
 
 const CURRENT_TERMS_VERSION = "2026-06-18";
@@ -27,7 +28,7 @@ export function RegisterForm() {
   });
 
   const selectedRole = form.watch("role");
-  const requiresInstitution = selectedRole === "teacher" || selectedRole === "admin";
+  const showInstitutionField = requiresInstitution(selectedRole);
 
   const onSubmit = form.handleSubmit(async (data) => {
     try {
@@ -68,7 +69,7 @@ export function RegisterForm() {
           ]}
           placeholder={t("auth:register.role.placeholder")}
         />
-        {requiresInstitution && (
+        {showInstitutionField && (
           <InputField
             name="institutionId"
             label={t("auth:register.institutionId.label")}
