@@ -1,7 +1,7 @@
-import { cn, focusRing } from "@/lib/utils";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { cn, focusRing } from "@/lib/utils";
 
 const Dialog = DialogPrimitive.Root;
 const DialogTrigger = DialogPrimitive.Trigger;

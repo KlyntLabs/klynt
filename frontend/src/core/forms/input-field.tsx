@@ -1,5 +1,5 @@
-import { Input } from "@/core/ui/input";
 import { Controller, useFormContext } from "react-hook-form";
+import { Input } from "@/core/ui/input";
 import { FormField } from "./form-field";
 
 interface InputFieldProps {

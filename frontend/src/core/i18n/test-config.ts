@@ -1,3 +1,5 @@
+import i18n from "i18next";
+import { initReactI18next } from "react-i18next";
 import cnAuth from "@/locales/cn/auth.json";
 import cnCommon from "@/locales/cn/common.json";
 import cnErrors from "@/locales/cn/errors.json";
@@ -13,8 +15,6 @@ import viCommon from "@/locales/vi/common.json";
 import viErrors from "@/locales/vi/errors.json";
 import viUi from "@/locales/vi/ui.json";
 import viValidation from "@/locales/vi/validation.json";
-import i18n from "i18next";
-import { initReactI18next } from "react-i18next";
 
 i18n.use(initReactI18next).init({
   lng: "en",

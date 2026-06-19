@@ -1,6 +1,6 @@
+import { Controller, useFormContext } from "react-hook-form";
 import { Label } from "@/core/ui/label";
 import { cn } from "@/lib/utils";
-import { Controller, useFormContext } from "react-hook-form";
 
 interface CheckboxFieldProps {
   name: string;

@@ -1,7 +1,7 @@
+import { HttpResponse, http } from "msw";
+import { describe, expect, it, vi } from "vitest";
 import { useAuthStore } from "@/core/auth/auth-store";
 import { server } from "@/test/msw/server";
-import { http, HttpResponse } from "msw";
-import { describe, expect, it, vi } from "vitest";
 import { apiClient, generateIdempotencyKey } from "./api-client";
 
 describe("apiClient", () => {

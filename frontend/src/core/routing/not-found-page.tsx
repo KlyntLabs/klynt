@@ -1,6 +1,6 @@
-import { routePaths } from "@/core/routing/route-paths";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
+import { routePaths } from "@/core/routing/route-paths";
 
 export default function NotFoundPage() {
   const { t } = useTranslation("ui");

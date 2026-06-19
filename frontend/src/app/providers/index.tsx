@@ -1,15 +1,15 @@
 import "@/core/i18n/config";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { useState } from "react";
+import { HelmetProvider } from "react-helmet-async";
+import { I18nextProvider } from "react-i18next";
 import { createQueryClient } from "@/core/api/query-client";
 import { ErrorBoundary } from "@/core/error-boundary";
 import i18n from "@/core/i18n/config";
 import { HtmlLang } from "@/core/i18n/html-lang";
 import { ToastContainer } from "@/core/notifications/toast-container";
 import { useToastStore } from "@/core/notifications/toast-store";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { useState } from "react";
-import { HelmetProvider } from "react-helmet-async";
-import { I18nextProvider } from "react-i18next";
 
 interface AppProvidersProps {
   children: React.ReactNode;

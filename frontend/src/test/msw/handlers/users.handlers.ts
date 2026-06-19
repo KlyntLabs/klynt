@@ -1,4 +1,4 @@
-import { http, HttpResponse } from "msw";
+import { HttpResponse, http } from "msw";
 
 export const usersHandlers = [
   http.post("/api/v1/users", async ({ request }) => {

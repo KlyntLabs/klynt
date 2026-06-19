@@ -1,6 +1,6 @@
+import axios from "axios";
 import { useAuthStore } from "@/core/auth/auth-store";
 import { logger } from "@/core/logger";
-import axios from "axios";
 import { createApiError } from "./api-error";
 
 const AUTH_ENDPOINTS = ["/auth/login", "/auth/register", "/auth/refresh"];

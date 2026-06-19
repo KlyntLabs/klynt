@@ -1,7 +1,7 @@
-import i18n from "@/core/i18n/test-config";
 import { renderHook } from "@testing-library/react";
 import { I18nextProvider } from "react-i18next";
 import { describe, expect, it } from "vitest";
+import i18n from "@/core/i18n/test-config";
 import { useRegisterSchema } from "./register-schema";
 
 function Wrapper({ children }: { children: React.ReactNode }) {

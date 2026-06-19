@@ -1,6 +1,6 @@
-import { render } from "@/test/render";
 import { run } from "axe-core";
 import { describe, expect, it } from "vitest";
+import { render } from "@/test/render";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./card";
 
 describe("Card accessibility", () => {

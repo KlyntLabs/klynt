@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils";
 import { Link, type LinkProps } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 interface PrefetchLinkProps extends LinkProps {
   prefetch?: "none" | "intent" | "render" | "viewport";

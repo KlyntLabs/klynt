@@ -1,11 +1,11 @@
-import { useToastStore } from "@/core/notifications/toast-store";
-import { server } from "@/test/msw/server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
-import { http, HttpResponse } from "msw";
+import { HttpResponse, http } from "msw";
 import { type ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
+import { useToastStore } from "@/core/notifications/toast-store";
+import { server } from "@/test/msw/server";
 import { useRegister } from "./use-register";
 
 const validInput = {

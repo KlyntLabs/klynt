@@ -1,7 +1,7 @@
-import { render } from "@/test/render";
 import { screen } from "@testing-library/react";
 import { run } from "axe-core";
 import { describe, expect, it } from "vitest";
+import { render } from "@/test/render";
 import { Button } from "./button";
 
 describe("Button accessibility", () => {

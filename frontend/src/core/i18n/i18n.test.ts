@@ -1,5 +1,5 @@
-import i18n from "@/core/i18n/test-config";
 import { describe, expect, it } from "vitest";
+import i18n from "@/core/i18n/test-config";
 
 describe("i18n", () => {
   it("translates common keys", () => {

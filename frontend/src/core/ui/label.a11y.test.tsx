@@ -1,7 +1,7 @@
-import { render } from "@/test/render";
 import { screen } from "@testing-library/react";
 import { run } from "axe-core";
 import { describe, expect, it } from "vitest";
+import { render } from "@/test/render";
 import { Input } from "./input";
 import { Label } from "./label";
 

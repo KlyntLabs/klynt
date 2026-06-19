@@ -1,10 +1,10 @@
+import { useRef } from "react";
+import { useTranslation } from "react-i18next";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import { SkipLink } from "@/core/a11y/skip-link";
 import { LanguageSwitcher } from "@/core/i18n/language-switcher";
 import { routePaths } from "@/core/routing/route-paths";
 import { useFocusOnRouteChange } from "@/core/routing/use-focus-on-route-change";
-import { useRef } from "react";
-import { useTranslation } from "react-i18next";
-import { Link, Outlet, useLocation } from "react-router-dom";
 
 const MAIN_ID = "main-content";
 

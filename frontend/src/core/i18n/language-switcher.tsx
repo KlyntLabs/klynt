@@ -1,6 +1,6 @@
+import { useTranslation } from "react-i18next";
 import { SUPPORTED_LANGUAGES } from "@/core/i18n/types";
 import { cn } from "@/lib/utils";
-import { useTranslation } from "react-i18next";
 
 interface LanguageSwitcherProps {
   className?: string;

@@ -9,7 +9,6 @@ interface ImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
 
 export function Image({ alt, width, height, lazy = true, className, ...props }: ImageProps) {
   return (
-    // biome-ignore lint/a11y/useAltText: alt is required via TypeScript and destructured above
     <img
       alt={alt}
       width={width}

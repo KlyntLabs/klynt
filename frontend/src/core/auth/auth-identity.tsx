@@ -1,5 +1,5 @@
-import { Spinner } from "@/core/ui/spinner";
 import { Navigate, useLocation } from "react-router-dom";
+import { Spinner } from "@/core/ui/spinner";
 import { useAuthStore } from "./auth-store";
 import type { Role, User } from "./types";
 

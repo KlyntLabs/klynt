@@ -1,5 +1,5 @@
+import { cva, type VariantProps } from "class-variance-authority";
 import { cn, disabledStyles, focusRing } from "@/lib/utils";
-import { type VariantProps, cva } from "class-variance-authority";
 import { Spinner } from "./spinner";
 
 const buttonVariants = cva(

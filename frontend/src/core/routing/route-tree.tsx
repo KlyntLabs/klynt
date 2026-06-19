@@ -1,8 +1,8 @@
+import { lazy, Suspense } from "react";
+import { createBrowserRouter, Outlet } from "react-router-dom";
 import { RootLayout } from "@/app/layout/root-layout";
 import { GuestRoute, ProtectedRoute, RoleGuard } from "@/core/auth";
 import { Spinner } from "@/core/ui/spinner";
-import { Suspense, lazy } from "react";
-import { Outlet, createBrowserRouter } from "react-router-dom";
 import { routePaths } from "./route-paths";
 
 const HomePage = lazy(() => import("./home-page"));

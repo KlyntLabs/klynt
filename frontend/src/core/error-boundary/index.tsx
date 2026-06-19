@@ -1,6 +1,6 @@
-import { logger } from "@/core/logger";
 import { ErrorBoundary as ReactErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
+import { logger } from "@/core/logger";
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;

@@ -1,7 +1,7 @@
-import { render } from "@/test/render";
 import { screen } from "@testing-library/react";
 import { Route, Routes } from "react-router-dom";
 import { describe, expect, it } from "vitest";
+import { render } from "@/test/render";
 import { GuestRoute, ProtectedRoute, RoleGuard } from "./auth-identity";
 import { useAuthStore } from "./auth-store";
 

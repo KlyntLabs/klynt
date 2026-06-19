@@ -12,6 +12,7 @@ export function Separator({
   className,
 }: SeparatorProps) {
   return (
+    // biome-ignore lint/a11y/useAriaPropsSupportedByRole: role is "separator" exactly when aria-orientation is set
     <div
       role={decorative ? "none" : "separator"}
       aria-orientation={decorative ? undefined : orientation}

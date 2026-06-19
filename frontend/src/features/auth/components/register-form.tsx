@@ -1,3 +1,5 @@
+import { FormProvider } from "react-hook-form";
+import { Trans, useTranslation } from "react-i18next";
 import { ApiError } from "@/core/api/api-error";
 import { CheckboxField } from "@/core/forms/checkbox-field";
 import { InputField } from "@/core/forms/input-field";
@@ -6,8 +8,6 @@ import { useZodForm } from "@/core/forms/use-zod-form";
 import { Button } from "@/core/ui/button";
 import { useRegister } from "@/features/auth/commands/use-register";
 import { useRegisterSchema } from "@/features/auth/schemas/register-schema";
-import { FormProvider } from "react-hook-form";
-import { Trans, useTranslation } from "react-i18next";
 
 const CURRENT_TERMS_VERSION = "2026-06-18";
 

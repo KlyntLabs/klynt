@@ -1,7 +1,7 @@
-import { RegisterForm } from "@/features/auth/components/register-form";
-import { render } from "@/test/render";
 import { run } from "axe-core";
 import { describe, expect, it } from "vitest";
+import { RegisterForm } from "@/features/auth/components/register-form";
+import { render } from "@/test/render";
 
 describe("RegisterForm accessibility", () => {
   it("has no accessibility violations", async () => {

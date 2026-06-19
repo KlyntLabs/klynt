@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils";
 import { User } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface AvatarProps {
   src?: string;
@@ -30,6 +30,7 @@ export function Avatar({ src, alt, fallback, size = "md", className }: AvatarPro
         sizeClasses[size],
         className
       )}
+      role="img"
       aria-label={alt}
     >
       {src ? (

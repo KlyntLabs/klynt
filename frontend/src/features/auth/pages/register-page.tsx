@@ -1,5 +1,5 @@
-import { RegisterForm } from "@/features/auth/components/register-form";
 import { useTranslation } from "react-i18next";
+import { RegisterForm } from "@/features/auth/components/register-form";
 
 export default function RegisterPage() {
   const { t } = useTranslation("auth");
