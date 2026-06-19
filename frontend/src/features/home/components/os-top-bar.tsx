@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { routePaths } from "@/core/routing/route-paths";
@@ -7,12 +8,23 @@ interface OsTopBarProps {
   windowTitle: string;
 }
 
-export function OsTopBar({ windowTitle }: OsTopBarProps) {
-  const { t } = useTranslation("home");
-  const time = new Intl.DateTimeFormat(undefined, {
+function formatTime(date: Date) {
+  return new Intl.DateTimeFormat(undefined, {
     hour: "numeric",
     minute: "numeric",
-  }).format(new Date());
+  }).format(date);
+}
+
+export function OsTopBar({ windowTitle }: OsTopBarProps) {
+  const { t } = useTranslation("home");
+  const [time, setTime] = useState(() => formatTime(new Date()));
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTime(formatTime(new Date()));
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="flex h-10 items-center gap-3 border-b-2 border-border bg-primary px-3 text-primary-foreground">
