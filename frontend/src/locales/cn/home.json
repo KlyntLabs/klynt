@@ -1,0 +1,20 @@
+{
+  "topBar": {
+    "startLabel": "Klynt",
+    "windowTitle": "klynt-browser.mdx"
+  },
+  "hero": {
+    "title": "Klynt",
+    "subtitle": "基础阶段教育平台，像操作系统一样构建。",
+    "body": "为教师、家长和幼儿提供的简单工具——无需设置，没有杂乱。",
+    "cta": "免费开始"
+  },
+  "desktop": {
+    "navLabel": "桌面应用",
+    "apps": {
+      "home": { "label": "首页" },
+      "register": { "label": "注册" },
+      "dashboard": { "label": "仪表板" }
+    }
+  }
+}

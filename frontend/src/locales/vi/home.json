@@ -1,0 +1,20 @@
+{
+  "topBar": {
+    "startLabel": "Klynt",
+    "windowTitle": "klynt-browser.mdx"
+  },
+  "hero": {
+    "title": "Klynt",
+    "subtitle": "Nền tảng giáo dục giai đoạn nền tảng, được xây dựng như một hệ điều hành.",
+    "body": "Công cụ đơn giản cho giáo viên, phụ huynh và học sinh nhỏ — không cài đặt, không rườm rà.",
+    "cta": "Bắt đầu miễn phí"
+  },
+  "desktop": {
+    "navLabel": "Ứng dụng trên màn hình",
+    "apps": {
+      "home": { "label": "Trang chủ" },
+      "register": { "label": "Đăng ký" },
+      "dashboard": { "label": "Bảng điều khiển" }
+    }
+  }
+}

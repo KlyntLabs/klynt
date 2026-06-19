@@ -1,0 +1,20 @@
+{
+  "topBar": {
+    "startLabel": "Klynt",
+    "windowTitle": "klynt-browser.mdx"
+  },
+  "hero": {
+    "title": "Klynt",
+    "subtitle": "The foundation-phase education platform, built like an OS.",
+    "body": "Simple tools for teachers, parents, and young learners — no setup, no clutter.",
+    "cta": "Get started free"
+  },
+  "desktop": {
+    "navLabel": "Desktop apps",
+    "apps": {
+      "home": { "label": "Home" },
+      "register": { "label": "Register" },
+      "dashboard": { "label": "Dashboard" }
+    }
+  }
+}
