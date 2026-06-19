@@ -12,8 +12,6 @@ klynt-domain = { workspace = true }
 chrono = { workspace = true }
 uuid = { workspace = true }
 async-trait = { workspace = true }
-argon2 = { workspace = true }
-rand_core = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true }

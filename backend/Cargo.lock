@@ -702,11 +702,9 @@ dependencies = [
 name = "klynt-application"
 version = "0.1.0"
 dependencies = [
- "argon2",
  "async-trait",
  "chrono",
  "klynt-domain",
- "rand_core",
  "tokio",
  "uuid",
 ]
@@ -727,10 +725,12 @@ dependencies = [
 name = "klynt-infrastructure"
 version = "0.1.0"
 dependencies = [
+ "argon2",
  "async-trait",
  "chrono",
  "config",
  "klynt-domain",
+ "rand_core",
  "tokio",
  "uuid",
 ]
