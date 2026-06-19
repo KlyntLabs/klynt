@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { Spinner } from "@/core/ui/spinner";
 import { useAuthStore } from "./auth-store";
@@ -20,7 +21,17 @@ export function useAuth(): UseAuthResult {
   const setSession = useAuthStore((state) => state.setSession);
   const clearSession = useAuthStore((state) => state.clearSession);
 
-  return { user, token, isAuthenticated, isLoading, setSession, clearSession };
+  return useMemo(
+    () => ({
+      user,
+      token,
+      isAuthenticated,
+      isLoading,
+      setSession,
+      clearSession,
+    }),
+    [user, token, isAuthenticated, isLoading, setSession, clearSession]
+  );
 }
 
 export function useRole() {
@@ -31,7 +42,6 @@ export function useRole() {
     role,
     isAdmin: role === "admin",
     isTeacher: role === "teacher" || role === "admin",
-    isInstructor: role === "teacher" || role === "admin",
     isParent: role === "parent",
     hasRole: (allowedRoles: Role[]) => (role ? allowedRoles.includes(role) : false),
   };
