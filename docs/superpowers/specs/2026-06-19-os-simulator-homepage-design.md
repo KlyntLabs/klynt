@@ -23,7 +23,9 @@ This design extends the NeoBrutalism design system already in `frontend/src/core
   - Space Grotesk typography.
 - **Layout (approved mockup):**
   - Plain light-grey desktop background (`--color-secondary` / `#f3f3f3`).
-  - Small, macOS-like yellow OS top menu bar with the Klynt logo icon, active window filename, language switcher (flag icons), and clock.
+  - Small, macOS-like yellow OS top menu bar:
+    - Left: Klynt logo icon that opens an OS menu, followed by dropdown menus for Docs, Community, Courses, Teachers.
+    - Right: flag-icon language switcher, Get started button, user avatar icon, chat icon.
   - Vertical icon dock on the left with borderless icons and labels.
   - Centered hero “browser” window with title-bar dots and filename.
   - No separate global header — the OS top bar is the only chrome on the homepage.
@@ -38,7 +40,7 @@ New feature folder: `frontend/src/features/home/`
 | --- | --- |
 | `features/home/pages/home-page.tsx` | Route page. Registers `home` i18n namespace and composes the OS shell. Replaces the current `core/routing/home-page.tsx` content. |
 | `features/home/components/os-desktop.tsx` | Full-screen desktop container: background, top bar, icon dock, hero window. |
-| `features/home/components/os-top-bar.tsx` | Small yellow NeoBrutalist menu bar: Klynt logo icon button, window title, language switcher, live clock. |
+| `features/home/components/os-top-bar.tsx` | Small yellow NeoBrutalist menu bar: Klynt logo menu, Docs/Community/Courses/Teachers dropdown menus, language switcher, Get started button, user/chat icons. |
 | `features/home/components/os-window.tsx` | Reusable window chrome: title bar with three dots + filename, bordered body with hard shadow. |
 | `features/home/components/os-icon.tsx` | Borderless desktop icon: Lucide icon + label wrapped in a React Router `Link`. |
 | `features/home/lib/desktop-apps.ts` | Static config array mapping apps to `{ id, labelKey, icon, route }`. |
@@ -46,8 +48,8 @@ New feature folder: `frontend/src/features/home/`
 Design-system primitives reused:
 
 - `core/ui/logo.tsx` provides the `KlyntLogo` SVG icon used in the OS top bar.
-- `core/ui/button.tsx` exports `buttonVariants` for styling the hero CTA link.
-- `core/i18n/language-switcher.tsx` is embedded in the OS top bar.
+- `core/ui/button.tsx` exports `buttonVariants` for styling CTA links. Button size variants were shrunk globally so the default button is smaller.
+- `core/i18n/language-switcher.tsx` is embedded in the OS top bar and uses flag icons.
 - Existing color/shadow/radius tokens from `index.css`.
 
 ## Routing
@@ -64,6 +66,9 @@ Keys (mirrored across `en`, `vi`, `cn`):
 
 - `topBar.startLabel`
 - `topBar.windowTitle`
+- `topBar.menu.label`, `topBar.menu.about`, `topBar.menu.docs`, `topBar.menu.register`, `topBar.menu.dashboard`
+- `topBar.nav.placeholder`, `topBar.nav.docs`, `topBar.nav.community`, `topBar.nav.courses`, `topBar.nav.teachers`
+- `topBar.actions.getStarted`, `topBar.actions.user`, `topBar.actions.chat`
 - `hero.title`
 - `hero.subtitle`
 - `hero.body`
@@ -72,13 +77,12 @@ Keys (mirrored across `en`, `vi`, `cn`):
 - `desktop.apps.register.label`
 - `desktop.apps.dashboard.label`
 
-The clock in the top bar uses `Intl.DateTimeFormat` with the user’s locale — no backend dependency.
-
 ## Interactions & Behavior
 
 - Desktop icons are React Router `<Link>` navigations.
-- Top-bar “Klynt” button navigates home.
-- Hero CTA navigates to `/register`.
+- Klynt logo opens a dropdown menu with links to Home, Register, and Dashboard.
+- Docs, Community, Courses, Teachers are dropdown menus with placeholder "Coming soon" items.
+- Hero CTA and top-bar Get started button navigate to `/register`.
 - Hover/focus states use the existing hard-shadow shift pattern.
 - **Out of scope for v1:** dragging, resizing, minimizing, maximizing, multiple windows.
 
