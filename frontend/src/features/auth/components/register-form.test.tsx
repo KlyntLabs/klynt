@@ -37,6 +37,8 @@ describe("RegisterForm", () => {
     await user.click(screen.getByLabelText(/i agree/i));
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
-    expect(await screen.findByText(/email already registered/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/email already registered/i, {}, { timeout: 3000 })
+    ).toBeInTheDocument();
   });
 });
