@@ -14,7 +14,10 @@ interface BreadcrumbProps {
 
 export function Breadcrumb({ items, className }: BreadcrumbProps) {
   return (
-    <nav aria-label="Breadcrumb" className={cn("text-sm text-muted-foreground", className)}>
+    <nav
+      aria-label="Breadcrumb"
+      className={cn("text-sm font-medium text-muted-foreground", className)}
+    >
       <ol className="flex flex-wrap items-center gap-1.5">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
@@ -22,13 +25,18 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
           return (
             <li key={item.label} className="flex items-center gap-1.5">
               {item.href && !isLast ? (
-                <Link to={item.href} className="hover:text-foreground">
+                <Link to={item.href} className="font-bold text-foreground hover:underline">
                   {item.label}
                 </Link>
               ) : (
-                <span aria-current={isLast ? "page" : undefined}>{item.label}</span>
+                <span
+                  className="font-bold text-foreground"
+                  aria-current={isLast ? "page" : undefined}
+                >
+                  {item.label}
+                </span>
               )}
-              {!isLast && <ChevronRight className="h-4 w-4" aria-hidden="true" />}
+              {!isLast && <ChevronRight className="h-4 w-4 text-foreground" aria-hidden="true" />}
             </li>
           );
         })}

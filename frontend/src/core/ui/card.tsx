@@ -9,7 +9,7 @@ export function Card({ className, ref, ...props }: CardProps) {
     <div
       ref={ref}
       className={cn(
-        "rounded-lg border border-border bg-card text-card-foreground shadow-sm",
+        "rounded-lg border-2 border-border bg-card text-card-foreground shadow-hard",
         className
       )}
       {...props}
@@ -18,7 +18,7 @@ export function Card({ className, ref, ...props }: CardProps) {
 }
 
 export function CardHeader({ className, ref, ...props }: CardProps) {
-  return <div ref={ref} className={cn("flex flex-col space-y-1.5 p-6", className)} {...props} />;
+  return <div ref={ref} className={cn("flex flex-col space-y-1.5 p-5", className)} {...props} />;
 }
 
 export function CardTitle({
@@ -29,7 +29,10 @@ export function CardTitle({
   return (
     <h3
       ref={ref}
-      className={cn("text-2xl font-semibold leading-none tracking-tight", className)}
+      className={cn(
+        "text-2xl font-bold leading-none tracking-tight text-card-foreground",
+        className
+      )}
       {...props}
     />
   );

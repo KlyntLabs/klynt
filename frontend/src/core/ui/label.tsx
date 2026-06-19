@@ -10,7 +10,7 @@ export function Label({ className, ref, ...props }: LabelProps) {
     <label
       ref={ref}
       className={cn(
-        "mb-1 block text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+        "mb-1 block text-sm font-bold leading-none text-foreground peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
         className
       )}
       {...props}

@@ -41,7 +41,7 @@ const DialogContent = ({
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out sm:rounded-lg",
+          "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border-2 border-border bg-card p-6 shadow-hard duration-200 data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out sm:rounded-lg",
           focusRing,
           className
         )}
