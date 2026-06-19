@@ -3,7 +3,8 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { LanguageSwitcher } from "@/core/i18n/language-switcher";
 import { routePaths } from "@/core/routing/route-paths";
-import { cn, focusRing, hardShadowActive } from "@/lib/utils";
+import { KlyntLogo } from "@/core/ui/logo";
+import { cn, focusRing } from "@/lib/utils";
 
 interface OsTopBarProps {
   windowTitle: string;
@@ -28,21 +29,21 @@ export function OsTopBar({ windowTitle }: OsTopBarProps) {
   }, []);
 
   return (
-    <div className="flex h-11 items-center gap-3 border-b-2 border-border bg-primary px-3 text-primary-foreground">
+    <div className="flex h-8 items-center gap-3 border-b-2 border-border bg-primary px-2 text-primary-foreground">
       <Link
         to={routePaths.home}
+        aria-label={t("topBar.startLabel")}
         className={cn(
-          "flex h-full items-center justify-center rounded bg-background px-3 text-sm font-bold text-foreground shadow-hard-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none",
-          hardShadowActive,
+          "flex items-center justify-center rounded p-1 text-foreground transition-transform hover:translate-x-[1px] hover:translate-y-[1px]",
           focusRing
         )}
       >
-        {t("topBar.startLabel")}
+        <KlyntLogo className="h-5 w-5" />
       </Link>
-      <span className="flex-1 truncate text-center text-sm font-bold">{windowTitle}</span>
-      <div className="flex items-center gap-3">
+      <span className="flex-1 truncate text-center text-xs font-bold">{windowTitle}</span>
+      <div className="flex items-center gap-2">
         <LanguageSwitcher className="text-primary-foreground" />
-        <span aria-live="off" className="text-xs font-bold">
+        <span aria-live="off" className="text-[10px] font-bold tabular-nums">
           {time}
         </span>
       </div>

@@ -5,7 +5,7 @@ import { render } from "@/test/render";
 import { OsTopBar } from "./os-top-bar";
 
 describe("OsTopBar", () => {
-  it("renders the start link and window title", () => {
+  it("renders the logo link and window title", () => {
     render(<OsTopBar windowTitle="klynt-browser.mdx" />);
 
     expect(screen.getByRole("link", { name: "Klynt" })).toHaveAttribute("href", routePaths.home);
