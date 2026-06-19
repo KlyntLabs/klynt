@@ -17,7 +17,7 @@ export function OsDesktop({ windowTitle, children }: OsDesktopProps) {
       <div className="relative flex flex-1">
         <nav
           aria-label={t("desktop.navLabel")}
-          className="absolute left-2 top-2 flex flex-col gap-1 md:left-4 md:top-4"
+          className="absolute left-2 top-2 flex flex-row gap-1 md:left-4 md:top-4 md:flex-col"
         >
           {desktopApps.map((app) => (
             <OsIcon key={app.id} to={app.route} icon={app.icon} label={t(app.labelKey)} />

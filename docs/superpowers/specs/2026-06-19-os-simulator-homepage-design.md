@@ -23,9 +23,10 @@ This design extends the NeoBrutalism design system already in `frontend/src/core
   - Space Grotesk typography.
 - **Layout (approved mockup):**
   - Plain light-grey desktop background (`--color-secondary` / `#f3f3f3`).
-  - Yellow top menu bar with Klynt start button, active window filename, and clock.
+  - Yellow OS top menu bar with Klynt start button, active window filename, language switcher, and clock.
   - Vertical icon dock on the left with borderless icons and labels.
   - Centered hero “browser” window with title-bar dots and filename.
+  - No separate global header — the OS top bar is the only chrome on the homepage.
 - **Mockup files:**
   - `.superpowers/brainstorm/43582-1781854111/content/os-homepage-mockup-v4.html`
 
@@ -37,14 +38,15 @@ New feature folder: `frontend/src/features/home/`
 | --- | --- |
 | `features/home/pages/home-page.tsx` | Route page. Registers `home` i18n namespace and composes the OS shell. Replaces the current `core/routing/home-page.tsx` content. |
 | `features/home/components/os-desktop.tsx` | Full-screen desktop container: background, top bar, icon dock, hero window. |
-| `features/home/components/os-top-bar.tsx` | Yellow NeoBrutalist menu bar: start button, window title, live clock. |
+| `features/home/components/os-top-bar.tsx` | Yellow NeoBrutalist menu bar: start button, window title, language switcher, live clock. |
 | `features/home/components/os-window.tsx` | Reusable window chrome: title bar with three dots + filename, bordered body with hard shadow. |
 | `features/home/components/os-icon.tsx` | Borderless desktop icon: Lucide icon + label wrapped in a React Router `Link`. |
 | `features/home/lib/desktop-apps.ts` | Static config array mapping apps to `{ id, labelKey, icon, route }`. |
 
 Design-system primitives reused:
 
-- `core/ui/button.tsx` for the hero CTA.
+- `core/ui/button.tsx` exports `buttonVariants` for styling the hero CTA link.
+- `core/i18n/language-switcher.tsx` is embedded in the OS top bar.
 - Existing color/shadow/radius tokens from `index.css`.
 
 ## Routing
@@ -89,7 +91,7 @@ The clock in the top bar uses `Intl.DateTimeFormat` with the user’s locale —
 
 ## Accessibility
 
-- A single `main` landmark on the page.
+- A single `main` landmark on the page (`RootLayout` no longer renders an additional global header).
 - Desktop icon dock is a `<nav>` with an `aria-label`.
 - Each icon link has a visible `focus-visible` ring.
 - Text uses existing high-contrast tokens (black on yellow/white/pink).
