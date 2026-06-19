@@ -29,8 +29,10 @@ impl RateLimiter {
             buckets: Mutex::default(),
         }
     }
+}
 
-    pub fn is_allowed(&self, ip: IpAddr) -> bool {
+impl RateLimiterPort for RateLimiter {
+    fn is_allowed(&self, ip: IpAddr) -> bool {
         if !self.config.enabled {
             return true;
         }
@@ -52,8 +54,32 @@ impl RateLimiter {
     }
 }
 
-impl RateLimiterPort for RateLimiter {
-    fn is_allowed(&self, ip: IpAddr) -> bool {
-        self.is_allowed(ip)
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::net::IpAddr;
+    use std::str::FromStr;
+
+    fn test_ip() -> IpAddr {
+        IpAddr::from_str("192.0.2.1").unwrap()
+    }
+
+    #[test]
+    fn port_allows_requests_under_limit() {
+        let limiter: Box<dyn RateLimiterPort> = Box::new(RateLimiter::new(RateLimiterConfig {
+            enabled: true,
+            max_requests: 2,
+            window_seconds: 60,
+        }));
+        assert!(limiter.is_allowed(test_ip()));
+        assert!(limiter.is_allowed(test_ip()));
+        assert!(!limiter.is_allowed(test_ip()));
+    }
+
+    #[test]
+    fn disabled_port_always_allows() {
+        let limiter: Box<dyn RateLimiterPort> = Box::new(RateLimiter::disabled());
+        assert!(limiter.is_allowed(test_ip()));
+        assert!(limiter.is_allowed(test_ip()));
     }
 }
