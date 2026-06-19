@@ -1,5 +1,5 @@
 import { Mutation, MutationCache, QueryClient } from "@tanstack/react-query";
-import type { ApiError } from "./api-error";
+import { ApiError } from "./api-error";
 
 export interface QueryClientOptions {
   onMutationError?: (
@@ -12,8 +12,8 @@ export function createQueryClient({ onMutationError }: QueryClientOptions = {}) 
   return new QueryClient({
     mutationCache: new MutationCache({
       onError: (error, _variables, _context, mutation) => {
-        if (onMutationError && error instanceof Error) {
-          onMutationError(error as ApiError, mutation);
+        if (onMutationError && error instanceof ApiError) {
+          onMutationError(error, mutation);
         }
       },
     }),
