@@ -8,9 +8,10 @@ use klynt_application::request_gate::UserRequestGate;
 use klynt_application::users::UserService;
 use klynt_domain::config::AppConfig;
 use klynt_domain::models::UserDto;
-use klynt_domain::ports::{HealthCheck, IdempotencyStore, RateLimiter};
+use klynt_domain::ports::{HealthCheck, IdempotencyStore, PasswordHasher, RateLimiter};
 use klynt_domain::session::SessionStore;
 use klynt_domain::unit_of_work::UnitOfWork;
+use klynt_infrastructure::password_hasher::Argon2PasswordHasher;
 use klynt_infrastructure::rate_limiter::RateLimiter as InMemoryRateLimiter;
 use klynt_infrastructure::repositories::idempotency::InMemoryIdempotencyStore;
 use klynt_infrastructure::repositories::in_memory_user::InMemoryUserRepository;
@@ -34,8 +35,9 @@ pub fn build_app(config: AppConfig) -> Router {
     let rate_limiter: Arc<dyn RateLimiter> =
         Arc::new(InMemoryRateLimiter::new(config.rate_limiter.clone()));
 
+    let password_hasher: Arc<dyn PasswordHasher> = Arc::new(Argon2PasswordHasher::new());
     let uow: Arc<dyn UnitOfWork> = Arc::new(InMemoryUnitOfWork::new(user_repo.clone()));
-    let user_service = Arc::new(UserService::new(uow));
+    let user_service = Arc::new(UserService::new(uow, password_hasher));
 
     let request_gate = Arc::new(UserRequestGate::new(
         Arc::clone(&idempotency_store),

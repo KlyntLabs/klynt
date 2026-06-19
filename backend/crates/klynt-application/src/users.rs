@@ -1,15 +1,12 @@
 use std::sync::Arc;
 
-use argon2::{
-    password_hash::{rand_core::OsRng, SaltString},
-    Argon2, PasswordHash, PasswordHasher, PasswordVerifier,
-};
 use chrono::Utc;
 use uuid::Uuid;
 
 use klynt_domain::ctx::Ctx;
 use klynt_domain::errors::{DomainError, NameError};
 use klynt_domain::models::{validate_password, Email, Role, User, UserDto, UserId, UserStatus};
+use klynt_domain::ports::{HashedPassword, PasswordHasher};
 use klynt_domain::repositories::CreateResult;
 use klynt_domain::unit_of_work::UnitOfWork;
 
@@ -26,11 +23,15 @@ pub struct CreateUserRequest {
 
 pub struct UserService {
     uow: Arc<dyn UnitOfWork>,
+    password_hasher: Arc<dyn PasswordHasher>,
 }
 
 impl UserService {
-    pub fn new(uow: Arc<dyn UnitOfWork>) -> Self {
-        Self { uow }
+    pub fn new(uow: Arc<dyn UnitOfWork>, password_hasher: Arc<dyn PasswordHasher>) -> Self {
+        Self {
+            uow,
+            password_hasher,
+        }
     }
 
     pub async fn create_user(
@@ -58,8 +59,7 @@ impl UserService {
             return Err(DomainError::InstitutionRequired(role));
         }
 
-        let password_hash =
-            hash_password(&req.password).map_err(|e| DomainError::internal_msg(e.to_string()))?;
+        let password_hash = self.password_hasher.hash(&req.password).await?;
 
         let user = User {
             id: UserId::new(),
@@ -68,7 +68,7 @@ impl UserService {
             role,
             institution_id: req.institution_id,
             status: UserStatus::PendingVerification,
-            password_hash,
+            password_hash: password_hash.as_str().to_string(),
             terms_accepted_at: Utc::now(),
             terms_version: req.terms_version,
             created_at: Utc::now(),
@@ -102,7 +102,8 @@ impl UserService {
             .await?
             .ok_or(DomainError::AuthenticationRequired)?;
 
-        if verify_password(password, &user.password_hash).is_err() {
+        let hash = HashedPassword::new(&user.password_hash);
+        if !self.password_hasher.verify(password, &hash).await? {
             // Do not reveal whether the email exists.
             return Err(DomainError::AuthenticationRequired);
         }
@@ -121,16 +122,4 @@ impl UserService {
         tx.commit().await?;
         Ok(user)
     }
-}
-
-fn hash_password(password: &str) -> Result<String, argon2::password_hash::Error> {
-    let salt = SaltString::generate(&mut OsRng);
-    let argon2 = Argon2::default();
-    let hash = argon2.hash_password(password.as_bytes(), &salt)?;
-    Ok(hash.to_string())
-}
-
-fn verify_password(password: &str, hash: &str) -> Result<(), argon2::password_hash::Error> {
-    let parsed_hash = PasswordHash::new(hash)?;
-    Argon2::default().verify_password(password.as_bytes(), &parsed_hash)
 }

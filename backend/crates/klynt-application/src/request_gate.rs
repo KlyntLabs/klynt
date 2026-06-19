@@ -64,7 +64,7 @@ mod tests {
     use klynt_domain::ctx::Ctx;
     use klynt_domain::errors::DomainError;
     use klynt_domain::models::{Email, User, UserDto, UserId};
-    use klynt_domain::ports::IdempotencyStore;
+    use klynt_domain::ports::{HashedPassword, IdempotencyStore, PasswordHasher};
     use klynt_domain::repositories::{CreateResult, UserRepository};
     use klynt_domain::unit_of_work::{Transaction, UnitOfWork};
 
@@ -183,9 +183,28 @@ mod tests {
         }
     }
 
+    #[derive(Debug, Default, Clone)]
+    struct FakePasswordHasher;
+
+    #[async_trait::async_trait]
+    impl PasswordHasher for FakePasswordHasher {
+        async fn hash(&self, plaintext: &str) -> Result<HashedPassword, DomainError> {
+            Ok(HashedPassword::new(format!("hashed:{plaintext}")))
+        }
+
+        async fn verify(
+            &self,
+            plaintext: &str,
+            hash: &HashedPassword,
+        ) -> Result<bool, DomainError> {
+            Ok(hash.as_str() == format!("hashed:{plaintext}"))
+        }
+    }
+
     fn disabled_gate() -> UserRequestGate {
         let uow: Arc<dyn UnitOfWork> = Arc::new(FakeUnitOfWork::default());
-        let user_service = Arc::new(UserService::new(uow));
+        let password_hasher: Arc<dyn PasswordHasher> = Arc::new(FakePasswordHasher);
+        let user_service = Arc::new(UserService::new(uow, password_hasher));
         let idempotency_store: Arc<dyn IdempotencyStore<UserDto>> =
             Arc::new(FakeIdempotencyStore::default());
         UserRequestGate::new(idempotency_store, user_service)
