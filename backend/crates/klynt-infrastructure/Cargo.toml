@@ -11,11 +11,9 @@ klynt-domain = { workspace = true }
 
 chrono = { workspace = true }
 uuid = { workspace = true }
-thiserror = { workspace = true }
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 config = { workspace = true }
-serde = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true }

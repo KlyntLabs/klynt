@@ -78,3 +78,29 @@ pre-push:
           exit 0
         fi
         cd backend && cargo llvm-cov --workspace --all-features --no-clean --fail-under-lines 84
+    backend-audit:
+      glob: "**/*.rs"
+      run: |
+        PUSH_TARGET=$(git rev-parse @{push} 2>/dev/null || echo "")
+        if [ -n "$PUSH_TARGET" ] && ! git diff --name-only "$PUSH_TARGET"..HEAD | grep -qE '^backend/'; then
+          echo "⏭️  backend-audit skipped (no backend changes)"
+          exit 0
+        fi
+        if ! cargo audit --version >/dev/null 2>&1; then
+          echo "⏭️  cargo-audit not installed; install with 'cargo install cargo-audit --locked' or run 'just setup'"
+          exit 0
+        fi
+        cd backend && cargo audit
+    backend-machete:
+      glob: "**/*.rs"
+      run: |
+        PUSH_TARGET=$(git rev-parse @{push} 2>/dev/null || echo "")
+        if [ -n "$PUSH_TARGET" ] && ! git diff --name-only "$PUSH_TARGET"..HEAD | grep -qE '^backend/'; then
+          echo "⏭️  backend-machete skipped (no backend changes)"
+          exit 0
+        fi
+        if ! cargo machete --version >/dev/null 2>&1; then
+          echo "⏭️  cargo-machete not installed; install with 'cargo install cargo-machete --locked' or run 'just setup'"
+          exit 0
+        fi
+        cd backend && cargo machete

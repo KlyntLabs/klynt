@@ -7,7 +7,7 @@ default:
 # One-time setup for new contributors
 setup:
     rustup component add rustfmt clippy llvm-tools-preview
-    cargo install cargo-watch cargo-nextest cargo-llvm-cov --locked
+    cargo install cargo-watch cargo-nextest cargo-llvm-cov cargo-audit cargo-machete --locked
     cd frontend && npm install
     @echo "Optional security tools (CI also runs these): brew install gitleaks semgrep trivy"
 
@@ -48,6 +48,14 @@ secret-scan:
 security-scan:
     semgrep --config=p/default --error
     trivy fs --scanners vuln,secret,misconfig --severity HIGH,CRITICAL .
+
+# Audit Rust dependencies for known vulnerabilities (requires cargo-audit)
+backend-audit:
+    cd backend && cargo audit
+
+# Find unused Rust dependencies (requires cargo-machete)
+backend-machete:
+    cd backend && cargo machete
 
 # Format everything (mutating)
 fmt:
