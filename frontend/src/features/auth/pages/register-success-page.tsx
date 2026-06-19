@@ -1,15 +1,21 @@
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router-dom";
+import { z } from "zod";
 import { routePaths } from "@/core/routing/route-paths";
 
-interface LocationState {
-  user?: { name: string; email: string };
-}
+const locationStateSchema = z.object({
+  user: z
+    .object({
+      name: z.string(),
+      email: z.string(),
+    })
+    .optional(),
+});
 
 export default function RegisterSuccessPage() {
   const { t } = useTranslation(["auth", "common"]);
   const location = useLocation();
-  const state = location.state as LocationState | undefined;
+  const state = locationStateSchema.safeParse(location.state).data;
 
   return (
     <div className="mx-auto max-w-md p-6">
