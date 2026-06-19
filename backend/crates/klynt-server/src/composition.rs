@@ -4,11 +4,10 @@ use axum::Router;
 use klynt_api::startup::build_router;
 use klynt_api::state::AppState;
 use klynt_application::auth::AuthService;
-use klynt_application::request_gate::UserRequestGate;
 use klynt_application::users::UserService;
 use klynt_domain::config::AppConfig;
 use klynt_domain::models::UserDto;
-use klynt_domain::ports::{HealthCheck, PasswordHasher};
+use klynt_domain::ports::{HealthCheck, IdempotencyStore, PasswordHasher};
 use klynt_domain::session::SessionStore;
 use klynt_infrastructure::password_hasher::Argon2PasswordHasher;
 use klynt_infrastructure::rate_limiter::RateLimiter as InMemoryRateLimiter;
@@ -26,8 +25,8 @@ pub fn build_app(config: AppConfig) -> Router {
     let user_repo = InMemoryUserRepository::new();
     let idempotency_store: Arc<InMemoryIdempotencyStore<UserDto>> =
         Arc::new(InMemoryIdempotencyStore::new());
-    let idempotency_store_port: Arc<dyn klynt_domain::ports::IdempotencyStore<UserDto>> =
-        Arc::clone(&idempotency_store) as Arc<dyn klynt_domain::ports::IdempotencyStore<UserDto>>;
+    let idempotency_store_port: Arc<dyn IdempotencyStore<UserDto>> =
+        Arc::clone(&idempotency_store) as Arc<dyn IdempotencyStore<UserDto>>;
     let session_store = Arc::new(InMemorySessionStore::new());
     let session_store_port: Arc<dyn SessionStore> =
         Arc::clone(&session_store) as Arc<dyn SessionStore>;
@@ -43,11 +42,10 @@ pub fn build_app(config: AppConfig) -> Router {
     let password_hasher: Arc<dyn PasswordHasher> = Arc::new(Argon2PasswordHasher::new());
     let uow: Arc<InMemoryUnitOfWork> = Arc::new(InMemoryUnitOfWork::new(user_repo.clone()));
     let uow_health: Arc<dyn HealthCheck> = Arc::clone(&uow) as Arc<dyn HealthCheck>;
-    let user_service = Arc::new(UserService::new(uow, password_hasher));
-
-    let request_gate = Arc::new(UserRequestGate::new(
+    let user_service = Arc::new(UserService::new(
+        uow,
+        password_hasher,
         Arc::clone(&idempotency_store_port),
-        Arc::clone(&user_service),
     ));
 
     let auth_service = Arc::new(AuthService::new(
@@ -66,7 +64,6 @@ pub fn build_app(config: AppConfig) -> Router {
     let state = Arc::new(AppState::new(
         config,
         user_service,
-        request_gate,
         auth_service,
         session_store_port,
         rate_limiter_port,

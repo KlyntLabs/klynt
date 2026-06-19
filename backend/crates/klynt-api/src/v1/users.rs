@@ -10,6 +10,7 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use klynt_application::users::CreateUserRequest;
+use klynt_domain::ctx::Ctx;
 use klynt_domain::models::UserDto;
 
 use crate::error::{AppError, AppErrorKind, WithRequestId};
@@ -49,8 +50,8 @@ pub async fn create_user(
 ) -> Result<impl IntoResponse, AppError> {
     let idempotency_key = parse_idempotency_key(&headers, request_id.0)?;
     let user_dto = state
-        .request_gate
-        .create_user(request_id.0, idempotency_key, req.into())
+        .user_service
+        .create_user(&Ctx::guest(request_id.0), idempotency_key, req.into())
         .await
         .with_request_id(request_id.0)?;
 
