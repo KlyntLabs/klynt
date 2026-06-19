@@ -23,7 +23,7 @@ This design extends the NeoBrutalism design system already in `frontend/src/core
   - Space Grotesk typography.
 - **Layout (approved mockup):**
   - Plain light-grey desktop background (`--color-secondary` / `#f3f3f3`).
-  - Small, macOS-like yellow OS top menu bar with the Klynt logo icon, active window filename, language switcher, and clock.
+  - Small, macOS-like yellow OS top menu bar with the Klynt logo icon, active window filename, language switcher (flag icons), and clock.
   - Vertical icon dock on the left with borderless icons and labels.
   - Centered hero “browser” window with title-bar dots and filename.
   - No separate global header — the OS top bar is the only chrome on the homepage.
