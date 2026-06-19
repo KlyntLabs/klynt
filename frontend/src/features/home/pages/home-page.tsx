@@ -18,7 +18,7 @@ export default function HomePage() {
         <Link
           to={routePaths.register}
           data-testid="hero-cta"
-          className={cn(buttonVariants({ size: "lg" }), focusRing)}
+          className={cn(buttonVariants(), focusRing)}
         >
           {t("hero.cta")}
         </Link>

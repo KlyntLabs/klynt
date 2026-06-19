@@ -9,6 +9,7 @@
       "dashboard": "Dashboard"
     },
     "nav": {
+      "placeholder": "Coming soon",
       "docs": "Docs",
       "community": "Community",
       "courses": "Courses",
