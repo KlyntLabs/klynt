@@ -6,8 +6,12 @@ import { Spinner } from "@/core/ui/spinner";
 import { routePaths } from "./route-paths";
 
 const HomePage = lazy(() => import("./home-page"));
-const RegisterPage = lazy(() => import("@/features/auth/pages/register-page"));
-const RegisterSuccessPage = lazy(() => import("@/features/auth/pages/register-success-page"));
+const RegisterPage = lazy(() =>
+  import("@/features/auth").then((module) => ({ default: module.RegisterPage }))
+);
+const RegisterSuccessPage = lazy(() =>
+  import("@/features/auth").then((module) => ({ default: module.RegisterSuccessPage }))
+);
 const DashboardPage = lazy(() => import("@/features/dashboard/pages/dashboard-page"));
 const AdminPage = lazy(() => import("@/features/admin/pages/admin-page"));
 const NotFoundPage = lazy(() => import("./not-found-page"));
