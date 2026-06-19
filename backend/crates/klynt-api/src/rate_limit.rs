@@ -29,7 +29,7 @@ pub async fn rate_limit(
     let allowed = request
         .extensions()
         .get::<ConnectInfo<SocketAddr>>()
-        .map(|ConnectInfo(addr)| state.rate_limiter.is_allowed(addr.ip()))
+        .map(|ConnectInfo(addr)| state.rate_limiter().is_allowed(addr.ip()))
         .unwrap_or(true);
 
     if !allowed {

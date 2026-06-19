@@ -25,7 +25,7 @@ const ALLOWED_HEADERS: [HeaderName; 4] = [
 
 pub fn build_router(state: Arc<AppState>) -> Router {
     let origins: Vec<HeaderValue> = state
-        .config
+        .config()
         .api
         .allowed_origins
         .iter()

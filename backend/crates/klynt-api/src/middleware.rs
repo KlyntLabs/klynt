@@ -78,7 +78,7 @@ pub async fn ctx_resolve(
         .get::<RequestId>()
         .map(|r| r.0)
         .unwrap_or_else(Uuid::new_v4);
-    let ctx = resolve_ctx(&*state.session_store, request_id, req.headers()).await;
+    let ctx = resolve_ctx(state.session_store(), request_id, req.headers()).await;
     req.extensions_mut().insert(ctx);
     next.run(req).await
 }

@@ -20,23 +20,20 @@ pub async fn liveness() -> impl IntoResponse {
 }
 
 pub async fn readiness(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    for check in &state.health_checks {
-        if check.check().await.is_err() {
-            return (
-                StatusCode::SERVICE_UNAVAILABLE,
-                Json(HealthStatus {
-                    status: "not_ready".to_string(),
-                    version: env!("CARGO_PKG_VERSION").to_string(),
-                }),
-            );
-        }
+    match state.check_health().await {
+        Ok(()) => (
+            StatusCode::OK,
+            Json(HealthStatus {
+                status: "ok".to_string(),
+                version: env!("CARGO_PKG_VERSION").to_string(),
+            }),
+        ),
+        Err(_) => (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(HealthStatus {
+                status: "not_ready".to_string(),
+                version: env!("CARGO_PKG_VERSION").to_string(),
+            }),
+        ),
     }
-
-    (
-        StatusCode::OK,
-        Json(HealthStatus {
-            status: "ok".to_string(),
-            version: env!("CARGO_PKG_VERSION").to_string(),
-        }),
-    )
 }
