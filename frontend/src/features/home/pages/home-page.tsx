@@ -1,13 +1,13 @@
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { routePaths } from "@/core/routing/route-paths";
-import { Button } from "@/core/ui/button";
+import { buttonVariants } from "@/core/ui/button";
+import { cn, focusRing } from "@/lib/utils";
 import { OsDesktop } from "../components/os-desktop";
 import { OsWindow } from "../components/os-window";
 
 export default function HomePage() {
   const { t } = useTranslation("home");
-  const navigate = useNavigate();
 
   return (
     <OsDesktop windowTitle={t("topBar.windowTitle")}>
@@ -15,9 +15,13 @@ export default function HomePage() {
         <h1 className="mb-2 text-4xl font-extrabold text-card-foreground">{t("hero.title")}</h1>
         <p className="mb-2 text-lg font-bold text-card-foreground">{t("hero.subtitle")}</p>
         <p className="mb-6 text-card-foreground">{t("hero.body")}</p>
-        <Button onClick={() => navigate(routePaths.register)} size="lg">
+        <Link
+          to={routePaths.register}
+          data-testid="hero-cta"
+          className={cn(buttonVariants({ size: "lg" }), focusRing)}
+        >
           {t("hero.cta")}
-        </Button>
+        </Link>
       </OsWindow>
     </OsDesktop>
   );

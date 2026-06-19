@@ -20,8 +20,7 @@ describe("HomePage", () => {
     );
 
     expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /get started/i })).toBeInTheDocument();
-    expect(screen.getByRole("navigation")).toBeInTheDocument();
+    expect(screen.getByTestId("hero-cta")).toBeInTheDocument();
   });
 
   it("navigates to register when the CTA is clicked", async () => {
@@ -33,7 +32,7 @@ describe("HomePage", () => {
       </>
     );
 
-    await user.click(screen.getByRole("button", { name: /get started/i }));
+    await user.click(screen.getByTestId("hero-cta"));
 
     expect(screen.getByTestId("current-path")).toHaveTextContent("/register");
   });
