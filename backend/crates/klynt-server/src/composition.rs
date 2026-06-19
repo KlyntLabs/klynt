@@ -8,9 +8,8 @@ use klynt_application::request_gate::UserRequestGate;
 use klynt_application::users::UserService;
 use klynt_domain::config::AppConfig;
 use klynt_domain::models::UserDto;
-use klynt_domain::ports::{HealthCheck, IdempotencyStore, PasswordHasher, RateLimiter};
+use klynt_domain::ports::{HealthCheck, PasswordHasher};
 use klynt_domain::session::SessionStore;
-use klynt_domain::unit_of_work::UnitOfWork;
 use klynt_infrastructure::password_hasher::Argon2PasswordHasher;
 use klynt_infrastructure::rate_limiter::RateLimiter as InMemoryRateLimiter;
 use klynt_infrastructure::repositories::idempotency::InMemoryIdempotencyStore;
@@ -25,22 +24,29 @@ use klynt_infrastructure::unit_of_work::InMemoryUnitOfWork;
 /// easy to bootstrap for both production and integration tests.
 pub fn build_app(config: AppConfig) -> Router {
     let user_repo = InMemoryUserRepository::new();
-    let idempotency_store: Arc<dyn IdempotencyStore<UserDto>> =
+    let idempotency_store: Arc<InMemoryIdempotencyStore<UserDto>> =
         Arc::new(InMemoryIdempotencyStore::new());
+    let idempotency_store_port: Arc<dyn klynt_domain::ports::IdempotencyStore<UserDto>> =
+        Arc::clone(&idempotency_store) as Arc<dyn klynt_domain::ports::IdempotencyStore<UserDto>>;
     let session_store = Arc::new(InMemorySessionStore::new());
     let session_store_port: Arc<dyn SessionStore> =
         Arc::clone(&session_store) as Arc<dyn SessionStore>;
     let session_store_health: Arc<dyn HealthCheck> =
         Arc::clone(&session_store) as Arc<dyn HealthCheck>;
-    let rate_limiter: Arc<dyn RateLimiter> =
+    let rate_limiter: Arc<InMemoryRateLimiter> =
         Arc::new(InMemoryRateLimiter::new(config.rate_limiter.clone()));
+    let rate_limiter_port: Arc<dyn klynt_domain::ports::RateLimiter> =
+        Arc::clone(&rate_limiter) as Arc<dyn klynt_domain::ports::RateLimiter>;
+    let rate_limiter_health: Arc<dyn HealthCheck> =
+        Arc::clone(&rate_limiter) as Arc<dyn HealthCheck>;
 
     let password_hasher: Arc<dyn PasswordHasher> = Arc::new(Argon2PasswordHasher::new());
-    let uow: Arc<dyn UnitOfWork> = Arc::new(InMemoryUnitOfWork::new(user_repo.clone()));
+    let uow: Arc<InMemoryUnitOfWork> = Arc::new(InMemoryUnitOfWork::new(user_repo.clone()));
+    let uow_health: Arc<dyn HealthCheck> = Arc::clone(&uow) as Arc<dyn HealthCheck>;
     let user_service = Arc::new(UserService::new(uow, password_hasher));
 
     let request_gate = Arc::new(UserRequestGate::new(
-        Arc::clone(&idempotency_store),
+        Arc::clone(&idempotency_store_port),
         Arc::clone(&user_service),
     ));
 
@@ -51,10 +57,10 @@ pub fn build_app(config: AppConfig) -> Router {
 
     let health_checks: Vec<Arc<dyn HealthCheck>> = vec![
         Arc::new(user_repo.clone()),
-        Arc::new(InMemoryIdempotencyStore::<UserDto>::new()),
+        Arc::clone(&idempotency_store) as Arc<dyn HealthCheck>,
         session_store_health,
-        Arc::new(InMemoryUnitOfWork::new(user_repo)),
-        Arc::new(InMemoryRateLimiter::disabled()),
+        uow_health,
+        rate_limiter_health,
     ];
 
     let state = Arc::new(AppState::new(
@@ -63,7 +69,7 @@ pub fn build_app(config: AppConfig) -> Router {
         request_gate,
         auth_service,
         session_store_port,
-        rate_limiter,
+        rate_limiter_port,
         health_checks,
     ));
 
