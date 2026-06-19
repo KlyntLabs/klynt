@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { type UseMutationResult, useMutation } from "@tanstack/react-query";
 import { useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { generateIdempotencyKey } from "@/core/api/api-client";
@@ -8,16 +8,7 @@ import { routePaths } from "@/core/routing/route-paths";
 import { registerUser } from "@/features/auth/api/register";
 import type { RegisterInput, RegisterResponse } from "@/features/auth/api/types";
 
-export interface UseRegisterResult {
-  isPending: boolean;
-  isIdle: boolean;
-  isSuccess: boolean;
-  isError: boolean;
-  error: Error | null;
-  mutateAsync: (input: RegisterInput) => Promise<RegisterResponse>;
-}
-
-export function useRegister(): UseRegisterResult {
+export function useRegister(): UseMutationResult<RegisterResponse, Error, RegisterInput, unknown> {
   const navigate = useNavigate();
   const addToast = useToastStore((state) => state.addToast);
   const idempotencyKeyRef = useRef<string>(generateIdempotencyKey());
@@ -44,19 +35,11 @@ export function useRegister(): UseRegisterResult {
 
   const mutateAsync = useCallback(
     async (input: RegisterInput) => {
-      // A fresh user intent gets a fresh key; TanStack Query retries reuse this key.
       idempotencyKeyRef.current = generateIdempotencyKey();
       return mutation.mutateAsync(input);
     },
     [mutation]
   );
 
-  return {
-    isPending: mutation.isPending,
-    isIdle: mutation.isIdle,
-    isSuccess: mutation.isSuccess,
-    isError: mutation.isError,
-    error: mutation.error,
-    mutateAsync,
-  };
+  return { ...mutation, mutateAsync };
 }
