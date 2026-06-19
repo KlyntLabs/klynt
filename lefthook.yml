@@ -77,7 +77,7 @@ pre-push:
           echo "⏭️  backend-test skipped (no backend changes)"
           exit 0
         fi
-        cd backend && cargo llvm-cov --workspace --all-features --no-clean --fail-under-lines 84
+        cd backend && cargo nextest run --all-features
     backend-audit:
       glob: "**/*.rs"
       run: |

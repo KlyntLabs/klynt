@@ -142,7 +142,7 @@ Cargo workspace with dependency direction enforced by the compiler:
 ### Pre-push (Lefthook, skips unchanged directories)
 
 - Frontend typecheck, tests with coverage, production build
-- Backend format check, Clippy, tests with coverage
+- Backend format check, Clippy, tests with nextest
 
 ### CI (`ci.yml`)
 
