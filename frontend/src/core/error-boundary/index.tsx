@@ -1,6 +1,7 @@
 import { ErrorBoundary as ReactErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
 import { logger } from "@/core/logger";
+import { Button } from "@/core/ui/button";
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -20,13 +21,9 @@ function Fallback({
     <div className="p-6" role="alert">
       <h2 className="text-lg font-semibold">{t("boundary.title")}</h2>
       <pre className="mt-2 text-sm text-destructive">{message}</pre>
-      <button
-        type="button"
-        onClick={resetErrorBoundary}
-        className="mt-4 rounded bg-primary px-4 py-2 text-primary-foreground"
-      >
+      <Button onClick={resetErrorBoundary} className="mt-4">
         {t("boundary.tryAgain")}
-      </button>
+      </Button>
     </div>
   );
 }
