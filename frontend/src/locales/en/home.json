@@ -1,7 +1,24 @@
 {
   "topBar": {
     "startLabel": "Klynt",
-    "windowTitle": "klynt-browser.mdx"
+    "windowTitle": "klynt-browser.mdx",
+    "menu": {
+      "about": "About Klynt",
+      "docs": "Docs",
+      "register": "Register",
+      "dashboard": "Dashboard"
+    },
+    "nav": {
+      "docs": "Docs",
+      "community": "Community",
+      "courses": "Courses",
+      "teachers": "Teachers"
+    },
+    "actions": {
+      "getStarted": "Get started",
+      "user": "User",
+      "chat": "Chat"
+    }
   },
   "hero": {
     "title": "Klynt",

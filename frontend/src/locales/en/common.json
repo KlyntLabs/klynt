@@ -19,5 +19,9 @@
     "en": "English",
     "vi": "Tiếng Việt",
     "cn": "中文"
+  },
+  "comingSoon": {
+    "title": "Coming soon",
+    "back": "Back to home"
   }
 }

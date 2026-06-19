@@ -19,5 +19,9 @@
     "en": "English",
     "vi": "Tiếng Việt",
     "cn": "中文"
+  },
+  "comingSoon": {
+    "title": "Sắp ra mắt",
+    "back": "Quay lại trang chủ"
   }
 }

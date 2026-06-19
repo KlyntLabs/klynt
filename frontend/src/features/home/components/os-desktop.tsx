@@ -4,16 +4,15 @@ import { OsIcon } from "./os-icon";
 import { OsTopBar } from "./os-top-bar";
 
 interface OsDesktopProps {
-  windowTitle: string;
   children: React.ReactNode;
 }
 
-export function OsDesktop({ windowTitle, children }: OsDesktopProps) {
+export function OsDesktop({ children }: OsDesktopProps) {
   const { t } = useTranslation("home");
 
   return (
     <div className="flex min-h-full flex-1 flex-col bg-secondary">
-      <OsTopBar windowTitle={windowTitle} />
+      <OsTopBar />
       <div className="relative flex flex-1">
         <nav
           aria-label={t("desktop.navLabel")}

@@ -1,7 +1,24 @@
 {
   "topBar": {
     "startLabel": "Klynt",
-    "windowTitle": "klynt-browser.mdx"
+    "windowTitle": "klynt-browser.mdx",
+    "menu": {
+      "about": "关于 Klynt",
+      "docs": "文档",
+      "register": "注册",
+      "dashboard": "仪表板"
+    },
+    "nav": {
+      "docs": "文档",
+      "community": "社区",
+      "courses": "课程",
+      "teachers": "教师"
+    },
+    "actions": {
+      "getStarted": "开始",
+      "user": "用户",
+      "chat": "聊天"
+    }
   },
   "hero": {
     "title": "Klynt",

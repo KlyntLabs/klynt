@@ -1,15 +1,15 @@
 import { screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { routePaths } from "@/core/routing/route-paths";
 import { render } from "@/test/render";
 import { OsTopBar } from "./os-top-bar";
 
 describe("OsTopBar", () => {
-  it("renders the logo link and window title", () => {
-    render(<OsTopBar windowTitle="klynt-browser.mdx" />);
+  it("renders the logo menu and nav links", () => {
+    render(<OsTopBar />);
 
-    expect(screen.getByRole("link", { name: "Klynt" })).toHaveAttribute("href", routePaths.home);
-    expect(screen.getByText("klynt-browser.mdx")).toBeInTheDocument();
-    expect(screen.getByText(/\d{1,2}:\d{2}/u)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Klynt" })).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "Docs" }).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole("link", { name: "Get started" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Chat" })).toBeInTheDocument();
   });
 });

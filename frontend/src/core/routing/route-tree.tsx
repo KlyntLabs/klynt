@@ -14,6 +14,7 @@ const RegisterSuccessPage = lazy(() =>
 );
 const DashboardPage = lazy(() => import("@/features/dashboard/pages/dashboard-page"));
 const AdminPage = lazy(() => import("@/features/admin/pages/admin-page"));
+const PlaceholderPage = lazy(() => import("@/features/marketing/pages/placeholder-page"));
 const NotFoundPage = lazy(() => import("./not-found-page"));
 
 function GuestLayout() {
@@ -70,6 +71,10 @@ export const router = createBrowserRouter([
         element: <AdminLayout />,
         children: [{ path: routePaths.admin, element: <AdminPage /> }],
       },
+      { path: routePaths.docs, element: <PlaceholderPage /> },
+      { path: routePaths.community, element: <PlaceholderPage /> },
+      { path: routePaths.courses, element: <PlaceholderPage /> },
+      { path: routePaths.teachers, element: <PlaceholderPage /> },
       { path: "*", element: <NotFoundPage /> },
     ],
   },

@@ -10,7 +10,7 @@ export default function HomePage() {
   const { t } = useTranslation("home");
 
   return (
-    <OsDesktop windowTitle={t("topBar.windowTitle")}>
+    <OsDesktop>
       <OsWindow title={t("topBar.windowTitle")} className="w-full max-w-2xl">
         <h1 className="mb-2 text-4xl font-extrabold text-card-foreground">{t("hero.title")}</h1>
         <p className="mb-2 text-lg font-bold text-card-foreground">{t("hero.subtitle")}</p>

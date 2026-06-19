@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { render } from "@/test/render";
 import { OsDesktop } from "./os-desktop";
@@ -6,13 +6,14 @@ import { OsDesktop } from "./os-desktop";
 describe("OsDesktop", () => {
   it("renders the top bar, desktop icons, and content", () => {
     render(
-      <OsDesktop windowTitle="klynt-browser.mdx">
+      <OsDesktop>
         <p>Hero content</p>
       </OsDesktop>
     );
 
-    expect(screen.getByRole("navigation")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Register" })).toBeInTheDocument();
+    const desktopNav = screen.getByRole("navigation", { name: "Desktop apps" });
+    expect(desktopNav).toBeInTheDocument();
+    expect(within(desktopNav).getByRole("link", { name: "Register" })).toBeInTheDocument();
     expect(screen.getByText("Hero content")).toBeInTheDocument();
   });
 });

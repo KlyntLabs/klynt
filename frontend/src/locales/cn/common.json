@@ -19,5 +19,9 @@
     "en": "English",
     "vi": "Tiếng Việt",
     "cn": "中文"
+  },
+  "comingSoon": {
+    "title": "即将推出",
+    "back": "返回首页"
   }
 }
