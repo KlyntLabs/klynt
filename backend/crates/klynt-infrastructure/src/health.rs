@@ -13,9 +13,11 @@ use crate::unit_of_work::InMemoryUnitOfWork;
 impl HealthCheck for InMemoryUserRepository {
     async fn check(&self) -> Result<(), DomainError> {
         // Acquiring the lock verifies the store is not poisoned.
-        drop(self.users.lock().map_err(|_| {
-            DomainError::Internal(anyhow::anyhow!("user repository lock is poisoned"))
-        })?);
+        drop(
+            self.users
+                .lock()
+                .map_err(|_| DomainError::internal_msg("user repository lock is poisoned"))?,
+        );
         Ok(())
     }
 }
@@ -26,9 +28,11 @@ where
     T: Clone + Send + Sync + 'static,
 {
     async fn check(&self) -> Result<(), DomainError> {
-        drop(self.cache.lock().map_err(|_| {
-            DomainError::Internal(anyhow::anyhow!("idempotency cache lock is poisoned"))
-        })?);
+        drop(
+            self.cache
+                .lock()
+                .map_err(|_| DomainError::internal_msg("idempotency cache lock is poisoned"))?,
+        );
         Ok(())
     }
 }
@@ -36,9 +40,11 @@ where
 #[async_trait]
 impl HealthCheck for InMemorySessionStore {
     async fn check(&self) -> Result<(), DomainError> {
-        drop(self.sessions.lock().map_err(|_| {
-            DomainError::Internal(anyhow::anyhow!("session store lock is poisoned"))
-        })?);
+        drop(
+            self.sessions
+                .lock()
+                .map_err(|_| DomainError::internal_msg("session store lock is poisoned"))?,
+        );
         Ok(())
     }
 }
@@ -46,9 +52,11 @@ impl HealthCheck for InMemorySessionStore {
 #[async_trait]
 impl HealthCheck for InMemoryUnitOfWork {
     async fn check(&self) -> Result<(), DomainError> {
-        drop(self.users.lock().map_err(|_| {
-            DomainError::Internal(anyhow::anyhow!("unit of work lock is poisoned"))
-        })?);
+        drop(
+            self.users
+                .lock()
+                .map_err(|_| DomainError::internal_msg("unit of work lock is poisoned"))?,
+        );
         Ok(())
     }
 }
@@ -56,9 +64,11 @@ impl HealthCheck for InMemoryUnitOfWork {
 #[async_trait]
 impl HealthCheck for RateLimiter {
     async fn check(&self) -> Result<(), DomainError> {
-        drop(self.buckets.lock().map_err(|_| {
-            DomainError::Internal(anyhow::anyhow!("rate limiter lock is poisoned"))
-        })?);
+        drop(
+            self.buckets
+                .lock()
+                .map_err(|_| DomainError::internal_msg("rate limiter lock is poisoned"))?,
+        );
         Ok(())
     }
 }

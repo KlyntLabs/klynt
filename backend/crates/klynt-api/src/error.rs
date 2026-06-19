@@ -48,7 +48,7 @@ pub enum AppErrorKind {
     #[error("unprocessable entity: {0}")]
     Validation(String),
     #[error("internal server error")]
-    Internal(#[from] anyhow::Error),
+    Internal(Box<dyn std::error::Error + Send + Sync>),
 }
 
 impl From<DomainError> for AppErrorKind {
@@ -216,7 +216,7 @@ mod conversion_tests {
 
     #[test]
     fn internal_error_becomes_500_and_sanitizes_message() {
-        let app_err = AppError::from(DomainError::Internal(anyhow::anyhow!("secrets")));
+        let app_err = AppError::from(DomainError::internal_msg("secrets"));
         match app_err.kind {
             kind @ AppErrorKind::Internal(_) => {
                 assert_eq!(

@@ -65,10 +65,32 @@ pub enum DomainError {
     #[error("authentication required")]
     AuthenticationRequired,
     #[error("internal domain error")]
-    Internal(#[from] anyhow::Error),
+    Internal(Box<dyn std::error::Error + Send + Sync>),
 }
 
+#[derive(Debug)]
+struct InternalError(String);
+
+impl std::fmt::Display for InternalError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl std::error::Error for InternalError {}
+
 impl DomainError {
+    pub fn internal<E>(error: E) -> Self
+    where
+        E: std::error::Error + Send + Sync + 'static,
+    {
+        Self::Internal(Box::new(error))
+    }
+
+    pub fn internal_msg<S: Into<String>>(message: S) -> Self {
+        Self::Internal(Box::new(InternalError(message.into())))
+    }
+
     pub fn kind(&self) -> ErrorKind {
         match self {
             DomainError::NotFound => ErrorKind::NotFound,
@@ -156,8 +178,15 @@ mod classification_tests {
     }
 
     #[test]
+    fn internal_can_be_constructed_from_string() {
+        let err = DomainError::internal_msg("something went wrong");
+        assert_eq!(err.kind(), ErrorKind::Internal);
+        assert!(err.to_string().contains("internal domain error"));
+    }
+
+    #[test]
     fn internal_maps_to_internal() {
-        let err = DomainError::Internal(anyhow::anyhow!("boom"));
+        let err = DomainError::internal_msg("boom");
         assert_eq!(err.kind(), ErrorKind::Internal);
     }
 

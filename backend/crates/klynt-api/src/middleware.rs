@@ -60,7 +60,7 @@ impl<S: Send + Sync> FromRequestParts<S> for CtxW {
             .get::<Ctx>()
             .copied()
             .map(CtxW)
-            .ok_or_else(|| AppError::from(DomainError::Internal(anyhow::anyhow!("Ctx missing"))))
+            .ok_or_else(|| AppError::from(DomainError::internal_msg("Ctx missing")))
     }
 }
 

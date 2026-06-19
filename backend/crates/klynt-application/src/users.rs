@@ -58,8 +58,8 @@ impl UserService {
             return Err(DomainError::InstitutionRequired(role));
         }
 
-        let password_hash = hash_password(&req.password)
-            .map_err(|e| DomainError::Internal(anyhow::anyhow!("{e}")))?;
+        let password_hash =
+            hash_password(&req.password).map_err(|e| DomainError::internal_msg(e.to_string()))?;
 
         let user = User {
             id: UserId::new(),
