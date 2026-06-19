@@ -35,3 +35,6 @@ backend/config/local.toml
 
 *storybook.log
 storybook-static
+
+# Brainstorming mockups
+.superpowers/
