@@ -9,7 +9,7 @@ This design extends the NeoBrutalism design system already in `frontend/src/core
 ## Goals
 
 - Give Klynt a memorable, on-brand first impression.
-- Surface the most important navigation paths (Register, Docs, Dashboard) as desktop apps.
+- Surface the most important navigation paths (Register, Dashboard) as desktop apps.
 - Keep the implementation small, testable, and accessible.
 - Avoid scope creep: no drag/resize/minimize for v1.
 
@@ -49,7 +49,7 @@ Design-system primitives reused:
 
 ## Routing
 
-`core/routing/route-tree.tsx` keeps its lazy import of `HomePage`, but `home-page.tsx` will live under `features/home/pages/`.
+`core/routing/route-tree.tsx` updates its lazy import of `HomePage` to point to `features/home/pages/home-page.tsx`.
 
 No new route paths are introduced.
 
@@ -67,7 +67,6 @@ Keys (mirrored across `en`, `vi`, `cn`):
 - `hero.cta`
 - `desktop.apps.home.label`
 - `desktop.apps.register.label`
-- `desktop.apps.docs.label`
 - `desktop.apps.dashboard.label`
 
 The clock in the top bar uses `Intl.DateTimeFormat` with the user’s locale — no backend dependency.
@@ -115,3 +114,4 @@ The clock in the top bar uses `Intl.DateTimeFormat` with the user’s locale —
 
 - Should the mobile icon dock remain visible or collapse into the “Klynt” start menu? Decision: keep visible as a compact horizontal row for v1.
 - Should we add a second feature window below the hero? Decision: defer to a later polish pass.
+- Should there be a Docs desktop app? Decision: defer until a docs route/page exists; v1 uses Home, Register, and Dashboard.
