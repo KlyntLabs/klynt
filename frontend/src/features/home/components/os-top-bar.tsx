@@ -39,7 +39,7 @@ export function OsTopBar({ windowTitle }: OsTopBarProps) {
         {t("topBar.startLabel")}
       </Link>
       <span className="flex-1 truncate text-center text-sm font-bold">{windowTitle}</span>
-      <span aria-live="polite" className="text-xs font-bold">
+      <span aria-live="off" className="text-xs font-bold">
         {time}
       </span>
     </div>

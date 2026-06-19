@@ -8,7 +8,12 @@ interface OsWindowProps {
 }
 
 function WindowDot() {
-  return <span className="h-3.5 w-3.5 rounded-full border-2 border-border bg-background" />;
+  return (
+    <span
+      aria-hidden="true"
+      className="h-3.5 w-3.5 rounded-full border-2 border-border bg-background"
+    />
+  );
 }
 
 export function OsWindow({ title, children, className }: OsWindowProps) {
