@@ -12,7 +12,7 @@ export function Spinner({ className }: SpinnerProps) {
     <output
       aria-label={t("spinnerLabel")}
       className={cn(
-        "inline-block h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent",
+        "inline-block h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent text-foreground",
         className
       )}
     >

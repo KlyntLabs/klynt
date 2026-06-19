@@ -26,7 +26,7 @@ export function Avatar({ src, alt, fallback, size = "md", className }: AvatarPro
   return (
     <div
       className={cn(
-        "relative inline-flex items-center justify-center overflow-hidden rounded-full bg-muted font-medium text-muted-foreground",
+        "relative inline-flex items-center justify-center overflow-hidden rounded-full border-2 border-border bg-muted font-bold text-muted-foreground",
         sizeClasses[size],
         className
       )}

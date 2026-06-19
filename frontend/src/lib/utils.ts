@@ -15,3 +15,10 @@ export const focusRing =
 
 /** Shared disabled state for interactive components. */
 export const disabledStyles = "disabled:pointer-events-none disabled:opacity-50";
+
+/** Hard offset shadow used by NeoBrutalist components. */
+export const hardShadow = "shadow-hard border-2 border-border";
+
+/** Active/pressed offset transform for hard-shadow components. */
+export const hardShadowActive =
+  "active:translate-x-[2px] active:translate-y-[2px] active:shadow-none";

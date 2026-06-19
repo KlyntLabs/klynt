@@ -15,12 +15,12 @@ export function QueryError({ title, message, onRetry, className }: QueryErrorPro
   return (
     <div
       className={cn(
-        "rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-destructive-foreground",
+        "rounded-lg border-2 border-destructive bg-card p-4 text-card-foreground shadow-hard",
         className
       )}
     >
-      <h3 className="font-semibold">{title ?? t("queryError.title")}</h3>
-      <p className="mt-1 text-sm opacity-90">{message ?? t("queryError.message")}</p>
+      <h3 className="font-bold text-destructive">{title ?? t("queryError.title")}</h3>
+      <p className="mt-1 text-sm text-muted-foreground">{message ?? t("queryError.message")}</p>
       {onRetry && (
         <Button variant="secondary" size="sm" className="mt-3" onClick={onRetry}>
           {t("queryError.retry")}

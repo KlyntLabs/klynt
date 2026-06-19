@@ -1,44 +1,48 @@
 @import "tailwindcss";
 
 @theme {
-  /* Semantic color tokens using OKLCH for better color perception */
-  --color-background: oklch(100% 0 0);
-  --color-foreground: oklch(14.5% 0.025 264);
+  /* NeoBrutalist color tokens */
+  --color-background: #ffffff;
+  --color-foreground: #000000;
 
-  --color-primary: oklch(14.5% 0.025 264);
-  --color-primary-foreground: oklch(98% 0.01 264);
+  --color-primary: #ffdc5f;
+  --color-primary-foreground: #000000;
 
-  --color-secondary: oklch(96% 0.01 264);
-  --color-secondary-foreground: oklch(14.5% 0.025 264);
+  --color-secondary: #f3f3f3;
+  --color-secondary-foreground: #000000;
 
-  --color-muted: oklch(96% 0.01 264);
-  --color-muted-foreground: oklch(46% 0.02 264);
+  --color-muted: #f3f3f3;
+  --color-muted-foreground: #6b7280;
 
-  --color-accent: oklch(96% 0.01 264);
-  --color-accent-foreground: oklch(14.5% 0.025 264);
+  --color-accent: #ff90e8;
+  --color-accent-foreground: #000000;
 
-  --color-destructive: oklch(53% 0.22 27);
-  --color-destructive-foreground: oklch(98% 0.01 264);
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
 
-  --color-success: oklch(62% 0.17 145);
-  --color-success-foreground: oklch(98% 0.01 145);
+  --color-success: #22c55e;
+  --color-success-foreground: #000000;
 
-  --color-warning: oklch(78% 0.16 85);
-  --color-warning-foreground: oklch(20% 0.05 85);
+  --color-warning: #f59e0b;
+  --color-warning-foreground: #000000;
 
-  --color-border: oklch(91% 0.01 264);
-  --color-ring: oklch(14.5% 0.025 264);
+  --color-border: #000000;
+  --color-ring: #000000;
+  --color-ring-offset: #ffffff;
 
-  --color-card: oklch(100% 0 0);
-  --color-card-foreground: oklch(14.5% 0.025 264);
-
-  --color-ring-offset: oklch(100% 0 0);
+  --color-card: #ffffff;
+  --color-card-foreground: #000000;
 
   /* Radius tokens */
   --radius-sm: 0.25rem;
   --radius-md: 0.375rem;
   --radius-lg: 0.5rem;
   --radius-xl: 0.75rem;
+
+  /* Hard shadow tokens */
+  --shadow-hard: 4px 4px 0 0 #000000;
+  --shadow-hard-sm: 2px 2px 0 0 #000000;
+  --shadow-hard-lg: 6px 6px 0 0 #000000;
 
   /* Animation tokens */
   --animate-fade-in: fade-in 0.2s ease-out;
@@ -86,37 +90,36 @@
 
 /* Dark mode theme overrides */
 .dark {
-  --color-background: oklch(14.5% 0.025 264);
-  --color-foreground: oklch(98% 0.01 264);
+  --color-background: #1a1a1a;
+  --color-foreground: #ffffff;
 
-  --color-primary: oklch(98% 0.01 264);
-  --color-primary-foreground: oklch(14.5% 0.025 264);
+  --color-primary: #ffdc5f;
+  --color-primary-foreground: #000000;
 
-  --color-secondary: oklch(22% 0.02 264);
-  --color-secondary-foreground: oklch(98% 0.01 264);
+  --color-secondary: #2a2a2a;
+  --color-secondary-foreground: #ffffff;
 
-  --color-muted: oklch(22% 0.02 264);
-  --color-muted-foreground: oklch(65% 0.02 264);
+  --color-muted: #2a2a2a;
+  --color-muted-foreground: #a1a1aa;
 
-  --color-accent: oklch(22% 0.02 264);
-  --color-accent-foreground: oklch(98% 0.01 264);
+  --color-accent: #ff90e8;
+  --color-accent-foreground: #000000;
 
-  --color-destructive: oklch(42% 0.15 27);
-  --color-destructive-foreground: oklch(98% 0.01 264);
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
 
-  --color-success: oklch(55% 0.15 145);
-  --color-success-foreground: oklch(98% 0.01 145);
+  --color-success: #22c55e;
+  --color-success-foreground: #000000;
 
-  --color-warning: oklch(65% 0.13 85);
-  --color-warning-foreground: oklch(98% 0.05 85);
+  --color-warning: #f59e0b;
+  --color-warning-foreground: #000000;
 
-  --color-border: oklch(22% 0.02 264);
-  --color-ring: oklch(83% 0.02 264);
+  --color-border: #ffffff;
+  --color-ring: #ffffff;
+  --color-ring-offset: #1a1a1a;
 
-  --color-card: oklch(14.5% 0.025 264);
-  --color-card-foreground: oklch(98% 0.01 264);
-
-  --color-ring-offset: oklch(14.5% 0.025 264);
+  --color-card: #1a1a1a;
+  --color-card-foreground: #ffffff;
 }
 
 /* Base styles */
@@ -131,7 +134,7 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    font-family: "Space Grotesk", system-ui, Avenir, Helvetica, Arial, sans-serif;
     font-display: swap;
     min-width: 320px;
     min-height: 100vh;
