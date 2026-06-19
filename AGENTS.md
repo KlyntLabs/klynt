@@ -95,7 +95,8 @@ Before changing code:
 
 ### UI Components
 
-- Reuse `frontend/src/components/ui/` primitives.
+- Reuse `frontend/src/components/ui/` primitives. These are shadcn/ui-style components migrated from `frontend-v2/` and adapted for Tailwind CSS v4.
+- The legacy `frontend/src/core/ui/` NeoBrutalist primitives and `frontend/src/features/home/` OS desktop have been removed; see `docs/adr/0001-frontend-v2-ui-migration.md`.
 - New UI must feel native to Klynt — browser-default styling is a signal that an existing primitive is missing.
 
 ## Architecture at a Glance

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { Spinner } from "@/core/ui/spinner";
+import { Spinner } from "@/components/ui/spinner";
 import { useAuthStore } from "./auth-store";
 import type { Role, User } from "./types";
 

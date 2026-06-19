@@ -1,4 +1,4 @@
-import { Label } from "@/core/ui/label";
+import { Label } from "@/components/ui/label";
 
 interface FormFieldProps {
   label: string;

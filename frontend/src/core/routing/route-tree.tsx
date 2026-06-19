@@ -1,11 +1,11 @@
 import { lazy, Suspense } from "react";
 import { createBrowserRouter, Outlet } from "react-router-dom";
 import { RootLayout } from "@/app/layout/root-layout";
+import { Spinner } from "@/components/ui/spinner";
 import { GuestRoute, ProtectedRoute, RoleGuard } from "@/core/auth";
-import { Spinner } from "@/core/ui/spinner";
 import { routePaths } from "./route-paths";
 
-const HomePage = lazy(() => import("@/features/home/pages/home-page"));
+const DesktopEnvironment = lazy(() => import("@/features/desktop/components/DesktopEnvironment"));
 const RegisterPage = lazy(() =>
   import("@/features/auth").then((module) => ({ default: module.RegisterPage }))
 );
@@ -54,7 +54,7 @@ export const router = createBrowserRouter([
     element: <RootLayout />,
     hydrateFallbackElement: <Spinner />,
     children: [
-      { index: true, element: <HomePage /> },
+      { index: true, element: <DesktopEnvironment /> },
       {
         element: <GuestLayout />,
         children: [

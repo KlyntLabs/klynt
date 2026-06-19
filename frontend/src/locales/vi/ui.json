@@ -10,10 +10,17 @@
   },
   "notFound": {
     "title": "Không tìm thấy trang",
+    "message": "Trang bạn đang tìm kiếm không tồn tại.",
     "goHome": "Về trang chủ"
   },
   "dashboard": {
     "title": "Bảng điều khiển",
-    "welcome": "Chào mừng trở lại."
+    "welcome": "Chào mừng trở lại.",
+    "placeholder": "Nội dung bảng điều khiển của bạn sẽ hiển thị tại đây."
+  },
+  "admin": {
+    "title": "Quản trị",
+    "description": "Tổng quan quản trị viên",
+    "placeholder": "Công cụ quản trị sẽ hiển thị tại đây."
   }
 }

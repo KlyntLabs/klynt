@@ -1,11 +1,12 @@
 import { FormProvider } from "react-hook-form";
 import { Trans, useTranslation } from "react-i18next";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { ApiError } from "@/core/api/api-error";
 import { CheckboxField } from "@/core/forms/checkbox-field";
 import { InputField } from "@/core/forms/input-field";
 import { SelectField } from "@/core/forms/select-field";
 import { useZodForm } from "@/core/forms/use-zod-form";
-import { Button } from "@/core/ui/button";
 import { useRegister } from "@/features/auth/commands/use-register";
 import { requiresInstitution } from "@/features/auth/lib/role-rules";
 import { useRegisterSchema } from "@/features/auth/schemas/register-schema";
@@ -96,7 +97,8 @@ export function RegisterForm() {
             {form.formState.errors.root.message}
           </p>
         )}
-        <Button type="submit" isLoading={register.isPending} className="w-full">
+        <Button type="submit" disabled={register.isPending} className="w-full">
+          {register.isPending && <Spinner className="mr-2 size-4" />}
           {t("auth:register.submit")}
         </Button>
       </form>

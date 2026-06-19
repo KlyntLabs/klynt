@@ -1,5 +1,5 @@
 import { Controller, useFormContext } from "react-hook-form";
-import { Input } from "@/core/ui/input";
+import { Input } from "@/components/ui/input";
 import { FormField } from "./form-field";
 
 interface InputFieldProps {
@@ -23,7 +23,7 @@ export function InputField({ name, label, type = "text", placeholder }: InputFie
             id={name}
             type={type}
             placeholder={placeholder}
-            hasError={!!fieldState.error}
+            aria-invalid={fieldState.error ? true : undefined}
             aria-describedby={fieldState.error ? `${name}-error` : undefined}
           />
         </FormField>

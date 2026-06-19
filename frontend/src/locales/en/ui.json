@@ -10,10 +10,17 @@
   },
   "notFound": {
     "title": "Page not found",
+    "message": "The page you are looking for does not exist.",
     "goHome": "Go home"
   },
   "dashboard": {
     "title": "Dashboard",
-    "welcome": "Welcome back."
+    "welcome": "Welcome back.",
+    "placeholder": "Your dashboard content will appear here."
+  },
+  "admin": {
+    "title": "Admin",
+    "description": "Administrator overview",
+    "placeholder": "Admin tools will appear here."
   }
 }
