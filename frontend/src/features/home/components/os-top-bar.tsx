@@ -42,7 +42,7 @@ export function OsTopBar({ windowTitle }: OsTopBarProps) {
       </Link>
       <span className="flex-1 truncate text-center text-xs font-bold">{windowTitle}</span>
       <div className="flex items-center gap-2">
-        <LanguageSwitcher className="text-primary-foreground" />
+        <LanguageSwitcher />
         <span aria-live="off" className="text-[10px] font-bold tabular-nums">
           {time}
         </span>
