@@ -3,6 +3,7 @@
     "startLabel": "Klynt",
     "windowTitle": "klynt-browser.mdx",
     "menu": {
+      "label": "Menu Klynt",
       "about": "Về Klynt",
       "docs": "Tài liệu",
       "register": "Đăng ký",

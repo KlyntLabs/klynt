@@ -7,11 +7,11 @@ describe("OsTopBar", () => {
   it("renders the logo menu, nav menus, and action buttons", () => {
     render(<OsTopBar />);
 
-    expect(screen.getByRole("button", { name: "Klynt" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Docs" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Community" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Courses" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Teachers" })).toBeInTheDocument();
+    expect(screen.getByTestId("logo-menu")).toBeInTheDocument();
+    expect(screen.getByText("Docs")).toBeInTheDocument();
+    expect(screen.getByText("Community")).toBeInTheDocument();
+    expect(screen.getByText("Courses")).toBeInTheDocument();
+    expect(screen.getByText("Teachers")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Get started" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Chat" })).toBeInTheDocument();
   });

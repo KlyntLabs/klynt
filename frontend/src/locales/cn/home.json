@@ -3,6 +3,7 @@
     "startLabel": "Klynt",
     "windowTitle": "klynt-browser.mdx",
     "menu": {
+      "label": "Klynt 菜单",
       "about": "关于 Klynt",
       "docs": "文档",
       "register": "注册",

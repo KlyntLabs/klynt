@@ -12,9 +12,8 @@ function LogoMenu() {
 
   return (
     <details className="group relative">
-      {/* biome-ignore lint/a11y/useSemanticElements: <summary> inside <details> has implicit button role; explicit role aids testability in jsdom */}
       <summary
-        role="button"
+        data-testid="logo-menu"
         className={cn(
           "flex list-none cursor-pointer items-center justify-center rounded p-1 text-foreground transition-transform hover:translate-x-[1px] hover:translate-y-[1px]",
           "[&::-webkit-details-marker]:hidden",
@@ -25,7 +24,7 @@ function LogoMenu() {
         <KlyntLogo className="h-5 w-5" />
       </summary>
       <nav
-        aria-label={t("topBar.startLabel")}
+        aria-label={t("topBar.menu.label")}
         className="absolute top-full left-0 z-50 mt-1 min-w-[12rem] rounded-lg border-2 border-border bg-background p-1 shadow-hard"
       >
         <Link
@@ -56,9 +55,7 @@ function NavMenu({ label }: { label: string }) {
 
   return (
     <details className="group relative">
-      {/* biome-ignore lint/a11y/useSemanticElements: <summary> inside <details> has implicit button role; explicit role aids testability in jsdom */}
       <summary
-        role="button"
         className={cn(
           "list-none cursor-pointer rounded px-2 py-1 text-xs font-bold text-primary-foreground hover:bg-primary-foreground/10",
           "[&::-webkit-details-marker]:hidden",
