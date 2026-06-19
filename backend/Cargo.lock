@@ -685,7 +685,6 @@ dependencies = [
 name = "klynt-api"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "axum",
  "http-body-util",
  "klynt-application",
@@ -703,7 +702,6 @@ dependencies = [
 name = "klynt-application"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "argon2",
  "async-trait",
  "chrono",
@@ -717,11 +715,11 @@ dependencies = [
 name = "klynt-domain"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "async-trait",
  "chrono",
  "serde",
  "thiserror",
+ "tokio",
  "uuid",
 ]
 
@@ -729,7 +727,6 @@ dependencies = [
 name = "klynt-infrastructure"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "async-trait",
  "chrono",
  "config",

@@ -31,3 +31,6 @@ where
 pub trait RateLimiter: Send + Sync {
     fn is_allowed(&self, ip: IpAddr) -> bool;
 }
+
+pub mod password_hasher;
+pub use password_hasher::{HashedPassword, PasswordHasher};
