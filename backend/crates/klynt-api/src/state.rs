@@ -1,15 +1,11 @@
 use std::sync::Arc;
 
-use klynt_application::audit::AuditService;
 use klynt_application::auth::AuthService;
-use klynt_application::users::{CreateUserRequest, UserService};
+use klynt_application::users::UserService;
 use klynt_domain::config::AppConfig;
-use klynt_domain::ctx::Ctx;
 use klynt_domain::errors::DomainError;
-use klynt_domain::models::{Email, User, UserDto, UserId};
 use klynt_domain::ports::{HealthCheck, RateLimiter};
-use klynt_domain::session::{SessionStore, SessionToken};
-use uuid::Uuid;
+use klynt_domain::session::SessionStore;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -19,7 +15,6 @@ pub struct AppState {
     session_store: Arc<dyn SessionStore>,
     rate_limiter: Arc<dyn RateLimiter>,
     health_checks: Vec<Arc<dyn HealthCheck>>,
-    audit_service: Arc<AuditService>,
 }
 
 /// Named dependency bag for constructing [`AppState`].
@@ -30,7 +25,6 @@ pub struct AppStateDeps {
     pub session_store: Arc<dyn SessionStore>,
     pub rate_limiter: Arc<dyn RateLimiter>,
     pub health_checks: Vec<Arc<dyn HealthCheck>>,
-    pub audit_service: Arc<AuditService>,
 }
 
 impl AppState {
@@ -42,7 +36,6 @@ impl AppState {
             session_store: deps.session_store,
             rate_limiter: deps.rate_limiter,
             health_checks: deps.health_checks,
-            audit_service: deps.audit_service,
         }
     }
 
@@ -58,69 +51,12 @@ impl AppState {
         &*self.session_store
     }
 
-    pub fn audit_service(&self) -> &AuditService {
-        &self.audit_service
+    pub fn user_service(&self) -> &UserService {
+        &self.user_service
     }
 
-    pub async fn create_user(
-        &self,
-        ctx: &Ctx,
-        idempotency_key: Uuid,
-        req: CreateUserRequest,
-    ) -> Result<UserDto, DomainError> {
-        self.user_service
-            .create_user(ctx, idempotency_key, req)
-            .await
-    }
-
-    pub async fn find_user_by_id(&self, ctx: &Ctx, id: UserId) -> Result<User, DomainError> {
-        self.user_service.find_by_id(ctx, id).await
-    }
-
-    pub async fn login(
-        &self,
-        ctx: &Ctx,
-        email: &Email,
-        password: &str,
-    ) -> Result<(SessionToken, UserDto), DomainError> {
-        self.auth_service.login(ctx, email, password).await
-    }
-
-    pub async fn register(
-        &self,
-        ctx: &Ctx,
-        name: String,
-        email: &Email,
-        password: &str,
-        terms_accepted: bool,
-        terms_version: String,
-    ) -> Result<UserId, DomainError> {
-        self.auth_service
-            .register(ctx, name, email, password, terms_accepted, terms_version)
-            .await
-    }
-
-    pub async fn verify_email(&self, ctx: &Ctx, token: &str) -> Result<UserId, DomainError> {
-        self.auth_service.verify_email(ctx, token).await
-    }
-
-    pub async fn request_password_reset(
-        &self,
-        ctx: &Ctx,
-        email: &Email,
-    ) -> Result<(), DomainError> {
-        self.auth_service.request_password_reset(ctx, email).await
-    }
-
-    pub async fn reset_password(
-        &self,
-        ctx: &Ctx,
-        token: &str,
-        new_password: &str,
-    ) -> Result<(), DomainError> {
-        self.auth_service
-            .reset_password(ctx, token, new_password)
-            .await
+    pub fn auth_service(&self) -> &AuthService {
+        &self.auth_service
     }
 
     pub async fn check_health(&self) -> Result<(), DomainError> {

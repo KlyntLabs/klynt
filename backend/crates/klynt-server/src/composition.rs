@@ -109,7 +109,6 @@ pub async fn build_app_with_email_service(
         session_store: Arc::clone(&session_store) as Arc<dyn SessionStore>,
         rate_limiter: rate_limiter_port,
         health_checks,
-        audit_service,
     }));
 
     build_router(state)
