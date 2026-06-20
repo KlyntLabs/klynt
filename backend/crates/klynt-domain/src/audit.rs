@@ -1,5 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use std::fmt::{self, Display};
+use std::str::FromStr;
 use uuid::Uuid;
 
 use crate::models::UserId;
@@ -139,6 +141,88 @@ impl AuditEvent {
     }
 }
 
+impl FromStr for AuditAction {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "user_registered" => Ok(AuditAction::UserRegistered),
+            "user_email_verified" => Ok(AuditAction::UserEmailVerified),
+            "user_password_changed" => Ok(AuditAction::UserPasswordChanged),
+            "user_password_reset" => Ok(AuditAction::UserPasswordReset),
+            "user_suspended" => Ok(AuditAction::UserSuspended),
+            "user_deleted" => Ok(AuditAction::UserDeleted),
+            "session_created" => Ok(AuditAction::SessionCreated),
+            "session_revoked" => Ok(AuditAction::SessionRevoked),
+            "session_refreshed" => Ok(AuditAction::SessionRefreshed),
+            "tenant_created" => Ok(AuditAction::TenantCreated),
+            "tenant_updated" => Ok(AuditAction::TenantUpdated),
+            "tenant_deleted" => Ok(AuditAction::TenantDeleted),
+            "member_invited" => Ok(AuditAction::MemberInvited),
+            "member_role_changed" => Ok(AuditAction::MemberRoleChanged),
+            "member_removed" => Ok(AuditAction::MemberRemoved),
+            "permission_granted" => Ok(AuditAction::PermissionGranted),
+            "permission_revoked" => Ok(AuditAction::PermissionRevoked),
+            _ => Err(format!("Unknown action: {s}")),
+        }
+    }
+}
+
+impl Display for AuditAction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            AuditAction::UserRegistered => "user_registered",
+            AuditAction::UserEmailVerified => "user_email_verified",
+            AuditAction::UserPasswordChanged => "user_password_changed",
+            AuditAction::UserPasswordReset => "user_password_reset",
+            AuditAction::UserSuspended => "user_suspended",
+            AuditAction::UserDeleted => "user_deleted",
+            AuditAction::SessionCreated => "session_created",
+            AuditAction::SessionRevoked => "session_revoked",
+            AuditAction::SessionRefreshed => "session_refreshed",
+            AuditAction::TenantCreated => "tenant_created",
+            AuditAction::TenantUpdated => "tenant_updated",
+            AuditAction::TenantDeleted => "tenant_deleted",
+            AuditAction::MemberInvited => "member_invited",
+            AuditAction::MemberRoleChanged => "member_role_changed",
+            AuditAction::MemberRemoved => "member_removed",
+            AuditAction::PermissionGranted => "permission_granted",
+            AuditAction::PermissionRevoked => "permission_revoked",
+        };
+        write!(f, "{s}")
+    }
+}
+
+impl FromStr for ResourceType {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "user" => Ok(ResourceType::User),
+            "session" => Ok(ResourceType::Session),
+            "tenant" => Ok(ResourceType::Tenant),
+            "membership" => Ok(ResourceType::Membership),
+            "permission" => Ok(ResourceType::Permission),
+            "role" => Ok(ResourceType::Role),
+            _ => Err(format!("Unknown resource type: {s}")),
+        }
+    }
+}
+
+impl Display for ResourceType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            ResourceType::User => "user",
+            ResourceType::Session => "session",
+            ResourceType::Tenant => "tenant",
+            ResourceType::Membership => "membership",
+            ResourceType::Permission => "permission",
+            ResourceType::Role => "role",
+        };
+        write!(f, "{s}")
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -196,5 +280,37 @@ mod tests {
             event.after_data,
             Some(serde_json::json!({"status": "active"}))
         );
+    }
+
+    #[test]
+    fn audit_action_round_trips_through_display_and_from_str() {
+        let action = AuditAction::PermissionGranted;
+        let serialized = action.to_string();
+        assert_eq!(serialized, "permission_granted");
+        assert_eq!(
+            AuditAction::from_str(&serialized).unwrap(),
+            AuditAction::PermissionGranted
+        );
+    }
+
+    #[test]
+    fn audit_action_from_str_rejects_unknown() {
+        assert!(AuditAction::from_str("unknown_action").is_err());
+    }
+
+    #[test]
+    fn resource_type_round_trips_through_display_and_from_str() {
+        let resource_type = ResourceType::Membership;
+        let serialized = resource_type.to_string();
+        assert_eq!(serialized, "membership");
+        assert_eq!(
+            ResourceType::from_str(&serialized).unwrap(),
+            ResourceType::Membership
+        );
+    }
+
+    #[test]
+    fn resource_type_from_str_rejects_unknown() {
+        assert!(ResourceType::from_str("unknown_type").is_err());
     }
 }

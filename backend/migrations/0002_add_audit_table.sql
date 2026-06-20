@@ -9,7 +9,7 @@ CREATE TABLE audit_events (
 
     -- Actor information
     actor_user_id UUID,
-    actor_ip_address INET,
+    actor_ip_address VARCHAR(45),
 
     -- Action details
     action VARCHAR(100) NOT NULL,
@@ -48,7 +48,8 @@ CREATE INDEX idx_audit_events_user_action ON audit_events(actor_user_id, created
 -- COMMENTs for documentation
 COMMENT ON TABLE audit_events IS 'Immutable audit log for compliance and security tracking';
 COMMENT ON COLUMN audit_events.actor_user_id IS 'User who performed the action (NULL for system actions)';
-COMMENT ON COLUMN audit_events.action IS 'Action performed: user.registered, user.verified, session.created, etc.';
+COMMENT ON COLUMN audit_events.actor_ip_address IS 'Actor IP address as a string (IPv4 or IPv6)';
+COMMENT ON COLUMN audit_events.action IS 'Action performed: user_registered, user_email_verified, session_created, etc.';
 COMMENT ON COLUMN audit_events.resource_type IS 'Type of resource affected: user, session, tenant, etc.';
 COMMENT ON COLUMN audit_events.before_data IS 'Snapshot of resource state before action (JSONB)';
 COMMENT ON COLUMN audit_events.after_data IS 'Snapshot of resource state after action (JSONB)';
