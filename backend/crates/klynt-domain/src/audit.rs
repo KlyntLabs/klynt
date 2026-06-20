@@ -43,6 +43,7 @@ pub enum AuditAction {
     SessionCreated,
     SessionRevoked,
     SessionRefreshed,
+    LoginFailed,
 
     // Tenant actions (Phase 2+)
     TenantCreated,
@@ -155,6 +156,7 @@ impl FromStr for AuditAction {
             "session_created" => Ok(AuditAction::SessionCreated),
             "session_revoked" => Ok(AuditAction::SessionRevoked),
             "session_refreshed" => Ok(AuditAction::SessionRefreshed),
+            "login_failed" => Ok(AuditAction::LoginFailed),
             "tenant_created" => Ok(AuditAction::TenantCreated),
             "tenant_updated" => Ok(AuditAction::TenantUpdated),
             "tenant_deleted" => Ok(AuditAction::TenantDeleted),
@@ -180,6 +182,7 @@ impl Display for AuditAction {
             AuditAction::SessionCreated => "session_created",
             AuditAction::SessionRevoked => "session_revoked",
             AuditAction::SessionRefreshed => "session_refreshed",
+            AuditAction::LoginFailed => "login_failed",
             AuditAction::TenantCreated => "tenant_created",
             AuditAction::TenantUpdated => "tenant_updated",
             AuditAction::TenantDeleted => "tenant_deleted",
@@ -290,6 +293,17 @@ mod tests {
         assert_eq!(
             AuditAction::from_str(&serialized).unwrap(),
             AuditAction::PermissionGranted
+        );
+    }
+
+    #[test]
+    fn login_failed_action_round_trips() {
+        let action = AuditAction::LoginFailed;
+        let serialized = action.to_string();
+        assert_eq!(serialized, "login_failed");
+        assert_eq!(
+            AuditAction::from_str(&serialized).unwrap(),
+            AuditAction::LoginFailed
         );
     }
 
