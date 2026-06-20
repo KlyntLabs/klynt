@@ -10,9 +10,10 @@ use klynt_domain::tokens::TokenKind;
 
 /// PostgreSQL implementation of [`TokenStore`].
 ///
-/// Uses an explicit, exhaustive whitelist of table names.
-/// The `consume` method does find + mark-used atomically via
-/// a single `UPDATE ... RETURNING` statement.
+/// Uses static SQL queries selected by [`TokenKind`] so all SQL is
+/// checked by sqlx at compile time. The `consume` method does
+/// find + mark-used atomically via a single `UPDATE ... RETURNING`
+/// statement.
 pub struct PgTokenStore {
     pool: PgPool,
 }
@@ -20,18 +21,6 @@ pub struct PgTokenStore {
 impl PgTokenStore {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
-    }
-}
-
-/// Allowed token tables.
-///
-/// This mapping is an exhaustive safeguard local to the PostgreSQL
-/// repository: only the two known variants are accepted, so the value
-/// can never come from user input.
-fn table_name(kind: TokenKind) -> &'static str {
-    match kind {
-        TokenKind::EmailVerification => "email_verification_tokens",
-        TokenKind::PasswordReset => "password_reset_tokens",
     }
 }
 
@@ -45,22 +34,36 @@ impl TokenStore for PgTokenStore {
         token_hash: &str,
         expires_at: DateTime<Utc>,
     ) -> Result<(), DomainError> {
-        let table = table_name(kind);
-        let sql = format!(
-            r#"
-            INSERT INTO {table} (user_id, token_hash, expires_at)
-            VALUES ($1, $2, $3)
-            "#
-        );
+        let result = match kind {
+            TokenKind::EmailVerification => {
+                sqlx::query(
+                    r#"
+                    INSERT INTO email_verification_tokens (user_id, token_hash, expires_at)
+                    VALUES ($1, $2, $3)
+                    "#,
+                )
+                .bind(user_id.0)
+                .bind(token_hash)
+                .bind(expires_at)
+                .execute(&self.pool)
+                .await
+            }
+            TokenKind::PasswordReset => {
+                sqlx::query(
+                    r#"
+                    INSERT INTO password_reset_tokens (user_id, token_hash, expires_at)
+                    VALUES ($1, $2, $3)
+                    "#,
+                )
+                .bind(user_id.0)
+                .bind(token_hash)
+                .bind(expires_at)
+                .execute(&self.pool)
+                .await
+            }
+        };
 
-        sqlx::query(&sql)
-            .bind(user_id.0)
-            .bind(token_hash)
-            .bind(expires_at)
-            .execute(&self.pool)
-            .await
-            .map_err(DomainError::internal)?;
-
+        result.map_err(DomainError::internal)?;
         Ok(())
     }
 
@@ -70,28 +73,41 @@ impl TokenStore for PgTokenStore {
         kind: TokenKind,
         token_hash: &str,
     ) -> Result<UserId, DomainError> {
-        let table = table_name(kind);
-
-        // Atomic: mark an unused, unexpired token as used and return its user_id.
-        // If no row matches, the token was invalid, expired, or already used.
-        let sql = format!(
-            r#"
-            UPDATE {table}
-            SET used_at = NOW()
-            WHERE token_hash = $1
-              AND used_at IS NULL
-              AND expires_at > NOW()
-            RETURNING user_id
-            "#
-        );
-
-        let result = sqlx::query_scalar::<_, uuid::Uuid>(&sql)
-            .bind(token_hash)
-            .fetch_optional(&self.pool)
-            .await
-            .map_err(DomainError::internal)?;
+        let result = match kind {
+            TokenKind::EmailVerification => {
+                sqlx::query_scalar::<_, uuid::Uuid>(
+                    r#"
+                    UPDATE email_verification_tokens
+                    SET used_at = NOW()
+                    WHERE token_hash = $1
+                      AND used_at IS NULL
+                      AND expires_at > NOW()
+                    RETURNING user_id
+                    "#,
+                )
+                .bind(token_hash)
+                .fetch_optional(&self.pool)
+                .await
+            }
+            TokenKind::PasswordReset => {
+                sqlx::query_scalar::<_, uuid::Uuid>(
+                    r#"
+                    UPDATE password_reset_tokens
+                    SET used_at = NOW()
+                    WHERE token_hash = $1
+                      AND used_at IS NULL
+                      AND expires_at > NOW()
+                    RETURNING user_id
+                    "#,
+                )
+                .bind(token_hash)
+                .fetch_optional(&self.pool)
+                .await
+            }
+        };
 
         result
+            .map_err(DomainError::internal)?
             .map(UserId)
             .ok_or(DomainError::InvalidToken(TokenError::Invalid))
     }
