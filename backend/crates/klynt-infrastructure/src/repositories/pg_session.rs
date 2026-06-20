@@ -17,6 +17,10 @@ impl PgSessionStore {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }
+
+    pub fn pool(&self) -> &PgPool {
+        &self.pool
+    }
 }
 
 #[async_trait]
@@ -82,17 +86,6 @@ impl SessionStore for PgSessionStore {
         .await
         .map_err(DomainError::internal)?;
 
-        Ok(())
-    }
-}
-
-#[async_trait]
-impl klynt_domain::ports::HealthCheck for PgSessionStore {
-    async fn check(&self) -> Result<(), DomainError> {
-        sqlx::query("SELECT 1")
-            .fetch_one(&self.pool)
-            .await
-            .map_err(|e| DomainError::internal_msg(format!("postgres health check failed: {e}")))?;
         Ok(())
     }
 }

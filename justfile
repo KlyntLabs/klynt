@@ -29,9 +29,9 @@ dev-backend:
 dev-frontend:
     cd frontend && bun run dev
 
-# Run all tests
+# Run all tests (requires Postgres and Redis)
 test:
-    cd backend && cargo nextest run --all-features
+    cd backend && DATABASE_URL=${DATABASE_URL:-postgresql://klynt:klynt@localhost:5432/test} REDIS_URL=${REDIS_URL:-redis://localhost:6379/0} cargo nextest run --workspace --all-features
     cd frontend && bun run test
 
 # Run all tests with coverage gates

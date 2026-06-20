@@ -1,7 +1,6 @@
 //! End-to-end smoke tests for the production composition backed by Postgres
-//! and Redis. These tests run against real infrastructure and are therefore
-//! gated behind `#[ignore = "requires infrastructure"]` so the default `cargo test`
-//! stays fast and hermetic.
+//! and Redis. These tests run against real infrastructure and therefore require
+//! `DATABASE_URL` and `REDIS_URL` to point at running services.
 
 use std::sync::Arc;
 
@@ -13,7 +12,7 @@ use http_body_util::BodyExt;
 use klynt_domain::config::{ApiConfig, AppConfig, RateLimiterConfig};
 use klynt_domain::ports::SharedEmailService;
 use klynt_infrastructure::email::MockEmailService;
-use klynt_server::composition::build_production_app_with_email_service;
+use klynt_server::composition::build_app_with_email_service;
 use tower::ServiceExt;
 use uuid::Uuid;
 
@@ -44,7 +43,7 @@ async fn app_with_email() -> (axum::Router, Arc<MockEmailService>) {
     let config = production_config();
     let mock_email: Arc<MockEmailService> = Arc::new(MockEmailService::new());
     let email_service: SharedEmailService = Arc::clone(&mock_email) as SharedEmailService;
-    let app = build_production_app_with_email_service(config, email_service).await;
+    let app = build_app_with_email_service(config, email_service).await;
     (app, mock_email)
 }
 
@@ -62,7 +61,6 @@ fn post_request(uri: &str, body: serde_json::Value) -> Request<Body> {
 }
 
 #[tokio::test]
-#[ignore = "requires infrastructure"]
 async fn production_health_checks_pass() {
     let (app, _) = app_with_email().await;
 
@@ -81,7 +79,6 @@ async fn production_health_checks_pass() {
 }
 
 #[tokio::test]
-#[ignore = "requires infrastructure"]
 async fn register_verify_login_and_get_me_round_trip_with_postgres() {
     let (app, email_service) = app_with_email().await;
     let suffix = Uuid::new_v4();

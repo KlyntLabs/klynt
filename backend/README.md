@@ -12,7 +12,7 @@ Phase 1 delivers the foundational authentication and audit infrastructure:
 - **Audit logging** for security-relevant events (registration, verification, login, password reset)
 - **OpenAPI 3.1.0** specification for auth endpoints (`crates/klynt-api/src/openapi.yaml`)
 
-Adapters are currently in-memory (`InMemoryUserRepository`, `InMemorySessionStore`, etc.). PostgreSQL/SQLx adapter implementations exist for token and audit repositories and will be wired once the production database path is enabled.
+Adapters are production-backed: PostgreSQL/SQLx repositories for users, sessions, tokens and audit events, Redis for rate limiting and idempotency, and Argon2 for password hashing.
 
 ## Crate Layout
 
@@ -20,7 +20,7 @@ Adapters are currently in-memory (`InMemoryUserRepository`, `InMemorySessionStor
 |-------|----------------|
 | `klynt-domain` | Entities, errors, ports/traits, config types. No framework dependencies. |
 | `klynt-application` | Use cases (`AuthService`, `UserService`, `AuditService`). Depends only on domain. |
-| `klynt-infrastructure` | Concrete adapters (in-memory repos, SQLx repos, Argon2 hasher, mock email). |
+| `klynt-infrastructure` | Concrete adapters (Postgres/SQLx repos, Redis rate limiter/idempotency, Argon2 hasher, mock email). |
 | `klynt-api` | HTTP handlers, DTOs, routing, middleware, error mapping, OpenAPI spec. |
 | `klynt-server` | Binary entrypoint, telemetry, and the single composition root. |
 
@@ -68,15 +68,20 @@ The API is available at `http://localhost:3001/api/v1`.
 
 ### Run all tests
 
+Tests require a running Postgres and Redis instance. Defaults point at the Docker Compose services:
+
 ```bash
-cargo nextest run --workspace
+export DATABASE_URL=postgresql://klynt:klynt@localhost:5432/test
+export REDIS_URL=redis://localhost:6379/0
+cargo nextest run --workspace --all-features
 ```
 
 ### Run tests with coverage
 
 ```bash
-cargo llvm-cov --workspace --lcov --output-path lcov.info
-cargo llvm-cov report --summary-only
+export DATABASE_URL=postgresql://klynt:klynt@localhost:5432/test
+export REDIS_URL=redis://localhost:6379/0
+cargo llvm-cov --workspace --all-features --no-clean --fail-under-lines 84
 ```
 
 Phase 1 coverage gate: **≥ 84% lines**.

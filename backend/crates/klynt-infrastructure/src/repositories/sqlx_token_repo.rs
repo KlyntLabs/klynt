@@ -167,7 +167,9 @@ mod tests {
     async fn test_pool() -> PgPool {
         let url = std::env::var("DATABASE_URL")
             .unwrap_or_else(|_| "postgresql://klynt:klynt@localhost:5432/test".to_string());
-        PgPool::connect(&url).await.unwrap()
+        let pool = PgPool::connect(&url).await.unwrap();
+        sqlx::migrate!("../../migrations").run(&pool).await.unwrap();
+        pool
     }
 
     async fn seed_user(pool: &PgPool) -> UserId {
@@ -193,7 +195,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "requires database"]
     async fn saves_and_retrieves_email_verification_token() {
         let pool = test_pool().await;
         let repo = PgEmailVerificationTokenRepository::new(pool.clone());
@@ -213,7 +214,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "requires database"]
     async fn marks_token_as_used() {
         let pool = test_pool().await;
         let repo = PgEmailVerificationTokenRepository::new(pool.clone());

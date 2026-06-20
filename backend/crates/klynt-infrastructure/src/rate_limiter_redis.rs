@@ -6,7 +6,7 @@ use redis::aio::MultiplexedConnection;
 
 use klynt_domain::config::RateLimiterConfig;
 use klynt_domain::errors::DomainError;
-use klynt_domain::ports::{HealthCheck, RateLimiter as RateLimiterPort};
+use klynt_domain::ports::RateLimiter as RateLimiterPort;
 
 /// Redis-backed fixed-window rate limiter.
 ///
@@ -18,6 +18,12 @@ pub struct RedisRateLimiter {
 }
 
 impl RedisRateLimiter {
+    /// Returns the underlying Redis connection so other infrastructure
+    /// components (e.g. health checks) can reuse it.
+    pub(crate) fn conn(&self) -> &Arc<tokio::sync::Mutex<MultiplexedConnection>> {
+        &self.conn
+    }
+
     pub async fn new(config: RateLimiterConfig, redis_url: &str) -> Result<Self, DomainError> {
         let client = redis::Client::open(redis_url)
             .map_err(|e| DomainError::internal_msg(format!("invalid redis url: {e}")))?;
@@ -71,17 +77,5 @@ impl RateLimiterPort for RedisRateLimiter {
             .await;
 
         matches!(result, Ok(1))
-    }
-}
-
-#[async_trait]
-impl HealthCheck for RedisRateLimiter {
-    async fn check(&self) -> Result<(), DomainError> {
-        let mut conn = self.conn.lock().await;
-        let _: () = redis::cmd("PING")
-            .query_async(&mut *conn)
-            .await
-            .map_err(|e| DomainError::internal_msg(format!("redis health check failed: {e}")))?;
-        Ok(())
     }
 }

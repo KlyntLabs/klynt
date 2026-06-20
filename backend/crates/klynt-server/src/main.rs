@@ -2,7 +2,7 @@ use std::net::SocketAddr;
 
 use axum::serve;
 use klynt_infrastructure::config::load_config;
-use klynt_server::composition::build_production_app;
+use klynt_server::composition::build_app;
 use tokio::net::TcpListener;
 use tracing::info;
 
@@ -13,7 +13,7 @@ async fn main() -> anyhow::Result<()> {
     let config = load_config()?;
     klynt_server::telemetry::init_telemetry(&config.log_level);
 
-    let app = build_production_app(config.clone()).await;
+    let app = build_app(config.clone()).await;
 
     let addr = format!("{}:{}", config.api.host, config.api.port);
     let listener = TcpListener::bind(&addr).await?;

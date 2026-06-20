@@ -1,10 +1,5 @@
-pub mod idempotency;
-pub mod in_memory_audit_event;
-pub mod in_memory_password_reset_token;
-pub mod in_memory_token;
-pub mod in_memory_user;
 pub mod pg_session;
 pub mod pg_user;
-pub mod session;
+pub mod redis_idempotency;
 pub mod sqlx_audit_repo;
 pub mod sqlx_token_repo;
