@@ -25,7 +25,7 @@ export default function DesktopEnvironment() {
         className="absolute inset-0"
         style={{
           backgroundColor: "#D8D2C8",
-          backgroundImage: "url(/wallpaper-texture.png)",
+          backgroundImage: "url(/wallpaper-texture.webp)",
           backgroundRepeat: "repeat",
           backgroundSize: "512px 512px",
         }}
@@ -34,7 +34,7 @@ export default function DesktopEnvironment() {
       {/* Decorative hedgehog garden */}
       <div className="absolute bottom-4 right-4 opacity-30 pointer-events-none z-0">
         <img
-          src="/hedgehog-garden.png"
+          src="/hedgehog-garden.webp"
           alt=""
           width={1024}
           height={1536}

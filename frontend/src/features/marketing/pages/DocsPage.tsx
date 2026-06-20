@@ -206,7 +206,7 @@ export default function DocsPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.4 }}
           transition={{ duration: 0.3, delay: 0.3 }}
-          src="/hedgehog-garden.png"
+          src="/hedgehog-garden.webp"
           alt={t("docs.hero.bannerAlt")}
           width={1024}
           height={1536}

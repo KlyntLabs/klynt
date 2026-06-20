@@ -67,7 +67,7 @@ export default function ProductsPage() {
             transition={{ delay: 0.15, duration: 0.4 }}
           >
             <img
-              src="/product-os-hero.png"
+              src="/product-os-hero.webp"
               alt={t("products.hero.mascotAlt")}
               width={1024}
               height={1024}

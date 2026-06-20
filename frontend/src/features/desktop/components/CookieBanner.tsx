@@ -54,7 +54,7 @@ export default function CookieBanner() {
 
           <div className="flex items-center gap-3">
             <img
-              src="/ursula-cookie.png"
+              src="/ursula-cookie.webp"
               alt={t("desktop.cookieBanner.ursulaAlt")}
               width={1024}
               height={1024}

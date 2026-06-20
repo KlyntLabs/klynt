@@ -33,7 +33,7 @@ export function CommunityArticles() {
       >
         <div className="w-full aspect-[16/10] bg-[#F5F3EF] rounded-lg overflow-hidden mb-4 flex items-center justify-center">
           <img
-            src="/hedgehog-hero.png"
+            src="/hedgehog-hero.webp"
             alt={t("community.header.title")}
             width={1024}
             height={1024}
@@ -62,7 +62,7 @@ export function CommunityArticles() {
           >
             <div className="w-20 h-[60px] bg-[#F5F3EF] rounded shrink-0 overflow-hidden flex items-center justify-center">
               <img
-                src="/product-os-hero.png"
+                src="/product-os-hero.webp"
                 alt=""
                 width={1024}
                 height={1024}

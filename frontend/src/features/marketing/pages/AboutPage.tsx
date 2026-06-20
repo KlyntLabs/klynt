@@ -127,7 +127,7 @@ function AboutTab() {
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               >
                 <img
-                  src="/hedgehog-hero.png"
+                  src="/hedgehog-hero.webp"
                   alt={t("about.aboutTab.mascotAlt")}
                   width={1024}
                   height={1024}

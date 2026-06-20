@@ -158,7 +158,7 @@ export function HeroSection({ onOpenApp }: HeroSectionProps) {
           className="flex items-center justify-center shrink-0"
         >
           <img
-            src="/hedgehog-hero.png"
+            src="/hedgehog-hero.webp"
             alt={t("home.hero.mascotAlt")}
             width={1024}
             height={1024}
