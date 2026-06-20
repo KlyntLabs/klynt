@@ -8,7 +8,7 @@ use klynt_domain::models::{Email, UserDto, UserId};
 use klynt_domain::ports::SharedEmailService;
 use klynt_domain::repositories::{EmailVerificationTokenRepository, PasswordResetTokenRepository};
 use klynt_domain::session::{Session, SessionStore, SessionToken};
-use klynt_domain::tokens::{EmailVerificationToken, PasswordResetToken};
+use klynt_domain::tokens::{EmailVerificationToken, PasswordResetToken, Token, TokenKind};
 
 use crate::audit::AuditService;
 use crate::users::UserService;
@@ -121,7 +121,7 @@ impl AuthService {
             );
         }
 
-        let token = EmailVerificationToken::generate(user_id);
+        let token = Token::generate(TokenKind::EmailVerification, user_id);
         self.email_verification_repo
             .save(ctx, user_id, &token.hash, token.expires_at)
             .await?;
@@ -188,7 +188,7 @@ impl AuthService {
             Err(e) => return Err(e),
         };
 
-        let token = PasswordResetToken::generate(user.id);
+        let token = Token::generate(TokenKind::PasswordReset, user.id);
 
         self.password_reset_repo
             .save(ctx, user.id, &token.hash, token.expires_at)
