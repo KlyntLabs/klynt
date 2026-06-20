@@ -208,6 +208,10 @@ export default function DocsPage() {
           transition={{ duration: 0.3, delay: 0.3 }}
           src="/hedgehog-garden.png"
           alt={t("docs.hero.bannerAlt")}
+          width={1024}
+          height={1536}
+          loading="lazy"
+          decoding="async"
           className="absolute inset-0 w-full h-full object-cover"
         />
 

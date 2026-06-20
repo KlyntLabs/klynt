@@ -69,6 +69,9 @@ export default function ProductsPage() {
             <img
               src="/product-os-hero.png"
               alt={t("products.hero.mascotAlt")}
+              width={1024}
+              height={1024}
+              fetchPriority="high"
               className="max-w-[260px] sm:max-w-[280px] w-full h-auto"
               style={{ imageRendering: "auto" }}
             />

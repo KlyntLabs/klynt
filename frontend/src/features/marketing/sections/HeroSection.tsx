@@ -160,6 +160,9 @@ export function HeroSection({ onOpenApp }: HeroSectionProps) {
           <img
             src="/hedgehog-hero.png"
             alt={t("home.hero.mascotAlt")}
+            width={1024}
+            height={1024}
+            fetchPriority="high"
             className="w-[260px] h-auto animate-bounce"
             style={{ animation: "float 3s ease-in-out infinite" }}
           />

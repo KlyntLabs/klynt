@@ -35,6 +35,8 @@ export function CommunityArticles() {
           <img
             src="/hedgehog-hero.png"
             alt={t("community.header.title")}
+            width={1024}
+            height={1024}
             className="w-full h-full object-cover"
           />
         </div>
@@ -59,7 +61,15 @@ export function CommunityArticles() {
             className="flex gap-4 mb-6 pb-6 border-b border-[#F0EDE6] last:border-0"
           >
             <div className="w-20 h-[60px] bg-[#F5F3EF] rounded shrink-0 overflow-hidden flex items-center justify-center">
-              <img src="/product-os-hero.png" alt="" className="w-full h-full object-cover" />
+              <img
+                src="/product-os-hero.png"
+                alt=""
+                width={1024}
+                height={1024}
+                loading="lazy"
+                decoding="async"
+                className="w-full h-full object-cover"
+              />
             </div>
             <div className="flex-1 min-w-0">
               <span className="text-xs text-[#9CA3AF] uppercase tracking-wider">

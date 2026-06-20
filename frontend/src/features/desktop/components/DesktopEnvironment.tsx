@@ -33,7 +33,15 @@ export default function DesktopEnvironment() {
 
       {/* Decorative hedgehog garden */}
       <div className="absolute bottom-4 right-4 opacity-30 pointer-events-none z-0">
-        <img src="/hedgehog-garden.png" alt="" className="w-[280px] h-auto" />
+        <img
+          src="/hedgehog-garden.png"
+          alt=""
+          width={1024}
+          height={1536}
+          loading="lazy"
+          decoding="async"
+          className="w-[280px] h-auto"
+        />
       </div>
 
       {/* Menubar */}

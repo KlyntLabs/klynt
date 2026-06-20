@@ -56,6 +56,10 @@ export default function CookieBanner() {
             <img
               src="/ursula-cookie.png"
               alt={t("desktop.cookieBanner.ursulaAlt")}
+              width={1024}
+              height={1024}
+              loading="lazy"
+              decoding="async"
               className="w-16 h-16 rounded-md object-cover"
             />
             <div className="text-xs text-[#9CA3AF]">{t("desktop.cookieBanner.footer")}</div>

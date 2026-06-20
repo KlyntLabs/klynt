@@ -129,6 +129,10 @@ function AboutTab() {
                 <img
                   src="/hedgehog-hero.png"
                   alt={t("about.aboutTab.mascotAlt")}
+                  width={1024}
+                  height={1024}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full max-w-[200px] md:max-w-[240px]"
                 />
               </motion.div>
