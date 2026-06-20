@@ -8,7 +8,7 @@ default:
 setup:
     rustup component add rustfmt clippy llvm-tools-preview
     cargo install cargo-watch cargo-nextest cargo-llvm-cov cargo-audit cargo-machete --locked
-    cd frontend && npm install
+    cd frontend && bun install
     @echo "Optional security tools (CI also runs these): brew install gitleaks semgrep trivy"
 
 # Copy environment template
@@ -19,7 +19,7 @@ env:
 dev:
     cd frontend && npx concurrently --names "api,web" --prefix-colors "cyan,yellow" \
         "cd ../backend && cargo watch -x 'run --bin klynt-server'" \
-        "npm run dev"
+        "bun run dev"
 
 # Run backend only (hot reload)
 dev-backend:
@@ -27,18 +27,18 @@ dev-backend:
 
 # Run frontend only
 dev-frontend:
-    cd frontend && npm run dev
+    cd frontend && bun run dev
 
 # Run all tests
 test:
     cd backend && cargo nextest run --all-features
-    cd frontend && npm run test
+    cd frontend && bun run test
 
 # Run all tests with coverage gates
 # Thresholds are ratchets: raise them only when current coverage improves.
 test-coverage:
     cd backend && cargo llvm-cov --workspace --all-features --no-clean --fail-under-lines 84
-    cd frontend && npm run test:coverage
+    cd frontend && bun run test:coverage
 
 # Run secret scan on the whole repo (requires gitleaks)
 secret-scan:
@@ -60,25 +60,25 @@ backend-machete:
 # Format everything (mutating)
 fmt:
     cd backend && cargo fmt --all
-    cd frontend && npm run format
+    cd frontend && bun run format
 
 # Check formatting without mutating
 fmt-check:
     cd backend && cargo fmt --all -- --check
-    cd frontend && npm run format:check
+    cd frontend && bun run format:check
 
 # Run all linters
 lint:
     cd backend && cargo clippy --all-targets --all-features -- -D warnings
-    cd frontend && npm run lint
+    cd frontend && bun run lint
 
 # Type-check frontend
 typecheck:
-    cd frontend && npm run typecheck
+    cd frontend && bun run typecheck
 
 # Build production artifacts
 build:
-    cd frontend && npm run build
+    cd frontend && bun run build
     cd backend && cargo build --release --bin klynt-server
 
 # Run all fast checks (useful before pushing)

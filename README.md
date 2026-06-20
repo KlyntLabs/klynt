@@ -37,7 +37,7 @@ docker compose -f docker-compose.dev.yml up --build
 
 Source code is mounted into the containers, so edits on the host are reflected immediately.
 
-> **Note:** The dev containers use a persistent `frontend-node-modules` volume. If you add or remove frontend dependencies, restart the `frontend` and `storybook` services so `npm install` refreshes the volume:
+> **Note:** The dev containers use a persistent `frontend-node-modules` volume. If you add or remove frontend dependencies, restart the `frontend` and `storybook` services so `bun install` refreshes the volume:
 >
 > ```bash
 > docker compose -f docker-compose.dev.yml restart frontend storybook

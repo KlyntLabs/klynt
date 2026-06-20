@@ -20,7 +20,7 @@
     "format": "biome format --write .",
     "format:check": "biome format .",
     "check": "biome check .",
-    "analyze": "ANALYZE=true npm run build",
+    "analyze": "ANALYZE=true bun run build",
     "prepare": "lefthook install",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"

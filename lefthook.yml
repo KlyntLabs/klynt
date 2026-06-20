@@ -1,5 +1,5 @@
 # Docs: https://lefthook.dev/configuration/
-# Installed automatically via `npm run prepare` in frontend/
+# Installed automatically via `bun run prepare` in frontend/
 #
 # Policy:
 # - pre-commit: fast staged-only checks (format/lint)
@@ -16,7 +16,7 @@ pre-commit:
       run: backend/scripts/check-file-size.sh {staged_files}
     biome-check:
       glob: "**/*.{js,ts,tsx,json,jsonc,css}"
-      run: cd frontend && npx @biomejs/biome check --error-on-warnings --no-errors-on-unmatched $(for f in {staged_files}; do echo "${f#frontend/}"; done)
+      run: cd frontend && bunx @biomejs/biome check --error-on-warnings --no-errors-on-unmatched $(for f in {staged_files}; do echo "${f#frontend/}"; done)
     frontend-file-size:
       glob: "frontend/src/**/*.{ts,tsx,js,jsx,css}"
       run: frontend/scripts/check-file-size.sh {staged_files}
@@ -38,7 +38,7 @@ pre-push:
           echo "⏭️  frontend-typecheck skipped (no frontend changes)"
           exit 0
         fi
-        cd frontend && npm run typecheck
+        cd frontend && bun run typecheck
     frontend-test:
       glob: "**/*.{js,ts,tsx}"
       run: |
@@ -47,7 +47,7 @@ pre-push:
           echo "⏭️  frontend-test skipped (no frontend changes)"
           exit 0
         fi
-        cd frontend && npm run test:coverage
+        cd frontend && bun run test:coverage
     frontend-build:
       glob: "**/*.{js,ts,tsx}"
       run: |
@@ -56,7 +56,7 @@ pre-push:
           echo "⏭️  frontend-build skipped (no frontend changes)"
           exit 0
         fi
-        cd frontend && npm run build
+        cd frontend && bun run build
     backend-format:
       glob: "**/*.rs"
       run: |

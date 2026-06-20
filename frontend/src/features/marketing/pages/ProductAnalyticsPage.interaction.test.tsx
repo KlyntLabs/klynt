@@ -42,7 +42,7 @@ describe("ProductAnalyticsPage interactions", () => {
       expect(screen.getByText("8 / 8")).toBeInTheDocument();
     });
 
-    expect(screen.getByText("npm install posthog-js")).toBeInTheDocument();
+    expect(screen.getByText("bun add posthog-js")).toBeInTheDocument();
     const copyButton = screen.getAllByTitle("Copy")[0];
     await user.click(copyButton);
     expect(copyButton).toBeInTheDocument();

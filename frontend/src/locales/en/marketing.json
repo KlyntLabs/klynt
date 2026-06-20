@@ -9,7 +9,7 @@
       "subtitle2Emphasis": "autonomously",
       "ctaPrimary": "Get started - free",
       "ctaSecondary": "Install with AI",
-      "installCommand": "npx @posthog/wizard",
+      "installCommand": "bunx @posthog/wizard",
       "copyTooltip": "Copy to clipboard",
       "installHint": "Install with AI in a single prompt. Paste into your terminal or code editor and make AI do the work.",
       "links": {
@@ -259,7 +259,7 @@
         "subtitle": "Join 100,000+ companies using PostHog",
         "primary": "Get started — free",
         "secondary": "Talk to a human",
-        "installCommand": "npm install posthog-js",
+        "installCommand": "bun add posthog-js",
         "copyTooltip": "Copy"
       },
       "notes": {
@@ -510,7 +510,7 @@
       "title": "Devtools and product data infrastructure for building successful products",
       "body": "Humans and AI agents build with PostHog because everything you need to collect and analyze product usage data – and build and ship new features – lives in one place.",
       "getStarted": "Get started",
-      "installCommand": "npx -y @posthog/wizard",
+      "installCommand": "bunx @posthog/wizard",
       "copyTooltip": "Copy to clipboard",
       "supports": "Supports",
       "and": "and",

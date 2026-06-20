@@ -40,7 +40,7 @@ export default defineConfig({
           exclude: ["e2e/**/*", "node_modules/**/*", "dist/**/*"],
         },
       },
-      // Storybook stories can be tested in a real browser via `npm run test:storybook`.
+      // Storybook stories can be tested in a real browser via `bun run test:storybook`.
       // We keep them out of the default test run to avoid Playwright browser
       // installation and flakiness in normal development and CI.
       ...(enableStorybookBrowserTests
