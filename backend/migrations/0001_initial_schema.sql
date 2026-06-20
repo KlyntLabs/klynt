@@ -1,9 +1,6 @@
 -- Initial schema for multi-tenant authentication system
 -- Phase 1: Core Auth Foundation
 
--- Enable UUID extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 -- ============================================================================
 -- Users Table
 -- ============================================================================
