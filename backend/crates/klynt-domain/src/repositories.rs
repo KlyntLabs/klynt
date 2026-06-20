@@ -6,6 +6,7 @@ use crate::ctx::Ctx;
 use crate::errors::DomainError;
 use crate::models::{Email, User, UserId};
 use crate::ports::HashedPassword;
+use crate::tokens::TokenKind;
 
 pub enum CreateResult {
     Created,
@@ -37,48 +38,33 @@ pub trait UserRepository: Send + Sync {
     ) -> Result<(), DomainError>;
 }
 
+/// Unified store for issue-once tokens (email verification, password reset).
+///
+/// Behind this interface sits the CSPRNG-hash-persist-consume lifecycle.
+/// The `kind` parameter selects the target table.
 #[async_trait]
-pub trait EmailVerificationTokenRepository: Send + Sync {
-    /// Store an email verification token (hash only).
+pub trait TokenStore: Send + Sync {
+    /// Store a token hash with its expiry.
     async fn save(
         &self,
         ctx: &Ctx,
+        kind: TokenKind,
         user_id: UserId,
         token_hash: &str,
         expires_at: DateTime<Utc>,
     ) -> Result<(), DomainError>;
 
-    /// Find a valid token by hash.
-    async fn find_valid(
+    /// Atomically consume a token: validate it exists, is unused, is not
+    /// expired, and mark it used — all in one step.
+    ///
+    /// Returns the user_id on success, or an error if the token is
+    /// invalid/expired/already-used.
+    async fn consume(
         &self,
         ctx: &Ctx,
+        kind: TokenKind,
         token_hash: &str,
-    ) -> Result<Option<(UserId, DateTime<Utc>)>, DomainError>;
-
-    /// Mark token as used (atomic, single-use).
-    async fn mark_used(&self, ctx: &Ctx, token_hash: &str) -> Result<bool, DomainError>;
-}
-
-#[async_trait]
-pub trait PasswordResetTokenRepository: Send + Sync {
-    /// Store a password reset token (hash only).
-    async fn save(
-        &self,
-        ctx: &Ctx,
-        user_id: UserId,
-        token_hash: &str,
-        expires_at: DateTime<Utc>,
-    ) -> Result<(), DomainError>;
-
-    /// Find a valid token by hash.
-    async fn find_valid(
-        &self,
-        ctx: &Ctx,
-        token_hash: &str,
-    ) -> Result<Option<(UserId, DateTime<Utc>)>, DomainError>;
-
-    /// Mark token as used (atomic, single-use).
-    async fn mark_used(&self, ctx: &Ctx, token_hash: &str) -> Result<bool, DomainError>;
+    ) -> Result<UserId, DomainError>;
 }
 
 #[async_trait]
