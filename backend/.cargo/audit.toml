@@ -1,0 +1,8 @@
+[advisories]
+ignore = [
+    # Marvin Attack: potential key recovery through timing sidechannels in `rsa`.
+    # Affects `rsa 0.9.10`, a transitive dependency of `sqlx-mysql`. Klynt only
+    # uses the Postgres feature of sqlx, so the RSA code path is not exercised.
+    # No fixed upgrade is currently available.
+    "RUSTSEC-2023-0071",
+]

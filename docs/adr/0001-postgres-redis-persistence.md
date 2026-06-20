@@ -46,6 +46,10 @@ remain unchanged for fast integration tests.
   `--include-ignored`.
 - **Negative**: `PgUnitOfWork` currently uses a no-op transaction wrapper; full
   multi-repository transactions are deferred to a later phase.
+- **Security note**: `sqlx` transitively depends on `rsa` via `sqlx-mysql`, which
+  is flagged by `RUSTSEC-2023-0071`. Klynt only uses sqlx's Postgres feature, so
+  the vulnerable RSA path is unused. The advisory is ignored in
+  `backend/.cargo/audit.toml` until a fixed version is available.
 
 ## Related Files
 

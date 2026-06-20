@@ -92,7 +92,7 @@ pre-push:
           echo "⏭️  backend-test skipped (no backend changes)"
           exit 0
         fi
-        cd backend && cargo llvm-cov nextest --workspace --all-features --no-clean --fail-under-lines 84
+        cd backend && DATABASE_URL=${DATABASE_URL:-postgresql://klynt:klynt@localhost:5432/test} REDIS_URL=${REDIS_URL:-redis://localhost:6379/0} cargo llvm-cov nextest --workspace --all-features --no-clean --fail-under-lines 84 -- --include-ignored
     backend-audit:
       glob: "**/*.rs"
       run: |

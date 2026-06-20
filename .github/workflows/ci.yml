@@ -55,6 +55,32 @@ jobs:
     defaults:
       run:
         working-directory: ./backend
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: test
+          POSTGRES_USER: klynt
+          POSTGRES_PASSWORD: klynt
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    env:
+      DATABASE_URL: postgresql://klynt:klynt@localhost:5432/test
+      REDIS_URL: redis://localhost:6379/0
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -79,7 +105,7 @@ jobs:
         run: cargo clippy --locked --all-targets --all-features -- -D warnings
 
       - name: Run tests with coverage
-        run: cargo llvm-cov --locked --workspace --all-features --no-clean --fail-under-lines 84
+        run: cargo llvm-cov --locked --workspace --all-features --no-clean --fail-under-lines 84 -- --include-ignored
 
       - name: Build release binary
         run: cargo build --locked --release --bin klynt-server
