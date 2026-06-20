@@ -15,3 +15,4 @@ async-trait = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true }
+klynt-infrastructure = { workspace = true }

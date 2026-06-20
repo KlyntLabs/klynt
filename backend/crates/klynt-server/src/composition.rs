@@ -7,11 +7,13 @@ use klynt_application::auth::AuthService;
 use klynt_application::users::UserService;
 use klynt_domain::config::AppConfig;
 use klynt_domain::models::UserDto;
-use klynt_domain::ports::{HealthCheck, IdempotencyStore, PasswordHasher};
+use klynt_domain::ports::{HealthCheck, IdempotencyStore, PasswordHasher, SharedEmailService};
 use klynt_domain::session::SessionStore;
+use klynt_infrastructure::email::MockEmailService;
 use klynt_infrastructure::password_hasher::Argon2PasswordHasher;
 use klynt_infrastructure::rate_limiter::RateLimiter as InMemoryRateLimiter;
 use klynt_infrastructure::repositories::idempotency::InMemoryIdempotencyStore;
+use klynt_infrastructure::repositories::in_memory_token::InMemoryEmailVerificationTokenRepository;
 use klynt_infrastructure::repositories::in_memory_user::InMemoryUserRepository;
 use klynt_infrastructure::repositories::session::InMemorySessionStore;
 use klynt_infrastructure::unit_of_work::InMemoryUnitOfWork;
@@ -48,9 +50,16 @@ pub fn build_app(config: AppConfig) -> Router {
         Arc::clone(&idempotency_store_port),
     ));
 
+    let email_verification_repo: Arc<
+        dyn klynt_domain::repositories::EmailVerificationTokenRepository,
+    > = Arc::new(InMemoryEmailVerificationTokenRepository::new());
+    let email_service: SharedEmailService = Arc::new(MockEmailService::new());
+
     let auth_service = Arc::new(AuthService::new(
         Arc::clone(&user_service),
         Arc::clone(&session_store_port),
+        email_verification_repo,
+        email_service,
     ));
 
     let health_checks: Vec<Arc<dyn HealthCheck>> = vec![

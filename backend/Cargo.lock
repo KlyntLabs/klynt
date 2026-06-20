@@ -1043,6 +1043,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "klynt-domain",
+ "klynt-infrastructure",
  "tokio",
  "uuid",
 ]

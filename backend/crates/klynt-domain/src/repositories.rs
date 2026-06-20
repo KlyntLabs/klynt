@@ -24,6 +24,9 @@ pub trait UserRepository: Send + Sync {
     async fn find_by_email(&self, ctx: &Ctx, email: &Email) -> Result<Option<User>, DomainError>;
 
     async fn find_by_id(&self, ctx: &Ctx, id: UserId) -> Result<Option<User>, DomainError>;
+
+    /// Mark the user's email as verified and activate the account.
+    async fn set_email_verified(&self, ctx: &Ctx, user_id: UserId) -> Result<(), DomainError>;
 }
 
 #[async_trait]

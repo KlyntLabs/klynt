@@ -1,4 +1,5 @@
 pub mod idempotency;
+pub mod in_memory_token;
 pub mod in_memory_user;
 pub mod session;
 pub mod sqlx_audit_repo;
