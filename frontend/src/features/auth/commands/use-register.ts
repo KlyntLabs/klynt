@@ -4,9 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { generateIdempotencyKey } from "@/core/api/api-client";
 import { ApiError } from "@/core/api/api-error";
 import { useToastStore } from "@/core/notifications/toast-store";
+import { routePaths } from "@/core/routing/route-paths";
 import { registerUser } from "@/features/auth/api/register";
 import type { RegisterInput, RegisterResponse } from "@/features/auth/api/types";
-import { registerCommand } from "./register-command";
 
 const RATE_LIMIT_TOAST_DURATION = 5000;
 
@@ -16,13 +16,14 @@ export function useRegister(): UseMutationResult<RegisterResponse, Error, Regist
   const idempotencyKeyRef = useRef<string>(generateIdempotencyKey());
 
   const mutation = useMutation<RegisterResponse, Error, RegisterInput>({
-    mutationFn: (input: RegisterInput) =>
-      registerCommand(input, idempotencyKeyRef.current, {
-        register: registerUser,
-        navigate,
-      }),
+    mutationFn: (input: RegisterInput) => registerUser(input, idempotencyKeyRef.current),
     retry: 1,
     meta: { suppressToast: true },
+    onSuccess: (response) => {
+      navigate(routePaths.registerSuccess, {
+        state: { user: { name: response.name, email: response.email } },
+      });
+    },
     onError: (error) => {
       if (error instanceof ApiError && error.code === "rate_limited") {
         addToast({

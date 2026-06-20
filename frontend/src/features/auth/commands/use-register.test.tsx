@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
 import { type ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
@@ -68,7 +68,9 @@ describe("useRegister", () => {
 
     await waitFor(() => expect(result.current.isIdle).toBe(true));
 
-    await result.current.mutateAsync(validInput);
+    await act(async () => {
+      await result.current.mutateAsync(validInput);
+    });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(keys.length).toBe(2);
@@ -91,10 +93,14 @@ describe("useRegister", () => {
 
     await waitFor(() => expect(result.current.isIdle).toBe(true));
 
-    await result.current.mutateAsync(validInput);
+    await act(async () => {
+      await result.current.mutateAsync(validInput);
+    });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    await result.current.mutateAsync({ ...validInput, email: "grace@example.com" });
+    await act(async () => {
+      await result.current.mutateAsync({ ...validInput, email: "grace@example.com" });
+    });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(keys.length).toBe(2);
@@ -116,7 +122,11 @@ describe("useRegister", () => {
 
     await waitFor(() => expect(result.current.isIdle).toBe(true));
 
-    await expect(result.current.mutateAsync(validInput)).rejects.toBeDefined();
+    await expect(
+      act(async () => {
+        await result.current.mutateAsync(validInput);
+      })
+    ).rejects.toBeDefined();
     await waitFor(() => expect(result.current.isError).toBe(true));
 
     expect(useToastStore.getState().toasts).toHaveLength(1);
