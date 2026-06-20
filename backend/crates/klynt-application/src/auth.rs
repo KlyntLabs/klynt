@@ -39,6 +39,9 @@ impl AuthService {
 
     /// Authenticate a user and create a session.
     ///
+    /// SECURITY: Always creates a NEW session ID on login to prevent
+    /// session fixation attacks. Callers must replace any previously held token.
+    ///
     /// Returns the bearer token and a DTO of the authenticated user.
     pub async fn login(
         &self,
