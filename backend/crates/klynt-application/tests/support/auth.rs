@@ -17,7 +17,6 @@ use klynt_domain::repositories::{
     AuditEventRepository, EmailVerificationTokenRepository, PasswordResetTokenRepository,
 };
 use klynt_domain::session::{Session, SessionStore, SessionToken};
-use uuid::Uuid;
 
 use super::user_service;
 
@@ -177,40 +176,6 @@ impl AuditEventRepository for FakeAuditEventRepository {
         let mut events = self.events.lock().unwrap();
         events.push(event);
         Ok(())
-    }
-
-    async fn find_by_user(
-        &self,
-        _ctx: &Ctx,
-        user_id: UserId,
-        limit: usize,
-    ) -> Result<Vec<AuditEvent>, DomainError> {
-        let events = self.events.lock().unwrap();
-        Ok(events
-            .iter()
-            .filter(|e| e.actor_user_id == Some(user_id))
-            .take(limit)
-            .cloned()
-            .collect())
-    }
-
-    async fn find_by_resource(
-        &self,
-        _ctx: &Ctx,
-        resource_type: &str,
-        resource_id: Uuid,
-        limit: usize,
-    ) -> Result<Vec<AuditEvent>, DomainError> {
-        let events = self.events.lock().unwrap();
-        Ok(events
-            .iter()
-            .filter(|e| {
-                e.resource_type.to_string().to_lowercase() == resource_type.to_lowercase()
-                    && e.resource_id == Some(resource_id)
-            })
-            .take(limit)
-            .cloned()
-            .collect())
     }
 }
 

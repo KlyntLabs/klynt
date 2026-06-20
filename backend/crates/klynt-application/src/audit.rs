@@ -133,25 +133,6 @@ mod tests {
             self.events.lock().unwrap().push(event);
             Ok(())
         }
-
-        async fn find_by_user(
-            &self,
-            _ctx: &Ctx,
-            _user_id: UserId,
-            _limit: usize,
-        ) -> Result<Vec<AuditEvent>, DomainError> {
-            Ok(vec![])
-        }
-
-        async fn find_by_resource(
-            &self,
-            _ctx: &Ctx,
-            _resource_type: &str,
-            _resource_id: Uuid,
-            _limit: usize,
-        ) -> Result<Vec<AuditEvent>, DomainError> {
-            Ok(vec![])
-        }
     }
 
     struct ErrorRepo;
@@ -162,25 +143,6 @@ mod tests {
             Err(DomainError::Internal(
                 "audit storage failed".to_string().into(),
             ))
-        }
-
-        async fn find_by_user(
-            &self,
-            _ctx: &Ctx,
-            _user_id: UserId,
-            _limit: usize,
-        ) -> Result<Vec<AuditEvent>, DomainError> {
-            Ok(vec![])
-        }
-
-        async fn find_by_resource(
-            &self,
-            _ctx: &Ctx,
-            _resource_type: &str,
-            _resource_id: Uuid,
-            _limit: usize,
-        ) -> Result<Vec<AuditEvent>, DomainError> {
-            Ok(vec![])
         }
     }
 

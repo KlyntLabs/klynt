@@ -1,6 +1,5 @@
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use uuid::Uuid;
 
 use crate::audit::AuditEvent;
 use crate::ctx::Ctx;
@@ -86,21 +85,4 @@ pub trait PasswordResetTokenRepository: Send + Sync {
 pub trait AuditEventRepository: Send + Sync {
     /// Log an audit event (append-only).
     async fn log(&self, ctx: &Ctx, event: AuditEvent) -> Result<(), DomainError>;
-
-    /// Query audit events by user.
-    async fn find_by_user(
-        &self,
-        ctx: &Ctx,
-        user_id: UserId,
-        limit: usize,
-    ) -> Result<Vec<AuditEvent>, DomainError>;
-
-    /// Query audit events by resource.
-    async fn find_by_resource(
-        &self,
-        ctx: &Ctx,
-        resource_type: &str,
-        resource_id: Uuid,
-        limit: usize,
-    ) -> Result<Vec<AuditEvent>, DomainError>;
 }
