@@ -9,6 +9,7 @@ use axum::{
 use crate::middleware::ctx_require;
 use crate::state::AppState;
 
+pub mod auth;
 pub mod health;
 pub mod sessions;
 pub mod users;
@@ -17,6 +18,8 @@ pub fn router() -> Router<Arc<AppState>> {
     let public = Router::new()
         .route("/health/live", get(health::liveness))
         .route("/health/ready", get(health::readiness))
+        .route("/auth/register", post(auth::register))
+        .route("/auth/verify-email", post(auth::verify_email))
         .route("/sessions", post(sessions::login))
         .route("/users", post(users::create_user));
 

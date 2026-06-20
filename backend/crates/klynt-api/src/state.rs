@@ -75,6 +75,24 @@ impl AppState {
         self.auth_service.login(ctx, email, password).await
     }
 
+    pub async fn register(
+        &self,
+        ctx: &Ctx,
+        name: String,
+        email: &Email,
+        password: &str,
+        terms_accepted: bool,
+        terms_version: String,
+    ) -> Result<UserId, DomainError> {
+        self.auth_service
+            .register(ctx, name, email, password, terms_accepted, terms_version)
+            .await
+    }
+
+    pub async fn verify_email(&self, ctx: &Ctx, token: &str) -> Result<UserId, DomainError> {
+        self.auth_service.verify_email(ctx, token).await
+    }
+
     pub async fn check_health(&self) -> Result<(), DomainError> {
         for check in &self.health_checks {
             check.check().await?;

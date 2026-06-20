@@ -25,6 +25,18 @@ use klynt_infrastructure::unit_of_work::InMemoryUnitOfWork;
 /// the application crate free of infrastructure knowledge and makes the system
 /// easy to bootstrap for both production and integration tests.
 pub fn build_app(config: AppConfig) -> Router {
+    let email_service: SharedEmailService = Arc::new(MockEmailService::new());
+    build_app_with_email_service(config, email_service)
+}
+
+/// Builds the application graph with an injectable email service.
+///
+/// Useful for integration tests that need to inspect the emails (and tokens)
+/// "sent" by the application.
+pub fn build_app_with_email_service(
+    config: AppConfig,
+    email_service: SharedEmailService,
+) -> Router {
     let user_repo = InMemoryUserRepository::new();
     let idempotency_store: Arc<InMemoryIdempotencyStore<UserDto>> =
         Arc::new(InMemoryIdempotencyStore::new());
@@ -56,7 +68,6 @@ pub fn build_app(config: AppConfig) -> Router {
     > = Arc::new(InMemoryEmailVerificationTokenRepository::new());
     let password_reset_repo: Arc<dyn klynt_domain::repositories::PasswordResetTokenRepository> =
         Arc::new(InMemoryPasswordResetTokenRepository::new());
-    let email_service: SharedEmailService = Arc::new(MockEmailService::new());
 
     let auth_service = Arc::new(AuthService::new(
         Arc::clone(&user_service),
