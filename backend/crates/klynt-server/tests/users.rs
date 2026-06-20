@@ -332,28 +332,60 @@ async fn get_me_without_token_returns_401() {
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
 }
 
+fn post_auth_register_request(body: String) -> Request<Body> {
+    Request::builder()
+        .method("POST")
+        .uri("/api/v1/auth/register")
+        .header("Content-Type", "application/json")
+        .body(Body::from(body))
+        .unwrap()
+}
+
+fn post_auth_verify_email_request(token: &str) -> Request<Body> {
+    Request::builder()
+        .method("POST")
+        .uri("/api/v1/auth/verify-email")
+        .header("Content-Type", "application/json")
+        .body(Body::from(
+            serde_json::json!({ "token": token }).to_string(),
+        ))
+        .unwrap()
+}
+
 #[tokio::test]
 async fn login_and_get_me_round_trip_works() {
-    let app = helpers::test_app();
+    let (app, email_service) = helpers::test_app_with_email_service();
     let email = "ada-auth@example.com";
 
-    // Register
+    // Register via the auth flow, which sends a verification email.
     let register_response = app
         .clone()
-        .oneshot(post_users_request(
-            Uuid::new_v4(),
-            register_payload_with(
-                "Ada Lovelace",
-                email,
-                "str0ng!passphrase",
-                "student",
-                true,
-                None,
-            ),
-        ))
+        .oneshot(post_auth_register_request(register_payload_with(
+            "Ada Lovelace",
+            email,
+            "str0ng!passphrase",
+            "student",
+            true,
+            None,
+        )))
         .await
         .unwrap();
     assert_eq!(register_response.status(), StatusCode::CREATED);
+
+    // Extract the verification token from the mock email service.
+    let verifications = email_service.recorded_verifications();
+    let (_, verification_token) = verifications
+        .iter()
+        .find(|(e, _)| e == email)
+        .expect("verification email was sent");
+
+    // Verify the email so the user becomes active.
+    let verify_response = app
+        .clone()
+        .oneshot(post_auth_verify_email_request(verification_token))
+        .await
+        .unwrap();
+    assert_eq!(verify_response.status(), StatusCode::OK);
 
     // Login
     let login_response = app
@@ -383,6 +415,38 @@ async fn login_and_get_me_round_trip_works() {
     let me_body = me_response.into_body().collect().await.unwrap().to_bytes();
     let me_json: serde_json::Value = serde_json::from_slice(&me_body).unwrap();
     assert_eq!(me_json["email"], email);
+}
+
+#[tokio::test]
+async fn login_with_unverified_email_returns_401() {
+    let app = helpers::test_app();
+    let email = "ada-unverified@example.com";
+
+    let register_response = app
+        .clone()
+        .oneshot(post_users_request(
+            Uuid::new_v4(),
+            register_payload_with(
+                "Ada Lovelace",
+                email,
+                "str0ng!passphrase",
+                "student",
+                true,
+                None,
+            ),
+        ))
+        .await
+        .unwrap();
+    assert_eq!(register_response.status(), StatusCode::CREATED);
+
+    let login_response = app
+        .oneshot(post_sessions_request(login_payload(
+            email,
+            "str0ng!passphrase",
+        )))
+        .await
+        .unwrap();
+    assert_eq!(login_response.status(), StatusCode::UNAUTHORIZED);
 }
 
 #[tokio::test]

@@ -133,6 +133,9 @@ async fn update_password_changes_authentication() {
         .await
         .unwrap();
 
+    // Simulate email verification so the user can authenticate.
+    service.activate_user(&ctx, user_id).await.unwrap();
+
     let auth = service.authenticate(&ctx, &email, "n3w!longer-pass").await;
     assert!(auth.is_ok());
 

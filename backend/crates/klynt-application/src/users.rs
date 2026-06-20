@@ -185,6 +185,11 @@ impl UserService {
             return Err(DomainError::AuthenticationRequired);
         }
 
+        // Only active (email-verified) users may authenticate.
+        if user.status != UserStatus::Active {
+            return Err(DomainError::AuthenticationRequired);
+        }
+
         tx.commit().await?;
         Ok(user)
     }

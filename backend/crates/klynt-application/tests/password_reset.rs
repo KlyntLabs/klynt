@@ -52,7 +52,7 @@ async fn reset_password_updates_password() {
     let ctx = Ctx::guest(Uuid::new_v4());
     let email = Email::parse("reset-update@example.com").unwrap();
 
-    user_service
+    let user_id = user_service
         .create_pending_user(
             &ctx,
             "Ada Lovelace".to_string(),
@@ -75,6 +75,9 @@ async fn reset_password_updates_password() {
         .reset_password(&ctx, &plaintext_token, "n3w!longer-pass")
         .await
         .unwrap();
+
+    // Simulate the email-verification step so the user can authenticate.
+    user_service.activate_user(&ctx, user_id).await.unwrap();
 
     let auth = user_service
         .authenticate(&ctx, &email, "n3w!longer-pass")

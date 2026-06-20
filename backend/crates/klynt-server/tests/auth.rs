@@ -301,6 +301,18 @@ async fn reset_password_with_valid_token_returns_200() {
         .unwrap();
     assert_eq!(register_response.status(), StatusCode::CREATED);
 
+    // Verify the email so the account is active before requesting a password reset.
+    let verifications = email_service.recorded_verifications();
+    let (_email, verification_token) = verifications
+        .first()
+        .expect("verification email was recorded");
+    let verify_response = app
+        .clone()
+        .oneshot(post_auth_verify_email_request(verification_token))
+        .await
+        .unwrap();
+    assert_eq!(verify_response.status(), StatusCode::OK);
+
     let request_response = app
         .clone()
         .oneshot(post_auth_request_password_reset_request("ada@example.com"))
