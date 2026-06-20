@@ -54,6 +54,21 @@ impl klynt_domain::repositories::UserRepository for FakeUserRepository {
         user.email_verified_at = Some(Utc::now());
         Ok(())
     }
+
+    async fn update_password(
+        &self,
+        _ctx: &Ctx,
+        user_id: UserId,
+        password_hash: &HashedPassword,
+    ) -> Result<(), DomainError> {
+        let mut users = self.users.lock().unwrap();
+        let user = users
+            .values_mut()
+            .find(|u| u.id == user_id)
+            .ok_or(DomainError::NotFound)?;
+        user.password_hash = password_hash.as_str().to_string();
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone, Default)]

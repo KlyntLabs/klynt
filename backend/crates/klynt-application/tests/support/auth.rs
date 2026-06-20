@@ -10,7 +10,9 @@ use klynt_domain::ctx::Ctx;
 use klynt_domain::errors::DomainError;
 use klynt_domain::models::{Email, UserId};
 use klynt_domain::ports::{EmailService, SharedEmailService};
+use klynt_domain::repositories::PasswordResetTokenRepository;
 use klynt_domain::session::{Session, SessionStore, SessionToken};
+use klynt_infrastructure::repositories::in_memory_password_reset_token::InMemoryPasswordResetTokenRepository;
 use klynt_infrastructure::repositories::in_memory_token::InMemoryEmailVerificationTokenRepository;
 
 use super::user_service;
@@ -28,7 +30,9 @@ impl EmailService for FakeEmailService {
         Ok(())
     }
 
-    async fn send_password_reset(&self, _email: &Email, _token: &str) -> Result<(), DomainError> {
+    async fn send_password_reset(&self, email: &Email, token: &str) -> Result<(), DomainError> {
+        let mut sent = self.sent.lock().unwrap();
+        sent.push((email.clone(), token.to_string()));
         Ok(())
     }
 }
@@ -68,6 +72,8 @@ pub fn auth_service() -> (
     let user_service = Arc::new(user_service());
     let session_store: Arc<dyn SessionStore> = Arc::new(FakeSessionStore);
     let email_verification_repo = Arc::new(InMemoryEmailVerificationTokenRepository::new());
+    let password_reset_repo: Arc<dyn PasswordResetTokenRepository> =
+        Arc::new(InMemoryPasswordResetTokenRepository::new());
     let email_service_impl = Arc::new(FakeEmailService::default());
     let email_service: SharedEmailService = Arc::clone(&email_service_impl) as SharedEmailService;
     let auth_service = AuthService::new(
@@ -75,6 +81,7 @@ pub fn auth_service() -> (
         session_store,
         email_verification_repo
             as Arc<dyn klynt_domain::repositories::EmailVerificationTokenRepository>,
+        password_reset_repo,
         email_service,
     );
     (auth_service, user_service, email_service_impl)

@@ -102,7 +102,7 @@ impl PasswordResetToken {
     }
 
     /// Compute SHA-256 hash of token (hex string).
-    fn sha256_hash(token: &str) -> String {
+    pub fn sha256_hash(token: &str) -> String {
         use sha2::{Digest, Sha256};
         let mut hasher = Sha256::new();
         hasher.update(token.as_bytes());

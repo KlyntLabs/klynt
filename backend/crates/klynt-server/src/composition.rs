@@ -13,6 +13,7 @@ use klynt_infrastructure::email::MockEmailService;
 use klynt_infrastructure::password_hasher::Argon2PasswordHasher;
 use klynt_infrastructure::rate_limiter::RateLimiter as InMemoryRateLimiter;
 use klynt_infrastructure::repositories::idempotency::InMemoryIdempotencyStore;
+use klynt_infrastructure::repositories::in_memory_password_reset_token::InMemoryPasswordResetTokenRepository;
 use klynt_infrastructure::repositories::in_memory_token::InMemoryEmailVerificationTokenRepository;
 use klynt_infrastructure::repositories::in_memory_user::InMemoryUserRepository;
 use klynt_infrastructure::repositories::session::InMemorySessionStore;
@@ -53,12 +54,15 @@ pub fn build_app(config: AppConfig) -> Router {
     let email_verification_repo: Arc<
         dyn klynt_domain::repositories::EmailVerificationTokenRepository,
     > = Arc::new(InMemoryEmailVerificationTokenRepository::new());
+    let password_reset_repo: Arc<dyn klynt_domain::repositories::PasswordResetTokenRepository> =
+        Arc::new(InMemoryPasswordResetTokenRepository::new());
     let email_service: SharedEmailService = Arc::new(MockEmailService::new());
 
     let auth_service = Arc::new(AuthService::new(
         Arc::clone(&user_service),
         Arc::clone(&session_store_port),
         email_verification_repo,
+        password_reset_repo,
         email_service,
     ));
 

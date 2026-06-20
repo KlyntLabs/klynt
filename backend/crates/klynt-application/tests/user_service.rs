@@ -109,3 +109,57 @@ async fn activate_user_verifies_email() {
     assert_eq!(user.status, UserStatus::Active);
     assert!(user.email_verified_at.is_some());
 }
+
+#[tokio::test]
+async fn update_password_changes_authentication() {
+    let service = user_service();
+    let ctx = Ctx::guest(Uuid::new_v4());
+    let email = Email::parse("update-password@example.com").unwrap();
+
+    let user_id = service
+        .create_pending_user(
+            &ctx,
+            "Ada Lovelace".to_string(),
+            &email,
+            "str0ng!passphrase",
+            true,
+            "1.0".to_string(),
+        )
+        .await
+        .unwrap();
+
+    service
+        .update_password(&ctx, user_id, "n3w!longer-pass")
+        .await
+        .unwrap();
+
+    let auth = service.authenticate(&ctx, &email, "n3w!longer-pass").await;
+    assert!(auth.is_ok());
+
+    let old_auth = service
+        .authenticate(&ctx, &email, "str0ng!passphrase")
+        .await;
+    assert!(old_auth.is_err());
+}
+
+#[tokio::test]
+async fn update_password_rejects_weak_password() {
+    let service = user_service();
+    let ctx = Ctx::guest(Uuid::new_v4());
+    let email = Email::parse("update-password-weak@example.com").unwrap();
+
+    let user_id = service
+        .create_pending_user(
+            &ctx,
+            "Ada Lovelace".to_string(),
+            &email,
+            "str0ng!passphrase",
+            true,
+            "1.0".to_string(),
+        )
+        .await
+        .unwrap();
+
+    let result = service.update_password(&ctx, user_id, "short").await;
+    assert!(matches!(result, Err(DomainError::WeakPassword(_))));
+}

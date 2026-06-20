@@ -6,6 +6,7 @@ use crate::audit::AuditEvent;
 use crate::ctx::Ctx;
 use crate::errors::DomainError;
 use crate::models::{Email, User, UserId};
+use crate::ports::HashedPassword;
 
 pub enum CreateResult {
     Created,
@@ -27,6 +28,14 @@ pub trait UserRepository: Send + Sync {
 
     /// Mark the user's email as verified and activate the account.
     async fn set_email_verified(&self, ctx: &Ctx, user_id: UserId) -> Result<(), DomainError>;
+
+    /// Update the user's password hash.
+    async fn update_password(
+        &self,
+        ctx: &Ctx,
+        user_id: UserId,
+        password_hash: &HashedPassword,
+    ) -> Result<(), DomainError>;
 }
 
 #[async_trait]

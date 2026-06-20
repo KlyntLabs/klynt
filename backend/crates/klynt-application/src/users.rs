@@ -199,4 +199,34 @@ impl UserService {
         tx.commit().await?;
         Ok(user)
     }
+
+    /// Find a user by email.
+    pub async fn find_by_email(
+        &self,
+        ctx: &Ctx,
+        email: &Email,
+    ) -> Result<Option<User>, DomainError> {
+        let tx = self.uow.begin().await?;
+        let user = tx.users().find_by_email(ctx, email).await?;
+        tx.commit().await?;
+        Ok(user)
+    }
+
+    /// Update user password.
+    pub async fn update_password(
+        &self,
+        ctx: &Ctx,
+        user_id: UserId,
+        new_password: &str,
+    ) -> Result<(), DomainError> {
+        validate_password(new_password)?;
+
+        let password_hash = self.password_hasher.hash(new_password).await?;
+
+        let tx = self.uow.begin().await?;
+        tx.users()
+            .update_password(ctx, user_id, &password_hash)
+            .await?;
+        tx.commit().await
+    }
 }

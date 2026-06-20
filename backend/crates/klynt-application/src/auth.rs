@@ -6,9 +6,9 @@ use klynt_domain::ctx::Ctx;
 use klynt_domain::errors::DomainError;
 use klynt_domain::models::{Email, UserDto, UserId};
 use klynt_domain::ports::SharedEmailService;
-use klynt_domain::repositories::EmailVerificationTokenRepository;
+use klynt_domain::repositories::{EmailVerificationTokenRepository, PasswordResetTokenRepository};
 use klynt_domain::session::{Session, SessionStore, SessionToken};
-use klynt_domain::tokens::EmailVerificationToken;
+use klynt_domain::tokens::{EmailVerificationToken, PasswordResetToken};
 
 use crate::users::UserService;
 
@@ -16,6 +16,7 @@ pub struct AuthService {
     user_service: Arc<UserService>,
     session_store: Arc<dyn SessionStore>,
     email_verification_repo: Arc<dyn EmailVerificationTokenRepository>,
+    password_reset_repo: Arc<dyn PasswordResetTokenRepository>,
     email_service: SharedEmailService,
 }
 
@@ -24,12 +25,14 @@ impl AuthService {
         user_service: Arc<UserService>,
         session_store: Arc<dyn SessionStore>,
         email_verification_repo: Arc<dyn EmailVerificationTokenRepository>,
+        password_reset_repo: Arc<dyn PasswordResetTokenRepository>,
         email_service: SharedEmailService,
     ) -> Self {
         Self {
             user_service,
             session_store,
             email_verification_repo,
+            password_reset_repo,
             email_service,
         }
     }
@@ -106,5 +109,69 @@ impl AuthService {
         self.user_service.activate_user(ctx, user_id).await?;
 
         Ok(user_id)
+    }
+
+    /// Request password reset (user initiates).
+    ///
+    /// Always returns Ok to prevent email enumeration.
+    pub async fn request_password_reset(
+        &self,
+        ctx: &Ctx,
+        email: &Email,
+    ) -> Result<(), DomainError> {
+        let user = match self.user_service.find_by_email(ctx, email).await {
+            Ok(Some(user)) => user,
+            Ok(None) => {
+                // User doesn't exist - return Ok to prevent enumeration
+                return Ok(());
+            }
+            Err(e) => return Err(e),
+        };
+
+        let token = PasswordResetToken::generate(user.id);
+
+        self.password_reset_repo
+            .save(ctx, user.id, &token.hash, token.expires_at)
+            .await?;
+
+        self.email_service
+            .send_password_reset(email, &token.plaintext)
+            .await?;
+
+        Ok(())
+    }
+
+    /// Reset password using token from email.
+    pub async fn reset_password(
+        &self,
+        ctx: &Ctx,
+        token: &str,
+        new_password: &str,
+    ) -> Result<(), DomainError> {
+        klynt_domain::models::validate_password(new_password)?;
+
+        let token_hash = PasswordResetToken::sha256_hash(token);
+
+        let (user_id, _expires_at) = self
+            .password_reset_repo
+            .find_valid(ctx, &token_hash)
+            .await?
+            .ok_or(DomainError::InvalidToken(
+                klynt_domain::errors::TokenError::Invalid,
+            ))?;
+
+        let was_used = self.password_reset_repo.mark_used(ctx, &token_hash).await?;
+
+        if !was_used {
+            return Err(DomainError::InvalidToken(
+                klynt_domain::errors::TokenError::AlreadyUsed,
+            ));
+        }
+
+        self.user_service
+            .update_password(ctx, user_id, new_password)
+            .await?;
+
+        Ok(())
     }
 }
