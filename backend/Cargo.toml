@@ -48,6 +48,11 @@ dotenvy = "0.15"
 argon2 = { version = "0.5", features = ["std"] }
 rand_core = { version = "0.6", features = ["getrandom"] }
 
+# Crypto
+rand = "0.8"
+sha2 = "0.10"
+base64 = "0.22"
+
 # Database
 sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "postgres", "uuid", "chrono", "migrate"] }
 
