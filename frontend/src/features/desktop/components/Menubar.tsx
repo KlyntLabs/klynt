@@ -1,14 +1,8 @@
 import { Bell, Search, User, Zap } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
-import {
-  getAppByRoute,
-  getAppMenuGroups,
-  getAppsByMenuGroup,
-  marketingRegistry,
-} from "@/features/desktop/apps";
-import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
+import { getAppMenuGroups, getAppsByMenuGroup, marketingRegistry } from "@/features/desktop/apps";
+import { useMarketingNavigation } from "@/features/desktop/hooks/use-marketing-navigation";
 
 interface MenuItem {
   label: string;
@@ -74,13 +68,9 @@ function useMenuGroups(): MenuGroup[] {
 export default function Menubar() {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const { openWindow, viewMode } = useDesktopStore();
-  const navigate = useNavigate();
+  const { goTo, goToHome, goToPricing } = useMarketingNavigation();
   const { t } = useTranslation("home");
   const menus = useMenuGroups();
-
-  const pricingApp = getAppByRoute(marketingRegistry, "/pricing");
-  const homeApp = marketingRegistry.defaultApp;
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -95,33 +85,16 @@ export default function Menubar() {
   const handleMenuClick = (item: MenuItem) => {
     setOpenMenu(null);
     if (item.route) {
-      if (viewMode === "desktop") {
-        openWindow(item.route, item.label);
-      } else {
-        navigate(item.route);
-      }
+      goTo(item.route);
     }
   };
 
   const handleLogoClick = () => {
-    if (viewMode === "desktop") {
-      openWindow(homeApp.manifest.route, homeApp.manifest.title, {
-        size: homeApp.manifest.defaultSize,
-      });
-    } else {
-      navigate(homeApp.manifest.route);
-    }
+    goToHome();
   };
 
   const handleGetStartedClick = () => {
-    if (!pricingApp) return;
-    if (viewMode === "desktop") {
-      openWindow(pricingApp.manifest.route, pricingApp.manifest.title, {
-        size: pricingApp.manifest.defaultSize,
-      });
-    } else {
-      navigate(pricingApp.manifest.route);
-    }
+    goToPricing();
   };
 
   return (

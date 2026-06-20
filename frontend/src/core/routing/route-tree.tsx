@@ -3,8 +3,9 @@ import { createBrowserRouter, Outlet } from "react-router-dom";
 import { RootLayout } from "@/app/layout/root-layout";
 import { Spinner } from "@/components/ui/spinner";
 import { GuestRoute, ProtectedRoute, RoleGuard } from "@/core/auth";
-import { getAppByRoute, marketingRegistry } from "@/features/desktop/apps";
+import { marketingRegistry } from "@/features/desktop/apps";
 import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
+import { MarketingShell } from "@/features/marketing/components/MarketingShell";
 import { routePaths } from "./route-paths";
 
 const DesktopEnvironment = lazy(() => import("@/features/desktop/components/DesktopEnvironment"));
@@ -61,36 +62,12 @@ function IndexRoute() {
     );
   }
 
-  const homeApp = getAppByRoute(marketingRegistry, "/");
-  if (!homeApp) {
-    return <NotFoundPage />;
-  }
-
-  const HomeComponent = homeApp.component;
-  return (
-    <Suspense fallback={<Spinner />}>
-      <HomeComponent />
-    </Suspense>
-  );
-}
-
-function MarketingRoute({ route }: { route: string }) {
-  const app = getAppByRoute(marketingRegistry, route);
-  if (!app) {
-    return <NotFoundPage />;
-  }
-
-  const AppComponent = app.component;
-  return (
-    <Suspense fallback={<Spinner />}>
-      <AppComponent />
-    </Suspense>
-  );
+  return <MarketingShell route={marketingRegistry.defaultApp.manifest.route} />;
 }
 
 const marketingRoutes = marketingRegistry.apps.map((app) => ({
   path: app.manifest.route,
-  element: <MarketingRoute route={app.manifest.route} />,
+  element: <MarketingShell route={app.manifest.route} />,
 }));
 
 export const router = createBrowserRouter([
