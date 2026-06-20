@@ -13,7 +13,7 @@ scales horizontally.
 
 The existing codebase was built on in-memory adapters for speed and simplicity. Before
 introducing real authentication flows, we must wire the application to real
-infrastructure while keeping the in-memory adapters available for fast, hermetic tests.
+infrastructure.
 
 ## Decision
 
@@ -21,31 +21,33 @@ We will use:
 
 - **PostgreSQL** as the primary durable store, accessed through `sqlx` with migration
   files in `backend/migrations/`.
-- **Redis** as the optional backing store for the rate limiter, using a Lua-based
+- **Redis** as the backing store for the rate limiter, using a Lua-based
   fixed-window counter.
 - **Migration-driven schema evolution**: each schema change is an incremental SQL file
   applied automatically on startup by `sqlx::migrate!`.
 
-The production composition root (`klynt-server::composition::build_production_app`)
-connects to Postgres, runs pending migrations, and wires Postgres-backed repositories.
-If `REDIS_URL` is configured, it uses `RedisRateLimiter`; otherwise it falls back to the
-in-memory rate limiter.
+The production composition root (`klynt-server::composition::build_app`) connects to
+Postgres and Redis, runs pending migrations, and wires Postgres-backed repositories.
+It uses `RedisRateLimiter` backed by the configured `REDIS_URL`.
 
-The existing `build_app` / `build_app_with_email_service` synchronous composition roots
-remain unchanged for fast integration tests.
+Integration tests that need real infrastructure use `build_app_with_email_service`
+with test-scoped Postgres and Redis instances.
 
 ## Consequences
 
 - **Positive**: Real persistence and shared rate limiting are now available for
   production deployments.
-- **Positive**: In-memory adapters keep the default `cargo test` fast and hermetic.
 - **Positive**: Migrations are version-controlled and applied automatically, reducing
   drift between environments.
-- **Negative**: Running the full backend coverage gate now requires a Postgres and Redis
+- **Negative**: Running the full backend coverage gate requires a Postgres and Redis
   instance; the `test-coverage` recipe therefore runs ignored infrastructure tests with
   `--include-ignored`.
-- **Negative**: `PgUnitOfWork` currently uses a no-op transaction wrapper; full
-  multi-repository transactions are deferred to a later phase.
+
+> **Update (2026-06-20):** The in-memory adapters and no-op `UnitOfWork` referenced
+> in the original ADR have been removed. The composition root now requires
+> `DATABASE_URL` and `REDIS_URL` (no fallback). `UserService` holds
+> `Arc<dyn UserRepository>` directly — real cross-aggregate transactions, if needed,
+> will be introduced as a new seam that spans all repositories.
 - **Security note**: `sqlx` transitively depends on `rsa` via `sqlx-mysql`, which
   is flagged by `RUSTSEC-2023-0071`. Klynt only uses sqlx's Postgres feature, so
   the vulnerable RSA path is unused. The advisory is ignored in
