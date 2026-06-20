@@ -12,7 +12,7 @@ export function useMarketingTranslation() {
   return {
     t,
     language: i18n.language,
-    array: <T>(key: string): T[] => t(key, { returnObjects: true }) as T[],
-    object: <T>(key: string): T => t(key, { returnObjects: true }) as T,
+    array: <T>(key: string): T[] => t(key as never, { returnObjects: true }) as T[],
+    object: <T>(key: string): T => t(key as never, { returnObjects: true }) as T,
   };
 }

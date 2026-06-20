@@ -68,10 +68,10 @@ export function ContactCards() {
             {card.icon}
           </div>
           <h2 className="text-sm font-semibold text-[#1A1A1A] mt-3">
-            {t(`talkToHuman.contactCards.${card.key}.title`)}
+            {t(`talkToHuman.contactCards.${card.key}.title` as never)}
           </h2>
           <p className="text-xs text-[#6B6B6B] mt-1 leading-relaxed flex-1">
-            {t(`talkToHuman.contactCards.${card.key}.body`)}
+            {t(`talkToHuman.contactCards.${card.key}.body` as never)}
           </p>
           <a
             href={card.href}
@@ -80,7 +80,8 @@ export function ContactCards() {
               : { target: undefined, rel: undefined })}
             className="text-xs text-[#2563EB] mt-3 inline-flex items-center gap-0.5 hover:underline"
           >
-            {t(`talkToHuman.contactCards.${card.key}.link`)} <ArrowRight className="w-3 h-3" />
+            {t(`talkToHuman.contactCards.${card.key}.link` as never)}{" "}
+            <ArrowRight className="w-3 h-3" />
           </a>
         </motion.div>
       ))}
