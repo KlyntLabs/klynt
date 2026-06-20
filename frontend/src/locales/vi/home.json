@@ -31,9 +31,108 @@
   "desktop": {
     "navLabel": "Ứng dụng trên màn hình",
     "apps": {
-      "home": { "label": "Trang chủ" },
-      "register": { "label": "Đăng ký" },
-      "dashboard": { "label": "Bảng điều khiển" }
+      "home": {
+        "label": "Trang chủ"
+      },
+      "register": {
+        "label": "Đăng ký"
+      },
+      "dashboard": {
+        "label": "Bảng điều khiển"
+      }
+    },
+    "menubar": {
+      "logo": "PostHog",
+      "logoAlt": "PostHog logo",
+      "getStarted": "Get started – free",
+      "menus": {
+        "productOS": {
+          "label": "Product OS",
+          "overview": "Product OS Overview",
+          "productAnalytics": "Product Analytics",
+          "webAnalytics": "Web Analytics",
+          "sessionReplay": "Session Replay",
+          "featureFlags": "Feature Flags",
+          "experiments": "Experiments",
+          "surveys": "Surveys",
+          "dataWarehouse": "Data Warehouse"
+        },
+        "pricing": {
+          "label": "Pricing",
+          "item": "Pricing"
+        },
+        "docs": {
+          "label": "Docs",
+          "item": "Documentation"
+        },
+        "community": {
+          "label": "Community",
+          "item": "Community"
+        },
+        "company": {
+          "label": "Company",
+          "about": "About",
+          "careers": "Careers",
+          "changelog": "Changelog",
+          "handbook": "Handbook"
+        },
+        "more": {
+          "label": "More",
+          "talkToHuman": "Talk to a human",
+          "merch": "Merch",
+          "trash": "Trash"
+        }
+      },
+      "search": "Search",
+      "notifications": "Notifications",
+      "profile": "Profile"
+    },
+    "icons": {
+      "switchToWebsite": "Switch to website",
+      "left": {
+        "productOS": "Product OS",
+        "pricing": "Pricing",
+        "docs": "Docs",
+        "talkToHuman": "Talk to a human",
+        "askQuestion": "Ask a question",
+        "signUp": "Sign up"
+      },
+      "right": {
+        "whyPostHog": "Why PostHog?",
+        "changelog": "Changelog",
+        "companyHandbook": "Company handbook",
+        "store": "Store",
+        "workHere": "Work here",
+        "trash": "Trash"
+      }
+    },
+    "cookieBanner": {
+      "dismiss": "Dismiss cookie banner",
+      "heading": "Legally-required cookie banner",
+      "body": "PostHog.com doesn't use third-party cookies, only a single in-house cookie. No data is sent to a third party.",
+      "aside": "(Ursula von der Leyen would be so proud.)",
+      "ursulaAlt": "Ursula von der Leyen",
+      "footer": "No cookies were harmed in the making of this banner."
+    },
+    "window": {
+      "close": "Close",
+      "minimize": "Minimize",
+      "maximize": "Maximize",
+      "restore": "Restore",
+      "minimized": "Window minimized",
+      "share": "Share",
+      "zoom": "100%",
+      "toolbar": {
+        "back": "Back",
+        "forward": "Forward",
+        "bold": "Bold",
+        "italic": "Italic",
+        "underline": "Underline",
+        "font": "Font",
+        "search": "Search",
+        "bookmark": "Bookmark",
+        "settings": "Settings"
+      }
     }
   }
 }

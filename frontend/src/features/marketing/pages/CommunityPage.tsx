@@ -8,110 +8,17 @@ import {
   ThumbsUp,
 } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-/* ──────────────────────────── data ──────────────────────────── */
-
-const SLACK_THREADS = [
-  {
-    channel: "#devrel",
-    title: "A great writeup on React Server Components",
-    preview:
-      "Read this a couple months ago, but just thought it worth sharing: great writeup on React Server Components",
-  },
-  {
-    channel: "#where-in-the-world",
-    title: "new cafe opened 5 minutes walk from home",
-    preview: "new cafe opened 5 minutes walk from home",
-  },
-  {
-    channel: "#engineering",
-    title: "We shipped the new query engine",
-    preview:
-      "After 3 months of work, the new query engine is live. 10x faster on large event volumes.",
-  },
-];
-
-const ARTICLES = [
-  {
-    category: "Blog",
-    title: "Everything (and everyone) is build mode now",
-    excerpt:
-      "There's a future version of you who isn't boxed into one job function. Someone who has an idea in the morning and the means to ship it the same afternoon. Farfetched? Hardly. That version of you isn't waiting for 2030 \u2013 they exist today. They're in\u2026",
-    featured: true,
-  },
-  {
-    category: "Blog",
-    title: "All social media metrics are bad",
-    excerpt:
-      "Picture this: your company's social media team excitedly informs you that stonks are up this month. You can see the screenshots. They're green. Holy smokes. We are killing it. Social media has been solved...",
-    featured: false,
-  },
-  {
-    category: "Blog",
-    title: "I didn't understand the OS I built with AI until the MCP gave it analytics",
-    excerpt:
-      "For my birthday this year I got a Pimoroni Presto \u2014 a little developer gadget with a 240x240 touchscreen and not much else...",
-    featured: false,
-  },
-  {
-    category: "Tutorial",
-    title: "How to set up feature flags in Next.js",
-    excerpt:
-      "A step-by-step guide to getting feature flags working in your Next.js application with PostHog...",
-    featured: false,
-  },
-  {
-    category: "Blog",
-    title: "Why we stopped using UUIDs",
-    excerpt:
-      "UUIDs are great until they're not. Here's what we switched to and why it made everything faster...",
-    featured: false,
-  },
-];
-
-const QUESTIONS = [
-  { topic: "Manual ticket creation", reply: "16 hours ago" },
-  { topic: "Unable to export data", reply: "a day ago" },
-  { topic: "Split ID", reply: "a day ago" },
-  { topic: "Session replay not loading", reply: "2 days ago" },
-];
-
-const CHANGELOG_ITEMS = [
-  {
-    category: "Product analytics",
-    text: "Search and filter the alerts list",
-    dotColor: "bg-[#F76E18]",
-  },
-  { category: "Feature flags", text: "New UI for creating flags", dotColor: "bg-[#2563EB]" },
-  { category: "Session replay", text: "Mobile network waterfall view", dotColor: "bg-[#22C55E]" },
-];
-
-const FEATURE_REQUESTS = [
-  { name: "Product tours", votes: 695 },
-  { name: "Customer support product", votes: 119 },
-  { name: "PostHog CRM", votes: 110 },
-];
-
-const EVENTS = [
-  { title: "Community Office Hours", date: "June 25, 2026", type: "Virtual" },
-  { title: "PostHog Meetup: London", date: "July 8, 2026", type: "In-person" },
-];
-
-const SPOTLIGHT_MEMBER = {
-  name: "Dana",
-  role: "Technical Customer Success Manager",
-  bio: "In a past life, Dana studied medicine. Now she helps teams get started with PostHog. In her downtime she's a founding member of PostHog's D&D club.",
-};
-
 /* ──────────────────────────── helpers ──────────────────────────── */
 
-function getTodayDate(): string {
+function getTodayDate(language: string): string {
   const d = new Date();
-  return d.toLocaleDateString("en-US", {
+  return d.toLocaleDateString(language === "cn" ? "zh-CN" : language === "vi" ? "vi-VN" : "en-US", {
     weekday: "long",
     year: "numeric",
     month: "long",
@@ -128,7 +35,46 @@ const COLUMN_VARIANTS = {
 /* ──────────────────────────── page ──────────────────────────── */
 
 export default function CommunityPage() {
+  const { t, i18n } = useTranslation("marketing");
   const [email, setEmail] = useState("");
+
+  const slackThreads = t("community.slack.threads", { returnObjects: true }) as {
+    channel: string;
+    title: string;
+    preview: string;
+  }[];
+  const articles = t("community.articles.items", { returnObjects: true }) as {
+    category: string;
+    title: string;
+    excerpt: string;
+  }[];
+  const questions = t("community.questions.items", { returnObjects: true }) as {
+    topic: string;
+    reply: string;
+  }[];
+  const changelogItems = t("community.changelog.items", { returnObjects: true }) as {
+    category: string;
+    text: string;
+  }[];
+  const featureRequests = t("community.featureRequests.items", { returnObjects: true }) as {
+    name: string;
+    votes: number;
+  }[];
+  const events = t("community.events.items", { returnObjects: true }) as {
+    title: string;
+    date: string;
+    type: string;
+  }[];
+  const stats = t("community.stats", { returnObjects: true }) as {
+    slackMembers: { value: string; label: string };
+    messagesSent: { value: string; label: string };
+    countries: { value: string; label: string };
+  };
+  const spotlight = t("community.spotlight", { returnObjects: true }) as {
+    name: string;
+    role: string;
+    bio: string;
+  };
 
   return (
     <ScrollArea className="h-full bg-white">
@@ -142,21 +88,21 @@ export default function CommunityPage() {
         >
           {/* Top row */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
-            <p className="text-sm text-[#6B6B6B]">{getTodayDate()}</p>
+            <p className="text-sm text-[#6B6B6B]">{getTodayDate(i18n.language)}</p>
             <h1
               className="text-2xl md:text-3xl font-bold text-[#1A1A1A] text-center"
               style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
             >
-              The PostHog Gazette
+              {t("community.header.title")}
             </h1>
             <div className="flex items-center gap-2 text-xs text-[#22C55E]">
               <CheckCircle2 className="w-3.5 h-3.5" />
-              All systems operational
+              {t("community.header.operational")}
             </div>
           </div>
           {/* Tagline */}
           <p className="text-xs text-[#6B6B6B] text-center italic">
-            PostHog&apos;s community newspaper. Stories, updates, and musings from the team.
+            {t("community.header.tagline")}
           </p>
         </motion.header>
 
@@ -176,29 +122,28 @@ export default function CommunityPage() {
             {/* From the editor */}
             <div className="border border-[#D1D1D1] p-4 bg-[#FAFAF8] rounded-md">
               <p className="text-xs text-[#6B6B6B] leading-relaxed">
-                Welcome to Inside PostHog — our community newspaper. Explore our latest posts,
-                community questions, and everything else that&apos;s happening in the world of
-                PostHog.
+                {t("community.editor.welcome")}
               </p>
-              <p className="text-xs text-[#9CA3AF] italic mt-2">— Andy, Editor-in-Chief</p>
+              <p className="text-xs text-[#9CA3AF] italic mt-2">
+                {t("community.editor.signature")}
+              </p>
             </div>
 
             {/* Hedgehog wisdom */}
             <div className="border-t border-[#E5E5E5] pt-4">
               <p className="text-sm text-[#1A1A1A] italic leading-relaxed">
-                &ldquo;Why scurry through life when you can forage? Take time to sniff the
-                mealworms. When things feel overwhelming, just curl into a ball.&rdquo;
+                &ldquo;{t("community.wisdom.quote")}&rdquo;
               </p>
-              <p className="text-xs text-[#9CA3AF] mt-2">— Max, our resident hedgehog</p>
+              <p className="text-xs text-[#9CA3AF] mt-2">{t("community.wisdom.attribution")}</p>
             </div>
 
             {/* From the Slack */}
             <div>
-              <h3 className="text-xs font-semibold uppercase tracking-wider mb-3 text-[#1A1A1A]">
-                From the PostHog Slack
-              </h3>
+              <h2 className="text-xs font-semibold uppercase tracking-wider mb-3 text-[#1A1A1A]">
+                {t("community.slack.title")}
+              </h2>
               <div className="space-y-3">
-                {SLACK_THREADS.map((thread) => (
+                {slackThreads.map((thread) => (
                   <div key={thread.title} className="pb-3 border-b border-[#F0EDE6] last:border-0">
                     <Badge
                       variant="secondary"
@@ -219,26 +164,30 @@ export default function CommunityPage() {
             <div className="border border-[#D1D1D1] p-4 bg-[#FAFAF8] rounded-md">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-12 h-12 rounded-full bg-[#E5E5E5] flex items-center justify-center text-sm font-semibold text-[#6B6B6B]">
-                  {SPOTLIGHT_MEMBER.name[0]}
+                  {spotlight.name[0]}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-[#1A1A1A]">{SPOTLIGHT_MEMBER.name}</p>
-                  <p className="text-xs text-[#6B6B6B]">{SPOTLIGHT_MEMBER.role}</p>
+                  <p className="text-sm font-semibold text-[#1A1A1A]">{spotlight.name}</p>
+                  <p className="text-xs text-[#6B6B6B]">{spotlight.role}</p>
                 </div>
               </div>
-              <p className="text-xs text-[#6B6B6B] leading-relaxed">{SPOTLIGHT_MEMBER.bio}</p>
-              <button className="text-xs text-[#2563EB] mt-2 hover:underline inline-flex items-center gap-0.5">
-                Learn more about {SPOTLIGHT_MEMBER.name} <ArrowRight className="w-3 h-3" />
+              <p className="text-xs text-[#6B6B6B] leading-relaxed">{spotlight.bio}</p>
+              <button
+                type="button"
+                className="text-xs text-[#2563EB] mt-2 hover:underline inline-flex items-center gap-0.5"
+              >
+                {t("community.spotlight.cta", { name: spotlight.name })}{" "}
+                <ArrowRight className="w-3 h-3" />
               </button>
             </div>
 
             {/* Upcoming events */}
             <div>
-              <h3 className="text-xs font-semibold uppercase tracking-wider mb-3 text-[#1A1A1A]">
-                Upcoming events
-              </h3>
+              <h2 className="text-xs font-semibold uppercase tracking-wider mb-3 text-[#1A1A1A]">
+                {t("community.events.title")}
+              </h2>
               <div className="space-y-3">
-                {EVENTS.map((event) => (
+                {events.map((event) => (
                   <div
                     key={event.title}
                     className="flex items-start gap-2 pb-3 border-b border-[#F0EDE6] last:border-0"
@@ -283,24 +232,24 @@ export default function CommunityPage() {
               <div className="w-full aspect-[16/10] bg-[#F5F3EF] rounded-lg overflow-hidden mb-4 flex items-center justify-center">
                 <img
                   src="/hedgehog-hero.png"
-                  alt="PostHog hedgehog"
+                  alt={t("community.header.title")}
                   className="w-full h-full object-cover"
                 />
               </div>
               <span className="text-xs text-[#9CA3AF] uppercase tracking-wider">
-                {ARTICLES[0].category}
+                {articles[0]?.category}
               </span>
               <h2 className="text-xl font-bold text-[#1A1A1A] leading-tight hover:text-[#2563EB] cursor-pointer mt-1">
-                {ARTICLES[0].title}
+                {articles[0]?.title}
               </h2>
               <p className="text-sm text-[#6B6B6B] leading-relaxed mt-2 line-clamp-3">
-                {ARTICLES[0].excerpt}
+                {articles[0]?.excerpt}
               </p>
             </motion.article>
 
             {/* Secondary articles */}
             <div className="space-y-0">
-              {ARTICLES.slice(1).map((article, i) => (
+              {articles.slice(1).map((article, i) => (
                 <motion.article
                   key={article.title}
                   initial={{ opacity: 0, y: 10 }}
@@ -329,18 +278,18 @@ export default function CommunityPage() {
             {/* Community stats bar */}
             <div className="mt-6 bg-[#F5F3EF] rounded-lg p-4 flex items-center justify-around">
               <div className="text-center">
-                <p className="text-lg font-bold text-[#1A1A1A]">12k+</p>
-                <p className="text-[10px] text-[#6B6B6B]">Slack members</p>
+                <p className="text-lg font-bold text-[#1A1A1A]">{stats.slackMembers.value}</p>
+                <p className="text-[10px] text-[#6B6B6B]">{stats.slackMembers.label}</p>
               </div>
               <div className="w-px h-8 bg-[#D1D1D1]" />
               <div className="text-center">
-                <p className="text-lg font-bold text-[#1A1A1A]">2.4M</p>
-                <p className="text-[10px] text-[#6B6B6B]">Messages sent</p>
+                <p className="text-lg font-bold text-[#1A1A1A]">{stats.messagesSent.value}</p>
+                <p className="text-[10px] text-[#6B6B6B]">{stats.messagesSent.label}</p>
               </div>
               <div className="w-px h-8 bg-[#D1D1D1]" />
               <div className="text-center">
-                <p className="text-lg font-bold text-[#1A1A1A]">500+</p>
-                <p className="text-[10px] text-[#6B6B6B]">Countries</p>
+                <p className="text-lg font-bold text-[#1A1A1A]">{stats.countries.value}</p>
+                <p className="text-[10px] text-[#6B6B6B]">{stats.countries.label}</p>
               </div>
             </div>
           </motion.section>
@@ -358,21 +307,23 @@ export default function CommunityPage() {
           >
             {/* Newsletter subscribe */}
             <div className="border border-[#D1D1D1] p-4 bg-[#F0EDE6] rounded-md">
-              <h3 className="text-sm font-semibold text-[#1A1A1A]">Subscribe to our newsletter</h3>
-              <p className="text-xs text-[#F76E18] font-medium mt-0.5">Product for Engineers</p>
-              <p className="text-xs text-[#6B6B6B] mt-0.5">
-                Read by 100,000+ founders and builders
+              <h2 className="text-sm font-semibold text-[#1A1A1A]">
+                {t("community.newsletter.title")}
+              </h2>
+              <p className="text-xs text-[#F76E18] font-medium mt-0.5">
+                {t("community.newsletter.subtitle")}
               </p>
+              <p className="text-xs text-[#6B6B6B] mt-0.5">{t("community.newsletter.body")}</p>
               <div className="mt-3 space-y-2">
                 <Input
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder={t("community.newsletter.placeholder")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-white border-[#D1D1D1] rounded px-3 py-2 text-sm h-auto"
                 />
                 <Button className="w-full bg-[#1A1A1A] text-white text-sm font-medium rounded px-3 py-2 hover:bg-[#333] h-auto">
-                  Subscribe
+                  {t("community.newsletter.cta")}
                 </Button>
               </div>
             </div>
@@ -381,31 +332,40 @@ export default function CommunityPage() {
             <div className="border border-[#D1D1D1] p-4 bg-[#FAFAF8] rounded-md">
               <div className="flex items-center gap-2 mb-2">
                 <MessageCircle className="w-5 h-5 text-[#F76E18]" />
-                <h3 className="text-sm font-semibold text-[#1A1A1A]">Join our Slack</h3>
+                <h2 className="text-sm font-semibold text-[#1A1A1A]">
+                  {t("community.slackJoin.title")}
+                </h2>
               </div>
               <p className="text-xs text-[#6B6B6B] leading-relaxed mb-3">
-                Get help, share ideas, and hang out with 12,000+ product engineers.
+                {t("community.slackJoin.body")}
               </p>
-              <button className="w-full text-center text-xs text-white bg-[#F76E18] hover:bg-[#E56310] font-medium px-3 py-2 rounded transition-colors">
-                Join Slack community
+              <button
+                type="button"
+                className="w-full text-center text-xs text-white bg-[#F76E18] hover:bg-[#E56310] font-medium px-3 py-2 rounded transition-colors"
+              >
+                {t("community.slackJoin.cta")}
               </button>
             </div>
 
             {/* Latest questions */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold text-[#1A1A1A]">Latest questions</h3>
-                <button className="text-xs text-[#2563EB] hover:underline">
-                  View all <ArrowRight className="w-3 h-3 inline" />
+                <h2 className="text-sm font-semibold text-[#1A1A1A]">
+                  {t("community.questions.title")}
+                </h2>
+                <button type="button" className="text-xs text-[#2563EB] hover:underline">
+                  {t("community.questions.viewAll")} <ArrowRight className="w-3 h-3 inline" />
                 </button>
               </div>
               <div>
-                {QUESTIONS.map((q) => (
+                {questions.map((q) => (
                   <div key={q.topic} className="py-2 border-b border-[#F0EDE6] last:border-0">
                     <p className="text-sm text-[#1A1A1A] hover:text-[#2563EB] cursor-pointer">
                       {q.topic}
                     </p>
-                    <p className="text-xs text-[#9CA3AF]">Last reply {q.reply}</p>
+                    <p className="text-xs text-[#9CA3AF]">
+                      {t("community.questions.reply", { time: q.reply })}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -413,14 +373,14 @@ export default function CommunityPage() {
 
             {/* Changelog teaser */}
             <div>
-              <h3 className="text-sm font-semibold text-[#1A1A1A] mb-2">Latest changelog</h3>
-              <p className="text-xs text-[#6B6B6B] mb-3">
-                Here&apos;s what we&apos;ve shipped in the last two weeks.
-              </p>
+              <h2 className="text-sm font-semibold text-[#1A1A1A] mb-2">
+                {t("community.changelog.title")}
+              </h2>
+              <p className="text-xs text-[#6B6B6B] mb-3">{t("community.changelog.body")}</p>
               <div className="space-y-2">
-                {CHANGELOG_ITEMS.map((item) => (
+                {changelogItems.map((item) => (
                   <div key={item.text} className="flex items-start gap-2">
-                    <span className={`w-2 h-2 rounded-full mt-1 shrink-0 ${item.dotColor}`} />
+                    <span className="w-2 h-2 rounded-full mt-1 shrink-0 bg-[#F76E18]" />
                     <div>
                       <span className="text-[10px] text-[#9CA3AF]">{item.category}:</span>
                       <p className="text-xs text-[#1A1A1A]">{item.text}</p>
@@ -428,16 +388,18 @@ export default function CommunityPage() {
                   </div>
                 ))}
               </div>
-              <button className="text-xs text-[#2563EB] mt-2 hover:underline">
-                View full changelog <ArrowRight className="w-3 h-3 inline" />
+              <button type="button" className="text-xs text-[#2563EB] mt-2 hover:underline">
+                {t("community.changelog.viewAll")} <ArrowRight className="w-3 h-3 inline" />
               </button>
             </div>
 
             {/* Feature requests */}
             <div>
-              <h3 className="text-sm font-semibold text-[#1A1A1A] mb-2">Latest feature requests</h3>
+              <h2 className="text-sm font-semibold text-[#1A1A1A] mb-2">
+                {t("community.featureRequests.title")}
+              </h2>
               <div>
-                {FEATURE_REQUESTS.map((req) => (
+                {featureRequests.map((req) => (
                   <div
                     key={req.name}
                     className="flex justify-between items-center py-1.5 border-b border-[#F0EDE6] last:border-0"
@@ -450,22 +412,24 @@ export default function CommunityPage() {
                   </div>
                 ))}
               </div>
-              <button className="text-xs text-[#2563EB] mt-2 hover:underline">
-                Vote on the roadmap <ArrowRight className="w-3 h-3 inline" />
+              <button type="button" className="text-xs text-[#2563EB] mt-2 hover:underline">
+                {t("community.featureRequests.voteCta")} <ArrowRight className="w-3 h-3 inline" />
               </button>
             </div>
 
             {/* CEO musings */}
             <div>
-              <h3 className="text-sm font-semibold text-[#1A1A1A] mb-2">Musings from the CEO</h3>
+              <h2 className="text-sm font-semibold text-[#1A1A1A] mb-2">
+                {t("community.ceoMusings.title")}
+              </h2>
               <p className="text-sm text-[#1A1A1A] leading-relaxed italic">
-                &ldquo;nobody will remember: your salary, how &apos;busy you were&apos;, how many
-                hours you worked. people will remember: if you hopped on a quick call, when you
-                hopped on a quick call, how many quick calls you hopped on, how you made them feel
-                when you hopped on a quick call&rdquo;
+                &ldquo;{t("community.ceoMusings.quote")}&rdquo;
               </p>
-              <button className="text-xs text-[#2563EB] mt-2 hover:underline inline-flex items-center gap-0.5">
-                Follow James on X <ExternalLink className="w-3 h-3" />
+              <button
+                type="button"
+                className="text-xs text-[#2563EB] mt-2 hover:underline inline-flex items-center gap-0.5"
+              >
+                {t("community.ceoMusings.cta")} <ExternalLink className="w-3 h-3" />
               </button>
             </div>
           </motion.aside>

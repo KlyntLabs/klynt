@@ -13,6 +13,7 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
+    "test:storybook": "STORYBOOK_TEST=true vitest run --project storybook",
     "typecheck": "tsc -b",
     "lint": "biome lint .",
     "lint:fix": "biome lint --write .",

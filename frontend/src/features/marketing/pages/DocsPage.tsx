@@ -9,13 +9,14 @@ import {
   Users,
 } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { DocCategory, DocItem } from "@/features/marketing/data/docs";
 import { allDocCategories } from "@/features/marketing/data/docs";
 
 /* ------------------------------------------------------------------ */
 /*  Doc Card Component                                                  */
 /* ------------------------------------------------------------------ */
-function DocCard({ item }: { item: DocItem }) {
+function DocCard({ item, tk }: { item: DocItem; tk: (key: string) => string }) {
   const Icon = item.icon;
   return (
     <motion.button
@@ -26,7 +27,7 @@ function DocCard({ item }: { item: DocItem }) {
       <div className="w-10 h-10 rounded-full bg-[#F5F3EF] flex items-center justify-center shrink-0">
         <Icon className="w-5 h-5 text-[#6B6B6B]" />
       </div>
-      <span className="text-sm font-medium text-[#1A1A1A] leading-tight">{item.label}</span>
+      <span className="text-sm font-medium text-[#1A1A1A] leading-tight">{tk(item.labelKey)}</span>
     </motion.button>
   );
 }
@@ -37,9 +38,11 @@ function DocCard({ item }: { item: DocItem }) {
 function DocSection({
   category,
   defaultOpen = false,
+  tk,
 }: {
   category: DocCategory;
   defaultOpen?: boolean;
+  tk: (key: string) => string;
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
@@ -56,7 +59,7 @@ function DocSection({
         ) : (
           <ChevronRight className="w-4 h-4 text-[#6B6B6B]" />
         )}
-        <span>{category.name}</span>
+        <span>{tk(category.nameKey)}</span>
       </button>
 
       {/* Card Grid */}
@@ -87,14 +90,14 @@ function DocSection({
             >
               {category.items.map((item) => (
                 <motion.div
-                  key={item.label}
+                  key={item.labelKey}
                   variants={{
                     hidden: { opacity: 0, y: 8 },
                     visible: { opacity: 1, y: 0 },
                   }}
                   transition={{ duration: 0.2 }}
                 >
-                  <DocCard item={item} />
+                  <DocCard item={item} tk={tk} />
                 </motion.div>
               ))}
             </motion.div>
@@ -109,6 +112,8 @@ function DocSection({
 /*  Right Sidebar Component                                             */
 /* ------------------------------------------------------------------ */
 function DocsSidebar() {
+  const { t } = useTranslation("marketing");
+
   return (
     <motion.aside
       initial={{ opacity: 0, x: 10 }}
@@ -117,65 +122,57 @@ function DocsSidebar() {
       className="w-[260px] shrink-0"
     >
       <div className="border border-[#E5E5E5] rounded-lg bg-white p-5">
-        <h3 className="text-sm font-semibold text-[#1A1A1A] mb-4">About our docs</h3>
+        <h2 className="text-sm font-semibold text-[#1A1A1A] mb-4">{t("docs.sidebar.title")}</h2>
 
         <div className="space-y-3">
           <div className="flex gap-2.5">
             <ExternalLink className="w-4 h-4 text-[#9CA3AF] shrink-0 mt-0.5" />
             <div>
-              <p className="text-xs font-medium text-[#1A1A1A]">On our website</p>
-              <p className="text-xs text-[#6B6B6B] mt-0.5">
-                You can search docs using the search bar above, or browse by category.
+              <p className="text-xs font-medium text-[#1A1A1A]">
+                {t("docs.sidebar.website.title")}
               </p>
+              <p className="text-xs text-[#6B6B6B] mt-0.5">{t("docs.sidebar.website.body")}</p>
             </div>
           </div>
 
           <div className="flex gap-2.5">
             <BookOpen className="w-4 h-4 text-[#9CA3AF] shrink-0 mt-0.5" />
             <div>
-              <p className="text-xs font-medium text-[#1A1A1A]">In the product</p>
-              <p className="text-xs text-[#6B6B6B] mt-0.5">
-                Look for the help icon (?) in the app to access contextual documentation.
+              <p className="text-xs font-medium text-[#1A1A1A]">
+                {t("docs.sidebar.product.title")}
               </p>
+              <p className="text-xs text-[#6B6B6B] mt-0.5">{t("docs.sidebar.product.body")}</p>
             </div>
           </div>
 
           <div className="flex gap-2.5">
             <Sparkles className="w-4 h-4 text-[#9CA3AF] shrink-0 mt-0.5" />
             <div>
-              <p className="text-xs font-medium text-[#1A1A1A]">Ask PostHog AI</p>
-              <p className="text-xs text-[#6B6B6B] mt-0.5">
-                Our AI assistant can answer questions about any of our docs.
-              </p>
+              <p className="text-xs font-medium text-[#1A1A1A]">{t("docs.sidebar.ai.title")}</p>
+              <p className="text-xs text-[#6B6B6B] mt-0.5">{t("docs.sidebar.ai.body")}</p>
             </div>
           </div>
 
           <div className="flex gap-2.5">
             <Users className="w-4 h-4 text-[#9CA3AF] shrink-0 mt-0.5" />
             <div>
-              <p className="text-xs font-medium text-[#1A1A1A]">Community forums</p>
-              <p className="text-xs text-[#6B6B6B] mt-0.5">
-                Join our community to ask questions and share knowledge.
+              <p className="text-xs font-medium text-[#1A1A1A]">
+                {t("docs.sidebar.community.title")}
               </p>
+              <p className="text-xs text-[#6B6B6B] mt-0.5">{t("docs.sidebar.community.body")}</p>
             </div>
           </div>
         </div>
 
         {/* Feedback */}
         <div className="mt-6 pt-4 border-t border-[#E5E5E5]">
-          <p className="text-xs text-[#9CA3AF]">Our docs are a perpetual work in progress.</p>
+          <p className="text-xs text-[#9CA3AF]">{t("docs.sidebar.feedback1")}</p>
+          <p className="text-xs text-[#9CA3AF] mt-1.5">{t("docs.sidebar.feedback2")}</p>
           <p className="text-xs text-[#9CA3AF] mt-1.5">
-            The Docs &amp; Wizard Team is responsible for what you see here.
-          </p>
-          <p className="text-xs text-[#9CA3AF] mt-1.5">
-            Found an issue?{" "}
-            <a
-              href="#"
-              onClick={(e) => e.preventDefault()}
-              className="text-[#2563EB] hover:underline"
-            >
-              Let us know!
-            </a>
+            {t("docs.sidebar.feedback3")}{" "}
+            <button type="button" className="text-[#2563EB] hover:underline">
+              {t("docs.sidebar.feedbackLink")}
+            </button>
           </p>
         </div>
       </div>
@@ -187,6 +184,8 @@ function DocsSidebar() {
 /*  Main Docs Page                                                      */
 /* ------------------------------------------------------------------ */
 export default function DocsPage() {
+  const { t } = useTranslation("marketing");
+  const tk = (key: string) => t(key as never);
   const [searchQuery, setSearchQuery] = useState("");
 
   return (
@@ -208,7 +207,7 @@ export default function DocsPage() {
           animate={{ opacity: 0.4 }}
           transition={{ duration: 0.3, delay: 0.3 }}
           src="/hedgehog-garden.png"
-          alt=""
+          alt={t("docs.hero.bannerAlt")}
           className="absolute inset-0 w-full h-full object-cover"
         />
 
@@ -217,7 +216,7 @@ export default function DocsPage() {
           className="relative z-10 text-4xl font-bold text-white drop-shadow-lg"
           style={{ textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}
         >
-          Documentation
+          {t("docs.hero.title")}
         </h1>
       </motion.div>
 
@@ -234,14 +233,14 @@ export default function DocsPage() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search the docs..."
+            placeholder={t("docs.search.placeholder")}
             className="w-full bg-white border border-[#D1D1D1] rounded-lg px-4 py-3 pl-11 pr-24 text-base text-[#1A1A1A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all"
           />
           <button
             type="button"
             className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#F5F3EF] hover:bg-[#EBE8E2] text-sm font-medium text-[#1A1A1A] px-3 py-1.5 rounded-md transition-colors inline-flex items-center gap-1.5"
           >
-            Ask AI <Sparkles className="w-3.5 h-3.5 text-[#F76E18]" />
+            {t("docs.search.askAi")} <Sparkles className="w-3.5 h-3.5 text-[#F76E18]" />
           </button>
         </div>
       </motion.div>
@@ -251,7 +250,7 @@ export default function DocsPage() {
         {/* Category Sections */}
         <div className="flex-1 min-w-0">
           {allDocCategories.map((category, i) => (
-            <DocSection key={category.name} category={category} defaultOpen={i === 0} />
+            <DocSection key={category.nameKey} category={category} defaultOpen={i === 0} tk={tk} />
           ))}
         </div>
 

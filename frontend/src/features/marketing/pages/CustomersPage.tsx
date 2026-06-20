@@ -1,13 +1,14 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ExternalLink } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { CustomerRow } from "@/features/marketing/data/customers";
+import { useTranslation } from "react-i18next";
+import type { CustomerRow, Product } from "@/features/marketing/data/customers";
 import { allProducts, customerRows } from "@/features/marketing/data/customers";
 
 /* ------------------------------------------------------------------ */
 /*  Filter option types                                                */
 /* ------------------------------------------------------------------ */
-type ProductFilter = "Any" | string;
+type ProductFilter = "Any" | Product;
 type CaseStudyFilter = "Any" | "Has link" | "No link";
 type FeaturedFilter = "Any" | "TRUE" | "FALSE";
 
@@ -31,7 +32,7 @@ function CompanyLogo({ customer }: { customer: CustomerRow }) {
 /* ------------------------------------------------------------------ */
 /*  Product tag pills                                                  */
 /* ------------------------------------------------------------------ */
-function ProductTags({ products }: { products: string[] }) {
+function ProductTags({ products, tk }: { products: Product[]; tk: (key: string) => string }) {
   return (
     <div className="flex flex-wrap gap-1">
       {products.map((p) => (
@@ -39,7 +40,7 @@ function ProductTags({ products }: { products: string[] }) {
           key={p}
           className="inline-block bg-[#F5F3EF] text-[10px] text-[#6B6B6B] px-1.5 py-0.5 rounded"
         >
-          {p}
+          {tk(`data.products.${p}`)}
         </span>
       ))}
     </div>
@@ -49,34 +50,39 @@ function ProductTags({ products }: { products: string[] }) {
 /* ------------------------------------------------------------------ */
 /*  Case study link                                                    */
 /* ------------------------------------------------------------------ */
-function CaseStudyLink({ hasLink }: { hasLink: boolean }) {
+function CaseStudyLink({ hasLink, tk }: { hasLink: boolean; tk: (key: string) => string }) {
   if (!hasLink) {
     return <span className="text-sm text-[#9CA3AF]">&ndash;</span>;
   }
   return (
-    <a
-      href="#"
-      aria-label="Open case study"
-      onClick={(e) => e.preventDefault()}
+    <button
+      type="button"
+      aria-label={tk("customers.table.link")}
       className="inline-flex items-center gap-1 text-sm text-[#2563EB] hover:underline"
     >
-      Link <ExternalLink className="w-3 h-3" />
-    </a>
+      {tk("customers.table.link")} <ExternalLink className="w-3 h-3" />
+    </button>
   );
 }
 
 /* ------------------------------------------------------------------ */
 /*  Dropdown component (shared)                                        */
 /* ------------------------------------------------------------------ */
+interface DropdownOption {
+  value: string;
+  label: string;
+}
+
 interface DropdownProps {
   value: string;
-  options: string[];
+  options: DropdownOption[];
   onChange: (value: string) => void;
 }
 
 function Dropdown({ value, options, onChange }: DropdownProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const selected = options.find((o) => o.value === value);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -95,7 +101,7 @@ function Dropdown({ value, options, onChange }: DropdownProps) {
         onClick={() => setOpen(!open)}
         className="inline-flex items-center gap-1 bg-white border border-[#D1D1D1] rounded px-2 py-1 text-sm font-medium text-[#1A1A1A] cursor-pointer hover:border-[#9CA3AF] transition-colors"
       >
-        {value}
+        {selected?.label ?? value}
         <ChevronDown className="w-3 h-3 text-[#6B6B6B]" />
       </button>
       <AnimatePresence>
@@ -109,17 +115,17 @@ function Dropdown({ value, options, onChange }: DropdownProps) {
           >
             {options.map((opt) => (
               <button
-                key={opt}
+                key={opt.value}
                 type="button"
                 onClick={() => {
-                  onChange(opt);
+                  onChange(opt.value);
                   setOpen(false);
                 }}
                 className={`block w-full text-left px-3 py-1.5 text-sm hover:bg-[#F5F3EF] transition-colors ${
-                  opt === value ? "font-medium text-[#1A1A1A]" : "text-[#6B6B6B]"
+                  opt.value === value ? "font-medium text-[#1A1A1A]" : "text-[#6B6B6B]"
                 }`}
               >
-                {opt}
+                {opt.label}
               </button>
             ))}
           </motion.div>
@@ -133,6 +139,8 @@ function Dropdown({ value, options, onChange }: DropdownProps) {
 /*  Main Customers Page                                                */
 /* ------------------------------------------------------------------ */
 export default function CustomersPage() {
+  const { t } = useTranslation("marketing");
+  const tk = (key: string) => t(key as never);
   const [productFilter, setProductFilter] = useState<ProductFilter>("Any");
   const [caseStudyFilter, setCaseStudyFilter] = useState<CaseStudyFilter>("Any");
   const [featuredFilter, setFeaturedFilter] = useState<FeaturedFilter>("Any");
@@ -161,30 +169,45 @@ export default function CustomersPage() {
     return [...filteredRows].sort((a, b) => a.id - b.id);
   }, [filteredRows]);
 
-  const productOptions = ["Any", ...allProducts];
-  const caseStudyOptions: CaseStudyFilter[] = ["Any", "Has link", "No link"];
-  const featuredOptions: FeaturedFilter[] = ["Any", "TRUE", "FALSE"];
+  const productOptions: DropdownOption[] = [
+    { value: "Any", label: t("customers.filters.any") },
+    ...allProducts.map((p) => ({ value: p, label: tk(`data.products.${p}`) })),
+  ];
+  const caseStudyOptions: DropdownOption[] = [
+    { value: "Any", label: t("customers.filters.any") },
+    { value: "Has link", label: t("customers.filters.hasLink") },
+    { value: "No link", label: t("customers.filters.noLink") },
+  ];
+  const featuredOptions: DropdownOption[] = [
+    { value: "Any", label: t("customers.filters.any") },
+    { value: "TRUE", label: t("customers.filters.true") },
+    { value: "FALSE", label: t("customers.filters.false") },
+  ];
 
   return (
     <div className="w-full">
       {/* Filter Bar */}
       <div className="sticky top-0 z-[1] bg-white border-b border-[#E5E5E5] px-6 py-3">
         <div className="flex items-center flex-wrap gap-x-2 gap-y-2 text-sm">
-          <span className="text-[#6B6B6B]">where</span>
-          <span className="text-[#6B6B6B]">product(s) used</span>
-          <span className="text-[#6B6B6B]">includes</span>
-          <Dropdown value={productFilter} options={productOptions} onChange={setProductFilter} />
-          <span className="text-[#6B6B6B]">and</span>
-          <span className="text-[#6B6B6B]">case study</span>
-          <span className="text-[#6B6B6B]">equals</span>
+          <span className="text-[#6B6B6B]">{t("customers.filters.where")}</span>
+          <span className="text-[#6B6B6B]">{t("customers.filters.productUsed")}</span>
+          <span className="text-[#6B6B6B]">{t("customers.filters.includes")}</span>
+          <Dropdown
+            value={productFilter}
+            options={productOptions}
+            onChange={(v) => setProductFilter(v as ProductFilter)}
+          />
+          <span className="text-[#6B6B6B]">{t("customers.filters.and")}</span>
+          <span className="text-[#6B6B6B]">{t("customers.filters.caseStudy")}</span>
+          <span className="text-[#6B6B6B]">{t("customers.filters.equals")}</span>
           <Dropdown
             value={caseStudyFilter}
             options={caseStudyOptions}
             onChange={(v) => setCaseStudyFilter(v as CaseStudyFilter)}
           />
-          <span className="text-[#6B6B6B]">and</span>
-          <span className="text-[#6B6B6B]">featured</span>
-          <span className="text-[#6B6B6B]">equals</span>
+          <span className="text-[#6B6B6B]">{t("customers.filters.and")}</span>
+          <span className="text-[#6B6B6B]">{t("customers.filters.featured")}</span>
+          <span className="text-[#6B6B6B]">{t("customers.filters.equals")}</span>
           <Dropdown
             value={featuredFilter}
             options={featuredOptions}
@@ -199,19 +222,19 @@ export default function CustomersPage() {
           <thead>
             <tr className="bg-[#F5F3EF] border-b-2 border-[#E5E5E5]">
               <th className="text-xs font-semibold text-[#6B6B6B] uppercase tracking-wider px-6 py-3 text-center w-[40px]">
-                #
+                {t("customers.table.number")}
               </th>
               <th className="text-xs font-semibold text-[#6B6B6B] uppercase tracking-wider px-6 py-3 text-left min-w-[180px]">
-                Company name
+                {t("customers.table.company")}
               </th>
               <th className="text-xs font-semibold text-[#6B6B6B] uppercase tracking-wider px-6 py-3 text-left min-w-[200px]">
-                Product(s) used
+                {t("customers.table.products")}
               </th>
               <th className="text-xs font-semibold text-[#6B6B6B] uppercase tracking-wider px-6 py-3 text-left w-[100px]">
-                Case study
+                {t("customers.table.caseStudy")}
               </th>
               <th className="text-xs font-semibold text-[#6B6B6B] uppercase tracking-wider px-6 py-3 text-left min-w-[150px]">
-                Notes
+                {t("customers.table.notes")}
               </th>
             </tr>
           </thead>
@@ -231,12 +254,12 @@ export default function CustomersPage() {
                     <CompanyLogo customer={row} />
                   </td>
                   <td className="px-6 py-3.5">
-                    <ProductTags products={row.products} />
+                    <ProductTags products={row.products} tk={tk} />
                   </td>
                   <td className="px-6 py-3.5">
-                    <CaseStudyLink hasLink={row.caseStudy} />
+                    <CaseStudyLink hasLink={row.caseStudy} tk={tk} />
                   </td>
-                  <td className="text-sm text-[#6B6B6B] px-6 py-3.5">{row.notes}</td>
+                  <td className="text-sm text-[#6B6B6B] px-6 py-3.5">{tk(row.notesKey)}</td>
                 </motion.tr>
               ))}
             </AnimatePresence>
@@ -247,7 +270,7 @@ export default function CustomersPage() {
       {/* Empty state */}
       {sortedRows.length === 0 && (
         <div className="flex items-center justify-center py-16 text-[#9CA3AF] text-sm">
-          No customers match the selected filters.
+          {t("customers.table.empty")}
         </div>
       )}
     </div>

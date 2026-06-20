@@ -72,6 +72,7 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null;
   }
 
+  // biome-ignore-start lint/security/noDangerouslySetInnerHtml: internal theme CSS variables, no user input
   return (
     <style
       dangerouslySetInnerHTML={{
@@ -97,6 +98,7 @@ ${colorConfig
       }}
     />
   );
+  // biome-ignore-end lint/security/noDangerouslySetInnerHtml: end
 };
 
 const ChartTooltip = RechartsPrimitive.Tooltip;

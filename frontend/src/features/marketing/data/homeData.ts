@@ -1,130 +1,138 @@
-// Product data for tabs
 export interface ProductItem {
   id: string;
-  label: string;
+  labelKey: string;
   icon: string;
   route: string;
-  description?: string;
+  descriptionKey?: string;
   category: "analytics" | "data" | "debug" | "testing" | "automation" | "feedback";
 }
 
-// Tab 1: Understand product usage
 export const tab1Products: ProductItem[] = [
   {
     id: "web-analytics",
-    label: "Web Analytics",
+    labelKey: "marketing:data.products.webAnalytics",
     icon: "Globe",
     route: "/web-analytics",
     category: "analytics",
   },
   {
     id: "product-analytics",
-    label: "Product Analytics",
+    labelKey: "marketing:data.products.productAnalytics",
     icon: "BarChart3",
     route: "/product-analytics",
     category: "analytics",
   },
   {
     id: "session-replay",
-    label: "Session Replay",
+    labelKey: "marketing:data.products.sessionReplay",
     icon: "PlayCircle",
     route: "/session-replay",
     category: "analytics",
   },
-  { id: "funnels", label: "Funnels", icon: "Filter", route: "/funnels", category: "analytics" },
-  { id: "heatmaps", label: "Heatmaps", icon: "Flame", route: "/heatmaps", category: "analytics" },
+  {
+    id: "funnels",
+    labelKey: "marketing:data.products.funnels",
+    icon: "Filter",
+    route: "/funnels",
+    category: "analytics",
+  },
+  {
+    id: "heatmaps",
+    labelKey: "marketing:data.products.heatmaps",
+    icon: "Flame",
+    route: "/heatmaps",
+    category: "analytics",
+  },
   {
     id: "trends",
-    label: "Graphs & trends",
+    labelKey: "marketing:data.products.graphsTrends",
     icon: "TrendingUp",
     route: "/trends",
     category: "analytics",
   },
   {
     id: "lifecycle",
-    label: "Lifecycle",
+    labelKey: "marketing:data.products.lifecycle",
     icon: "RotateCcw",
     route: "/lifecycle",
     category: "analytics",
   },
   {
     id: "user-paths",
-    label: "User Paths",
+    labelKey: "marketing:data.products.userPaths",
     icon: "GitBranch",
     route: "/user-paths",
     category: "analytics",
   },
   {
     id: "ai-evals",
-    label: "AI Evals",
+    labelKey: "marketing:data.products.aiEvals",
     icon: "Bot",
     route: "/ai-observability",
     category: "analytics",
   },
 ];
 
-// Tab 3: Debug & fix issues
 export const tab3Products: ProductItem[] = [
   {
     id: "session-replay-debug",
-    label: "Session Replay",
+    labelKey: "marketing:data.products.sessionReplay",
     icon: "PlayCircleSmall",
     route: "/session-replay",
-    description: "Watch real user sessions",
+    descriptionKey: "marketing:data.productDescriptions.sessionReplay",
     category: "debug",
   },
   {
     id: "error-tracking",
-    label: "Error Tracking",
+    labelKey: "marketing:data.products.errorTracking",
     icon: "AlertTriangle",
     route: "/error-tracking",
-    description: "Track and resolve errors",
+    descriptionKey: "marketing:data.productDescriptions.errorTracking",
     category: "debug",
   },
   {
     id: "logs",
-    label: "Logs",
+    labelKey: "marketing:data.products.logs",
     icon: "FileText",
     route: "/logs",
-    description: "Centralized logging",
+    descriptionKey: "marketing:data.productDescriptions.logs",
     category: "debug",
   },
   {
     id: "activity-timeline",
-    label: "Activity timeline",
+    labelKey: "marketing:data.products.activityTimeline",
     icon: "Clock",
     route: "/activity",
-    description: "Full user activity view",
+    descriptionKey: "marketing:data.productDescriptions.activityTimeline",
     category: "debug",
   },
 ];
 
-// Tab 4: Test & roll out changes
 export const tab4FeatureDev: ProductItem[] = [
   {
     id: "feature-flags",
-    label: "Feature Flags",
+    labelKey: "marketing:data.products.featureFlags",
     icon: "Flag",
     route: "/feature-flags",
     category: "testing",
   },
   {
     id: "experiments",
-    label: "Experiments",
+    labelKey: "marketing:data.products.experiments",
     icon: "Beaker",
     route: "/experiments",
     category: "testing",
   },
   {
     id: "ab-testing",
-    label: "No-code A/B Testing",
+    labelKey: "marketing:data.products.abTesting",
     icon: "TestTube",
     route: "/experiments",
     category: "testing",
   },
   {
     id: "early-access",
-    label: "Early Access Features",
+    labelKey: "marketing:data.products.earlyAccess",
     icon: "Rocket",
     route: "/early-access",
     category: "testing",
@@ -134,21 +142,21 @@ export const tab4FeatureDev: ProductItem[] = [
 export const tab4Automation: ProductItem[] = [
   {
     id: "endpoints",
-    label: "Endpoints",
+    labelKey: "marketing:data.products.endpoints",
     icon: "Plug",
     route: "/endpoints",
     category: "automation",
   },
   {
     id: "webhooks",
-    label: "Webhooks",
+    labelKey: "marketing:data.products.webhooks",
     icon: "Webhook",
     route: "/webhooks",
     category: "automation",
   },
   {
     id: "workflows",
-    label: "Workflows",
+    labelKey: "marketing:data.products.workflows",
     icon: "Workflow",
     route: "/workflows",
     category: "automation",
@@ -158,71 +166,63 @@ export const tab4Automation: ProductItem[] = [
 export const tab4Feedback: ProductItem[] = [
   {
     id: "surveys",
-    label: "Surveys",
+    labelKey: "marketing:data.products.surveys",
     icon: "ClipboardList",
     route: "/surveys",
     category: "feedback",
   },
-  { id: "support", label: "Support", icon: "LifeBuoy", route: "/support", category: "feedback" },
+  {
+    id: "support",
+    labelKey: "marketing:data.products.support",
+    icon: "LifeBuoy",
+    route: "/support",
+    category: "feedback",
+  },
   {
     id: "user-interviews",
-    label: "User interviews",
+    labelKey: "marketing:data.products.userInterviews",
     icon: "Users",
     route: "/user-interviews",
     category: "feedback",
   },
 ];
 
-export const dataSources = [
-  "Postgres",
-  "Snowflake",
-  "Salesforce",
-  "Stripe",
-  "Zendesk",
-  "Google Ads",
-  "Hubspot",
-  "BigQuery",
-  "Redshift",
-  "MySQL",
-  "GitHub",
-  "MongoDB",
-];
+export interface PricingCard {
+  productKey: string;
+  freeTierKey: string;
+  paidRateKey: string;
+  icon: string;
+}
 
-export const dataManageQuery = ["Data modeling", "SQL editor", "CDP", "Managed warehouse", "BI"];
-
-export const dataExport = [
-  "BigQuery",
-  "Snowflake",
-  "Amazon S3",
-  "PostgresSQL",
-  "Redshift",
-  "Zapier",
-  "Hubspot",
-  "Intercom",
-  "Customer.io",
-  "Zendesk",
-  "HTTP Webhook",
-];
-
-export const pricingCards = [
+export const pricingCards: PricingCard[] = [
   {
-    product: "Product Analytics",
-    freeTier: "First 1M events free",
-    paidRate: "From $0.00005/event",
+    productKey: "marketing:data.products.productAnalytics",
+    freeTierKey: "marketing:data.pricingCards.productAnalytics.freeTier",
+    paidRateKey: "marketing:data.pricingCards.productAnalytics.paidRate",
     icon: "BarChart3Small",
   },
   {
-    product: "Session Replay",
-    freeTier: "5K recordings",
-    paidRate: "$0.005/recording",
+    productKey: "marketing:data.products.sessionReplay",
+    freeTierKey: "marketing:data.pricingCards.sessionReplay.freeTier",
+    paidRateKey: "marketing:data.pricingCards.sessionReplay.paidRate",
     icon: "PlayCircleSmall",
   },
-  { product: "Feature Flags", freeTier: "1M requests", paidRate: "$0.0001/request", icon: "Flag" },
-  { product: "Experiments", freeTier: "Billed with FF", paidRate: "(included)", icon: "Beaker" },
   {
-    product: "Surveys",
-    freeTier: "250 responses",
-    paidRate: "$0.01/response",
+    productKey: "marketing:data.products.featureFlags",
+    freeTierKey: "marketing:data.pricingCards.featureFlags.freeTier",
+    paidRateKey: "marketing:data.pricingCards.featureFlags.paidRate",
+    icon: "Flag",
+  },
+  {
+    productKey: "marketing:data.products.experiments",
+    freeTierKey: "marketing:data.pricingCards.experiments.freeTier",
+    paidRateKey: "marketing:data.pricingCards.experiments.paidRate",
+    icon: "Beaker",
+  },
+  {
+    productKey: "marketing:data.products.surveys",
+    freeTierKey: "marketing:data.pricingCards.surveys.freeTier",
+    paidRateKey: "marketing:data.pricingCards.surveys.paidRate",
     icon: "ClipboardList",
   },
 ];

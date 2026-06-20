@@ -15,6 +15,7 @@ import {
   Trash2,
   Video,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
 
 interface DesktopIconItemProps {
@@ -26,6 +27,7 @@ interface DesktopIconItemProps {
 function DesktopIconItem({ icon, label, onClick }: DesktopIconItemProps) {
   return (
     <button
+      type="button"
       onClick={onClick}
       className="flex flex-col items-center gap-1 w-[72px] group cursor-pointer"
     >
@@ -39,104 +41,105 @@ function DesktopIconItem({ icon, label, onClick }: DesktopIconItemProps) {
   );
 }
 
-const leftIcons = [
-  {
-    label: "home.mdx",
-    icon: <FileText className="w-6 h-6 text-[#2563EB]" />,
-    route: "/",
-    title: "home.mdx",
-  },
-  {
-    label: "Product OS",
-    icon: <FolderOpen className="w-6 h-6 text-[#F76E18]" />,
-    route: "/products",
-    title: "Product OS",
-  },
-  {
-    label: "Pricing",
-    icon: <Table className="w-6 h-6 text-[#22C55E]" />,
-    route: "/pricing",
-    title: "Pricing",
-  },
-  {
-    label: "customers.mdx",
-    icon: <FileText className="w-6 h-6 text-[#2563EB]" />,
-    route: "/customers",
-    title: "customers.mdx",
-  },
-  {
-    label: "demo.mov",
-    icon: <Video className="w-6 h-6 text-[#DC2626]" />,
-    route: "/demo",
-    title: "demo.mov",
-  },
-  {
-    label: "Docs",
-    icon: <BookOpen className="w-6 h-6 text-[#6B6B6B]" />,
-    route: "/docs",
-    title: "Docs",
-  },
-  {
-    label: "Talk to a human",
-    icon: <Mail className="w-6 h-6 text-[#6B6B6B]" />,
-    route: "/talk-to-a-human",
-    title: "Talk to a human",
-  },
-  {
-    label: "Ask a question",
-    icon: <MessageCircleQuestion className="w-6 h-6 text-[#6B6B6B]" />,
-    route: "/community",
-    title: "Community",
-  },
-  {
-    label: "Sign up",
-    icon: <ExternalLink className="w-6 h-6 text-[#6B6B6B]" />,
-    route: "/signup",
-    title: "Sign up",
-  },
-];
-
-const rightIcons = [
-  {
-    label: "Why PostHog?",
-    icon: <Bookmark className="w-6 h-6 text-[#F76E18]" />,
-    route: "/about",
-    title: "Why PostHog?",
-  },
-  {
-    label: "Changelog",
-    icon: <Calendar className="w-6 h-6 text-[#6B6B6B]" />,
-    route: "/changelog",
-    title: "Changelog",
-  },
-  {
-    label: "Company handbook",
-    icon: <BookMarked className="w-6 h-6 text-[#6B6B6B]" />,
-    route: "/handbook",
-    title: "Company handbook",
-  },
-  {
-    label: "Store",
-    icon: <ShoppingBag className="w-6 h-6 text-[#6B6B6B]" />,
-    route: "/merch",
-    title: "Store",
-  },
-  {
-    label: "Work here",
-    icon: <Building2 className="w-6 h-6 text-[#6B6B6B]" />,
-    route: "/careers",
-    title: "Careers",
-  },
-  {
-    label: "Trash",
-    icon: <Trash2 className="w-6 h-6 text-[#6B6B6B]" />,
-    route: "/trash",
-    title: "Trash",
-  },
-];
-
 export default function DesktopIcons() {
   const { openWindow, setViewMode } = useDesktopStore();
+  const { t } = useTranslation("home");
+
+  const leftIcons = [
+    {
+      label: "home.mdx",
+      icon: <FileText className="w-6 h-6 text-[#2563EB]" />,
+      route: "/",
+      title: "home.mdx",
+    },
+    {
+      label: t("desktop.icons.left.productOS"),
+      icon: <FolderOpen className="w-6 h-6 text-[#F76E18]" />,
+      route: "/products",
+      title: t("desktop.icons.left.productOS"),
+    },
+    {
+      label: t("desktop.icons.left.pricing"),
+      icon: <Table className="w-6 h-6 text-[#22C55E]" />,
+      route: "/pricing",
+      title: t("desktop.icons.left.pricing"),
+    },
+    {
+      label: "customers.mdx",
+      icon: <FileText className="w-6 h-6 text-[#2563EB]" />,
+      route: "/customers",
+      title: "customers.mdx",
+    },
+    {
+      label: "demo.mov",
+      icon: <Video className="w-6 h-6 text-[#DC2626]" />,
+      route: "/demo",
+      title: "demo.mov",
+    },
+    {
+      label: t("desktop.icons.left.docs"),
+      icon: <BookOpen className="w-6 h-6 text-[#6B6B6B]" />,
+      route: "/docs",
+      title: t("desktop.icons.left.docs"),
+    },
+    {
+      label: t("desktop.icons.left.talkToHuman"),
+      icon: <Mail className="w-6 h-6 text-[#6B6B6B]" />,
+      route: "/talk-to-a-human",
+      title: t("desktop.icons.left.talkToHuman"),
+    },
+    {
+      label: t("desktop.icons.left.askQuestion"),
+      icon: <MessageCircleQuestion className="w-6 h-6 text-[#6B6B6B]" />,
+      route: "/community",
+      title: t("desktop.icons.left.askQuestion"),
+    },
+    {
+      label: t("desktop.icons.left.signUp"),
+      icon: <ExternalLink className="w-6 h-6 text-[#6B6B6B]" />,
+      route: "/signup",
+      title: t("desktop.icons.left.signUp"),
+    },
+  ];
+
+  const rightIcons = [
+    {
+      label: t("desktop.icons.right.whyPostHog"),
+      icon: <Bookmark className="w-6 h-6 text-[#F76E18]" />,
+      route: "/about",
+      title: t("desktop.icons.right.whyPostHog"),
+    },
+    {
+      label: t("desktop.icons.right.changelog"),
+      icon: <Calendar className="w-6 h-6 text-[#6B6B6B]" />,
+      route: "/changelog",
+      title: t("desktop.icons.right.changelog"),
+    },
+    {
+      label: t("desktop.icons.right.companyHandbook"),
+      icon: <BookMarked className="w-6 h-6 text-[#6B6B6B]" />,
+      route: "/handbook",
+      title: t("desktop.icons.right.companyHandbook"),
+    },
+    {
+      label: t("desktop.icons.right.store"),
+      icon: <ShoppingBag className="w-6 h-6 text-[#6B6B6B]" />,
+      route: "/merch",
+      title: t("desktop.icons.right.store"),
+    },
+    {
+      label: t("desktop.icons.right.workHere"),
+      icon: <Building2 className="w-6 h-6 text-[#6B6B6B]" />,
+      route: "/careers",
+      title: t("desktop.icons.right.workHere"),
+    },
+    {
+      label: t("desktop.icons.right.trash"),
+      icon: <Trash2 className="w-6 h-6 text-[#6B6B6B]" />,
+      route: "/trash",
+      title: t("desktop.icons.right.trash"),
+    },
+  ];
 
   return (
     <>
@@ -152,7 +155,7 @@ export default function DesktopIcons() {
         ))}
         <DesktopIconItem
           icon={<Monitor className="w-6 h-6 text-[#6B6B6B]" />}
-          label="Switch to website"
+          label={t("desktop.icons.switchToWebsite")}
           onClick={() => setViewMode("website")}
         />
       </div>

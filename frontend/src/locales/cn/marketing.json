@@ -1,0 +1,1128 @@
+{
+  "home": {
+    "hero": {
+      "logoAlt": "PostHog logo",
+      "brand": "PostHog",
+      "title": "The new way to build products",
+      "subtitle1": "Product development used to mean manually writing code, running analysis, diagnosing bugs, and rolling out changes using dozens of tools.",
+      "subtitle2": "PostHog is the only platform that acts like a co-pilot for you (and your AI agents) to do it all — ",
+      "subtitle2Emphasis": "autonomously",
+      "ctaPrimary": "Get started - free",
+      "ctaSecondary": "Install with AI",
+      "installCommand": "npx @posthog/wizard",
+      "copyTooltip": "Copy to clipboard",
+      "installHint": "Install with AI in a single prompt. Paste into your terminal or code editor and make AI do the work.",
+      "links": {
+        "mcp": "MCP",
+        "demo": "Watch a demo",
+        "talkToHuman": "Talk to a human"
+      },
+      "mascotAlt": "Hedgehog mascot"
+    },
+    "tabs": {
+      "understand": "Understand product usage",
+      "data": "One place for product data",
+      "debug": "Debug & fix issues",
+      "ship": "Test & roll out changes"
+    },
+    "tabUnderstand": {
+      "title": "Understand what users are doing",
+      "body": "Measure engagement, track conversion, and understand usage patterns – whether it's by person, company, or AI feature.",
+      "link": "How we analyze data and build products has changed a lot. Work smarter with PostHog AI to get direct answers to questions about your data."
+    },
+    "tabData": {
+      "title": "Build better products with better data",
+      "body": "Not your mama's data integrations. Third party data is imported into PostHog's CDP and warehouse as a first-class citizen. This means you can query third party data and product usage data, leading to more informed decisions.",
+      "sourcesTitle": "Data sources & import",
+      "sourcesLink": "Explore data sources (159)",
+      "manageTitle": "Manage & query",
+      "manageLink": "Data stack README",
+      "exportTitle": "Reverse ETL & export",
+      "exportLink": "Explore destinations (112)"
+    },
+    "tabDebug": {
+      "title": "Debug & fix issues faster",
+      "body": "See exactly what went wrong with session replay, error tracking, and logs. Understand the full context of user issues without guessing."
+    },
+    "tabShip": {
+      "title": "Ship features safely & get feedback",
+      "body1": "Now that you know what's happening, you can make informed decisions about what to build. PostHog helps you roll out features to specific users or groups, then test and validate ideas before you ship them to everyone.",
+      "body2": "And you can build it all with PostHog Code, our new AI code editor.",
+      "featureDev": "Feature development",
+      "automation": "Data APIs & automation",
+      "feedback": "Feedback & training"
+    },
+    "customers": {
+      "title": "Who's using PostHog?",
+      "subtitle": "Here are some of our paying customers. (Yes they actually use us, no it's not just some random engineer who tried us out 2+ years ago.)",
+      "shuffle": "Shuffle companies",
+      "vcLabel": "VCs love them",
+      "engineerLabel": "Product engineers love them",
+      "openCustomers": "Open customers.mdx"
+    },
+    "dataStack": {
+      "title": "PostHog data stack, built for data teams and loved by product teams",
+      "body1": "When you're analyzing how customers use your product, you should be operating from the full set of data.",
+      "body2": "This includes customer information that happens outside your product: payments from Stripe, exceptions in an error tracking tool, tickets in your support platform.",
+      "body3": "Having all the data in one place means you can make more informed decisions about what to build next. PostHog's Product OS isn't just analytics – it's the entire suite of tools built to give you a single source of truth about your customers.",
+      "includedAlt": "Included",
+      "items": [
+        "A data warehouse",
+        "120+ sources/destinations",
+        "SQL editor + BI + data viz",
+        "User activity feed (CDP-lite)",
+        "API, webhooks"
+      ],
+      "readmeLink": "README: PostHog data stack.md"
+    },
+    "pricing": {
+      "title": "Usage-based pricing",
+      "philosophy": "Our whole philosophy is that you shouldn't have to worry about pricing.",
+      "freeTierText": "All our paid products are pay-per-use with generous monthly free tiers. In fact, 98% of our customers use PostHog for free.",
+      "salesText": "We aim to match the cheapest option at scale – PostHog should be a no-brainer. You never have to \"jump on a quick call\" with sales.",
+      "seeAll": "See all pricing →"
+    }
+  },
+  "data": {
+    "products": {
+      "webAnalytics": "Web Analytics",
+      "productAnalytics": "Product Analytics",
+      "sessionReplay": "Session Replay",
+      "funnels": "Funnels",
+      "heatmaps": "Heatmaps",
+      "graphsTrends": "Graphs & trends",
+      "lifecycle": "Lifecycle",
+      "userPaths": "User Paths",
+      "aiEvals": "AI Evals",
+      "errorTracking": "Error Tracking",
+      "logs": "Logs",
+      "activityTimeline": "Activity timeline",
+      "featureFlags": "Feature Flags",
+      "experiments": "Experiments",
+      "abTesting": "No-code A/B Testing",
+      "earlyAccess": "Early Access Features",
+      "endpoints": "Endpoints",
+      "webhooks": "Webhooks",
+      "workflows": "Workflows",
+      "surveys": "Surveys",
+      "support": "Support",
+      "userInterviews": "User interviews",
+      "dataWarehouse": "Data Warehouse",
+      "managedWarehouse": "Managed warehouse",
+      "cdp": "CDP",
+      "bi": "BI",
+      "dataModeling": "Data modeling",
+      "sqlEditor": "SQL editor",
+      "aiObservability": "AI Observability",
+      "posthogAI": "PostHog AI"
+    },
+    "productDescriptions": {
+      "sessionReplay": "Watch real user sessions",
+      "errorTracking": "Track and resolve errors",
+      "logs": "Centralized logging",
+      "activityTimeline": "Full user activity view"
+    },
+    "dataSources": [
+      "Postgres",
+      "Snowflake",
+      "Salesforce",
+      "Stripe",
+      "Zendesk",
+      "Google Ads",
+      "Hubspot",
+      "BigQuery",
+      "Redshift",
+      "MySQL",
+      "GitHub",
+      "MongoDB"
+    ],
+    "dataManageQuery": ["Data modeling", "SQL editor", "CDP", "Managed warehouse", "BI"],
+    "dataExport": [
+      "BigQuery",
+      "Snowflake",
+      "Amazon S3",
+      "PostgresSQL",
+      "Redshift",
+      "Zapier",
+      "Hubspot",
+      "Intercom",
+      "Customer.io",
+      "Zendesk",
+      "HTTP Webhook"
+    ],
+    "pricingCards": {
+      "productAnalytics": {
+        "freeTier": "First 1M events free",
+        "paidRate": "From $0.00005/event"
+      },
+      "sessionReplay": {
+        "freeTier": "5K recordings",
+        "paidRate": "$0.005/recording"
+      },
+      "featureFlags": {
+        "freeTier": "1M requests",
+        "paidRate": "$0.0001/request"
+      },
+      "experiments": {
+        "freeTier": "Billed with FF",
+        "paidRate": "(included)"
+      },
+      "surveys": {
+        "freeTier": "250 responses",
+        "paidRate": "$0.01/response"
+      }
+    }
+  },
+  "productAnalytics": {
+    "toolbar": {
+      "exportPdf": "Export PDF",
+      "present": "Present",
+      "getStarted": "Get started — free"
+    },
+    "navigation": {
+      "prev": "Prev",
+      "next": "Next",
+      "notesLabel": "Presenter notes"
+    },
+    "slides": {
+      "title": {
+        "title": "Product Analytics",
+        "subtitle": "Understand your product with PostHog",
+        "tagline": "The complete analytics toolkit for product engineers",
+        "hint": "Press → to start"
+      },
+      "track": {
+        "title": "Track everything that matters",
+        "items": [
+          "Pageviews and clicks",
+          "Custom events with properties",
+          "User sessions and flows",
+          "Conversion funnels",
+          "Retention and engagement",
+          "Feature usage and adoption"
+        ]
+      },
+      "features": {
+        "title": "Everything you need",
+        "items": [
+          { "title": "Trend analysis", "desc": "Track metrics over time with powerful filtering" },
+          { "title": "Funnels", "desc": "See where users drop off in your flows" },
+          { "title": "Retention", "desc": "Understand how users come back" },
+          { "title": "Paths", "desc": "Visualize user navigation patterns" },
+          { "title": "Cohorts", "desc": "Group users by behavior" },
+          { "title": "SQL access", "desc": "Query your raw data directly" }
+        ]
+      },
+      "autocapture": {
+        "title": "Autocapture — data without the setup",
+        "body": "Just install PostHog and we automatically capture:",
+        "items": ["Every pageview", "Every click", "Every form submission", "Every input change"],
+        "footer": "No manual tracking code required.",
+        "codeComment1": "// Just this one line",
+        "codeComment2": "// That's it. Really."
+      },
+      "privacy": {
+        "title": "Your data, your rules",
+        "items": [
+          { "title": "EU hosting", "desc": "Choose where your data lives. EU or US." },
+          { "title": "No third-party cookies", "desc": "We don't use third-party cookies. Ever." },
+          { "title": "Open source", "desc": "Our code is open source. Audit it yourself." }
+        ]
+      },
+      "pricing": {
+        "title": "Simple, usage-based pricing",
+        "product": "Product Analytics",
+        "freeTier": "First 1M events/mo",
+        "freeLabel": "Free forever",
+        "rate": "Then $0.00005 per event",
+        "noHiddenFees": "No hidden fees. No surprises.",
+        "cta": "Get started free"
+      },
+      "integration": {
+        "title": "Works with your stack",
+        "frameworks": [
+          "React",
+          "Vue",
+          "Angular",
+          "Next.js",
+          "Python",
+          "Ruby",
+          "Go",
+          "iOS",
+          "Android"
+        ],
+        "codeComment1": "// React",
+        "codeComment2": "// One hook, infinite insights"
+      },
+      "cta": {
+        "title": "Ready to understand your users?",
+        "subtitle": "Join 100,000+ companies using PostHog",
+        "primary": "Get started — free",
+        "secondary": "Talk to a human",
+        "installCommand": "npm install posthog-js",
+        "copyTooltip": "Copy"
+      },
+      "notes": {
+        "title": "Welcome to Product Analytics. This is our core product — the thing that started it all. Let's walk through what makes PostHog's analytics different.",
+        "track": "PostHog autocaptures pageviews and clicks automatically. Add custom events for deeper insights. Track the full user journey from first visit to power user.",
+        "features": "Six core analysis tools. Each one is designed to answer a specific type of product question. Use them individually or combine for deeper insights.",
+        "autocapture": "The magic of autocapture — install PostHog and data starts flowing immediately. No need to define every event upfront. Retroactively define events using our 'Actions' feature.",
+        "privacy": "Privacy isn't an afterthought. Choose your data region, no third-party cookies, and our code is open source. The cookie banner isn't just a joke — it's a statement.",
+        "pricing": "Generous free tier — 1 million events per month. Most startups never pay a cent. When you do grow, our pricing is transparent and usage-based.",
+        "integration": "SDKs for every major framework. React, Vue, Angular, mobile, backend — we've got you covered. Install takes less than 5 minutes.",
+        "cta": "That's Product Analytics. The easiest way to start is to install PostHog and let autocapture do the work. Questions? Talk to a human — we actually respond."
+      },
+      "slideTitles": {
+        "title": "Title",
+        "track": "What You Can Track",
+        "features": "Key Features",
+        "autocapture": "Autocapture",
+        "privacy": "Privacy",
+        "pricing": "Pricing",
+        "integration": "Integration",
+        "cta": "Get Started"
+      }
+    }
+  },
+  "about": {
+    "tabs": {
+      "about": "About",
+      "roadmap": "Roadmap",
+      "wip": "WIP",
+      "changelog": "Changelog",
+      "people": "People",
+      "teams": "Teams",
+      "handbook": "Handbook",
+      "blog": "Blog",
+      "media": "Media",
+      "careers": "Careers"
+    },
+    "comingSoon": "Coming soon — this section is under construction",
+    "aboutTab": {
+      "fromTheDesk": "From the desk of",
+      "initials": "JH",
+      "name": "James Hawkins",
+      "role": "Co-founder",
+      "social": "james406",
+      "title": "We're here to help product engineers build successful products",
+      "subtitle": "Literally every piece of SaaS that a product engineer needs.",
+      "body1": "This includes tools for building products, talking to customers, and making sense of all your customer data.",
+      "body2": "PostHog is a single platform for people who build things.",
+      "cta": "Explore product suite",
+      "mascotAlt": "PostHog hedgehog mascot",
+      "caption": "There are other dev tool companies, but they not like us 🎵",
+      "storyTitle": "So how did we get here?",
+      "teamCount": "190254",
+      "teamCountLabel": "teams using PostHog"
+    },
+    "timeline": [
+      {
+        "year": "2020",
+        "title": "Hatched in Y Combinator's W20 batch",
+        "description": "Two friends with a vision to help product engineers."
+      },
+      {
+        "year": "2020",
+        "title": "Launched on Hacker News",
+        "description": "Our first analytics product hit the front page. The response was overwhelming. 4 weeks after writing the first line of code."
+      },
+      {
+        "year": "2021-2023",
+        "title": "Grew beyond analytics",
+        "description": "Added session replay, feature flags, experiments, and more — becoming a full product OS."
+      },
+      {
+        "year": "2024+",
+        "title": "The product OS",
+        "description": "10+ products, 190,254+ teams, and counting. Building the everything store for product engineers."
+      }
+    ]
+  },
+  "customers": {
+    "filters": {
+      "where": "where",
+      "productUsed": "product(s) used",
+      "includes": "includes",
+      "and": "and",
+      "caseStudy": "case study",
+      "equals": "equals",
+      "featured": "featured",
+      "any": "Any",
+      "hasLink": "Has link",
+      "noLink": "No link",
+      "true": "TRUE",
+      "false": "FALSE"
+    },
+    "table": {
+      "number": "#",
+      "company": "Company name",
+      "products": "Product(s) used",
+      "caseStudy": "Case study",
+      "notes": "Notes",
+      "link": "Link",
+      "empty": "No customers match the selected filters."
+    },
+    "notes": {
+      "yCombinator": "World's premier startup accelerator",
+      "mistral": "Open source LLMs",
+      "supabase": "Postgres in the cloud",
+      "elevenlabs": "AI voice generator",
+      "lovable": "AI app & website builder",
+      "raycast": "The MacOS Spotlight Apple should have built",
+      "airbus": "They make airplanes",
+      "arena": "AI model comparison platform",
+      "researchgate": "World's largest professional network for scientists",
+      "republic": "Crowdfunding for startups",
+      "exa": "Search API for AI products",
+      "hasura": "Open source GraphQL engine",
+      "tray": "Backend web app platform",
+      "jitter": "Crypto wallet",
+      "pulumi": "AI video generator",
+      "posthog": "Would it be clever or lame if we included our own company here?"
+    }
+  },
+  "pricing": {
+    "hero": {
+      "title": "PostHog Cloud",
+      "body1": "PostHog is designed to grow with you. Our {{productCount}} products (and counting) will take you from idea to product-market fit to IPO and beyond.",
+      "body2": "Our generous free tier means more than 90% of companies use PostHog for free. Only add a card if you need more than the free tier limits, advanced features, or want more projects. You still keep the same monthly free volume, even after upgrading.",
+      "statNumber": "3000",
+      "statLabel": "PostHog",
+      "caption": "The latest version of PostHog comes with 10+ products, generous free tiers, and usage-based pricing."
+    },
+    "planToggle": {
+      "free": "Free",
+      "scale": "Scale"
+    },
+    "freeTier": {
+      "title": "Free tier on all plans",
+      "subtitle": "Our generous free tier resets monthly",
+      "items": [
+        { "product": "Product Analytics", "allowance": "1M events/mo", "included": false },
+        { "product": "Session Replay", "allowance": "5K sessions/mo", "included": false },
+        { "product": "Feature Flags", "allowance": "1M API calls/mo", "included": false },
+        { "product": "Experiments", "allowance": "Included with FF", "included": true },
+        { "product": "Surveys", "allowance": "250 responses/mo", "included": false },
+        { "product": "Data Warehouse", "allowance": "1M rows/mo", "included": false },
+        { "product": "Web Analytics", "allowance": "1M events/mo", "included": false },
+        { "product": "Error Tracking", "allowance": "100K exceptions/mo", "included": false },
+        { "product": "AI Analytics", "allowance": "Included", "included": true },
+        { "product": "CDP", "allowance": "Included", "included": true }
+      ]
+    },
+    "scalePlan": {
+      "title": "Scale plan",
+      "subtitle": "For growing teams that need more",
+      "price": "$199",
+      "priceSuffix": "/month base + usage",
+      "features": [
+        "Everything in Free, plus:",
+        "SSO & SAML authentication",
+        "Advanced permissions & roles",
+        "Custom data retention policies",
+        "Priority email support",
+        "Higher usage limits",
+        "Dedicated onboarding",
+        "99.99% SLA",
+        "$199/month base + usage"
+      ],
+      "cta": "Upgrade to Scale"
+    },
+    "usagePricing": {
+      "title": "Usage-based pricing",
+      "subtitle": "Once you exceed your free tier, you only pay for what you use. No hidden fees, no surprises.",
+      "tierHeader": "Tier",
+      "priceHeader": "Price",
+      "upTo": "Up to {{value}}",
+      "over": "{{value}}+",
+      "free": "Free",
+      "custom": "Custom"
+    },
+    "productPricing": {
+      "productAnalytics": {
+        "name": "Product Analytics",
+        "freeLimit": "1M events",
+        "unit": "events",
+        "tierUnit": "event"
+      },
+      "sessionReplay": {
+        "name": "Session Replay",
+        "freeLimit": "5K sessions",
+        "unit": "sessions",
+        "tierUnit": "session"
+      },
+      "featureFlags": {
+        "name": "Feature Flags",
+        "freeLimit": "1M requests",
+        "unit": "requests",
+        "tierUnit": "request"
+      }
+    },
+    "calculator": {
+      "title": "Pricing calculator",
+      "subtitle": "Estimate your monthly cost based on usage",
+      "estimatedCost": "Estimated monthly cost",
+      "estimateNote": "This is an estimate. You pay nothing until you exceed your free tier.",
+      "perMonth": "/mo",
+      "usageAmount": "Usage amount",
+      "cta": "Get started for free"
+    },
+    "faq": {
+      "title": "Frequently asked questions",
+      "items": [
+        {
+          "question": "What happens when I exceed my free tier?",
+          "answer": "You only pay for usage beyond the free tier. We'll never charge you without warning. You can set up billing alerts to get notified when you're approaching your limits."
+        },
+        {
+          "question": "Can I use PostHog for free forever?",
+          "answer": "Yes! More than 90% of companies use PostHog for free. The free tier resets every month, so you get the same generous allowance continuously."
+        },
+        {
+          "question": "Do I need a credit card to start?",
+          "answer": "No. You can use PostHog's full free tier without any payment information. We only ask for billing details when you choose to upgrade for higher limits."
+        },
+        {
+          "question": "What is the difference between Free and Scale plans?",
+          "answer": "Scale adds higher usage limits, SSO/SAML authentication, advanced permissions, custom data retention, and dedicated support. The base price is $199/month plus usage."
+        },
+        {
+          "question": "Can I self-host PostHog?",
+          "answer": "Yes, we offer a self-hosted option for enterprise customers who need to keep data on their own infrastructure. Contact our sales team for details."
+        },
+        {
+          "question": "How does usage-based pricing work?",
+          "answer": "You pay per unit (event, session, API call) beyond your free tier. There are no flat fees or hidden charges. Pricing tiers get cheaper per unit as your volume increases."
+        },
+        {
+          "question": "Is there an annual discount?",
+          "answer": "Yes, annual plans include a discount. Contact us for details on enterprise pricing and custom annual agreements."
+        },
+        {
+          "question": "What support do I get?",
+          "answer": "Free plans include community support via our forums and Slack. Scale plans get priority email support. Enterprise plans include a dedicated support engineer."
+        }
+      ]
+    }
+  },
+  "products": {
+    "hero": {
+      "title": "Devtools and product data infrastructure for building successful products",
+      "body": "Humans and AI agents build with PostHog because everything you need to collect and analyze product usage data – and build and ship new features – lives in one place.",
+      "getStarted": "Get started",
+      "installCommand": "npx -y @posthog/wizard",
+      "copyTooltip": "Copy to clipboard",
+      "supports": "Supports",
+      "and": "and",
+      "more": "21 more",
+      "frameworks": [
+        "Vue",
+        "Svelte",
+        "Angular",
+        "Ruby on Rails",
+        "Django",
+        "Laravel",
+        "Go",
+        "Rust",
+        "Java",
+        "PHP",
+        "Node.js",
+        "Remix",
+        "Nuxt",
+        "SvelteKit",
+        "Gatsby",
+        "Astro",
+        "Express",
+        "FastAPI",
+        "Laravel",
+        "Rails",
+        "Elixir"
+      ],
+      "links": {
+        "mcp": "MCP",
+        "demo": "Watch a demo",
+        "talkToHuman": "Talk to a human"
+      },
+      "mascotAlt": "Hedgehog at desk with laptop"
+    },
+    "dataPlatform": {
+      "title": "Data platform",
+      "readme": "Data stack README",
+      "body": "Having all your product data in one place means you can make more informed decisions. Push all your data to PostHog, then send it anywhere else you need, too.",
+      "sourcesCard": {
+        "title": "Data sources & import (ELT)",
+        "link": "View all integrations"
+      },
+      "exportCard": {
+        "title": "Reverse ETL & export",
+        "link": "View all destinations"
+      },
+      "manageTitle": "Manage & query",
+      "manageCards": [
+        { "title": "Data modeling" },
+        { "title": "Managed warehouse" },
+        { "title": "CDP" },
+        { "title": "SQL editor" },
+        { "title": "BI" }
+      ]
+    },
+    "automaticTooling": {
+      "title": "Automatic tooling",
+      "readme": "Tooling README",
+      "llmInstructions": "Instructions for LLMs",
+      "bodyBefore": "In a previous era of building products, you'd need to configure event tracking and feature flags manually. Now, your AI coding agent can use the ",
+      "bodyAfter": " to configure PostHog without leaving your ADE.",
+      "mcp": "PostHog MCP"
+    },
+    "categories": {
+      "understand": "Understand product usage",
+      "debug": "Debug & fix issues",
+      "ship": "Ship features & get feedback"
+    }
+  },
+  "docs": {
+    "hero": {
+      "title": "Documentation",
+      "bannerAlt": "Documentation hero illustration"
+    },
+    "search": {
+      "placeholder": "Search the docs...",
+      "askAi": "Ask AI"
+    },
+    "sidebar": {
+      "title": "About our docs",
+      "website": {
+        "title": "On our website",
+        "body": "You can search docs using the search bar above, or browse by category."
+      },
+      "product": {
+        "title": "In the product",
+        "body": "Look for the help icon (?) in the app to access contextual documentation."
+      },
+      "ai": {
+        "title": "Ask PostHog AI",
+        "body": "Our AI assistant can answer questions about any of our docs."
+      },
+      "community": {
+        "title": "Community forums",
+        "body": "Join our community to ask questions and share knowledge."
+      },
+      "feedback1": "Our docs are a perpetual work in progress.",
+      "feedback2": "The Docs & Wizard Team is responsible for what you see here.",
+      "feedback3": "Found an issue?",
+      "feedbackLink": "Let us know!"
+    },
+    "categories": {
+      "integration": "Integration",
+      "aiPlatform": "AI platform",
+      "developerApps": "Developer apps"
+    },
+    "items": {
+      "installAndConfigure": "Install and configure",
+      "installAndConfigureDesc": "Get started with PostHog",
+      "sdks": "SDKs",
+      "sdksDesc": "Client libraries",
+      "frameworks": "Frameworks",
+      "frameworksDesc": "Framework integrations",
+      "api": "API",
+      "apiDesc": "REST API reference",
+      "advanced": "Advanced",
+      "advancedDesc": "Advanced configuration",
+      "gettingHogPilled": "Getting HogPilled",
+      "gettingHogPilledDesc": "Philosophy & culture",
+      "posthogCode": "PostHog Code",
+      "posthogAI": "PostHog AI",
+      "mcp": "MCP",
+      "aiWizard": "AI wizard",
+      "aiEngineering": "AI engineering",
+      "productAnalytics": "Product Analytics",
+      "webAnalytics": "Web Analytics",
+      "sessionReplay": "Session Replay",
+      "replayVision": "Replay Vision",
+      "featureFlags": "Feature Flags",
+      "experiments": "Experiments",
+      "errorTracking": "Error Tracking",
+      "surveys": "Surveys",
+      "support": "Support",
+      "dataPipelines": "Data pipelines",
+      "dataWarehouse": "Data Warehouse",
+      "aiObservability": "AI Observability",
+      "mcpAnalytics": "MCP Analytics",
+      "revenueAnalytics": "Revenue Analytics",
+      "customerAnalytics": "Customer Analytics",
+      "slackApp": "Slack app",
+      "workflows": "Workflows",
+      "logs": "Logs",
+      "distributedTracing": "Distributed tracing",
+      "endpoints": "Endpoints"
+    }
+  },
+  "community": {
+    "header": {
+      "title": "The PostHog Gazette",
+      "tagline": "PostHog's community newspaper. Stories, updates, and musings from the team.",
+      "operational": "All systems operational"
+    },
+    "editor": {
+      "welcome": "Welcome to Inside PostHog — our community newspaper. Explore our latest posts, community questions, and everything else that's happening in the world of PostHog.",
+      "signature": "— Andy, Editor-in-Chief"
+    },
+    "wisdom": {
+      "quote": "Why scurry through life when you can forage? Take time to sniff the mealworms. When things feel overwhelming, just curl into a ball.",
+      "attribution": "— Max, our resident hedgehog"
+    },
+    "slack": {
+      "title": "From the PostHog Slack",
+      "threads": [
+        {
+          "channel": "#devrel",
+          "title": "A great writeup on React Server Components",
+          "preview": "Read this a couple months ago, but just thought it worth sharing: great writeup on React Server Components"
+        },
+        {
+          "channel": "#where-in-the-world",
+          "title": "new cafe opened 5 minutes walk from home",
+          "preview": "new cafe opened 5 minutes walk from home"
+        },
+        {
+          "channel": "#engineering",
+          "title": "We shipped the new query engine",
+          "preview": "After 3 months of work, the new query engine is live. 10x faster on large event volumes."
+        }
+      ]
+    },
+    "spotlight": {
+      "name": "Dana",
+      "role": "Technical Customer Success Manager",
+      "bio": "In a past life, Dana studied medicine. Now she helps teams get started with PostHog. In her downtime she's a founding member of PostHog's D&D club.",
+      "cta": "Learn more about {{name}}"
+    },
+    "events": {
+      "title": "Upcoming events",
+      "items": [
+        { "title": "Community Office Hours", "date": "June 25, 2026", "type": "Virtual" },
+        { "title": "PostHog Meetup: London", "date": "July 8, 2026", "type": "In-person" }
+      ]
+    },
+    "articles": {
+      "items": [
+        {
+          "category": "Blog",
+          "title": "Everything (and everyone) is build mode now",
+          "excerpt": "There's a future version of you who isn't boxed into one job function. Someone who has an idea in the morning and the means to ship it the same afternoon. Farfetched? Hardly. That version of you isn't waiting for 2030 – they exist today. They're in…"
+        },
+        {
+          "category": "Blog",
+          "title": "All social media metrics are bad",
+          "excerpt": "Picture this: your company's social media team excitedly informs you that stonks are up this month. You can see the screenshots. They're green. Holy smokes. We are killing it. Social media has been solved..."
+        },
+        {
+          "category": "Blog",
+          "title": "I didn't understand the OS I built with AI until the MCP gave it analytics",
+          "excerpt": "For my birthday this year I got a Pimoroni Presto — a little developer gadget with a 240x240 touchscreen and not much else..."
+        },
+        {
+          "category": "Tutorial",
+          "title": "How to set up feature flags in Next.js",
+          "excerpt": "A step-by-step guide to getting feature flags working in your Next.js application with PostHog..."
+        },
+        {
+          "category": "Blog",
+          "title": "Why we stopped using UUIDs",
+          "excerpt": "UUIDs are great until they're not. Here's what we switched to and why it made everything faster..."
+        }
+      ]
+    },
+    "stats": {
+      "slackMembers": { "value": "12k+", "label": "Slack members" },
+      "messagesSent": { "value": "2.4M", "label": "Messages sent" },
+      "countries": { "value": "500+", "label": "Countries" }
+    },
+    "newsletter": {
+      "title": "Subscribe to our newsletter",
+      "subtitle": "Product for Engineers",
+      "body": "Read by 100,000+ founders and builders",
+      "placeholder": "you@example.com",
+      "cta": "Subscribe"
+    },
+    "slackJoin": {
+      "title": "Join our Slack",
+      "body": "Get help, share ideas, and hang out with 12,000+ product engineers.",
+      "cta": "Join Slack community"
+    },
+    "questions": {
+      "title": "Latest questions",
+      "viewAll": "View all",
+      "reply": "Last reply {{time}}",
+      "items": [
+        { "topic": "Manual ticket creation", "reply": "16 hours ago" },
+        { "topic": "Unable to export data", "reply": "a day ago" },
+        { "topic": "Split ID", "reply": "a day ago" },
+        { "topic": "Session replay not loading", "reply": "2 days ago" }
+      ]
+    },
+    "changelog": {
+      "title": "Latest changelog",
+      "body": "Here's what we've shipped in the last two weeks.",
+      "items": [
+        { "category": "Product analytics", "text": "Search and filter the alerts list" },
+        { "category": "Feature flags", "text": "New UI for creating flags" },
+        { "category": "Session replay", "text": "Mobile network waterfall view" }
+      ],
+      "viewAll": "View full changelog"
+    },
+    "featureRequests": {
+      "title": "Latest feature requests",
+      "voteCta": "Vote on the roadmap",
+      "items": [
+        { "name": "Product tours", "votes": 695 },
+        { "name": "Customer support product", "votes": 119 },
+        { "name": "PostHog CRM", "votes": 110 }
+      ]
+    },
+    "ceoMusings": {
+      "title": "Musings from the CEO",
+      "quote": "nobody will remember: your salary, how 'busy you were', how many hours you worked. people will remember: if you hopped on a quick call, when you hopped on a quick call, how many quick calls you hopped on, how you made them feel when you hopped on a quick call",
+      "cta": "Follow James on X"
+    }
+  },
+  "talkToHuman": {
+    "hero": {
+      "title": "Talk to a human",
+      "subtitle": "We actually respond. No chatbots, no automated runarounds. Real humans who know the product."
+    },
+    "contactCards": {
+      "discord": {
+        "title": "Community Discord",
+        "body": "Join 10,000+ developers in our community Discord. Get help, share ideas, or just hang out.",
+        "link": "Join Discord"
+      },
+      "email": {
+        "title": "Email",
+        "body": "Prefer email? Reach out to us at hey@posthog.com. We read every message.",
+        "link": "hey@posthog.com"
+      },
+      "github": {
+        "title": "GitHub",
+        "body": "Found a bug or have a feature request? Open an issue on GitHub.",
+        "link": "Open GitHub"
+      }
+    },
+    "form": {
+      "title": "Or send us a message",
+      "subtitle": "We'll get back to you within 24 hours. Usually much faster.",
+      "fields": {
+        "name": {
+          "label": "Your name",
+          "placeholder": "James Hawkins",
+          "error": "Please enter your name"
+        },
+        "email": {
+          "label": "Email address",
+          "placeholder": "james@posthog.com",
+          "errorRequired": "Please enter your email",
+          "errorInvalid": "Please enter a valid email address"
+        },
+        "subject": {
+          "label": "What can we help with?",
+          "placeholder": "Select a topic"
+        },
+        "message": {
+          "label": "Your message",
+          "placeholder": "Tell us what's on your mind...",
+          "error": "Please enter a message"
+        }
+      },
+      "subjects": [
+        { "value": "", "label": "Select a topic" },
+        { "value": "Help with setup", "label": "Help with setup" },
+        { "value": "Billing question", "label": "Billing question" },
+        { "value": "Feature request", "label": "Feature request" },
+        { "value": "Bug report", "label": "Bug report" },
+        { "value": "Something else", "label": "Something else" }
+      ],
+      "submit": "Send message",
+      "sending": "Sending...",
+      "success": {
+        "title": "Message sent!",
+        "subtitle": "We'll be in touch soon.",
+        "reset": "Send another message"
+      }
+    },
+    "faq": {
+      "title": "Frequently asked questions",
+      "items": [
+        {
+          "question": "How fast do you actually respond?",
+          "answer": "We're humans, not bots — so it depends on time zones and sleep schedules. But most questions in our Discord get answered within a few hours. Email responses are typically within 24 hours."
+        },
+        {
+          "question": "Do you offer paid support plans?",
+          "answer": "We don't have formal support tiers. Every user gets the same human-level support. For large enterprise deployments, we offer a dedicated success engineer as part of our Enterprise plan."
+        },
+        {
+          "question": "Can I schedule a demo or call?",
+          "answer": "We don't do traditional sales calls. If you need help, just ask in Discord or send an email. We're happy to jump on a call if it's the best way to solve your problem."
+        },
+        {
+          "question": "I found a bug — what should I do?",
+          "answer": "The fastest way is to open an issue on GitHub. Include steps to reproduce, expected vs actual behavior, and screenshots if relevant. We triage bugs daily."
+        },
+        {
+          "question": "How do I request a new feature?",
+          "answer": "Post a feature request on GitHub Discussions or mention it in Discord. We actively read and tag every request. Many of our best features came directly from community suggestions."
+        }
+      ]
+    },
+    "footer": {
+      "selfServe": "Prefer to figure things out yourself?",
+      "linksBefore": "Check out our ",
+      "linksMiddle": " or browse ",
+      "linksAfter": "",
+      "docs": "Docs",
+      "community": "Community Questions"
+    }
+  },
+  "trash": {
+    "header": {
+      "title": "Trash",
+      "subtitle": "Deleted items",
+      "description": "Things we have deleted from the site but could not bear to destroy",
+      "itemsCount": "{{count}} items"
+    },
+    "redacted": "[REDACTED]",
+    "redactedLegal": "[REDACTED FOR LEGAL REASONS]",
+    "detail": {
+      "deleted": "Deleted",
+      "restore": "Restore",
+      "restoreTooltip": "You can't restore from trash. That's not how trash works.",
+      "niceTry": "Nice try!"
+    },
+    "fileTypes": {
+      "markdown": "Markdown",
+      "image": "Image",
+      "spreadsheet": "Spreadsheet",
+      "audio": "Audio",
+      "pdf": "PDF",
+      "json": "JSON",
+      "csv": "CSV",
+      "txt": "Text"
+    },
+    "items": [
+      {
+        "filename": "bad-logo-1.svg",
+        "description": "Our first logo attempt. It was... a choice.",
+        "content": [
+          "[SVG IMAGE: A hedgehog drawn in MS Paint with approximately 47 poorly-aligned circles for \"spines\". The color palette appears to be \"all of them\". When shown to focus groups, 100% of participants asked \"is that a potato?\"]",
+          "",
+          "We keep this as a reminder that design is hard, and also that we should never let James near vector graphics software."
+        ]
+      },
+      {
+        "filename": "bad-logo-2.svg",
+        "description": "The sequel. Somehow worse.",
+        "content": [
+          "[SVG IMAGE: An abstract \"minimalist\" hedgehog that looks suspiciously like a hairbrush. One intern said it looked \"corporate.\" James took that as a compliment. It was not meant as one.]",
+          "",
+          "The lesson: when someone says your logo looks \"corporate,\" they mean it looks like a mid-2000s enterprise software company that sells printer toner."
+        ]
+      },
+      {
+        "filename": "honest-job-description.md",
+        "description": "What our job descriptions would say if we were honest",
+        "content": [
+          "# Honest Job Descriptions",
+          "",
+          "## Senior Frontend Engineer",
+          "You'll fix CSS bugs introduced by people who don't test their changes. You'll attend meetings that could have been emails. You'll explain to the CEO why we can't \"just add AI\" to everything. You'll become emotionally attached to a linter config.",
+          "",
+          "## Product Designer",
+          "You'll make beautiful mockups that engineers will implement with... varying degrees of fidelity. You'll say \"this doesn't match the design\" at least 4 times per sprint. You'll learn that \"pixel perfect\" is a state of mind, not a reality.",
+          "",
+          "## DevRel",
+          "You'll write blog posts at 2 AM. You'll answer the same question in Slack 47 times with the same enthusiasm each time. You'll become weirdly good at making GIFs. You'll explain what PostHog is to your family and they'll still say you \"work in computers.\"",
+          "",
+          "[HR said we couldn't publish this. Cowards.]"
+        ]
+      },
+      {
+        "filename": "vc-pitch-deck.pdf",
+        "description": "Our actual pitch deck. We can't believe they invested.",
+        "content": [
+          "[PDF: 12 slides]",
+          "",
+          "Slide 1: \"PostHog\" — with that bad logo #1",
+          "Slide 2: \"Product analytics, but open source\"",
+          "Slide 3: [REDACTED — too embarrassing]",
+          "Slide 4: TAM slide with a completely made-up number",
+          "Slide 5: \"Competition: everyone, but we are better\"",
+          "Slide 6: \"Team: two guys who met at YC\"",
+          "Slide 7: Financial projections that were off by 400%",
+          "Slide 8: \"The ask: money please\"",
+          "Slide 9: \"Thank you\" slide (comic sans)",
+          "Slide 10-12: Appendix of hedgehog memes",
+          "",
+          "Somehow this worked. We raised $12M off this deck. The VC later admitted they invested because \"the name was memorable.\" We choose to believe it was our compelling vision."
+        ]
+      },
+      {
+        "filename": "tim-cook-email.md",
+        "description": "That time we emailed Tim Cook",
+        "content": [
+          "# Email to Tim Cook",
+          "",
+          "**From:** james@posthog.com",
+          "**To:** tim@apple.com",
+          "**Subject:** \"We should talk\"",
+          "",
+          "Hi Tim,",
+          "",
+          "Love the work you are doing with the iPhone. Big fan. We make product analytics software. Have you considered adding better analytics to Xcode? Also, would love to put PostHog on the App Store. Can you expedite the review?",
+          "",
+          "Also — any chance you could mention us in the keynote? Even a small shoutout would be great.",
+          "",
+          "Best,",
+          "James",
+          "",
+          "---",
+          "",
+          "**Reply from:** donotreply@apple.com",
+          "**Subject:** Re: Auto-reply: Out of office",
+          "",
+          "[No response received. We waited 847 days before giving up.]"
+        ]
+      },
+      {
+        "filename": "failed-experiments.csv",
+        "description": "All the experiments that went nowhere",
+        "content": [
+          "experiment_name,result,notes",
+          "\"Auto-generating release notes from commit messages\",\"FAILED\",\"Every release note was just 'fix stuff' 47 times\"",
+          "\"AI-powered support bot\",\"FAILED\",\"It told a customer to 'try turning it off and on again' for a billing question\"",
+          "\"Hedgehog-themed error pages\",\"PARTIAL SUCCESS\",\"Users loved them but they increased panic by 30%\"",
+          "\"Predictive churn analysis\",\"FAILED\",\"Predicted 100% churn for our own team after looking at our bug backlog\"",
+          "\"Voice-activated dashboards\",\"FAILED\",\"The mic kept picking up office dog barks as commands\"",
+          "\"QR codes on all error messages\",\"FAILED\",\"No one has ever scanned a QR code in their life, apparently\""
+        ]
+      },
+      {
+        "filename": "rejected-taglines.txt",
+        "description": "Taglines that didn't make the cut",
+        "content": [
+          "PostHog: We are not a cult",
+          "PostHog: Like Google Analytics but you own your data",
+          "PostHog: The everything app (trademark issues)",
+          "PostHog: So easy even your PM can use it",
+          "PostHog: Hedgehogs > Unicorns",
+          "PostHog: Now with 47% fewer bugs",
+          "PostHog: The DevTool-iest DevTool that ever DevTooled",
+          "PostHog: Your data pipeline's spirit animal",
+          "PostHog: We read your commits so you don't have to",
+          "PostHog: Making product engineers cry (tears of joy, mostly)"
+        ]
+      },
+      {
+        "filename": "hr-incidents.pdf",
+        "description": "[REDACTED]",
+        "content": "[REDACTED]",
+        "redactedReason": "This file has been redacted per Legal's request. If you are reading this, please stop. We mean it."
+      },
+      {
+        "filename": "ceo-browser-history.csv",
+        "description": "[REDACTED FOR LEGAL REASONS]",
+        "content": "[REDACTED FOR LEGAL REASONS]",
+        "redactedReason": "Seriously? You thought we would keep this? The CEO's browser history is stored on a separate server, in a bunker, guarded by a very judgmental sysadmin."
+      },
+      {
+        "filename": "human-readable-tos.md",
+        "description": "Our terms of service, translated to human English",
+        "content": [
+          "# Terms of Service (Human Version)",
+          "",
+          "1. Don't be evil.",
+          "2. We won't sell your data. We are not Facebook.",
+          "3. If you break something, tell us. We don't judge (much).",
+          "4. We reserve the right to make dad jokes in the UI.",
+          "5. Free tier means free. No credit card trickery.",
+          "6. If you hit the free tier limits, either upgrade or get really good at data compression.",
+          "7. You own your data. We just hold it for you, like a very secure, very digital piggy bank.",
+          "8. No hedgehogs were harmed in the making of this software.",
+          "",
+          "Legal team said this \"isn't legally binding.\" We disagree. A pinky promise is legally binding in our hearts."
+        ]
+      },
+      {
+        "filename": "cofounder-dms.json",
+        "description": "The DMs that started a company",
+        "content": [
+          "{",
+          "  \"messages\": [",
+          "    {",
+          "      \"from\": \"james\",",
+          "      \"to\": \"tim\",",
+          "      \"timestamp\": \"2019-11-03T02:14:00Z\",",
+          "      \"text\": \"yo what if we made analytics but like... not terrible?\"",
+          "    },",
+          "    {",
+          "      \"from\": \"tim\",",
+          "      \"to\": \"james\",",
+          "      \"timestamp\": \"2019-11-03T02:15:00Z\",",
+          "      \"text\": \"i'm listening\"",
+          "    },",
+          "    {",
+          "      \"from\": \"james\",",
+          "      \"to\": \"tim\",",
+          "      \"timestamp\": \"2019-11-03T02:16:00Z\",",
+          "      \"text\": \"open source. developer-first. no sales team. just vibes.\"",
+          "    },",
+          "    {",
+          "      \"from\": \"tim\",",
+          "      \"to\": \"james\",",
+          "      \"timestamp\": \"2019-11-03T02:17:00Z\",",
+          "      \"text\": \"that's the worst idea i've heard all week. let's do it.\"",
+          "    },",
+          "    {",
+          "      \"from\": \"james\",",
+          "      \"to\": \"tim\",",
+          "      \"timestamp\": \"2019-11-03T02:18:00Z\",",
+          "      \"text\": \"yc application due in 3 days. think we can build a demo?\"",
+          "    },",
+          "    {",
+          "      \"from\": \"tim\",",
+          "      \"to\": \"james\",",
+          "      \"timestamp\": \"2019-11-03T02:19:00Z\",",
+          "      \"text\": \"sleep is for the weak\"",
+          "    }",
+          "  ],",
+          "  \"result\": \"$27,000,000,000 idea conceived at 2am\"",
+          "}"
+        ]
+      },
+      {
+        "filename": "why-we-use-posthog.md",
+        "description": "Meta, but make it self-aware",
+        "content": [
+          "# Why We Use PostHog (At PostHog)",
+          "",
+          "We use PostHog to track how people use PostHog so we can make PostHog better. This is not a tongue twister; it is our actual job.",
+          "",
+          "## How meta is it?",
+          "",
+          "- We use PostHog analytics to analyze PostHog usage",
+          "- We use PostHog session replay to watch people use PostHog session replay",
+          "- We use PostHog feature flags to roll out new PostHog features",
+          "- We use PostHog experiments to test which PostHog experiments work best",
+          "",
+          "## Metrics we track:",
+          "",
+          "1. How many people track metrics",
+          "2. The conversion rate of our conversion rate tracking",
+          "3. Whether our session replay replays sessions correctly",
+          "4. If our feature flag for feature flags is flagged correctly",
+          "",
+          "*This document was deleted because it caused an infinite recursion in our analytics pipeline.*"
+        ]
+      }
+    ]
+  }
+}

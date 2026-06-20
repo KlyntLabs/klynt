@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Check, Github, Headset, Loader2, Mail, MessageCircle } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Accordion,
   AccordionContent,
@@ -63,52 +64,10 @@ function validateEmail(email: string): boolean {
 }
 
 /* ------------------------------------------------------------------ */
-/*  FAQ data                                                           */
-/* ------------------------------------------------------------------ */
-const faqItems = [
-  {
-    question: "How fast do you actually respond?",
-    answer:
-      "We're humans, not bots — so it depends on time zones and sleep schedules. But most questions in our Discord get answered within a few hours. Email responses are typically within 24 hours.",
-  },
-  {
-    question: "Do you offer paid support plans?",
-    answer:
-      "We don't have formal support tiers. Every user gets the same human-level support. For large enterprise deployments, we offer a dedicated success engineer as part of our Enterprise plan.",
-  },
-  {
-    question: "Can I schedule a demo or call?",
-    answer:
-      "We don't do traditional sales calls. If you need help, just ask in Discord or send an email. We're happy to jump on a call if it's the best way to solve your problem.",
-  },
-  {
-    question: "I found a bug — what should I do?",
-    answer:
-      "The fastest way is to open an issue on GitHub. Include steps to reproduce, expected vs actual behavior, and screenshots if relevant. We triage bugs daily.",
-  },
-  {
-    question: "How do I request a new feature?",
-    answer:
-      "Post a feature request on GitHub Discussions or mention it in Discord. We actively read and tag every request. Many of our best features came directly from community suggestions.",
-  },
-];
-
-/* ------------------------------------------------------------------ */
-/*  Subject options                                                     */
-/* ------------------------------------------------------------------ */
-const subjectOptions = [
-  { value: "", label: "Select a topic" },
-  { value: "Help with setup", label: "Help with setup" },
-  { value: "Billing question", label: "Billing question" },
-  { value: "Feature request", label: "Feature request" },
-  { value: "Bug report", label: "Bug report" },
-  { value: "Something else", label: "Something else" },
-];
-
-/* ------------------------------------------------------------------ */
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 export default function TalkToHumanPage() {
+  const { t } = useTranslation("marketing");
   const [form, setForm] = useState<FormData>({
     name: "",
     email: "",
@@ -118,6 +77,15 @@ export default function TalkToHumanPage() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
   const [shakeCount, setShakeCount] = useState(0);
+
+  const subjectOptions = t("talkToHuman.form.subjects", { returnObjects: true }) as {
+    value: string;
+    label: string;
+  }[];
+  const faqItems = t("talkToHuman.faq.items", { returnObjects: true }) as {
+    question: string;
+    answer: string;
+  }[];
 
   /* Form field change handler */
   const handleChange = (
@@ -136,13 +104,13 @@ export default function TalkToHumanPage() {
     e.preventDefault();
 
     const newErrors: FormErrors = {};
-    if (!form.name.trim()) newErrors.name = "Please enter your name";
+    if (!form.name.trim()) newErrors.name = t("talkToHuman.form.fields.name.error");
     if (!form.email.trim()) {
-      newErrors.email = "Please enter your email";
+      newErrors.email = t("talkToHuman.form.fields.email.errorRequired");
     } else if (!validateEmail(form.email)) {
-      newErrors.email = "Please enter a valid email address";
+      newErrors.email = t("talkToHuman.form.fields.email.errorInvalid");
     }
-    if (!form.message.trim()) newErrors.message = "Please enter a message";
+    if (!form.message.trim()) newErrors.message = t("talkToHuman.form.fields.message.error");
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -172,15 +140,14 @@ export default function TalkToHumanPage() {
           variants={fadeUp}
           custom={0}
         >
-          Talk to a human
+          {t("talkToHuman.hero.title")}
         </motion.h1>
         <motion.p
           className="text-base text-[#6B6B6B] text-center mt-3 leading-relaxed max-w-sm"
           variants={fadeUp}
           custom={1}
         >
-          We actually respond. No chatbots, no automated runarounds. Real humans who know the
-          product.
+          {t("talkToHuman.hero.subtitle")}
         </motion.p>
         <motion.div className="mt-5" variants={fadeUp} custom={2}>
           <div className="w-16 h-16 rounded-full bg-[#F76E18]/10 flex items-center justify-center">
@@ -204,10 +171,11 @@ export default function TalkToHumanPage() {
           <div className="w-10 h-10 rounded-full bg-[#5865F2]/10 flex items-center justify-center">
             <MessageCircle className="w-5 h-5 text-[#5865F2]" />
           </div>
-          <h3 className="text-sm font-semibold text-[#1A1A1A] mt-3">Community Discord</h3>
+          <h2 className="text-sm font-semibold text-[#1A1A1A] mt-3">
+            {t("talkToHuman.contactCards.discord.title")}
+          </h2>
           <p className="text-xs text-[#6B6B6B] mt-1 leading-relaxed flex-1">
-            Join 10,000+ developers in our community Discord. Get help, share ideas, or just hang
-            out.
+            {t("talkToHuman.contactCards.discord.body")}
           </p>
           <a
             href="https://discord.gg/posthog"
@@ -215,7 +183,7 @@ export default function TalkToHumanPage() {
             rel="noopener noreferrer"
             className="text-xs text-[#2563EB] mt-3 inline-flex items-center gap-0.5 hover:underline"
           >
-            Join Discord <ArrowRight className="w-3 h-3" />
+            {t("talkToHuman.contactCards.discord.link")} <ArrowRight className="w-3 h-3" />
           </a>
         </motion.div>
 
@@ -227,15 +195,17 @@ export default function TalkToHumanPage() {
           <div className="w-10 h-10 rounded-full bg-[#F76E18]/10 flex items-center justify-center">
             <Mail className="w-5 h-5 text-[#F76E18]" />
           </div>
-          <h3 className="text-sm font-semibold text-[#1A1A1A] mt-3">Email</h3>
+          <h2 className="text-sm font-semibold text-[#1A1A1A] mt-3">
+            {t("talkToHuman.contactCards.email.title")}
+          </h2>
           <p className="text-xs text-[#6B6B6B] mt-1 leading-relaxed flex-1">
-            Prefer email? Reach out to us at hey@posthog.com. We read every message.
+            {t("talkToHuman.contactCards.email.body")}
           </p>
           <a
             href="mailto:hey@posthog.com"
             className="text-xs text-[#2563EB] mt-3 inline-flex items-center gap-0.5 hover:underline"
           >
-            hey@posthog.com <ArrowRight className="w-3 h-3" />
+            {t("talkToHuman.contactCards.email.link")} <ArrowRight className="w-3 h-3" />
           </a>
         </motion.div>
 
@@ -247,9 +217,11 @@ export default function TalkToHumanPage() {
           <div className="w-10 h-10 rounded-full bg-[#1A1A1A]/10 flex items-center justify-center">
             <Github className="w-5 h-5 text-[#1A1A1A]" />
           </div>
-          <h3 className="text-sm font-semibold text-[#1A1A1A] mt-3">GitHub</h3>
+          <h2 className="text-sm font-semibold text-[#1A1A1A] mt-3">
+            {t("talkToHuman.contactCards.github.title")}
+          </h2>
           <p className="text-xs text-[#6B6B6B] mt-1 leading-relaxed flex-1">
-            Found a bug or have a feature request? Open an issue on GitHub.
+            {t("talkToHuman.contactCards.github.body")}
           </p>
           <a
             href="https://github.com/PostHog/posthog/issues"
@@ -257,7 +229,7 @@ export default function TalkToHumanPage() {
             rel="noopener noreferrer"
             className="text-xs text-[#2563EB] mt-3 inline-flex items-center gap-0.5 hover:underline"
           >
-            Open GitHub <ArrowRight className="w-3 h-3" />
+            {t("talkToHuman.contactCards.github.link")} <ArrowRight className="w-3 h-3" />
           </a>
         </motion.div>
       </motion.div>
@@ -273,10 +245,8 @@ export default function TalkToHumanPage() {
           ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
         }}
       >
-        <h2 className="text-lg font-semibold text-[#1A1A1A]">Or send us a message</h2>
-        <p className="text-sm text-[#6B6B6B] mb-5">
-          We&apos;ll get back to you within 24 hours. Usually much faster.
-        </p>
+        <h2 className="text-lg font-semibold text-[#1A1A1A]">{t("talkToHuman.form.title")}</h2>
+        <p className="text-sm text-[#6B6B6B] mb-5">{t("talkToHuman.form.subtitle")}</p>
 
         <AnimatePresence mode="wait">
           {status === "success" ? (
@@ -290,14 +260,18 @@ export default function TalkToHumanPage() {
               <div className="w-14 h-14 rounded-full bg-[#22C55E]/10 flex items-center justify-center mb-4">
                 <Check className="w-7 h-7 text-[#22C55E]" />
               </div>
-              <h3 className="text-lg font-semibold text-[#1A1A1A]">Message sent!</h3>
-              <p className="text-sm text-[#6B6B6B] mt-1">We&apos;ll be in touch soon.</p>
+              <h3 className="text-lg font-semibold text-[#1A1A1A]">
+                {t("talkToHuman.form.success.title")}
+              </h3>
+              <p className="text-sm text-[#6B6B6B] mt-1">
+                {t("talkToHuman.form.success.subtitle")}
+              </p>
               <Button
                 variant="outline"
                 className="mt-4 rounded-lg border-[#D1D1D1]"
                 onClick={() => setStatus("idle")}
               >
-                Send another message
+                {t("talkToHuman.form.success.reset")}
               </Button>
             </motion.div>
           ) : (
@@ -314,7 +288,7 @@ export default function TalkToHumanPage() {
               {/* Name */}
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-[#1A1A1A] mb-1">
-                  Your name
+                  {t("talkToHuman.form.fields.name.label")}
                 </label>
                 <input
                   id="name"
@@ -322,7 +296,7 @@ export default function TalkToHumanPage() {
                   type="text"
                   value={form.name}
                   onChange={handleChange}
-                  placeholder="James Hawkins"
+                  placeholder={t("talkToHuman.form.fields.name.placeholder")}
                   className={`w-full bg-white border rounded-lg px-3 py-2.5 text-sm placeholder-[#9CA3AF] transition-all outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 ${
                     errors.name ? "border-[#DC2626]" : "border-[#D1D1D1]"
                   }`}
@@ -344,7 +318,7 @@ export default function TalkToHumanPage() {
               {/* Email */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-[#1A1A1A] mb-1">
-                  Email address
+                  {t("talkToHuman.form.fields.email.label")}
                 </label>
                 <input
                   id="email"
@@ -352,7 +326,7 @@ export default function TalkToHumanPage() {
                   type="email"
                   value={form.email}
                   onChange={handleChange}
-                  placeholder="james@posthog.com"
+                  placeholder={t("talkToHuman.form.fields.email.placeholder")}
                   className={`w-full bg-white border rounded-lg px-3 py-2.5 text-sm placeholder-[#9CA3AF] transition-all outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 ${
                     errors.email ? "border-[#DC2626]" : "border-[#D1D1D1]"
                   }`}
@@ -374,7 +348,7 @@ export default function TalkToHumanPage() {
               {/* Subject */}
               <div>
                 <label htmlFor="subject" className="block text-sm font-medium text-[#1A1A1A] mb-1">
-                  What can we help with?
+                  {t("talkToHuman.form.fields.subject.label")}
                 </label>
                 <select
                   id="subject"
@@ -394,14 +368,14 @@ export default function TalkToHumanPage() {
               {/* Message */}
               <div>
                 <label htmlFor="message" className="block text-sm font-medium text-[#1A1A1A] mb-1">
-                  Your message
+                  {t("talkToHuman.form.fields.message.label")}
                 </label>
                 <textarea
                   id="message"
                   name="message"
                   value={form.message}
                   onChange={handleChange}
-                  placeholder="Tell us what's on your mind..."
+                  placeholder={t("talkToHuman.form.fields.message.placeholder")}
                   rows={5}
                   className={`w-full bg-white border rounded-lg px-3 py-2.5 text-sm placeholder-[#9CA3AF] resize-vertical transition-all outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 ${
                     errors.message ? "border-[#DC2626]" : "border-[#D1D1D1]"
@@ -430,10 +404,10 @@ export default function TalkToHumanPage() {
                 {status === "submitting" ? (
                   <span className="flex items-center justify-center gap-2">
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Sending...
+                    {t("talkToHuman.form.sending")}
                   </span>
                 ) : (
-                  "Send message"
+                  t("talkToHuman.form.submit")
                 )}
               </Button>
             </motion.form>
@@ -448,11 +422,11 @@ export default function TalkToHumanPage() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5, duration: 0.35 }}
       >
-        <h2 className="text-lg font-semibold text-[#1A1A1A] mb-4">Frequently asked questions</h2>
+        <h2 className="text-lg font-semibold text-[#1A1A1A] mb-4">{t("talkToHuman.faq.title")}</h2>
         <Accordion type="single" collapsible className="w-full">
           {faqItems.map((item, idx) => (
             <AccordionItem
-              key={idx}
+              key={item.question}
               value={`faq-${idx}`}
               className="border-b border-[#E5E5E5] last:border-b-0"
             >
@@ -469,16 +443,17 @@ export default function TalkToHumanPage() {
 
       {/* ── Footer note ── */}
       <div className="px-8 py-5 border-t border-[#E5E5E5] text-center">
-        <p className="text-sm text-[#6B6B6B]">Prefer to figure things out yourself?</p>
+        <p className="text-sm text-[#6B6B6B]">{t("talkToHuman.footer.selfServe")}</p>
         <p className="text-sm text-[#6B6B6B] mt-0.5">
-          Check out our{" "}
+          {t("talkToHuman.footer.linksBefore")}
           <a href="/docs" className="text-[#2563EB] hover:underline">
-            Docs
-          </a>{" "}
-          or browse{" "}
-          <a href="/community" className="text-[#2563EB] hover:underline">
-            Community Questions
+            {t("talkToHuman.footer.docs")}
           </a>
+          {t("talkToHuman.footer.linksMiddle")}
+          <a href="/community" className="text-[#2563EB] hover:underline">
+            {t("talkToHuman.footer.community")}
+          </a>
+          {t("talkToHuman.footer.linksAfter")}
         </p>
       </div>
     </div>

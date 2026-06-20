@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import type { WindowState } from "@/features/desktop/store/use-desktop-store";
 import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
 
@@ -29,6 +30,7 @@ interface WindowProps {
 export default function WindowComponent({ window: w, children }: WindowProps) {
   const { focusWindow, closeWindow, minimizeWindow, maximizeWindow, restoreWindow } =
     useDesktopStore();
+  const { t } = useTranslation("home");
 
   const handleDragEnd = useCallback(
     (_: unknown, info: { offset: { x: number; y: number } }) => {
@@ -86,23 +88,29 @@ export default function WindowComponent({ window: w, children }: WindowProps) {
         {/* Window Controls */}
         <div className="flex items-center gap-1.5 shrink-0">
           <button
+            type="button"
             onClick={() => closeWindow(w.id)}
+            aria-label={t("desktop.window.close")}
             className="w-3 h-3 rounded-full bg-[#FF5F57] hover:bg-[#FF453A] flex items-center justify-center transition-colors group"
-            title="Close"
+            title={t("desktop.window.close")}
           >
             <X className="w-2 h-2 text-[#8B0000] opacity-0 group-hover:opacity-100" />
           </button>
           <button
+            type="button"
             onClick={() => minimizeWindow(w.id)}
+            aria-label={t("desktop.window.minimize")}
             className="w-3 h-3 rounded-full bg-[#FEBC2E] hover:bg-[#FFB224] flex items-center justify-center transition-colors group"
-            title="Minimize"
+            title={t("desktop.window.minimize")}
           >
             <Minus className="w-2 h-2 text-[#8B6914] opacity-0 group-hover:opacity-100" />
           </button>
           <button
+            type="button"
             onClick={() => (w.isMaximized ? restoreWindow(w.id) : maximizeWindow(w.id))}
+            aria-label={w.isMaximized ? t("desktop.window.restore") : t("desktop.window.maximize")}
             className="w-3 h-3 rounded-full bg-[#28C840] hover:bg-[#24B439] flex items-center justify-center transition-colors group"
-            title={w.isMaximized ? "Restore" : "Maximize"}
+            title={w.isMaximized ? t("desktop.window.restore") : t("desktop.window.maximize")}
           >
             <Square className="w-2 h-2 text-[#0B5C1F] opacity-0 group-hover:opacity-100" />
           </button>
@@ -128,28 +136,55 @@ export default function WindowComponent({ window: w, children }: WindowProps) {
       >
         {/* Left: Navigation + Formatting */}
         <div className="flex items-center gap-1">
-          <button className="h-7 w-8 flex items-center justify-center rounded hover:bg-[#EBE8E2] transition-colors border border-transparent hover:border-[#D1D1D1]">
+          <button
+            type="button"
+            aria-label={t("desktop.window.toolbar.back")}
+            className="h-7 w-8 flex items-center justify-center rounded hover:bg-[#EBE8E2] transition-colors border border-transparent hover:border-[#D1D1D1]"
+          >
             <ChevronLeft className="w-4 h-4 text-[#6B6B6B]" />
           </button>
-          <button className="h-7 w-8 flex items-center justify-center rounded hover:bg-[#EBE8E2] transition-colors border border-transparent hover:border-[#D1D1D1]">
+          <button
+            type="button"
+            aria-label={t("desktop.window.toolbar.forward")}
+            className="h-7 w-8 flex items-center justify-center rounded hover:bg-[#EBE8E2] transition-colors border border-transparent hover:border-[#D1D1D1]"
+          >
             <ChevronRight className="w-4 h-4 text-[#6B6B6B]" />
           </button>
           <div className="w-px h-5 bg-[#D1D1D1] mx-1" />
-          <button className="h-7 px-2 flex items-center gap-0.5 rounded hover:bg-[#EBE8E2] transition-colors border border-transparent hover:border-[#D1D1D1] text-[12px] text-[#6B6B6B]">
-            100% <ChevronDown className="w-3 h-3" />
+          <button
+            type="button"
+            className="h-7 px-2 flex items-center gap-0.5 rounded hover:bg-[#EBE8E2] transition-colors border border-transparent hover:border-[#D1D1D1] text-[12px] text-[#6B6B6B]"
+          >
+            {t("desktop.window.zoom")} <ChevronDown className="w-3 h-3" />
           </button>
           <div className="w-px h-5 bg-[#D1D1D1] mx-1" />
-          <button className="h-7 w-8 flex items-center justify-center rounded hover:bg-[#EBE8E2] transition-colors border border-transparent hover:border-[#D1D1D1]">
+          <button
+            type="button"
+            aria-label={t("desktop.window.toolbar.bold")}
+            className="h-7 w-8 flex items-center justify-center rounded hover:bg-[#EBE8E2] transition-colors border border-transparent hover:border-[#D1D1D1]"
+          >
             <Bold className="w-3.5 h-3.5 text-[#6B6B6B]" />
           </button>
-          <button className="h-7 w-8 flex items-center justify-center rounded hover:bg-[#EBE8E2] transition-colors border border-transparent hover:border-[#D1D1D1]">
+          <button
+            type="button"
+            aria-label={t("desktop.window.toolbar.italic")}
+            className="h-7 w-8 flex items-center justify-center rounded hover:bg-[#EBE8E2] transition-colors border border-transparent hover:border-[#D1D1D1]"
+          >
             <Italic className="w-3.5 h-3.5 text-[#6B6B6B]" />
           </button>
-          <button className="h-7 w-8 flex items-center justify-center rounded hover:bg-[#EBE8E2] transition-colors border border-transparent hover:border-[#D1D1D1]">
+          <button
+            type="button"
+            aria-label={t("desktop.window.toolbar.underline")}
+            className="h-7 w-8 flex items-center justify-center rounded hover:bg-[#EBE8E2] transition-colors border border-transparent hover:border-[#D1D1D1]"
+          >
             <Underline className="w-3.5 h-3.5 text-[#6B6B6B]" />
           </button>
           <div className="w-px h-5 bg-[#D1D1D1] mx-1" />
-          <button className="h-7 px-2 flex items-center gap-0.5 rounded hover:bg-[#EBE8E2] transition-colors border border-transparent hover:border-[#D1D1D1] text-[12px] text-[#6B6B6B]">
+          <button
+            type="button"
+            aria-label={t("desktop.window.toolbar.font")}
+            className="h-7 px-2 flex items-center gap-0.5 rounded hover:bg-[#EBE8E2] transition-colors border border-transparent hover:border-[#D1D1D1] text-[12px] text-[#6B6B6B]"
+          >
             <Type className="w-3.5 h-3.5" /> <ChevronDown className="w-3 h-3" />
           </button>
         </div>
@@ -158,18 +193,33 @@ export default function WindowComponent({ window: w, children }: WindowProps) {
 
         {/* Right: Search, Bookmark, Settings, Share */}
         <div className="flex items-center gap-1">
-          <button className="h-7 w-8 flex items-center justify-center rounded hover:bg-[#EBE8E2] transition-colors border border-transparent hover:border-[#D1D1D1]">
+          <button
+            type="button"
+            aria-label={t("desktop.window.toolbar.search")}
+            className="h-7 w-8 flex items-center justify-center rounded hover:bg-[#EBE8E2] transition-colors border border-transparent hover:border-[#D1D1D1]"
+          >
             <Search className="w-4 h-4 text-[#6B6B6B]" />
           </button>
-          <button className="h-7 w-8 flex items-center justify-center rounded hover:bg-[#EBE8E2] transition-colors border border-transparent hover:border-[#D1D1D1]">
+          <button
+            type="button"
+            aria-label={t("desktop.window.toolbar.bookmark")}
+            className="h-7 w-8 flex items-center justify-center rounded hover:bg-[#EBE8E2] transition-colors border border-transparent hover:border-[#D1D1D1]"
+          >
             <Bookmark className="w-4 h-4 text-[#6B6B6B]" />
           </button>
-          <button className="h-7 w-8 flex items-center justify-center rounded hover:bg-[#EBE8E2] transition-colors border border-transparent hover:border-[#D1D1D1]">
+          <button
+            type="button"
+            aria-label={t("desktop.window.toolbar.settings")}
+            className="h-7 w-8 flex items-center justify-center rounded hover:bg-[#EBE8E2] transition-colors border border-transparent hover:border-[#D1D1D1]"
+          >
             <Settings className="w-4 h-4 text-[#6B6B6B]" />
           </button>
-          <button className="h-7 px-3 flex items-center gap-1 rounded bg-[#F76E18] hover:bg-[#E56310] text-white text-[12px] font-medium transition-colors">
+          <button
+            type="button"
+            className="h-7 px-3 flex items-center gap-1 rounded bg-[#F76E18] hover:bg-[#E56310] text-white text-[12px] font-medium transition-colors"
+          >
             <Share2 className="w-3.5 h-3.5" />
-            Share
+            {t("desktop.window.share")}
           </button>
         </div>
       </div>
@@ -178,7 +228,7 @@ export default function WindowComponent({ window: w, children }: WindowProps) {
       <div className="flex-1 overflow-y-auto bg-white min-h-0">
         {w.isMinimized ? (
           <div className="flex items-center justify-center h-full text-[#9CA3AF] text-sm">
-            Window minimized
+            {t("desktop.window.minimized")}
           </div>
         ) : (
           <div className="w-full">{children}</div>

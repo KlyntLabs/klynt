@@ -34,10 +34,8 @@ import {
   Workflow,
 } from "lucide-react";
 import { useCallback, useState } from "react";
-
+import { useTranslation } from "react-i18next";
 import {
-  dataExport,
-  dataSources,
   tab1Products,
   tab3Products,
   tab4Automation,
@@ -122,22 +120,27 @@ const productIconMap: Record<string, { icon: React.ReactNode; bg: string; color:
 /*  Install / copy component                                           */
 /* ------------------------------------------------------------------ */
 function InstallCard() {
+  const { t } = useTranslation("marketing");
   const [copied, setCopied] = useState(false);
   const [showFrameworks, setShowFrameworks] = useState(false);
 
-  const command = "npx -y @posthog/wizard";
+  const command = t("products.hero.installCommand");
+  const frameworks = t("products.hero.frameworks", { returnObjects: true }) as string[];
 
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(command).catch(() => {});
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }, []);
+  }, [command]);
 
   return (
     <div className="border border-[#D1D1D1] rounded-lg p-4 bg-white">
       <div className="flex items-center gap-2 mb-3">
-        <button className="flex items-center gap-1 px-3 py-1.5 bg-[#F5F3EF] hover:bg-[#EBE8E2] rounded-md text-sm font-medium transition-colors">
-          Get started <ChevronDown className="w-3.5 h-3.5" />
+        <button
+          type="button"
+          className="flex items-center gap-1 px-3 py-1.5 bg-[#F5F3EF] hover:bg-[#EBE8E2] rounded-md text-sm font-medium transition-colors"
+        >
+          {t("products.hero.getStarted")} <ChevronDown className="w-3.5 h-3.5" />
         </button>
       </div>
       <div className="flex items-center gap-2 mb-3">
@@ -145,9 +148,10 @@ function InstallCard() {
           {command}
         </code>
         <button
+          type="button"
           onClick={handleCopy}
           className="h-9 w-9 flex items-center justify-center rounded-md bg-[#F5F3EF] hover:bg-[#EBE8E2] transition-colors border border-[#D1D1D1]"
-          title="Copy to clipboard"
+          title={t("products.hero.copyTooltip")}
         >
           {copied ? (
             <Check className="w-4 h-4 text-[#22C55E]" />
@@ -157,24 +161,25 @@ function InstallCard() {
         </button>
       </div>
       <div className="text-xs text-[#6B6B6B]">
-        Supports{" "}
-        <a href="#" className="text-[#2563EB] hover:underline">
+        {t("products.hero.supports")}{" "}
+        <button type="button" className="text-[#2563EB] hover:underline">
           Next.js
-        </a>
+        </button>
         ,{" "}
-        <a href="#" className="text-[#2563EB] hover:underline">
+        <button type="button" className="text-[#2563EB] hover:underline">
           React
-        </a>
+        </button>
         ,{" "}
-        <a href="#" className="text-[#2563EB] hover:underline">
+        <button type="button" className="text-[#2563EB] hover:underline">
           Python
-        </a>
-        , and{" "}
+        </button>
+        , {t("products.hero.and")}{" "}
         <button
+          type="button"
           onClick={() => setShowFrameworks(!showFrameworks)}
           className="text-[#2563EB] hover:underline font-medium"
         >
-          21 more
+          {t("products.hero.more")}
         </button>
         <AnimatePresence>
           {showFrameworks && (
@@ -186,29 +191,7 @@ function InstallCard() {
               className="overflow-hidden"
             >
               <div className="flex flex-wrap gap-1.5 mt-2">
-                {[
-                  "Vue",
-                  "Svelte",
-                  "Angular",
-                  "Ruby on Rails",
-                  "Django",
-                  "Laravel",
-                  "Go",
-                  "Rust",
-                  "Java",
-                  "PHP",
-                  "Node.js",
-                  "Remix",
-                  "Nuxt",
-                  "SvelteKit",
-                  "Gatsby",
-                  "Astro",
-                  "Express",
-                  "FastAPI",
-                  "Laravel",
-                  "Rails",
-                  "Elixir",
-                ].map((fw) => (
+                {frameworks.map((fw) => (
                   <span
                     key={fw}
                     className="px-2 py-0.5 bg-[#F5F3EF] rounded text-[11px] text-[#6B6B6B]"
@@ -233,19 +216,18 @@ function DataIOCard({
   title,
   items,
   linkText,
-  linkHref,
 }: {
   icon: React.ReactNode;
   title: string;
   items: string[];
   linkText?: string;
-  linkHref?: string;
 }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
     <div className="border border-[#D1D1D1] rounded-lg bg-white overflow-hidden">
       <button
+        type="button"
         onClick={() => setExpanded(!expanded)}
         className="w-full flex items-center gap-3 p-4 text-left hover:bg-[#FAFAF8] transition-colors"
       >
@@ -281,12 +263,12 @@ function DataIOCard({
                 ))}
               </div>
               {linkText && (
-                <a
-                  href={linkHref || "#"}
+                <button
+                  type="button"
                   className="inline-flex items-center gap-1 mt-3 text-xs text-[#2563EB] hover:underline"
                 >
                   {linkText} <ExternalLink className="w-3 h-3" />
-                </a>
+                </button>
               )}
             </div>
           </motion.div>
@@ -315,8 +297,10 @@ function ManageCard({ icon, title }: { icon: React.ReactNode; title: string }) {
 /* ------------------------------------------------------------------ */
 function ProductCard({
   product,
+  tk,
 }: {
-  product: { label: string; icon: string; route: string; description?: string };
+  product: { labelKey: string; icon: string; route: string; descriptionKey?: string };
+  tk: (key: string) => string;
 }) {
   const config = productIconMap[product.icon] || {
     icon: <BarChart3 className="w-4 h-4" />,
@@ -336,10 +320,10 @@ function ProductCard({
       </div>
       <div className="min-w-0">
         <div className="text-sm font-medium text-[#1A1A1A] group-hover:text-[#2563EB] transition-colors">
-          {product.label}
+          {tk(product.labelKey)}
         </div>
-        {product.description && (
-          <div className="text-xs text-[#9CA3AF] truncate">{product.description}</div>
+        {product.descriptionKey && (
+          <div className="text-xs text-[#9CA3AF] truncate">{tk(product.descriptionKey)}</div>
         )}
       </div>
     </a>
@@ -350,6 +334,17 @@ function ProductCard({
 /*  MAIN PAGE                                                          */
 /* ================================================================== */
 export default function ProductsPage() {
+  const { t } = useTranslation("marketing");
+  const tk = (key: string) => t(key as never);
+
+  const dataSources = t("data.dataSources", { returnObjects: true }) as unknown as string[];
+  const dataExport = t("data.dataExport", { returnObjects: true }) as unknown as string[];
+  const manageCards = t("products.dataPlatform.manageCards", {
+    returnObjects: true,
+  }) as unknown as {
+    title: string;
+  }[];
+
   return (
     <div className="w-full">
       {/* ── Hero ── */}
@@ -369,12 +364,10 @@ export default function ProductsPage() {
               className="text-2xl sm:text-3xl font-bold text-[#1A1A1A] leading-tight mb-4"
               style={{ letterSpacing: "-0.02em" }}
             >
-              Devtools and product data infrastructure for building successful products
+              {t("products.hero.title")}
             </h1>
             <p className="text-base text-[#6B6B6B] leading-relaxed mb-5">
-              Humans and AI agents build with PostHog because everything you need to collect and
-              analyze product usage data &ndash; and build and ship new features &ndash; lives in
-              one place.
+              {t("products.hero.body")}
             </p>
 
             <InstallCard />
@@ -385,18 +378,21 @@ export default function ProductsPage() {
                 href="/docs/model-context-protocol"
                 className="flex items-center gap-1 text-[#2563EB] hover:underline"
               >
-                <LinkIcon className="w-4 h-4" /> MCP
+                <LinkIcon className="w-4 h-4" /> {t("products.hero.links.mcp")}
               </a>
               <span className="text-[#D1D1D1]">&bull;</span>
-              <a href="#" className="flex items-center gap-1 text-[#2563EB] hover:underline">
-                <Play className="w-4 h-4" /> Watch a demo
-              </a>
+              <button
+                type="button"
+                className="flex items-center gap-1 text-[#2563EB] hover:underline"
+              >
+                <Play className="w-4 h-4" /> {t("products.hero.links.demo")}
+              </button>
               <span className="text-[#D1D1D1]">&bull;</span>
               <a
                 href="/talk-to-a-human"
                 className="flex items-center gap-1 text-[#2563EB] hover:underline"
               >
-                <Users className="w-4 h-4" /> Talk to a human
+                <Users className="w-4 h-4" /> {t("products.hero.links.talkToHuman")}
               </a>
             </div>
           </motion.div>
@@ -410,7 +406,7 @@ export default function ProductsPage() {
           >
             <img
               src="/product-os-hero.png"
-              alt="Hedgehog at desk with laptop"
+              alt={t("products.hero.mascotAlt")}
               className="max-w-[260px] sm:max-w-[280px] w-full h-auto"
               style={{ imageRendering: "auto" }}
             />
@@ -422,37 +418,37 @@ export default function ProductsPage() {
       <section className="px-6 sm:px-8 py-6 border-b border-[#E5E5E5]">
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-2xl font-bold text-[#1A1A1A]">Data platform</h2>
-          <a href="#" className="text-sm text-[#2563EB] hover:underline flex items-center gap-1">
-            Data stack README <ExternalLink className="w-3.5 h-3.5" />
-          </a>
+          <h2 className="text-2xl font-bold text-[#1A1A1A]">{t("products.dataPlatform.title")}</h2>
+          <button
+            type="button"
+            className="text-sm text-[#2563EB] hover:underline flex items-center gap-1"
+          >
+            {t("products.dataPlatform.readme")} <ExternalLink className="w-3.5 h-3.5" />
+          </button>
         </div>
-        <p className="text-sm text-[#6B6B6B] mb-5">
-          Having all your product data in one place means you can make more informed decisions. Push
-          all your data to PostHog, then send it anywhere else you need, too.
-        </p>
+        <p className="text-sm text-[#6B6B6B] mb-5">{t("products.dataPlatform.body")}</p>
 
         {/* Data I/O cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
           <DataIOCard
             icon={<Download className="w-4 h-4" />}
-            title="Data sources & import (ELT)"
+            title={t("products.dataPlatform.sourcesCard.title")}
             items={dataSources}
-            linkText="View all integrations"
-            linkHref="#"
+            linkText={t("products.dataPlatform.sourcesCard.link")}
           />
           <DataIOCard
             icon={<Upload className="w-4 h-4" />}
-            title="Reverse ETL & export"
+            title={t("products.dataPlatform.exportCard.title")}
             items={dataExport}
-            linkText="View all destinations"
-            linkHref="#"
+            linkText={t("products.dataPlatform.exportCard.link")}
           />
         </div>
 
         {/* Manage & Query */}
         <div className="mb-2">
-          <h3 className="text-sm font-semibold text-[#1A1A1A] mb-3">Manage & query</h3>
+          <h3 className="text-sm font-semibold text-[#1A1A1A] mb-3">
+            {t("products.dataPlatform.manageTitle")}
+          </h3>
           <motion.div
             className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"
             variants={staggerContainer}
@@ -461,14 +457,14 @@ export default function ProductsPage() {
             viewport={{ once: true }}
           >
             {[
-              { icon: <Code2 className="w-4 h-4" />, title: "Data modeling" },
-              { icon: <Database className="w-4 h-4" />, title: "Managed warehouse" },
-              { icon: <Webhook className="w-4 h-4" />, title: "CDP" },
-              { icon: <FileText className="w-4 h-4" />, title: "SQL editor" },
-              { icon: <BarChart3 className="w-4 h-4" />, title: "BI" },
+              { icon: <Code2 className="w-4 h-4" />, title: manageCards[0]?.title },
+              { icon: <Database className="w-4 h-4" />, title: manageCards[1]?.title },
+              { icon: <Webhook className="w-4 h-4" />, title: manageCards[2]?.title },
+              { icon: <FileText className="w-4 h-4" />, title: manageCards[3]?.title },
+              { icon: <BarChart3 className="w-4 h-4" />, title: manageCards[4]?.title },
             ].map((card, i) => (
-              <motion.div key={card.title} variants={staggerItem} custom={i}>
-                <ManageCard icon={card.icon} title={card.title} />
+              <motion.div key={card.title ?? i} variants={staggerItem} custom={i}>
+                <ManageCard icon={card.icon} title={card.title ?? ""} />
               </motion.div>
             ))}
           </motion.div>
@@ -478,24 +474,32 @@ export default function ProductsPage() {
       {/* ── Automatic Tooling ── */}
       <section className="px-6 sm:px-8 py-6 border-b border-[#E5E5E5]">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-2xl font-bold text-[#1A1A1A]">Automatic tooling</h2>
+          <h2 className="text-2xl font-bold text-[#1A1A1A]">
+            {t("products.automaticTooling.title")}
+          </h2>
           <div className="flex items-center gap-2 text-sm">
-            <a href="#" className="text-[#2563EB] hover:underline flex items-center gap-1">
-              Tooling README <ExternalLink className="w-3.5 h-3.5" />
-            </a>
+            <button
+              type="button"
+              className="text-[#2563EB] hover:underline flex items-center gap-1"
+            >
+              {t("products.automaticTooling.readme")} <ExternalLink className="w-3.5 h-3.5" />
+            </button>
             <span className="text-[#D1D1D1]">|</span>
-            <a href="#" className="text-[#2563EB] hover:underline flex items-center gap-1">
-              Instructions for LLMs <ExternalLink className="w-3.5 h-3.5" />
-            </a>
+            <button
+              type="button"
+              className="text-[#2563EB] hover:underline flex items-center gap-1"
+            >
+              {t("products.automaticTooling.llmInstructions")}{" "}
+              <ExternalLink className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
         <p className="text-sm text-[#6B6B6B]">
-          In a previous era of building products, you&apos;d need to configure event tracking and
-          feature flags manually. Now, your AI coding agent can use the{" "}
+          {t("products.automaticTooling.bodyBefore")}
           <a href="/docs/model-context-protocol" className="text-[#2563EB] hover:underline">
-            PostHog MCP
-          </a>{" "}
-          to configure PostHog without leaving your ADE.
+            {t("products.automaticTooling.mcp")}
+          </a>
+          {t("products.automaticTooling.bodyAfter")}
         </p>
       </section>
 
@@ -508,7 +512,9 @@ export default function ProductsPage() {
           viewport={{ once: true }}
           transition={{ duration: 0.35 }}
         >
-          <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">Understand product usage</h3>
+          <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">
+            {t("products.categories.understand")}
+          </h3>
           <motion.div
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1"
             variants={staggerContainer}
@@ -518,7 +524,7 @@ export default function ProductsPage() {
           >
             {tab1Products.map((p) => (
               <motion.div key={p.id} variants={staggerItem}>
-                <ProductCard product={p} />
+                <ProductCard product={p} tk={tk} />
               </motion.div>
             ))}
           </motion.div>
@@ -532,7 +538,9 @@ export default function ProductsPage() {
           viewport={{ once: true }}
           transition={{ duration: 0.35 }}
         >
-          <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">Debug &amp; fix issues</h3>
+          <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">
+            {t("products.categories.debug")}
+          </h3>
           <motion.div
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1"
             variants={staggerContainer}
@@ -542,7 +550,7 @@ export default function ProductsPage() {
           >
             {tab3Products.map((p) => (
               <motion.div key={p.id} variants={staggerItem}>
-                <ProductCard product={p} />
+                <ProductCard product={p} tk={tk} />
               </motion.div>
             ))}
           </motion.div>
@@ -557,7 +565,7 @@ export default function ProductsPage() {
           transition={{ duration: 0.35 }}
         >
           <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">
-            Ship features &amp; get feedback
+            {t("products.categories.ship")}
           </h3>
           <motion.div
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1"
@@ -568,7 +576,7 @@ export default function ProductsPage() {
           >
             {[...tab4FeatureDev, ...tab4Automation, ...tab4Feedback].map((p) => (
               <motion.div key={p.id} variants={staggerItem}>
-                <ProductCard product={p} />
+                <ProductCard product={p} tk={tk} />
               </motion.div>
             ))}
           </motion.div>

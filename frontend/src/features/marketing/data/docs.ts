@@ -33,62 +33,86 @@ import {
 } from "lucide-react";
 
 export interface DocCategory {
-  name: string;
+  nameKey: string;
   items: DocItem[];
 }
 
 export interface DocItem {
-  label: string;
+  labelKey: string;
   icon: LucideIcon;
-  description?: string;
+  descriptionKey?: string;
 }
 
 export const integrationCategories: DocCategory = {
-  name: "Integration",
+  nameKey: "marketing:docs.categories.integration",
   items: [
-    { label: "Install and configure", icon: Wrench, description: "Get started with PostHog" },
-    { label: "SDKs", icon: Package, description: "Client libraries" },
-    { label: "Frameworks", icon: LayoutGrid, description: "Framework integrations" },
-    { label: "API", icon: Code, description: "REST API reference" },
-    { label: "Advanced", icon: Settings, description: "Advanced configuration" },
-    { label: "Getting HogPilled", icon: Sparkles, description: "Philosophy & culture" },
+    {
+      labelKey: "marketing:docs.items.installAndConfigure",
+      icon: Wrench,
+      descriptionKey: "marketing:docs.items.installAndConfigureDesc",
+    },
+    {
+      labelKey: "marketing:docs.items.sdks",
+      icon: Package,
+      descriptionKey: "marketing:docs.items.sdksDesc",
+    },
+    {
+      labelKey: "marketing:docs.items.frameworks",
+      icon: LayoutGrid,
+      descriptionKey: "marketing:docs.items.frameworksDesc",
+    },
+    {
+      labelKey: "marketing:docs.items.api",
+      icon: Code,
+      descriptionKey: "marketing:docs.items.apiDesc",
+    },
+    {
+      labelKey: "marketing:docs.items.advanced",
+      icon: Settings,
+      descriptionKey: "marketing:docs.items.advancedDesc",
+    },
+    {
+      labelKey: "marketing:docs.items.gettingHogPilled",
+      icon: Sparkles,
+      descriptionKey: "marketing:docs.items.gettingHogPilledDesc",
+    },
   ],
 };
 
 export const aiPlatformCategories: DocCategory = {
-  name: "AI platform",
+  nameKey: "marketing:docs.categories.aiPlatform",
   items: [
-    { label: "PostHog Code", icon: Coffee },
-    { label: "PostHog AI", icon: Star },
-    { label: "MCP", icon: Puzzle },
-    { label: "AI wizard", icon: Wand2 },
-    { label: "AI engineering", icon: Brain },
+    { labelKey: "marketing:docs.items.posthogCode", icon: Coffee },
+    { labelKey: "marketing:docs.items.posthogAI", icon: Star },
+    { labelKey: "marketing:docs.items.mcp", icon: Puzzle },
+    { labelKey: "marketing:docs.items.aiWizard", icon: Wand2 },
+    { labelKey: "marketing:docs.items.aiEngineering", icon: Brain },
   ],
 };
 
 export const developerAppsCategories: DocCategory = {
-  name: "Developer apps",
+  nameKey: "marketing:docs.categories.developerApps",
   items: [
-    { label: "Product Analytics", icon: BarChart3 },
-    { label: "Web Analytics", icon: LineChart },
-    { label: "Session Replay", icon: Video },
-    { label: "Replay Vision", icon: Eye },
-    { label: "Feature Flags", icon: Flag },
-    { label: "Experiments", icon: FlaskConical },
-    { label: "Error Tracking", icon: AlertTriangle },
-    { label: "Surveys", icon: ClipboardList },
-    { label: "Support", icon: MessageSquareText },
-    { label: "Data pipelines", icon: Database },
-    { label: "Data Warehouse", icon: Database },
-    { label: "AI Observability", icon: Bot },
-    { label: "MCP Analytics", icon: Radio },
-    { label: "Revenue Analytics", icon: DollarSign },
-    { label: "Customer Analytics", icon: Users },
-    { label: "Slack app", icon: Slack },
-    { label: "Workflows", icon: Zap },
-    { label: "Logs", icon: FileText },
-    { label: "Distributed tracing", icon: SearchIcon },
-    { label: "Endpoints", icon: Plug },
+    { labelKey: "marketing:docs.items.productAnalytics", icon: BarChart3 },
+    { labelKey: "marketing:docs.items.webAnalytics", icon: LineChart },
+    { labelKey: "marketing:docs.items.sessionReplay", icon: Video },
+    { labelKey: "marketing:docs.items.replayVision", icon: Eye },
+    { labelKey: "marketing:docs.items.featureFlags", icon: Flag },
+    { labelKey: "marketing:docs.items.experiments", icon: FlaskConical },
+    { labelKey: "marketing:docs.items.errorTracking", icon: AlertTriangle },
+    { labelKey: "marketing:docs.items.surveys", icon: ClipboardList },
+    { labelKey: "marketing:docs.items.support", icon: MessageSquareText },
+    { labelKey: "marketing:docs.items.dataPipelines", icon: Database },
+    { labelKey: "marketing:docs.items.dataWarehouse", icon: Database },
+    { labelKey: "marketing:docs.items.aiObservability", icon: Bot },
+    { labelKey: "marketing:docs.items.mcpAnalytics", icon: Radio },
+    { labelKey: "marketing:docs.items.revenueAnalytics", icon: DollarSign },
+    { labelKey: "marketing:docs.items.customerAnalytics", icon: Users },
+    { labelKey: "marketing:docs.items.slackApp", icon: Slack },
+    { labelKey: "marketing:docs.items.workflows", icon: Zap },
+    { labelKey: "marketing:docs.items.logs", icon: FileText },
+    { labelKey: "marketing:docs.items.distributedTracing", icon: SearchIcon },
+    { labelKey: "marketing:docs.items.endpoints", icon: Plug },
   ],
 };
 
