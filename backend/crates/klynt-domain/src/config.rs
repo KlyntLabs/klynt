@@ -39,4 +39,6 @@ pub struct AppConfig {
     pub api: ApiConfig,
     pub rate_limiter: RateLimiterConfig,
     pub log_level: String,
+    pub database_url: Option<String>,
+    pub redis_url: Option<String>,
 }

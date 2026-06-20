@@ -56,6 +56,9 @@ base64 = "0.22"
 # Database
 sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "postgres", "uuid", "chrono", "migrate", "json"] }
 
+# Cache / rate limiter
+redis = { version = "0.27", features = ["tokio-comp"] }
+
 # Internal crates
 klynt-domain = { path = "crates/klynt-domain" }
 klynt-application = { path = "crates/klynt-application" }

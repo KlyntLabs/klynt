@@ -176,12 +176,16 @@ mod tests {
     use super::*;
     use klynt_domain::audit::{AuditAction, ResourceType};
 
+    async fn test_pool() -> PgPool {
+        let url = std::env::var("DATABASE_URL")
+            .unwrap_or_else(|_| "postgresql://klynt:klynt@localhost:5432/test".to_string());
+        PgPool::connect(&url).await.unwrap()
+    }
+
     #[tokio::test]
     #[ignore = "requires database"]
     async fn logs_and_retrieves_audit_events() {
-        let pool = PgPool::connect("postgresql://localhost/test")
-            .await
-            .unwrap();
+        let pool = test_pool().await;
         let repo = PgAuditEventRepository::new(pool);
         let ctx = Ctx::guest(Uuid::new_v4());
 

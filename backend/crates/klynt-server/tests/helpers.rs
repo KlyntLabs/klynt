@@ -25,6 +25,8 @@ pub fn test_config() -> AppConfig {
             window_seconds: 15 * 60,
         },
         log_level: "error".to_string(),
+        database_url: None,
+        redis_url: None,
     }
 }
 

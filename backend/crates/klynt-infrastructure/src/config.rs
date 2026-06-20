@@ -24,6 +24,8 @@ pub fn load_config() -> Result<AppConfig, ConfigError> {
         .set_default("rate_limiter.max_requests", 5)?
         .set_default("rate_limiter.window_seconds", 15 * 60)?
         .set_default("log_level", "info")?
+        .set_default("database_url", None::<String>)?
+        .set_default("redis_url", None::<String>)?
         .build()?;
 
     config.try_deserialize()

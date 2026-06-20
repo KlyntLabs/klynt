@@ -53,9 +53,8 @@ services:
       # Note: the backend config loader uses "__" as the nested-key separator.
       - KLYNT_API__HOST=0.0.0.0
       - KLYNT_API__PORT=3001
-      # Placeholders for when the backend is wired to Postgres / Redis.
-      - DATABASE_URL=${DATABASE_URL:-postgresql://klynt:klynt@postgres:5432/klynt}
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - KLYNT_DATABASE_URL=${KLYNT_DATABASE_URL:-postgresql://klynt:klynt@postgres:5432/klynt}
+      - KLYNT_REDIS_URL=${KLYNT_REDIS_URL:-redis://redis:6379}
     ports:
       - "127.0.0.1:${KLYNT_BACKEND_PORT:-3001}:3001"
     depends_on:

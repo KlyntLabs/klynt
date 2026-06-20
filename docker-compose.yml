@@ -56,9 +56,8 @@ services:
       # Note: the backend config loader uses "__" as the nested-key separator.
       - KLYNT_API__HOST=${KLYNT_API__HOST:-0.0.0.0}
       - KLYNT_API__PORT=${KLYNT_API__PORT:-3001}
-      # Placeholders for when the backend is wired to Postgres / Redis.
-      - DATABASE_URL=${DATABASE_URL:-postgresql://klynt:klynt@postgres:5432/klynt}
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - KLYNT_DATABASE_URL=${KLYNT_DATABASE_URL:-postgresql://klynt:klynt@postgres:5432/klynt}
+      - KLYNT_REDIS_URL=${KLYNT_REDIS_URL:-redis://redis:6379}
       # `api.allowed_origins` is a list in config/default.toml. Override it there
       # or by setting KLYNT_API__ALLOWED_ORIGINS='["http://localhost:5174"]'.
     healthcheck:

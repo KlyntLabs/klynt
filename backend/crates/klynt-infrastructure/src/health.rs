@@ -7,6 +7,7 @@ use klynt_domain::ports::HealthCheck;
 use crate::rate_limiter::RateLimiter;
 use crate::repositories::idempotency::InMemoryIdempotencyStore;
 use crate::repositories::in_memory_user::InMemoryUserRepository;
+use crate::repositories::pg_user::{PgUnitOfWork, PgUserRepository};
 use crate::repositories::session::InMemorySessionStore;
 use crate::unit_of_work::InMemoryUnitOfWork;
 
@@ -76,5 +77,33 @@ impl HealthCheck for InMemoryUnitOfWork {
 impl HealthCheck for RateLimiter {
     async fn check(&self) -> Result<(), DomainError> {
         check_lock("rate limiter", &self.buckets)
+    }
+}
+
+#[async_trait]
+impl HealthCheck for PgUserRepository {
+    async fn check(&self) -> Result<(), DomainError> {
+        sqlx::query("SELECT 1")
+            .fetch_one(self.pool())
+            .await
+            .map_err(|e| {
+                DomainError::internal_msg(format!(
+                    "postgres user repository health check failed: {e}"
+                ))
+            })?;
+        Ok(())
+    }
+}
+
+#[async_trait]
+impl HealthCheck for PgUnitOfWork {
+    async fn check(&self) -> Result<(), DomainError> {
+        sqlx::query("SELECT 1")
+            .fetch_one(self.pool())
+            .await
+            .map_err(|e| {
+                DomainError::internal_msg(format!("postgres unit of work health check failed: {e}"))
+            })?;
+        Ok(())
     }
 }

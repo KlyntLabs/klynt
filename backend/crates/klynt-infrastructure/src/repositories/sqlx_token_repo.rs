@@ -164,24 +164,50 @@ impl PasswordResetTokenRepository for PgPasswordResetTokenRepository {
 mod tests {
     use super::*;
 
+    async fn test_pool() -> PgPool {
+        let url = std::env::var("DATABASE_URL")
+            .unwrap_or_else(|_| "postgresql://klynt:klynt@localhost:5432/test".to_string());
+        PgPool::connect(&url).await.unwrap()
+    }
+
+    async fn seed_user(pool: &PgPool) -> UserId {
+        let user_id = UserId::new();
+        sqlx::query(
+            r#"
+            INSERT INTO users (id, email, name, password_hash, status, terms_accepted_at, terms_version, role)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            "#,
+        )
+        .bind(user_id.0)
+        .bind(format!("test-{}@example.com", user_id.0))
+        .bind("Test User")
+        .bind("hash")
+        .bind("active")
+        .bind(Utc::now())
+        .bind("1.0")
+        .bind("student")
+        .execute(pool)
+        .await
+        .unwrap();
+        user_id
+    }
+
     #[tokio::test]
     #[ignore = "requires database"]
     async fn saves_and_retrieves_email_verification_token() {
-        let pool = PgPool::connect("postgresql://localhost/test")
-            .await
-            .unwrap();
-        let repo = PgEmailVerificationTokenRepository::new(pool);
+        let pool = test_pool().await;
+        let repo = PgEmailVerificationTokenRepository::new(pool.clone());
         let ctx = Ctx::guest(Uuid::new_v4());
 
-        let user_id = UserId::new();
-        let token_hash = "test_hash";
+        let user_id = seed_user(&pool).await;
+        let token_hash = format!("hash-{}", Uuid::new_v4());
         let expires_at = Utc::now() + chrono::Duration::hours(24);
 
-        repo.save(&ctx, user_id, token_hash, expires_at)
+        repo.save(&ctx, user_id, &token_hash, expires_at)
             .await
             .unwrap();
 
-        let result = repo.find_valid(&ctx, token_hash).await.unwrap();
+        let result = repo.find_valid(&ctx, &token_hash).await.unwrap();
         assert!(result.is_some());
         assert_eq!(result.unwrap().0, user_id);
     }
@@ -189,24 +215,22 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires database"]
     async fn marks_token_as_used() {
-        let pool = PgPool::connect("postgresql://localhost/test")
-            .await
-            .unwrap();
-        let repo = PgEmailVerificationTokenRepository::new(pool);
+        let pool = test_pool().await;
+        let repo = PgEmailVerificationTokenRepository::new(pool.clone());
         let ctx = Ctx::guest(Uuid::new_v4());
 
-        let user_id = UserId::new();
-        let token_hash = "test_hash_used";
+        let user_id = seed_user(&pool).await;
+        let token_hash = format!("hash-used-{}", Uuid::new_v4());
         let expires_at = Utc::now() + chrono::Duration::hours(24);
 
-        repo.save(&ctx, user_id, token_hash, expires_at)
+        repo.save(&ctx, user_id, &token_hash, expires_at)
             .await
             .unwrap();
-        let marked = repo.mark_used(&ctx, token_hash).await.unwrap();
+        let marked = repo.mark_used(&ctx, &token_hash).await.unwrap();
         assert!(marked);
 
         // Token should no longer be valid
-        let result = repo.find_valid(&ctx, token_hash).await.unwrap();
+        let result = repo.find_valid(&ctx, &token_hash).await.unwrap();
         assert!(result.is_none());
     }
 }

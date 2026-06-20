@@ -3,6 +3,7 @@ use std::net::IpAddr;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
+use async_trait::async_trait;
 use klynt_domain::config::RateLimiterConfig;
 use klynt_domain::ports::RateLimiter as RateLimiterPort;
 
@@ -31,8 +32,9 @@ impl RateLimiter {
     }
 }
 
+#[async_trait]
 impl RateLimiterPort for RateLimiter {
-    fn is_allowed(&self, ip: IpAddr) -> bool {
+    async fn is_allowed(&self, ip: IpAddr) -> bool {
         if !self.config.enabled {
             return true;
         }
@@ -64,22 +66,22 @@ mod tests {
         IpAddr::from_str("192.0.2.1").unwrap()
     }
 
-    #[test]
-    fn port_allows_requests_under_limit() {
+    #[tokio::test]
+    async fn port_allows_requests_under_limit() {
         let limiter: Box<dyn RateLimiterPort> = Box::new(RateLimiter::new(RateLimiterConfig {
             enabled: true,
             max_requests: 2,
             window_seconds: 60,
         }));
-        assert!(limiter.is_allowed(test_ip()));
-        assert!(limiter.is_allowed(test_ip()));
-        assert!(!limiter.is_allowed(test_ip()));
+        assert!(limiter.is_allowed(test_ip()).await);
+        assert!(limiter.is_allowed(test_ip()).await);
+        assert!(!limiter.is_allowed(test_ip()).await);
     }
 
-    #[test]
-    fn disabled_port_always_allows() {
+    #[tokio::test]
+    async fn disabled_port_always_allows() {
         let limiter: Box<dyn RateLimiterPort> = Box::new(RateLimiter::disabled());
-        assert!(limiter.is_allowed(test_ip()));
-        assert!(limiter.is_allowed(test_ip()));
+        assert!(limiter.is_allowed(test_ip()).await);
+        assert!(limiter.is_allowed(test_ip()).await);
     }
 }

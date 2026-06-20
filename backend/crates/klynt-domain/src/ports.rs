@@ -28,8 +28,9 @@ where
     async fn get_or_insert(&self, key: Uuid, value: T) -> Result<Option<T>, DomainError>;
 }
 
+#[async_trait]
 pub trait RateLimiter: Send + Sync {
-    fn is_allowed(&self, ip: IpAddr) -> bool;
+    async fn is_allowed(&self, ip: IpAddr) -> bool;
 }
 
 pub mod email;
