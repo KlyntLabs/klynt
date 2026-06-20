@@ -1,8 +1,5 @@
 use chrono::{DateTime, Duration, Utc};
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
-use crate::errors::DomainError;
 use crate::models::UserId;
 
 /// Email verification token.
@@ -43,7 +40,10 @@ impl EmailVerificationToken {
         // Base64URL encoding = ~58 characters
         use rand::Rng;
         let mut rng = rand::thread_rng();
-        let bytes: [u8; 43] = rng.gen();
+        let mut bytes = [0u8; 43];
+        for byte in bytes.iter_mut() {
+            *byte = rng.gen();
+        }
         base64_url_encode(&bytes)
     }
 
@@ -94,7 +94,10 @@ impl PasswordResetToken {
     fn generate_csprng_token() -> String {
         use rand::Rng;
         let mut rng = rand::thread_rng();
-        let bytes: [u8; 43] = rng.gen();
+        let mut bytes = [0u8; 43];
+        for byte in bytes.iter_mut() {
+            *byte = rng.gen();
+        }
         base64_url_encode(&bytes)
     }
 
