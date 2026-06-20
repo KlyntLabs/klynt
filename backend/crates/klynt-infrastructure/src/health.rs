@@ -5,7 +5,7 @@ use klynt_domain::ports::HealthCheck;
 
 use crate::rate_limiter_redis::RedisRateLimiter;
 use crate::repositories::pg_session::PgSessionStore;
-use crate::repositories::pg_user::{PgUnitOfWork, PgUserRepository};
+use crate::repositories::pg_user::PgUserRepository;
 
 #[async_trait]
 impl HealthCheck for PgUserRepository {
@@ -17,19 +17,6 @@ impl HealthCheck for PgUserRepository {
                 DomainError::internal_msg(format!(
                     "postgres user repository health check failed: {e}"
                 ))
-            })?;
-        Ok(())
-    }
-}
-
-#[async_trait]
-impl HealthCheck for PgUnitOfWork {
-    async fn check(&self) -> Result<(), DomainError> {
-        sqlx::query("SELECT 1")
-            .fetch_one(self.pool())
-            .await
-            .map_err(|e| {
-                DomainError::internal_msg(format!("postgres unit of work health check failed: {e}"))
             })?;
         Ok(())
     }

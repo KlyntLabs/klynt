@@ -7,8 +7,7 @@ use klynt_domain::ctx::Ctx;
 use klynt_domain::errors::{DomainError, NameError};
 use klynt_domain::models::{validate_password, Email, Role, User, UserDto, UserId, UserStatus};
 use klynt_domain::ports::{HashedPassword, IdempotencyStore, PasswordHasher};
-use klynt_domain::repositories::CreateResult;
-use klynt_domain::unit_of_work::UnitOfWork;
+use klynt_domain::repositories::{CreateResult, UserRepository};
 
 #[derive(Debug, Clone)]
 pub struct CreateUserRequest {
@@ -22,7 +21,7 @@ pub struct CreateUserRequest {
 }
 
 pub struct UserService {
-    uow: Arc<dyn UnitOfWork>,
+    user_repo: Arc<dyn UserRepository>,
     password_hasher: Arc<dyn PasswordHasher>,
     idempotency_store: Arc<dyn IdempotencyStore<UserDto>>,
 }
@@ -40,12 +39,12 @@ fn validate_name(name: &str) -> Result<String, DomainError> {
 
 impl UserService {
     pub fn new(
-        uow: Arc<dyn UnitOfWork>,
+        user_repo: Arc<dyn UserRepository>,
         password_hasher: Arc<dyn PasswordHasher>,
         idempotency_store: Arc<dyn IdempotencyStore<UserDto>>,
     ) -> Self {
         Self {
-            uow,
+            user_repo,
             password_hasher,
             idempotency_store,
         }
@@ -91,10 +90,12 @@ impl UserService {
             created_at: Utc::now(),
         };
 
-        let tx = self.uow.begin().await?;
-        match tx.users().create_if_not_exists(ctx, &email, &user).await? {
+        match self
+            .user_repo
+            .create_if_not_exists(ctx, &email, &user)
+            .await?
+        {
             CreateResult::Created => {
-                tx.commit().await?;
                 let user_dto = UserDto::from(&user);
                 let cached = self
                     .idempotency_store
@@ -102,12 +103,9 @@ impl UserService {
                     .await?;
                 Ok(cached.unwrap_or(user_dto))
             }
-            CreateResult::AlreadyExists(existing) => {
-                tx.rollback().await?;
-                Err(DomainError::AlreadyExists {
-                    email: existing.email.as_str().to_string(),
-                })
-            }
+            CreateResult::AlreadyExists(existing) => Err(DomainError::AlreadyExists {
+                email: existing.email.as_str().to_string(),
+            }),
         }
     }
 
@@ -144,26 +142,21 @@ impl UserService {
             created_at: Utc::now(),
         };
 
-        let tx = self.uow.begin().await?;
-        match tx.users().create_if_not_exists(ctx, email, &user).await? {
-            CreateResult::Created => {
-                tx.commit().await?;
-                Ok(user.id)
-            }
-            CreateResult::AlreadyExists(_) => {
-                tx.rollback().await?;
-                Err(DomainError::AlreadyExists {
-                    email: email.as_str().to_string(),
-                })
-            }
+        match self
+            .user_repo
+            .create_if_not_exists(ctx, email, &user)
+            .await?
+        {
+            CreateResult::Created => Ok(user.id),
+            CreateResult::AlreadyExists(_) => Err(DomainError::AlreadyExists {
+                email: email.as_str().to_string(),
+            }),
         }
     }
 
     /// Activate a user account (after email verification).
     pub async fn activate_user(&self, ctx: &Ctx, user_id: UserId) -> Result<(), DomainError> {
-        let tx = self.uow.begin().await?;
-        tx.users().set_email_verified(ctx, user_id).await?;
-        tx.commit().await
+        self.user_repo.set_email_verified(ctx, user_id).await
     }
 
     pub async fn authenticate(
@@ -172,9 +165,8 @@ impl UserService {
         email: &Email,
         password: &str,
     ) -> Result<User, DomainError> {
-        let tx = self.uow.begin().await?;
-        let user = tx
-            .users()
+        let user = self
+            .user_repo
             .find_by_email(ctx, email)
             .await?
             .ok_or(DomainError::AuthenticationRequired)?;
@@ -190,19 +182,14 @@ impl UserService {
             return Err(DomainError::AuthenticationRequired);
         }
 
-        tx.commit().await?;
         Ok(user)
     }
 
     pub async fn find_by_id(&self, ctx: &Ctx, id: UserId) -> Result<User, DomainError> {
-        let tx = self.uow.begin().await?;
-        let user = tx
-            .users()
+        self.user_repo
             .find_by_id(ctx, id)
             .await?
-            .ok_or(DomainError::NotFound)?;
-        tx.commit().await?;
-        Ok(user)
+            .ok_or(DomainError::NotFound)
     }
 
     /// Find a user by email.
@@ -211,10 +198,7 @@ impl UserService {
         ctx: &Ctx,
         email: &Email,
     ) -> Result<Option<User>, DomainError> {
-        let tx = self.uow.begin().await?;
-        let user = tx.users().find_by_email(ctx, email).await?;
-        tx.commit().await?;
-        Ok(user)
+        self.user_repo.find_by_email(ctx, email).await
     }
 
     /// Update user password.
@@ -225,13 +209,9 @@ impl UserService {
         new_password: &str,
     ) -> Result<(), DomainError> {
         validate_password(new_password)?;
-
         let password_hash = self.password_hasher.hash(new_password).await?;
-
-        let tx = self.uow.begin().await?;
-        tx.users()
+        self.user_repo
             .update_password(ctx, user_id, &password_hash)
-            .await?;
-        tx.commit().await
+            .await
     }
 }

@@ -13,12 +13,11 @@ use klynt_domain::repositories::{
     AuditEventRepository, EmailVerificationTokenRepository, PasswordResetTokenRepository,
 };
 use klynt_domain::session::SessionStore;
-use klynt_domain::unit_of_work::UnitOfWork;
 use klynt_infrastructure::email::MockEmailService;
 use klynt_infrastructure::password_hasher::Argon2PasswordHasher;
 use klynt_infrastructure::rate_limiter_redis::RedisRateLimiter;
 use klynt_infrastructure::repositories::pg_session::PgSessionStore;
-use klynt_infrastructure::repositories::pg_user::{PgUnitOfWork, PgUserRepository};
+use klynt_infrastructure::repositories::pg_user::PgUserRepository;
 use klynt_infrastructure::repositories::redis_idempotency::RedisIdempotencyStore;
 use klynt_infrastructure::repositories::sqlx_audit_repo::PgAuditEventRepository;
 use klynt_infrastructure::repositories::sqlx_token_repo::{
@@ -62,7 +61,6 @@ pub async fn build_app_with_email_service(
 
     let user_repo: Arc<PgUserRepository> = Arc::new(PgUserRepository::new(pool.clone()));
     let session_store: Arc<PgSessionStore> = Arc::new(PgSessionStore::new(pool.clone()));
-    let uow: Arc<PgUnitOfWork> = Arc::new(PgUnitOfWork::new(pool.clone()));
     let email_verification_repo: Arc<dyn EmailVerificationTokenRepository> =
         Arc::new(PgEmailVerificationTokenRepository::new(pool.clone()));
     let password_reset_repo: Arc<dyn PasswordResetTokenRepository> =
@@ -90,7 +88,7 @@ pub async fn build_app_with_email_service(
 
     let password_hasher: Arc<dyn PasswordHasher> = Arc::new(Argon2PasswordHasher::new());
     let user_service = Arc::new(UserService::new(
-        Arc::clone(&uow) as Arc<dyn UnitOfWork>,
+        Arc::clone(&user_repo) as Arc<dyn klynt_domain::repositories::UserRepository>,
         password_hasher,
         Arc::clone(&idempotency_store_port),
     ));
@@ -109,7 +107,6 @@ pub async fn build_app_with_email_service(
     let health_checks: Vec<Arc<dyn HealthCheck>> = vec![
         Arc::clone(&user_repo) as Arc<dyn HealthCheck>,
         Arc::clone(&session_store) as Arc<dyn HealthCheck>,
-        Arc::clone(&uow) as Arc<dyn HealthCheck>,
         rate_limiter_health,
     ];
 

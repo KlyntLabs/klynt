@@ -8,7 +8,6 @@ use klynt_domain::errors::DomainError;
 use klynt_domain::models::{Email, GlobalRole, Role, User, UserId, UserStatus};
 use klynt_domain::ports::HashedPassword;
 use klynt_domain::repositories::{CreateResult, UserRepository};
-use klynt_domain::unit_of_work::{Transaction, UnitOfWork};
 
 /// PostgreSQL implementation of the user repository.
 pub struct PgUserRepository {
@@ -203,55 +202,6 @@ impl UserRepository for PgUserRepository {
         if result.rows_affected() == 0 {
             return Err(DomainError::NotFound);
         }
-        Ok(())
-    }
-}
-
-// Simple helper to serialize enums consistently with the database.
-
-/// PostgreSQL unit of work.
-///
-/// Phase 1 uses a connection-pool wrapper with no-op commit/rollback. Full
-/// transaction semantics can be added later when operations span multiple
-/// repositories.
-pub struct PgUnitOfWork {
-    pool: PgPool,
-}
-
-impl PgUnitOfWork {
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
-    }
-
-    pub fn pool(&self) -> &PgPool {
-        &self.pool
-    }
-}
-
-#[async_trait]
-impl UnitOfWork for PgUnitOfWork {
-    async fn begin(&self) -> Result<Box<dyn Transaction>, DomainError> {
-        Ok(Box::new(PgTransaction {
-            user_repo: PgUserRepository::new(self.pool.clone()),
-        }))
-    }
-}
-
-struct PgTransaction {
-    user_repo: PgUserRepository,
-}
-
-#[async_trait]
-impl Transaction for PgTransaction {
-    fn users(&self) -> &dyn UserRepository {
-        &self.user_repo
-    }
-
-    async fn commit(self: Box<Self>) -> Result<(), DomainError> {
-        Ok(())
-    }
-
-    async fn rollback(self: Box<Self>) -> Result<(), DomainError> {
         Ok(())
     }
 }

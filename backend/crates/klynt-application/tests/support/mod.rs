@@ -10,8 +10,7 @@ use klynt_domain::ctx::Ctx;
 use klynt_domain::errors::DomainError;
 use klynt_domain::models::{Email, User, UserDto, UserId, UserStatus};
 use klynt_domain::ports::{HashedPassword, IdempotencyStore, PasswordHasher};
-use klynt_domain::repositories::CreateResult;
-use klynt_domain::unit_of_work::{Transaction, UnitOfWork};
+use klynt_domain::repositories::{CreateResult, UserRepository};
 
 #[derive(Debug, Default)]
 pub struct FakeUserRepository {
@@ -19,7 +18,7 @@ pub struct FakeUserRepository {
 }
 
 #[async_trait]
-impl klynt_domain::repositories::UserRepository for FakeUserRepository {
+impl UserRepository for FakeUserRepository {
     async fn create_if_not_exists(
         &self,
         _ctx: &Ctx,
@@ -67,39 +66,6 @@ impl klynt_domain::repositories::UserRepository for FakeUserRepository {
             .find(|u| u.id == user_id)
             .ok_or(DomainError::NotFound)?;
         user.password_hash = password_hash.as_str().to_string();
-        Ok(())
-    }
-}
-
-#[derive(Debug, Clone, Default)]
-pub struct FakeUnitOfWork {
-    pub users: Arc<FakeUserRepository>,
-}
-
-#[async_trait]
-impl UnitOfWork for FakeUnitOfWork {
-    async fn begin(&self) -> Result<Box<dyn Transaction>, DomainError> {
-        Ok(Box::new(FakeTransaction {
-            users: self.users.clone(),
-        }))
-    }
-}
-
-pub struct FakeTransaction {
-    users: Arc<FakeUserRepository>,
-}
-
-#[async_trait]
-impl Transaction for FakeTransaction {
-    fn users(&self) -> &dyn klynt_domain::repositories::UserRepository {
-        &*self.users
-    }
-
-    async fn commit(self: Box<Self>) -> Result<(), DomainError> {
-        Ok(())
-    }
-
-    async fn rollback(self: Box<Self>) -> Result<(), DomainError> {
         Ok(())
     }
 }
@@ -164,11 +130,11 @@ pub fn sample_request() -> CreateUserRequest {
 }
 
 pub fn user_service() -> UserService {
-    let uow: Arc<dyn UnitOfWork> = Arc::new(FakeUnitOfWork::default());
+    let user_repo: Arc<dyn UserRepository> = Arc::new(FakeUserRepository::default());
     let password_hasher: Arc<dyn PasswordHasher> = Arc::new(FakePasswordHasher);
     let idempotency_store: Arc<dyn IdempotencyStore<UserDto>> =
         Arc::new(FakeIdempotencyStore::default());
-    UserService::new(uow, password_hasher, idempotency_store)
+    UserService::new(user_repo, password_hasher, idempotency_store)
 }
 
 pub mod auth;
