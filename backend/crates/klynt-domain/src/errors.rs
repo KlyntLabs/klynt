@@ -34,8 +34,6 @@ pub enum RoleError {
 pub enum TokenError {
     #[error("token is expired")]
     Expired,
-    #[error("token has already been used")]
-    AlreadyUsed,
     #[error("invalid token")]
     Invalid,
     #[error("token not found")]

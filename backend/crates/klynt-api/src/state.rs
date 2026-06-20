@@ -8,7 +8,6 @@ use klynt_domain::ctx::Ctx;
 use klynt_domain::errors::DomainError;
 use klynt_domain::models::{Email, User, UserDto, UserId};
 use klynt_domain::ports::{HealthCheck, RateLimiter};
-use klynt_domain::repositories::{EmailVerificationTokenRepository, PasswordResetTokenRepository};
 use klynt_domain::session::{SessionStore, SessionToken};
 use uuid::Uuid;
 
@@ -20,8 +19,6 @@ pub struct AppState {
     session_store: Arc<dyn SessionStore>,
     rate_limiter: Arc<dyn RateLimiter>,
     health_checks: Vec<Arc<dyn HealthCheck>>,
-    email_verification_repo: Arc<dyn EmailVerificationTokenRepository>,
-    password_reset_repo: Arc<dyn PasswordResetTokenRepository>,
     audit_service: Arc<AuditService>,
 }
 
@@ -33,8 +30,6 @@ pub struct AppStateDeps {
     pub session_store: Arc<dyn SessionStore>,
     pub rate_limiter: Arc<dyn RateLimiter>,
     pub health_checks: Vec<Arc<dyn HealthCheck>>,
-    pub email_verification_repo: Arc<dyn EmailVerificationTokenRepository>,
-    pub password_reset_repo: Arc<dyn PasswordResetTokenRepository>,
     pub audit_service: Arc<AuditService>,
 }
 
@@ -47,8 +42,6 @@ impl AppState {
             session_store: deps.session_store,
             rate_limiter: deps.rate_limiter,
             health_checks: deps.health_checks,
-            email_verification_repo: deps.email_verification_repo,
-            password_reset_repo: deps.password_reset_repo,
             audit_service: deps.audit_service,
         }
     }
@@ -63,14 +56,6 @@ impl AppState {
 
     pub fn session_store(&self) -> &dyn SessionStore {
         &*self.session_store
-    }
-
-    pub fn email_verification_repo(&self) -> &dyn EmailVerificationTokenRepository {
-        &*self.email_verification_repo
-    }
-
-    pub fn password_reset_repo(&self) -> &dyn PasswordResetTokenRepository {
-        &*self.password_reset_repo
     }
 
     pub fn audit_service(&self) -> &AuditService {

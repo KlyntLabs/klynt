@@ -13,10 +13,9 @@ use klynt_domain::ctx::Ctx;
 use klynt_domain::errors::DomainError;
 use klynt_domain::models::{Email, UserId};
 use klynt_domain::ports::{EmailService, SharedEmailService};
-use klynt_domain::repositories::{
-    AuditEventRepository, EmailVerificationTokenRepository, PasswordResetTokenRepository,
-};
+use klynt_domain::repositories::{AuditEventRepository, TokenStore};
 use klynt_domain::session::{Session, SessionStore, SessionToken};
+use klynt_domain::tokens::TokenKind;
 
 use super::user_service;
 
@@ -67,101 +66,50 @@ impl SessionStore for FakeSessionStore {
     }
 }
 
-type TokenEntry = (UserId, DateTime<Utc>, bool);
+type FakeTokenEntry = (UserId, DateTime<Utc>, bool);
 
 #[derive(Debug, Default)]
-pub struct FakeEmailVerificationTokenRepository {
-    tokens: Mutex<HashMap<String, TokenEntry>>,
+pub struct FakeTokenStore {
+    tokens: Mutex<HashMap<(TokenKind, String), FakeTokenEntry>>,
 }
 
 #[async_trait]
-impl EmailVerificationTokenRepository for FakeEmailVerificationTokenRepository {
+impl TokenStore for FakeTokenStore {
     async fn save(
         &self,
         _ctx: &Ctx,
+        kind: TokenKind,
         user_id: UserId,
         token_hash: &str,
         expires_at: DateTime<Utc>,
     ) -> Result<(), DomainError> {
         let mut tokens = self.tokens.lock().unwrap();
-        tokens.insert(token_hash.to_string(), (user_id, expires_at, false));
+        tokens.insert((kind, token_hash.to_string()), (user_id, expires_at, false));
         Ok(())
     }
 
-    async fn find_valid(
+    async fn consume(
         &self,
         _ctx: &Ctx,
+        kind: TokenKind,
         token_hash: &str,
-    ) -> Result<Option<(UserId, DateTime<Utc>)>, DomainError> {
-        let tokens = self.tokens.lock().unwrap();
-        Ok(tokens
-            .get(token_hash)
-            .and_then(|(user_id, expires_at, used)| {
-                if *used || *expires_at <= Utc::now() {
-                    return None;
-                }
-                Some((*user_id, *expires_at))
-            }))
-    }
-
-    async fn mark_used(&self, _ctx: &Ctx, token_hash: &str) -> Result<bool, DomainError> {
+    ) -> Result<UserId, DomainError> {
         let mut tokens = self.tokens.lock().unwrap();
-        let Some((_, _, used)) = tokens.get_mut(token_hash) else {
-            return Ok(false);
+        let key = (kind, token_hash.to_string());
+        let Some((user_id, expires_at, used)) = tokens.get_mut(&key) else {
+            return Err(DomainError::InvalidToken(
+                klynt_domain::errors::TokenError::Invalid,
+            ));
         };
-        if *used {
-            return Ok(false);
+        // Mirror the production PgTokenStore: any invalid, expired, or
+        // already-used token is reported as Invalid to prevent enumeration.
+        if *used || *expires_at <= Utc::now() {
+            return Err(DomainError::InvalidToken(
+                klynt_domain::errors::TokenError::Invalid,
+            ));
         }
         *used = true;
-        Ok(true)
-    }
-}
-
-#[derive(Debug, Default)]
-pub struct FakePasswordResetTokenRepository {
-    tokens: Mutex<HashMap<String, TokenEntry>>,
-}
-
-#[async_trait]
-impl PasswordResetTokenRepository for FakePasswordResetTokenRepository {
-    async fn save(
-        &self,
-        _ctx: &Ctx,
-        user_id: UserId,
-        token_hash: &str,
-        expires_at: DateTime<Utc>,
-    ) -> Result<(), DomainError> {
-        let mut tokens = self.tokens.lock().unwrap();
-        tokens.insert(token_hash.to_string(), (user_id, expires_at, false));
-        Ok(())
-    }
-
-    async fn find_valid(
-        &self,
-        _ctx: &Ctx,
-        token_hash: &str,
-    ) -> Result<Option<(UserId, DateTime<Utc>)>, DomainError> {
-        let tokens = self.tokens.lock().unwrap();
-        Ok(tokens
-            .get(token_hash)
-            .and_then(|(user_id, expires_at, used)| {
-                if *used || *expires_at <= Utc::now() {
-                    return None;
-                }
-                Some((*user_id, *expires_at))
-            }))
-    }
-
-    async fn mark_used(&self, _ctx: &Ctx, token_hash: &str) -> Result<bool, DomainError> {
-        let mut tokens = self.tokens.lock().unwrap();
-        let Some((_, _, used)) = tokens.get_mut(token_hash) else {
-            return Ok(false);
-        };
-        if *used {
-            return Ok(false);
-        }
-        *used = true;
-        Ok(true)
+        Ok(*user_id)
     }
 }
 
@@ -186,10 +134,7 @@ pub fn auth_service() -> (
 ) {
     let user_service = Arc::new(user_service());
     let session_store: Arc<dyn SessionStore> = Arc::new(FakeSessionStore);
-    let email_verification_repo: Arc<dyn EmailVerificationTokenRepository> =
-        Arc::new(FakeEmailVerificationTokenRepository::default());
-    let password_reset_repo: Arc<dyn PasswordResetTokenRepository> =
-        Arc::new(FakePasswordResetTokenRepository::default());
+    let token_store: Arc<dyn TokenStore> = Arc::new(FakeTokenStore::default());
     let email_service_impl = Arc::new(FakeEmailService::default());
     let email_service: SharedEmailService = Arc::clone(&email_service_impl) as SharedEmailService;
     let audit_repo: Arc<dyn AuditEventRepository> = Arc::new(FakeAuditEventRepository::default());
@@ -197,8 +142,7 @@ pub fn auth_service() -> (
     let auth_service = AuthService::new(
         Arc::clone(&user_service),
         session_store,
-        email_verification_repo,
-        password_reset_repo,
+        token_store,
         email_service,
         audit_service,
     );

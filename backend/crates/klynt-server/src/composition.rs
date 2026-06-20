@@ -9,9 +9,7 @@ use klynt_application::users::UserService;
 use klynt_domain::config::AppConfig;
 use klynt_domain::models::UserDto;
 use klynt_domain::ports::{HealthCheck, IdempotencyStore, PasswordHasher, SharedEmailService};
-use klynt_domain::repositories::{
-    AuditEventRepository, EmailVerificationTokenRepository, PasswordResetTokenRepository,
-};
+use klynt_domain::repositories::{AuditEventRepository, TokenStore};
 use klynt_domain::session::SessionStore;
 use klynt_infrastructure::email::MockEmailService;
 use klynt_infrastructure::password_hasher::Argon2PasswordHasher;
@@ -20,9 +18,7 @@ use klynt_infrastructure::repositories::pg_session::PgSessionStore;
 use klynt_infrastructure::repositories::pg_user::PgUserRepository;
 use klynt_infrastructure::repositories::redis_idempotency::RedisIdempotencyStore;
 use klynt_infrastructure::repositories::sqlx_audit_repo::PgAuditEventRepository;
-use klynt_infrastructure::repositories::sqlx_token_repo::{
-    PgEmailVerificationTokenRepository, PgPasswordResetTokenRepository,
-};
+use klynt_infrastructure::repositories::sqlx_token_repo::PgTokenStore;
 use sqlx::PgPool;
 
 const IDEMPOTENCY_TTL_SECONDS: u64 = 24 * 60 * 60;
@@ -61,10 +57,7 @@ pub async fn build_app_with_email_service(
 
     let user_repo: Arc<PgUserRepository> = Arc::new(PgUserRepository::new(pool.clone()));
     let session_store: Arc<PgSessionStore> = Arc::new(PgSessionStore::new(pool.clone()));
-    let email_verification_repo: Arc<dyn EmailVerificationTokenRepository> =
-        Arc::new(PgEmailVerificationTokenRepository::new(pool.clone()));
-    let password_reset_repo: Arc<dyn PasswordResetTokenRepository> =
-        Arc::new(PgPasswordResetTokenRepository::new(pool.clone()));
+    let token_store: Arc<dyn TokenStore> = Arc::new(PgTokenStore::new(pool.clone()));
     let audit_repo: Arc<dyn AuditEventRepository> =
         Arc::new(PgAuditEventRepository::new(pool.clone()));
 
@@ -98,8 +91,7 @@ pub async fn build_app_with_email_service(
     let auth_service = Arc::new(AuthService::new(
         Arc::clone(&user_service),
         Arc::clone(&session_store) as Arc<dyn SessionStore>,
-        Arc::clone(&email_verification_repo),
-        Arc::clone(&password_reset_repo),
+        Arc::clone(&token_store),
         email_service,
         Arc::clone(&audit_service),
     ));
@@ -117,8 +109,6 @@ pub async fn build_app_with_email_service(
         session_store: Arc::clone(&session_store) as Arc<dyn SessionStore>,
         rate_limiter: rate_limiter_port,
         health_checks,
-        email_verification_repo,
-        password_reset_repo,
         audit_service,
     }));
 

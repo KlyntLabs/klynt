@@ -3,7 +3,7 @@ use chrono::{DateTime, Duration, Utc};
 use crate::models::UserId;
 
 /// Which kind of token — determines TTL and target table.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TokenKind {
     EmailVerification,
     PasswordReset,
@@ -27,11 +27,6 @@ impl TokenKind {
     }
 }
 
-/// Temporary compatibility aliases for the old token types.
-/// These will be removed once all call sites are migrated to `Token` + `TokenKind`.
-pub type EmailVerificationToken = Token;
-pub type PasswordResetToken = Token;
-
 /// A generated token — plaintext (for email) + hash (for storage).
 ///
 /// Generated with a CSPRNG (≥256 bits), stored as a SHA-256 hash.
@@ -49,7 +44,7 @@ impl Token {
     /// Generate a new token of the given kind for the given user.
     pub fn generate(kind: TokenKind, user_id: UserId) -> Self {
         let plaintext = generate_csprng_token();
-        let hash = sha256_hash(&plaintext);
+        let hash = Self::sha256_hash(&plaintext);
         let expires_at = Utc::now() + kind.ttl();
 
         Self {
@@ -63,7 +58,7 @@ impl Token {
 
     /// Compute SHA-256 hash of a plaintext token (hex string).
     pub fn sha256_hash(token: &str) -> String {
-        sha256_hash(token)
+        sha256_hash_inner(token)
     }
 
     /// Check if token has expired.
@@ -86,7 +81,7 @@ fn generate_csprng_token() -> String {
 }
 
 /// Compute SHA-256 hash (hex string).
-fn sha256_hash(token: &str) -> String {
+fn sha256_hash_inner(token: &str) -> String {
     use sha2::{Digest, Sha256};
     let mut hasher = Sha256::new();
     hasher.update(token.as_bytes());

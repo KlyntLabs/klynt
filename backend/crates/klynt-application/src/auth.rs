@@ -6,9 +6,9 @@ use klynt_domain::ctx::Ctx;
 use klynt_domain::errors::DomainError;
 use klynt_domain::models::{Email, UserDto, UserId};
 use klynt_domain::ports::SharedEmailService;
-use klynt_domain::repositories::{EmailVerificationTokenRepository, PasswordResetTokenRepository};
+use klynt_domain::repositories::TokenStore;
 use klynt_domain::session::{Session, SessionStore, SessionToken};
-use klynt_domain::tokens::{EmailVerificationToken, PasswordResetToken, Token, TokenKind};
+use klynt_domain::tokens::{Token, TokenKind};
 
 use crate::audit::AuditService;
 use crate::users::UserService;
@@ -16,8 +16,7 @@ use crate::users::UserService;
 pub struct AuthService {
     user_service: Arc<UserService>,
     session_store: Arc<dyn SessionStore>,
-    email_verification_repo: Arc<dyn EmailVerificationTokenRepository>,
-    password_reset_repo: Arc<dyn PasswordResetTokenRepository>,
+    token_store: Arc<dyn TokenStore>,
     email_service: SharedEmailService,
     audit_service: Arc<AuditService>,
 }
@@ -26,16 +25,14 @@ impl AuthService {
     pub fn new(
         user_service: Arc<UserService>,
         session_store: Arc<dyn SessionStore>,
-        email_verification_repo: Arc<dyn EmailVerificationTokenRepository>,
-        password_reset_repo: Arc<dyn PasswordResetTokenRepository>,
+        token_store: Arc<dyn TokenStore>,
         email_service: SharedEmailService,
         audit_service: Arc<AuditService>,
     ) -> Self {
         Self {
             user_service,
             session_store,
-            email_verification_repo,
-            password_reset_repo,
+            token_store,
             email_service,
             audit_service,
         }
@@ -122,8 +119,14 @@ impl AuthService {
         }
 
         let token = Token::generate(TokenKind::EmailVerification, user_id);
-        self.email_verification_repo
-            .save(ctx, user_id, &token.hash, token.expires_at)
+        self.token_store
+            .save(
+                ctx,
+                TokenKind::EmailVerification,
+                user_id,
+                &token.hash,
+                token.expires_at,
+            )
             .await?;
 
         self.email_service
@@ -135,26 +138,12 @@ impl AuthService {
 
     /// Verify email using token from email link.
     pub async fn verify_email(&self, ctx: &Ctx, token: &str) -> Result<UserId, DomainError> {
-        let token_hash = EmailVerificationToken::sha256_hash(token);
+        let token_hash = Token::sha256_hash(token);
 
-        let (user_id, _expires_at) = self
-            .email_verification_repo
-            .find_valid(ctx, &token_hash)
-            .await?
-            .ok_or(DomainError::InvalidToken(
-                klynt_domain::errors::TokenError::Invalid,
-            ))?;
-
-        let was_used = self
-            .email_verification_repo
-            .mark_used(ctx, &token_hash)
+        let user_id = self
+            .token_store
+            .consume(ctx, TokenKind::EmailVerification, &token_hash)
             .await?;
-
-        if !was_used {
-            return Err(DomainError::InvalidToken(
-                klynt_domain::errors::TokenError::AlreadyUsed,
-            ));
-        }
 
         self.user_service.activate_user(ctx, user_id).await?;
 
@@ -178,7 +167,6 @@ impl AuthService {
         ctx: &Ctx,
         email: &Email,
     ) -> Result<(), DomainError> {
-        // TODO(phase-2): audit password-reset request attempts (both found and not-found users)
         let user = match self.user_service.find_by_email(ctx, email).await {
             Ok(Some(user)) => user,
             Ok(None) => {
@@ -190,8 +178,14 @@ impl AuthService {
 
         let token = Token::generate(TokenKind::PasswordReset, user.id);
 
-        self.password_reset_repo
-            .save(ctx, user.id, &token.hash, token.expires_at)
+        self.token_store
+            .save(
+                ctx,
+                TokenKind::PasswordReset,
+                user.id,
+                &token.hash,
+                token.expires_at,
+            )
             .await?;
 
         // Swallow email errors to prevent account enumeration during outages.
@@ -200,7 +194,12 @@ impl AuthService {
             .send_password_reset(email, &token.plaintext)
             .await
         {
-            eprintln!("Failed to send password reset email: {}", e);
+            tracing::warn!(
+                error = %e,
+                action = "password_reset_email",
+                request_id = ?ctx.request_id,
+                "failed to send password reset email"
+            );
         }
 
         Ok(())
@@ -215,23 +214,12 @@ impl AuthService {
     ) -> Result<(), DomainError> {
         klynt_domain::models::validate_password(new_password)?;
 
-        let token_hash = PasswordResetToken::sha256_hash(token);
+        let token_hash = Token::sha256_hash(token);
 
-        let (user_id, _expires_at) = self
-            .password_reset_repo
-            .find_valid(ctx, &token_hash)
-            .await?
-            .ok_or(DomainError::InvalidToken(
-                klynt_domain::errors::TokenError::Invalid,
-            ))?;
-
-        let was_used = self.password_reset_repo.mark_used(ctx, &token_hash).await?;
-
-        if !was_used {
-            return Err(DomainError::InvalidToken(
-                klynt_domain::errors::TokenError::AlreadyUsed,
-            ));
-        }
+        let user_id = self
+            .token_store
+            .consume(ctx, TokenKind::PasswordReset, &token_hash)
+            .await?;
 
         self.user_service
             .update_password(ctx, user_id, new_password)
