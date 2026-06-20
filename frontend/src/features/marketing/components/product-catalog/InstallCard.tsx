@@ -1,15 +1,15 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, ChevronDown, Copy } from "lucide-react";
 import { useCallback, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { useMarketingTranslation } from "@/features/marketing/lib/use-marketing-translation";
 
 export function InstallCard() {
-  const { t } = useTranslation("marketing");
+  const { t, array } = useMarketingTranslation();
   const [copied, setCopied] = useState(false);
   const [showFrameworks, setShowFrameworks] = useState(false);
 
   const command = t("products.hero.installCommand");
-  const frameworks = t("products.hero.frameworks", { returnObjects: true }) as string[];
+  const frameworks = array<string>("products.hero.frameworks");
 
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(command).catch(() => {});

@@ -1,11 +1,11 @@
 import { motion } from "framer-motion";
-import { useTranslation } from "react-i18next";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { useMarketingTranslation } from "@/features/marketing/lib/use-marketing-translation";
 
 interface FaqItem {
   question: string;
@@ -13,8 +13,8 @@ interface FaqItem {
 }
 
 export function FaqSection() {
-  const { t } = useTranslation("marketing");
-  const faqItems = t("talkToHuman.faq.items", { returnObjects: true }) as FaqItem[];
+  const { t, array } = useMarketingTranslation();
+  const faqItems = array<FaqItem>("talkToHuman.faq.items");
 
   return (
     <motion.div

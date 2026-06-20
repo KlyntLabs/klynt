@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Github, Mail, MessageCircle } from "lucide-react";
-import { useTranslation } from "react-i18next";
+import { useMarketingTranslation } from "@/features/marketing/lib/use-marketing-translation";
 
 const staggerContainer = {
   hidden: {},
@@ -25,7 +25,7 @@ interface ContactCardDef {
 }
 
 export function ContactCards() {
-  const { t } = useTranslation("marketing");
+  const { t } = useMarketingTranslation();
 
   const cards: ContactCardDef[] = [
     {

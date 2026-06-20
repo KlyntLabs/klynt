@@ -9,7 +9,7 @@ import {
   Webhook,
 } from "lucide-react";
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
+import { useMarketingTranslation } from "@/features/marketing/lib/use-marketing-translation";
 import { staggerContainer, staggerItem } from "./constants";
 
 interface DataIOCardProps {
@@ -93,15 +93,11 @@ function ManageCard({ icon, title }: ManageCardProps) {
 }
 
 export function DataPlatformSection() {
-  const { t } = useTranslation("marketing");
+  const { t, array } = useMarketingTranslation();
 
-  const dataSources = t("data.dataSources", { returnObjects: true }) as unknown as string[];
-  const dataExport = t("data.dataExport", { returnObjects: true }) as unknown as string[];
-  const manageCards = t("products.dataPlatform.manageCards", {
-    returnObjects: true,
-  }) as unknown as {
-    title: string;
-  }[];
+  const dataSources = array<string>("data.dataSources");
+  const dataExport = array<string>("data.dataExport");
+  const manageCards = array<{ title: string }>("products.dataPlatform.manageCards");
 
   return (
     <section className="px-6 sm:px-8 py-6 border-b border-[#E5E5E5]">

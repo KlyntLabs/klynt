@@ -3,7 +3,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Check, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -15,6 +14,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useMarketingTranslation } from "@/features/marketing/lib/use-marketing-translation";
 import { cn } from "@/lib/utils";
 import { type ContactFormData, createContactSchema } from "./contact-schema";
 
@@ -26,11 +26,11 @@ interface SubjectOption {
 }
 
 export function ContactForm() {
-  const { t } = useTranslation("marketing");
+  const { t, array } = useMarketingTranslation();
   const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
   const [shakeCount, setShakeCount] = useState(0);
 
-  const subjectOptions = t("talkToHuman.form.subjects", { returnObjects: true }) as SubjectOption[];
+  const subjectOptions = array<SubjectOption>("talkToHuman.form.subjects");
 
   const form = useForm<ContactFormData>({
     resolver: zodResolver(createContactSchema(t)),
