@@ -17,14 +17,6 @@ impl TokenKind {
             Self::PasswordReset => Duration::minutes(30),
         }
     }
-
-    /// Database table name for this token kind.
-    pub const fn table(self) -> &'static str {
-        match self {
-            Self::EmailVerification => "email_verification_tokens",
-            Self::PasswordReset => "password_reset_tokens",
-        }
-    }
 }
 
 /// A generated token — plaintext (for email) + hash (for storage).
@@ -146,13 +138,5 @@ mod tests {
 
         token.expires_at = Utc::now() + Duration::seconds(1);
         assert!(!token.is_expired());
-    }
-
-    #[test]
-    fn token_kind_table_names_differ() {
-        assert_ne!(
-            TokenKind::EmailVerification.table(),
-            TokenKind::PasswordReset.table()
-        );
     }
 }

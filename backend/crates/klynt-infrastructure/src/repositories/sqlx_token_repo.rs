@@ -25,13 +25,13 @@ impl PgTokenStore {
 
 /// Allowed token tables.
 ///
-/// `TokenKind::table()` is the single source of truth for table names.
-/// This whitelist is an exhaustive safeguard: only the two known variants
-/// are accepted, so the value can never come from user input.
+/// This mapping is an exhaustive safeguard local to the PostgreSQL
+/// repository: only the two known variants are accepted, so the value
+/// can never come from user input.
 fn table_name(kind: TokenKind) -> &'static str {
     match kind {
-        TokenKind::EmailVerification => TokenKind::EmailVerification.table(),
-        TokenKind::PasswordReset => TokenKind::PasswordReset.table(),
+        TokenKind::EmailVerification => "email_verification_tokens",
+        TokenKind::PasswordReset => "password_reset_tokens",
     }
 }
 
