@@ -43,10 +43,6 @@ pub enum AppErrorKind {
     Unauthorized,
     #[error("too many requests")]
     RateLimited,
-    /// Reserved for application-layer validation errors that should return 422.
-    /// Domain validation errors are mapped to `BadRequest` (400).
-    #[error("unprocessable entity: {0}")]
-    Validation(String),
     #[error("internal server error")]
     Internal(Box<dyn std::error::Error + Send + Sync>),
 }
@@ -123,10 +119,6 @@ impl IntoResponse for AppError {
             AppErrorKind::RateLimited => (
                 StatusCode::TOO_MANY_REQUESTS,
                 ApiErrorBody::new("rate_limited", "too many requests", &request_id),
-            ),
-            AppErrorKind::Validation(msg) => (
-                StatusCode::UNPROCESSABLE_ENTITY,
-                ApiErrorBody::new("validation_error", msg.clone(), &request_id),
             ),
             AppErrorKind::Internal(err) => {
                 error!(error = ?err, request_id, "internal server error");
