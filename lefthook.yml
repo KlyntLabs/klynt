@@ -57,6 +57,15 @@ pre-push:
           exit 0
         fi
         cd frontend && bun run build
+    frontend-performance-budget:
+      glob: "**/*.{js,ts,tsx,webp,png,jpg,jpeg,avif,gif}"
+      run: |
+        PUSH_TARGET=$(git rev-parse @{push} 2>/dev/null || echo "")
+        if [ -n "$PUSH_TARGET" ] && ! git diff --name-only "$PUSH_TARGET"..HEAD | grep -qE '^frontend/'; then
+          echo "⏭️  frontend-performance-budget skipped (no frontend changes)"
+          exit 0
+        fi
+        cd frontend && ./scripts/check-performance-budget.sh
     backend-format:
       glob: "**/*.rs"
       run: |
