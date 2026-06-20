@@ -24,16 +24,10 @@ export default defineConfig({
       reporter: ["text", "html"],
       exclude: ["src/locales/**/*.json"],
       thresholds: {
-        // NOTE: The previous 92/87/73/92 gates were set when the frontend was a
-        // small scaffold. The PostHog-style UI migration introduced a large
-        // surface of presentational/marketing components whose default/closed
-        // stories do not yet exercise every branch. The thresholds below match
-        // the current achieved coverage; they are intended as a temporary floor
-        // while interaction tests and Storybook browser tests are expanded.
-        lines: 73,
-        functions: 68,
-        branches: 46,
-        statements: 72,
+        lines: 92,
+        functions: 87,
+        branches: 73,
+        statements: 92,
       },
     },
     projects: [

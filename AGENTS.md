@@ -33,7 +33,7 @@ It's intentionally minimal right now: health endpoints, a basic React Router UI,
 | Task runner | `just` |
 | Git hooks | Lefthook |
 | CI/CD | GitHub Actions |
-| Coverage | `cargo llvm-cov` (Rust ≥ 84%), Vitest v8 (frontend ≥ 73% lines / 68% functions / 46% branches / 72% statements — temporarily lowered after the UI/marketing migration; see notes below) |
+| Coverage | `cargo llvm-cov` (Rust ≥ 84%), Vitest v8 (frontend ≥ 92%) |
 | Security | `gitleaks`, `semgrep`, `trivy` |
 
 ## Common Commands
@@ -168,7 +168,7 @@ See `docs/SECURITY_BASELINE.md` for the full threat model.
 Before claiming complete:
 
 - [ ] `just check` passes.
-- [ ] `just test-coverage` passes (Rust ≥ 84%, frontend ≥ 73% lines / 68% functions / 46% branches / 72% statements).
+- [ ] `just test-coverage` passes (Rust ≥ 84%, frontend ≥ 92%).
 - [ ] New behavior has tests; bug fixes have regression tests.
 - [ ] No new compiler, Clippy, or Biome warnings.
 - [ ] i18n strings mirrored across `en`, `vi`, `cn`.
@@ -187,7 +187,7 @@ Before claiming complete:
 - Deployment workflows are placeholders.
 - Prefer adding tools via `Cargo.toml` or `package.json` instead of global installs.
 - When modifying Docker files, validate with `docker compose config` and test `docker compose up --build` when possible.
-- **Frontend coverage floor**: The original 92% frontend coverage gate was set against a small scaffold. The PostHog-style UI migration (`frontend/src/components/ui/`, `features/marketing/`, `features/desktop/`) added a large presentational surface whose default/closed Storybook stories do not yet exercise every branch. Coverage thresholds were temporarily lowered to the achieved baseline in `frontend/vitest.config.ts`. Raising them back toward 92% is an explicit follow-up: add interaction tests for marketing pages, open-state tests for interactive UI primitives, and Storybook browser tests under `npm run test:storybook`.
+- **Frontend coverage gate**: The 92% lines/statements, 87% functions, 73% branches threshold is enforced. New presentational code (UI primitives, marketing pages, desktop chrome) must be covered by unit/integration tests, Storybook story renders, or browser tests so the gate stays green.
 
 ## Documentation References
 

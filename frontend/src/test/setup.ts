@@ -46,6 +46,12 @@ Object.defineProperty(window, "IntersectionObserver", {
   value: IntersectionObserverStub,
 });
 
+// Radix Select and other popover libraries call scrollIntoView on active items.
+Element.prototype.scrollIntoView = vi.fn();
+
+// input-otp uses elementFromPoint when focusing slots; jsdom does not implement it.
+document.elementFromPoint = () => null;
+
 // Disable framer-motion animations in tests. We map any `motion.<tag>` to the
 // underlying tag so animated marketing pages render without runtime errors.
 const framerOnlyProps = new Set([
@@ -88,14 +94,49 @@ function createMotionStub(Tag: string | React.ComponentType) {
   return function MotionStub(props: Record<string, unknown>) {
     const { children, className, ...rest } = props;
     const safeProps: Record<string, unknown> = {};
+    const dragHandlers: {
+      onDragEnd?: (event: unknown, info: { offset: { x: number; y: number } }) => void;
+    } = {};
+    let isDraggable = false;
     for (const key of Object.keys(rest)) {
-      if (!framerOnlyProps.has(key)) {
+      if (key === "drag") {
+        isDraggable = Boolean(rest[key]);
+      } else if (key === "onDragEnd") {
+        dragHandlers.onDragEnd = rest[key] as typeof dragHandlers.onDragEnd;
+      } else if (!framerOnlyProps.has(key)) {
         safeProps[key] = rest[key];
       }
     }
+
+    const dragSessionRef = React.useRef<{ startX: number; startY: number } | null>(null);
+
+    const handlePointerDown = (event: React.PointerEvent) => {
+      if (isDraggable) {
+        dragSessionRef.current = { startX: event.clientX, startY: event.clientY };
+      }
+      (safeProps.onPointerDown as ((event: unknown) => void) | undefined)?.(event);
+    };
+
+    const handlePointerUp = (event: React.PointerEvent) => {
+      const session = dragSessionRef.current;
+      if (session == null) return;
+      dragHandlers.onDragEnd?.(event, {
+        offset: {
+          x: event.clientX - session.startX,
+          y: event.clientY - session.startY,
+        },
+      });
+      dragSessionRef.current = null;
+    };
+
     return React.createElement(
       Tag as string,
-      { className, ...safeProps } as React.HTMLAttributes<HTMLElement>,
+      {
+        className,
+        ...safeProps,
+        onPointerDown: handlePointerDown,
+        onPointerUp: handlePointerUp,
+      } as React.HTMLAttributes<HTMLElement>,
       children as React.ReactNode
     );
   };
@@ -103,11 +144,15 @@ function createMotionStub(Tag: string | React.ComponentType) {
 
 vi.mock("framer-motion", async (importOriginal) => {
   const actual = (await importOriginal<typeof import("framer-motion")>()) || {};
+  const motionComponentCache = new Map<string, ReturnType<typeof createMotionStub>>();
   const motionProxy = new Proxy(
     {},
     {
       get(_, tag: string) {
-        return createMotionStub(tag);
+        if (!motionComponentCache.has(tag)) {
+          motionComponentCache.set(tag, createMotionStub(tag));
+        }
+        return motionComponentCache.get(tag);
       },
     }
   );

@@ -23,9 +23,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 /* ──────────────────────────── types ──────────────────────────── */
 
 interface TrashItem {
-  id: string;
+  id?: string;
   filename: string;
-  type: "markdown" | "image" | "spreadsheet" | "audio" | "pdf" | "json" | "csv" | "txt";
+  type?: "markdown" | "image" | "spreadsheet" | "audio" | "pdf" | "json" | "csv" | "txt";
   size: string;
   dateDeleted: string;
   description: string;
@@ -36,7 +36,7 @@ interface TrashItem {
 
 /* ──────────────────────────── helpers ──────────────────────────── */
 
-function getFileIcon(type: TrashItem["type"]) {
+function getFileIcon(type: TrashItem["type"] | undefined) {
   switch (type) {
     case "image":
       return <ImageIcon className="w-8 h-8 text-[#2563EB]" />;
@@ -60,7 +60,7 @@ export default function TrashPage() {
 
   const trashItems = t("trash.items", { returnObjects: true }) as TrashItem[];
   const fileTypeLabels = t("trash.fileTypes", { returnObjects: true }) as Record<
-    TrashItem["type"],
+    NonNullable<TrashItem["type"]>,
     string
   >;
 
@@ -97,7 +97,7 @@ export default function TrashPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {trashItems.map((item, i) => (
               <motion.button
-                key={item.id}
+                key={item.id ?? item.filename}
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.2, delay: i * 0.03 }}
@@ -114,7 +114,7 @@ export default function TrashPage() {
                   {item.filename}
                 </p>
                 <p className="text-[10px] text-[#9CA3AF] text-center mt-1">
-                  {item.redacted ? t("trash.redacted") : fileTypeLabels[item.type]}
+                  {item.redacted ? t("trash.redacted") : fileTypeLabels[item.type ?? "txt"]}
                 </p>
                 <div className="flex justify-between w-full mt-2 text-[10px] text-[#9CA3AF]">
                   <span>{item.size}</span>
@@ -172,7 +172,7 @@ export default function TrashPage() {
 
               <div className="shrink-0 pt-3 border-t border-[#E5E5E5] flex items-center justify-between">
                 <span className="text-[10px] text-[#9CA3AF]">
-                  {selectedItem.type.toUpperCase()} &bull; {selectedItem.size} &bull;{" "}
+                  {selectedItem.type?.toUpperCase() ?? "UNKNOWN"} &bull; {selectedItem.size} &bull;{" "}
                   {t("trash.detail.deleted")} {selectedItem.dateDeleted}
                 </span>
                 <button

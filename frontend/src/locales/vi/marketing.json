@@ -1029,6 +1029,7 @@
       },
       {
         "filename": "ceo-browser-history.csv",
+        "redacted": true,
         "description": "[REDACTED FOR LEGAL REASONS]",
         "content": "[REDACTED FOR LEGAL REASONS]",
         "redactedReason": "Seriously? You thought we would keep this? The CEO's browser history is stored on a separate server, in a bunker, guarded by a very judgmental sysadmin."

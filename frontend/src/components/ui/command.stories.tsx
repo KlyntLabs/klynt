@@ -46,7 +46,9 @@ export const Default: Story = {
             <span>Calculator</span>
           </CommandItem>
         </CommandGroup>
-        <CommandSeparator />
+      </CommandList>
+      <CommandSeparator />
+      <CommandList>
         <CommandGroup heading="Settings">
           <CommandItem>
             <UserIcon />
