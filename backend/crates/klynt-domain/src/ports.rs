@@ -32,5 +32,8 @@ pub trait RateLimiter: Send + Sync {
     fn is_allowed(&self, ip: IpAddr) -> bool;
 }
 
+pub mod email;
 pub mod password_hasher;
+
+pub use email::{EmailService, SharedEmailService};
 pub use password_hasher::{HashedPassword, PasswordHasher};
