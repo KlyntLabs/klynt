@@ -20,6 +20,11 @@ pub fn router() -> Router<Arc<AppState>> {
         .route("/health/ready", get(health::readiness))
         .route("/auth/register", post(auth::register))
         .route("/auth/verify-email", post(auth::verify_email))
+        .route(
+            "/auth/request-password-reset",
+            post(auth::request_password_reset),
+        )
+        .route("/auth/reset-password", post(auth::reset_password))
         .route("/sessions", post(sessions::login))
         .route("/users", post(users::create_user));
 

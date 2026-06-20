@@ -137,9 +137,14 @@ impl AuthService {
             .save(ctx, user.id, &token.hash, token.expires_at)
             .await?;
 
-        self.email_service
+        // Swallow email errors to prevent account enumeration during outages.
+        if let Err(e) = self
+            .email_service
             .send_password_reset(email, &token.plaintext)
-            .await?;
+            .await
+        {
+            eprintln!("Failed to send password reset email: {}", e);
+        }
 
         Ok(())
     }

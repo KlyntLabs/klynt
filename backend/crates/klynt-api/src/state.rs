@@ -93,6 +93,25 @@ impl AppState {
         self.auth_service.verify_email(ctx, token).await
     }
 
+    pub async fn request_password_reset(
+        &self,
+        ctx: &Ctx,
+        email: &Email,
+    ) -> Result<(), DomainError> {
+        self.auth_service.request_password_reset(ctx, email).await
+    }
+
+    pub async fn reset_password(
+        &self,
+        ctx: &Ctx,
+        token: &str,
+        new_password: &str,
+    ) -> Result<(), DomainError> {
+        self.auth_service
+            .reset_password(ctx, token, new_password)
+            .await
+    }
+
     pub async fn check_health(&self) -> Result<(), DomainError> {
         for check in &self.health_checks {
             check.check().await?;

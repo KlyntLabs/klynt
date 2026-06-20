@@ -37,6 +37,27 @@ pub struct VerifyEmailResponse {
     pub message: String,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct RequestPasswordResetBody {
+    pub email: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct RequestPasswordResetResponse {
+    pub message: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ResetPasswordBody {
+    pub token: String,
+    pub new_password: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ResetPasswordResponse {
+    pub message: String,
+}
+
 /// POST /api/v1/auth/register
 pub async fn register(
     State(state): State<Arc<AppState>>,
@@ -88,6 +109,50 @@ pub async fn verify_email(
     }))
 }
 
+/// POST /api/v1/auth/request-password-reset
+///
+/// Request a password reset email.
+pub async fn request_password_reset(
+    State(state): State<Arc<AppState>>,
+    Extension(request_id): Extension<RequestId>,
+    Json(body): Json<RequestPasswordResetBody>,
+) -> Result<impl IntoResponse, AppError> {
+    let email = Email::parse(&body.email)
+        .map_err(|e| AppError::from(DomainError::InvalidEmail(e)).with_request_id(request_id.0))?;
+
+    let ctx = Ctx::guest(request_id.0);
+    state
+        .request_password_reset(&ctx, &email)
+        .await
+        .with_request_id(request_id.0)?;
+
+    // Always return success to prevent email enumeration
+    Ok(Json(RequestPasswordResetResponse {
+        message: "If an account exists with this email, a password reset link has been sent."
+            .to_string(),
+    }))
+}
+
+/// POST /api/v1/auth/reset-password
+///
+/// Reset password using token from email.
+pub async fn reset_password(
+    State(state): State<Arc<AppState>>,
+    Extension(request_id): Extension<RequestId>,
+    Json(body): Json<ResetPasswordBody>,
+) -> Result<impl IntoResponse, AppError> {
+    let ctx = Ctx::guest(request_id.0);
+    state
+        .reset_password(&ctx, &body.token, &body.new_password)
+        .await
+        .with_request_id(request_id.0)?;
+
+    Ok(Json(ResetPasswordResponse {
+        message: "Password reset successfully. You can now log in with your new password."
+            .to_string(),
+    }))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -104,6 +169,22 @@ mod tests {
     #[test]
     fn verify_response_serializes() {
         let response = VerifyEmailResponse {
+            message: "test".to_string(),
+        };
+        assert!(serde_json::to_string(&response).is_ok());
+    }
+
+    #[test]
+    fn request_password_reset_response_serializes() {
+        let response = RequestPasswordResetResponse {
+            message: "test".to_string(),
+        };
+        assert!(serde_json::to_string(&response).is_ok());
+    }
+
+    #[test]
+    fn reset_password_response_serializes() {
+        let response = ResetPasswordResponse {
             message: "test".to_string(),
         };
         assert!(serde_json::to_string(&response).is_ok());
