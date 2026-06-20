@@ -1,5 +1,6 @@
 pub mod error;
 pub mod middleware;
+pub mod openapi;
 pub mod rate_limit;
 pub mod startup;
 pub mod state;
