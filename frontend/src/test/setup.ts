@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import React from "react";
 import { apiClient } from "@/core/api/api-client";
-import { registerAuthInterceptor } from "@/core/api/auth-interceptor";
+import { createAuthInterceptorDeps, registerAuthInterceptor } from "@/core/api/auth-interceptor";
 import { server } from "@/test/msw/server";
 
 // jsdom does not implement HTMLCanvasElement#getContext; stub it so libraries
@@ -163,7 +163,7 @@ vi.mock("framer-motion", async (importOriginal) => {
   };
 });
 
-registerAuthInterceptor(apiClient);
+registerAuthInterceptor(apiClient, createAuthInterceptorDeps());
 
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 afterEach(() => server.resetHandlers());

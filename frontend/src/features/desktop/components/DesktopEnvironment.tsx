@@ -1,15 +1,20 @@
 import { useEffect } from "react";
+import { marketingRegistry } from "@/features/desktop/apps";
 import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
 import CookieBanner from "./CookieBanner";
 import DesktopIcons from "./DesktopIcons";
 import Menubar from "./Menubar";
 import WindowManager from "./WindowManager";
+
 export default function DesktopEnvironment() {
   const { windows, openWindow } = useDesktopStore();
+  const defaultApp = marketingRegistry.defaultApp;
 
   useEffect(() => {
     if (windows.length === 0) {
-      openWindow("/", "home.mdx");
+      openWindow(defaultApp.manifest.route, defaultApp.manifest.title, {
+        size: defaultApp.manifest.defaultSize,
+      });
     }
   }, [windows.length, openWindow]);
 

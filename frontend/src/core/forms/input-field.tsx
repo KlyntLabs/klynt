@@ -1,16 +1,28 @@
 import { Controller, useFormContext } from "react-hook-form";
-import { Input } from "@/components/ui/input";
+import { Input, type InputProps } from "@/components/ui/input";
 import { FormField } from "./form-field";
+
+interface InputFieldComponents {
+  Input?: React.ComponentType<InputProps>;
+}
 
 interface InputFieldProps {
   name: string;
   label: string;
   type?: React.HTMLInputTypeAttribute;
   placeholder?: string;
+  components?: InputFieldComponents;
 }
 
-export function InputField({ name, label, type = "text", placeholder }: InputFieldProps) {
+export function InputField({
+  name,
+  label,
+  type = "text",
+  placeholder,
+  components = {},
+}: InputFieldProps) {
   const { control } = useFormContext();
+  const InputComponent = components.Input ?? Input;
 
   return (
     <Controller
@@ -18,7 +30,7 @@ export function InputField({ name, label, type = "text", placeholder }: InputFie
       control={control}
       render={({ field, fieldState }) => (
         <FormField label={label} htmlFor={name} error={fieldState.error?.message}>
-          <Input
+          <InputComponent
             {...field}
             id={name}
             type={type}

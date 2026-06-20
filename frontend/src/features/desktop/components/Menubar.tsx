@@ -1,7 +1,13 @@
 import { Bell, Search, User, Zap } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import {
+  getAppByRoute,
+  getAppMenuGroups,
+  getAppsByMenuGroup,
+  marketingRegistry,
+} from "@/features/desktop/apps";
 import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
 
 interface MenuItem {
@@ -16,60 +22,65 @@ interface MenuGroup {
   items: MenuItem[];
 }
 
+const MENU_GROUP_ORDER = ["productOS", "pricing", "docs", "community", "company", "more"];
+
+const MENU_GROUP_LABEL_KEYS: Record<string, string> = {
+  productOS: "desktop.menubar.menus.productOS.label",
+  pricing: "desktop.menubar.menus.pricing.label",
+  docs: "desktop.menubar.menus.docs.label",
+  community: "desktop.menubar.menus.community.label",
+  company: "desktop.menubar.menus.company.label",
+  more: "desktop.menubar.menus.more.label",
+};
+
+function useMenuGroups(): MenuGroup[] {
+  const { t } = useTranslation("home");
+
+  return useMemo(() => {
+    const groups: MenuGroup[] = [];
+    const seenGroups = new Set<string>();
+
+    for (const group of MENU_GROUP_ORDER) {
+      const apps = getAppsByMenuGroup(marketingRegistry, group);
+      if (apps.length === 0) continue;
+
+      seenGroups.add(group);
+      groups.push({
+        label: t(MENU_GROUP_LABEL_KEYS[group] as never),
+        items: apps.map((app) => ({
+          label: app.manifest.shortTitle || app.manifest.title,
+          route: app.manifest.route,
+        })),
+      });
+    }
+
+    // Append any registry menu groups not explicitly ordered.
+    for (const group of getAppMenuGroups(marketingRegistry)) {
+      if (seenGroups.has(group)) continue;
+      const apps = getAppsByMenuGroup(marketingRegistry, group);
+      groups.push({
+        label: group,
+        items: apps.map((app) => ({
+          label: app.manifest.shortTitle || app.manifest.title,
+          route: app.manifest.route,
+        })),
+      });
+    }
+
+    return groups;
+  }, [t]);
+}
+
 export default function Menubar() {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const { openWindow, viewMode } = useDesktopStore();
   const navigate = useNavigate();
   const { t } = useTranslation("home");
+  const menus = useMenuGroups();
 
-  const menus: MenuGroup[] = [
-    {
-      label: t("desktop.menubar.menus.productOS.label"),
-      items: [
-        { label: t("desktop.menubar.menus.productOS.overview"), route: "/products" },
-        {
-          label: t("desktop.menubar.menus.productOS.productAnalytics"),
-          route: "/product-analytics",
-        },
-        { label: t("desktop.menubar.menus.productOS.webAnalytics"), route: "/web-analytics" },
-        { label: t("desktop.menubar.menus.productOS.sessionReplay"), route: "/session-replay" },
-        { label: t("desktop.menubar.menus.productOS.featureFlags"), route: "/feature-flags" },
-        { label: t("desktop.menubar.menus.productOS.experiments"), route: "/experiments" },
-        { label: t("desktop.menubar.menus.productOS.surveys"), route: "/surveys" },
-        { label: t("desktop.menubar.menus.productOS.dataWarehouse"), route: "/data-warehouse" },
-      ],
-    },
-    {
-      label: t("desktop.menubar.menus.pricing.label"),
-      items: [{ label: t("desktop.menubar.menus.pricing.item"), route: "/pricing" }],
-    },
-    {
-      label: t("desktop.menubar.menus.docs.label"),
-      items: [{ label: t("desktop.menubar.menus.docs.item"), route: "/docs" }],
-    },
-    {
-      label: t("desktop.menubar.menus.community.label"),
-      items: [{ label: t("desktop.menubar.menus.community.item"), route: "/community" }],
-    },
-    {
-      label: t("desktop.menubar.menus.company.label"),
-      items: [
-        { label: t("desktop.menubar.menus.company.about"), route: "/about" },
-        { label: t("desktop.menubar.menus.company.careers"), route: "/careers" },
-        { label: t("desktop.menubar.menus.company.changelog"), route: "/changelog" },
-        { label: t("desktop.menubar.menus.company.handbook"), route: "/handbook" },
-      ],
-    },
-    {
-      label: t("desktop.menubar.menus.more.label"),
-      items: [
-        { label: t("desktop.menubar.menus.more.talkToHuman"), route: "/talk-to-a-human" },
-        { label: t("desktop.menubar.menus.more.merch"), route: "/merch" },
-        { label: t("desktop.menubar.menus.more.trash"), route: "/trash" },
-      ],
-    },
-  ];
+  const pricingApp = getAppByRoute(marketingRegistry, "/pricing");
+  const homeApp = marketingRegistry.defaultApp;
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -94,9 +105,22 @@ export default function Menubar() {
 
   const handleLogoClick = () => {
     if (viewMode === "desktop") {
-      openWindow("/", "home.mdx");
+      openWindow(homeApp.manifest.route, homeApp.manifest.title, {
+        size: homeApp.manifest.defaultSize,
+      });
     } else {
-      navigate("/");
+      navigate(homeApp.manifest.route);
+    }
+  };
+
+  const handleGetStartedClick = () => {
+    if (!pricingApp) return;
+    if (viewMode === "desktop") {
+      openWindow(pricingApp.manifest.route, pricingApp.manifest.title, {
+        size: pricingApp.manifest.defaultSize,
+      });
+    } else {
+      navigate(pricingApp.manifest.route);
     }
   };
 
@@ -186,13 +210,7 @@ export default function Menubar() {
       <div className="flex items-center gap-1.5">
         <button
           type="button"
-          onClick={() => {
-            if (viewMode === "desktop") {
-              openWindow("/pricing", t("desktop.menubar.menus.pricing.label"));
-            } else {
-              navigate("/pricing");
-            }
-          }}
+          onClick={handleGetStartedClick}
           className="h-7 px-3 flex items-center gap-1.5 rounded bg-[#F76E18] hover:bg-[#E56310] text-white text-[12px] font-semibold transition-colors"
         >
           <Zap className="w-3.5 h-3.5" />

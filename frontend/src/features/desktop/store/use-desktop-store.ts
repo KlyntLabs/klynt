@@ -59,39 +59,6 @@ const getCenteredPosition = (width: number, height: number, zIndex: number): Win
   };
 };
 
-const routeToTitle: Record<string, string> = {
-  "/": "home.mdx",
-  "/products": "Product OS",
-  "/pricing": "Pricing",
-  "/customers": "customers.mdx",
-  "/docs": "Docs",
-  "/about": "Why PostHog?",
-  "/community": "Community",
-  "/careers": "Careers",
-  "/changelog": "Changelog",
-  "/trash": "Trash",
-  "/product-analytics": "Product Analytics",
-  "/web-analytics": "Web Analytics",
-  "/session-replay": "Session Replay",
-  "/feature-flags": "Feature Flags",
-  "/experiments": "Experiments",
-  "/surveys": "Surveys",
-  "/data-warehouse": "Data Warehouse",
-  "/talk-to-a-human": "Talk to a human",
-  "/demo": "demo.mov",
-  "/merch": "Store",
-  "/handbook": "Company handbook",
-};
-
-const routeToSize: Record<string, { width: number; height: number }> = {
-  "/": { width: 640, height: 560 },
-  "/pricing": { width: 900, height: 600 },
-  "/customers": { width: 700, height: 520 },
-  "/docs": { width: 900, height: 600 },
-  "/product-analytics": { width: 1000, height: 700 },
-  "/demo": { width: 720, height: 480 },
-};
-
 const desktopStore: StateCreator<DesktopStore> = (set, get) => ({
   viewMode: "desktop",
   windows: [],
@@ -118,16 +85,12 @@ const desktopStore: StateCreator<DesktopStore> = (set, get) => ({
     }
 
     const newZIndex = state.nextZIndex + 1;
-    const size = routeToSize[route] || {
-      width: DEFAULT_WINDOW_WIDTH,
-      height: DEFAULT_WINDOW_HEIGHT,
+    const size = {
+      width: options?.size?.width || DEFAULT_WINDOW_WIDTH,
+      height: options?.size?.height || DEFAULT_WINDOW_HEIGHT,
     };
-    const windowTitle = title || routeToTitle[route] || "Untitled";
-    const base = getCenteredPosition(
-      options?.size?.width || size.width,
-      options?.size?.height || size.height,
-      newZIndex
-    );
+    const windowTitle = title || route;
+    const base = getCenteredPosition(size.width, size.height, newZIndex);
 
     const newWindow: WindowState = {
       ...base,

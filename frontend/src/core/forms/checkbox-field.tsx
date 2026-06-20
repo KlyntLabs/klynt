@@ -1,15 +1,21 @@
 import { Controller, useFormContext } from "react-hook-form";
-import { Label } from "@/components/ui/label";
+import { Label, type LabelProps } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+
+interface CheckboxFieldComponents {
+  Label?: React.ComponentType<LabelProps>;
+}
 
 interface CheckboxFieldProps {
   name: string;
   label: React.ReactNode;
   className?: string;
+  components?: CheckboxFieldComponents;
 }
 
-export function CheckboxField({ name, label, className }: CheckboxFieldProps) {
+export function CheckboxField({ name, label, className, components = {} }: CheckboxFieldProps) {
   const { control } = useFormContext();
+  const LabelComponent = components.Label ?? Label;
 
   return (
     <Controller
@@ -28,7 +34,7 @@ export function CheckboxField({ name, label, className }: CheckboxFieldProps) {
             aria-describedby={fieldState.error ? `${name}-error` : undefined}
           />
           <div>
-            <Label htmlFor={name}>{label}</Label>
+            <LabelComponent htmlFor={name}>{label}</LabelComponent>
             {fieldState.error && (
               <p id={`${name}-error`} className="text-sm text-destructive" role="alert">
                 {fieldState.error.message}

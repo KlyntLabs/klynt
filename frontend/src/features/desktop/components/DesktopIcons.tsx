@@ -1,21 +1,6 @@
-import {
-  BookMarked,
-  Bookmark,
-  BookOpen,
-  Building2,
-  Calendar,
-  ExternalLink,
-  FileText,
-  FolderOpen,
-  Mail,
-  MessageCircleQuestion,
-  Monitor,
-  ShoppingBag,
-  Table,
-  Trash2,
-  Video,
-} from "lucide-react";
+import { ExternalLink, Monitor } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { getDockApps, marketingRegistry } from "@/features/desktop/apps";
 import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
 
 interface DesktopIconItemProps {
@@ -41,118 +26,50 @@ function DesktopIconItem({ icon, label, onClick }: DesktopIconItemProps) {
   );
 }
 
+function DockIcons({ position }: { position: "left" | "right" }) {
+  const { openWindow } = useDesktopStore();
+  const apps = getDockApps(marketingRegistry, position);
+
+  return (
+    <>
+      {apps.map((app) => {
+        const Icon = app.manifest.icon;
+        return (
+          <DesktopIconItem
+            key={app.manifest.id}
+            icon={<Icon className="w-6 h-6" />}
+            label={app.manifest.title}
+            onClick={() =>
+              openWindow(app.manifest.route, app.manifest.title, {
+                size: app.manifest.defaultSize,
+              })
+            }
+          />
+        );
+      })}
+    </>
+  );
+}
+
 export default function DesktopIcons() {
   const { openWindow, setViewMode } = useDesktopStore();
   const { t } = useTranslation("home");
 
-  const leftIcons = [
-    {
-      label: "home.mdx",
-      icon: <FileText className="w-6 h-6 text-[#2563EB]" />,
-      route: "/",
-      title: "home.mdx",
-    },
-    {
-      label: t("desktop.icons.left.productOS"),
-      icon: <FolderOpen className="w-6 h-6 text-[#F76E18]" />,
-      route: "/products",
-      title: t("desktop.icons.left.productOS"),
-    },
-    {
-      label: t("desktop.icons.left.pricing"),
-      icon: <Table className="w-6 h-6 text-[#22C55E]" />,
-      route: "/pricing",
-      title: t("desktop.icons.left.pricing"),
-    },
-    {
-      label: "customers.mdx",
-      icon: <FileText className="w-6 h-6 text-[#2563EB]" />,
-      route: "/customers",
-      title: "customers.mdx",
-    },
-    {
-      label: "demo.mov",
-      icon: <Video className="w-6 h-6 text-[#DC2626]" />,
-      route: "/demo",
-      title: "demo.mov",
-    },
-    {
-      label: t("desktop.icons.left.docs"),
-      icon: <BookOpen className="w-6 h-6 text-[#6B6B6B]" />,
-      route: "/docs",
-      title: t("desktop.icons.left.docs"),
-    },
-    {
-      label: t("desktop.icons.left.talkToHuman"),
-      icon: <Mail className="w-6 h-6 text-[#6B6B6B]" />,
-      route: "/talk-to-a-human",
-      title: t("desktop.icons.left.talkToHuman"),
-    },
-    {
-      label: t("desktop.icons.left.askQuestion"),
-      icon: <MessageCircleQuestion className="w-6 h-6 text-[#6B6B6B]" />,
-      route: "/community",
-      title: t("desktop.icons.left.askQuestion"),
-    },
-    {
-      label: t("desktop.icons.left.signUp"),
-      icon: <ExternalLink className="w-6 h-6 text-[#6B6B6B]" />,
-      route: "/signup",
-      title: t("desktop.icons.left.signUp"),
-    },
-  ];
-
-  const rightIcons = [
-    {
-      label: t("desktop.icons.right.whyPostHog"),
-      icon: <Bookmark className="w-6 h-6 text-[#F76E18]" />,
-      route: "/about",
-      title: t("desktop.icons.right.whyPostHog"),
-    },
-    {
-      label: t("desktop.icons.right.changelog"),
-      icon: <Calendar className="w-6 h-6 text-[#6B6B6B]" />,
-      route: "/changelog",
-      title: t("desktop.icons.right.changelog"),
-    },
-    {
-      label: t("desktop.icons.right.companyHandbook"),
-      icon: <BookMarked className="w-6 h-6 text-[#6B6B6B]" />,
-      route: "/handbook",
-      title: t("desktop.icons.right.companyHandbook"),
-    },
-    {
-      label: t("desktop.icons.right.store"),
-      icon: <ShoppingBag className="w-6 h-6 text-[#6B6B6B]" />,
-      route: "/merch",
-      title: t("desktop.icons.right.store"),
-    },
-    {
-      label: t("desktop.icons.right.workHere"),
-      icon: <Building2 className="w-6 h-6 text-[#6B6B6B]" />,
-      route: "/careers",
-      title: t("desktop.icons.right.workHere"),
-    },
-    {
-      label: t("desktop.icons.right.trash"),
-      icon: <Trash2 className="w-6 h-6 text-[#6B6B6B]" />,
-      route: "/trash",
-      title: t("desktop.icons.right.trash"),
-    },
-  ];
+  const handleSignUpClick = () => {
+    // Register is not a marketing app yet; open it generically.
+    openWindow("/register", t("desktop.icons.left.signUp"));
+  };
 
   return (
     <>
       {/* Left column */}
       <div className="fixed left-4 top-[52px] z-10 flex flex-col gap-5">
-        {leftIcons.map((item) => (
-          <DesktopIconItem
-            key={item.route}
-            icon={item.icon}
-            label={item.label}
-            onClick={() => openWindow(item.route, item.title)}
-          />
-        ))}
+        <DockIcons position="left" />
+        <DesktopIconItem
+          icon={<ExternalLink className="w-6 h-6 text-[#6B6B6B]" />}
+          label={t("desktop.icons.left.signUp")}
+          onClick={handleSignUpClick}
+        />
         <DesktopIconItem
           icon={<Monitor className="w-6 h-6 text-[#6B6B6B]" />}
           label={t("desktop.icons.switchToWebsite")}
@@ -162,14 +79,7 @@ export default function DesktopIcons() {
 
       {/* Right column */}
       <div className="fixed right-4 top-[52px] z-10 flex flex-col gap-5">
-        {rightIcons.map((item) => (
-          <DesktopIconItem
-            key={item.route}
-            icon={item.icon}
-            label={item.label}
-            onClick={() => openWindow(item.route, item.title)}
-          />
-        ))}
+        <DockIcons position="right" />
       </div>
     </>
   );

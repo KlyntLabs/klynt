@@ -80,6 +80,10 @@ Before changing code:
 - Edition 2021.
 - All Clippy warnings are errors (`-D warnings`).
 - `unsafe_code` is forbidden at the workspace level.
+- Source files (`backend/crates/*/src/**/*.rs`) should stay under **400 lines**.
+- Integration test files (`backend/crates/*/tests/**/*.rs`) may go up to **600 lines**.
+- Lefthook enforces this on staged files via `backend/scripts/check-file-size.sh`.
+- Axum handlers should stay thin; most logic belongs in application/domain crates.
 
 ### TypeScript / Frontend
 
@@ -98,6 +102,13 @@ Before changing code:
 - Reuse `frontend/src/components/ui/` primitives. These are shadcn/ui-style components migrated from `frontend-v2/` and adapted for Tailwind CSS v4.
 - The legacy `frontend/src/core/ui/` NeoBrutalist primitives and `frontend/src/features/home/` OS desktop have been removed; see `docs/adr/0001-frontend-v2-ui-migration.md`.
 - New UI must feel native to Klynt — browser-default styling is a signal that an existing primitive is missing.
+
+### File Size
+
+- Frontend source files (`frontend/src/**/*.{ts,tsx,js,jsx,css}`) should stay under **300 lines**.
+- Lefthook enforces this on staged files via `frontend/scripts/check-file-size.sh`.
+- If a file exceeds the limit, break it into smaller modules (e.g. extract hooks, helpers, sub-components) rather than raising the limit.
+- Override `KLYNT_MAX_FILE_LINES` locally only for temporary testing.
 
 ## Architecture at a Glance
 

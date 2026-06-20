@@ -11,9 +11,15 @@ pre-commit:
     rustfmt:
       glob: "**/*.rs"
       run: cd backend && cargo fmt --all -- --check
+    backend-file-size:
+      glob: "backend/crates/**/*.rs"
+      run: backend/scripts/check-file-size.sh {staged_files}
     biome-check:
       glob: "**/*.{js,ts,tsx,json,jsonc,css}"
       run: cd frontend && npx @biomejs/biome check --error-on-warnings --no-errors-on-unmatched $(for f in {staged_files}; do echo "${f#frontend/}"; done)
+    frontend-file-size:
+      glob: "frontend/src/**/*.{ts,tsx,js,jsx,css}"
+      run: frontend/scripts/check-file-size.sh {staged_files}
     gitleaks:
       run: |
         if ! command -v gitleaks >/dev/null 2>&1; then
