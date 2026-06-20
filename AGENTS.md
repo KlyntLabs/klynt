@@ -52,7 +52,7 @@ Run `just` to list recipes.
 | `just secret-scan` | Run `gitleaks` locally |
 | `just security-scan` | Run `semgrep` + `trivy` locally |
 
-Frontend-only: `npm run dev`, `npm run test:coverage`, `npm run lint`, `npm run typecheck`, `npm run build`.
+Frontend-only: `bun run dev`, `bun run test:coverage`, `bun run lint`, `bun run typecheck`, `bun run build`.
 
 Backend-only: `cargo run --bin klynt-server`, `cargo nextest run --all-features`, `cargo clippy --workspace --all-targets --all-features -- -D warnings`, `cargo fmt`.
 
@@ -167,7 +167,7 @@ Cargo workspace with dependency direction enforced by the compiler:
 Targets OWASP ASVS Level 1 now; Level 2 before PII/grades/payments.
 
 - No secrets in source control.
-- Lockfiles committed; install with `npm ci` / `--locked`.
+- Lockfiles committed; install with `bun install --frozen-lockfile` / `--locked`.
 - CORS from environment; security headers via `tower-http`.
 - Centralized errors that don't leak internals.
 - Input validated at boundaries (Zod frontend, `validator` backend).
