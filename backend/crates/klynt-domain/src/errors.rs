@@ -30,6 +30,18 @@ pub enum RoleError {
     Unknown,
 }
 
+#[derive(Debug, Error, PartialEq)]
+pub enum TokenError {
+    #[error("token is expired")]
+    Expired,
+    #[error("token has already been used")]
+    AlreadyUsed,
+    #[error("invalid token")]
+    Invalid,
+    #[error("token not found")]
+    NotFound,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ErrorKind {
     Validation,
@@ -50,6 +62,8 @@ pub enum DomainError {
     WeakPassword(#[from] PasswordError),
     #[error("{0}")]
     InvalidRole(#[from] RoleError),
+    #[error("{0}")]
+    InvalidToken(#[from] TokenError),
     #[error("{0}")]
     InvalidName(#[from] NameError),
     #[error("not found")]
@@ -98,6 +112,7 @@ impl DomainError {
             DomainError::InvalidEmail(_)
             | DomainError::WeakPassword(_)
             | DomainError::InvalidRole(_)
+            | DomainError::InvalidToken(_)
             | DomainError::InvalidName(_)
             | DomainError::InstitutionRequired(_)
             | DomainError::TermsNotAccepted
@@ -141,6 +156,13 @@ mod classification_tests {
         let err = DomainError::InvalidRole(RoleError::Unknown);
         assert_eq!(err.kind(), ErrorKind::Validation);
         assert_eq!(err.to_string(), "unknown role");
+    }
+
+    #[test]
+    fn invalid_token_is_validation() {
+        let err = DomainError::InvalidToken(TokenError::Expired);
+        assert_eq!(err.kind(), ErrorKind::Validation);
+        assert_eq!(err.to_string(), "token is expired");
     }
 
     #[test]
