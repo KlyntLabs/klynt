@@ -79,6 +79,8 @@ impl UserService {
             role,
             institution_id: req.institution_id,
             status: UserStatus::PendingVerification,
+            email_verified_at: None,
+            global_role: None,
             password_hash: password_hash.as_str().to_string(),
             terms_accepted_at: Utc::now(),
             terms_version: req.terms_version,

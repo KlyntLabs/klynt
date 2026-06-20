@@ -18,6 +18,8 @@ fn sample_user(email: &str) -> Result<User, DomainError> {
         role: Role::Student,
         institution_id: None,
         status: UserStatus::PendingVerification,
+        email_verified_at: None,
+        global_role: None,
         password_hash: "hash".to_string(),
         terms_accepted_at: Utc::now(),
         terms_version: "2026-06-18".to_string(),

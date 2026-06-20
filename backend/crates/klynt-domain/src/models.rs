@@ -84,6 +84,15 @@ impl Role {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum GlobalRole {
+    Owner,
+    Admin,
+    #[default]
+    User,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum UserStatus {
@@ -100,6 +109,8 @@ pub struct User {
     pub role: Role,
     pub institution_id: Option<Uuid>,
     pub status: UserStatus,
+    pub email_verified_at: Option<DateTime<Utc>>,
+    pub global_role: Option<GlobalRole>,
     pub password_hash: String,
     pub terms_accepted_at: DateTime<Utc>,
     pub terms_version: String,
@@ -113,6 +124,8 @@ pub struct UserDto {
     pub email: String,
     pub role: Role,
     pub status: UserStatus,
+    pub email_verified_at: Option<DateTime<Utc>>,
+    pub global_role: Option<GlobalRole>,
     pub created_at: DateTime<Utc>,
 }
 
@@ -124,6 +137,8 @@ impl From<&User> for UserDto {
             email: user.email.as_str().to_string(),
             role: user.role,
             status: user.status,
+            email_verified_at: user.email_verified_at,
+            global_role: user.global_role,
             created_at: user.created_at,
         }
     }
