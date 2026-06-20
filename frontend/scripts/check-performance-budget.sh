@@ -75,7 +75,7 @@ if [ -d "${PUBLIC_DIR}" ]; then
     find "${PUBLIC_DIR}" -type f \( \
       -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o \
       -iname '*.webp' -o -iname '*.avif' -o -iname '*.gif' \
-    \) -exec stat -f '%z %N' {} + 2>/dev/null | sort -rn | head -n1 || true
+    \) -exec sh -c 'for f; do printf "%s %s\n" "$(wc -c < "$f")" "$f"; done' sh {} + 2>/dev/null | sort -rn | head -n1 || true
   )
 
   if [ -n "${LARGEST_IMAGE_LINE}" ]; then

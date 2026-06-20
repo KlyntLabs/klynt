@@ -117,6 +117,9 @@ jobs:
       - name: Production build
         run: bun run build
 
+      - name: Check frontend performance budget
+        run: bun run check:performance
+
   security-checks:
     name: Security checks
     runs-on: ubuntu-latest
