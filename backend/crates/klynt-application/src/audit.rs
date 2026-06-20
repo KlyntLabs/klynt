@@ -103,6 +103,27 @@ impl AuditService {
 
         self.repo.log(ctx, event).await
     }
+
+    /// Log an audit event, swallowing any error.
+    ///
+    /// Audit failures must never fail the request. This method encapsulates
+    /// the "log, warn, move on" policy so callers don't replicate the
+    /// error-handling boilerplate.
+    pub async fn try_log(
+        &self,
+        ctx: &Ctx,
+        action: &str,
+        log_fn: impl std::future::Future<Output = Result<(), DomainError>>,
+    ) {
+        if let Err(e) = log_fn.await {
+            tracing::warn!(
+                error = %e,
+                action = action,
+                request_id = ?ctx.request_id,
+                "failed to log audit event"
+            );
+        }
+    }
 }
 
 #[cfg(test)]
@@ -314,5 +335,21 @@ mod tests {
         let result = service.log_user_registered(&ctx, user_id, None).await;
 
         assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn try_log_swallows_repo_error() {
+        let service = AuditService::new(Arc::new(ErrorRepo));
+        let ctx = Ctx::guest(Uuid::new_v4());
+        let user_id = UserId::new();
+
+        // Should NOT return an error even though ErrorRepo always fails.
+        service
+            .try_log(
+                &ctx,
+                "test",
+                service.log_user_registered(&ctx, user_id, None),
+            )
+            .await;
     }
 }

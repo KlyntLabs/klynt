@@ -53,18 +53,18 @@ impl AuthService {
         let user = match self.user_service.authenticate(ctx, email, password).await {
             Ok(user) => user,
             Err(e) => {
-                if let Err(log_err) = self
-                    .audit_service
-                    .log_login_failed(ctx, email.as_str(), None, e.to_string())
-                    .await
-                {
-                    tracing::warn!(
-                        error = %log_err,
-                        action = "login_failed",
-                        request_id = ?ctx.request_id,
-                        "failed to log audit event"
-                    );
-                }
+                self.audit_service
+                    .try_log(
+                        ctx,
+                        "login_failed",
+                        self.audit_service.log_login_failed(
+                            ctx,
+                            email.as_str(),
+                            None,
+                            e.to_string(),
+                        ),
+                    )
+                    .await;
                 return Err(e);
             }
         };
@@ -74,18 +74,14 @@ impl AuthService {
         let expires_at = Utc::now() + Session::DEFAULT_TTL;
         let token = self.session_store.create(ctx, user_id, expires_at).await?;
 
-        if let Err(e) = self
-            .audit_service
-            .log_session_created(ctx, user_id, token.0, None)
-            .await
-        {
-            tracing::warn!(
-                error = %e,
-                action = "session_created",
-                request_id = ?ctx.request_id,
-                "failed to log audit event"
-            );
-        }
+        self.audit_service
+            .try_log(
+                ctx,
+                "session_created",
+                self.audit_service
+                    .log_session_created(ctx, user_id, token.0, None),
+            )
+            .await;
 
         Ok((token, user_dto))
     }
@@ -105,18 +101,13 @@ impl AuthService {
             .create_pending_user(ctx, name, email, password, terms_accepted, terms_version)
             .await?;
 
-        if let Err(e) = self
-            .audit_service
-            .log_user_registered(ctx, user_id, None)
-            .await
-        {
-            tracing::warn!(
-                error = %e,
-                action = "user_registered",
-                request_id = ?ctx.request_id,
-                "failed to log audit event"
-            );
-        }
+        self.audit_service
+            .try_log(
+                ctx,
+                "user_registered",
+                self.audit_service.log_user_registered(ctx, user_id, None),
+            )
+            .await;
 
         let token = Token::generate(TokenKind::EmailVerification, user_id);
         self.token_store
@@ -147,14 +138,13 @@ impl AuthService {
 
         self.user_service.activate_user(ctx, user_id).await?;
 
-        if let Err(e) = self.audit_service.log_email_verified(ctx, user_id).await {
-            tracing::warn!(
-                error = %e,
-                action = "email_verified",
-                request_id = ?ctx.request_id,
-                "failed to log audit event"
-            );
-        }
+        self.audit_service
+            .try_log(
+                ctx,
+                "email_verified",
+                self.audit_service.log_email_verified(ctx, user_id),
+            )
+            .await;
 
         Ok(user_id)
     }
@@ -225,14 +215,13 @@ impl AuthService {
             .update_password(ctx, user_id, new_password)
             .await?;
 
-        if let Err(e) = self.audit_service.log_password_reset(ctx, user_id).await {
-            tracing::warn!(
-                error = %e,
-                action = "password_reset",
-                request_id = ?ctx.request_id,
-                "failed to log audit event"
-            );
-        }
+        self.audit_service
+            .try_log(
+                ctx,
+                "password_reset",
+                self.audit_service.log_password_reset(ctx, user_id),
+            )
+            .await;
 
         Ok(())
     }
