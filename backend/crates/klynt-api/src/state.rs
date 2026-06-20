@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use klynt_application::audit::AuditService;
 use klynt_application::auth::AuthService;
 use klynt_application::users::{CreateUserRequest, UserService};
 use klynt_domain::config::AppConfig;
@@ -7,6 +8,7 @@ use klynt_domain::ctx::Ctx;
 use klynt_domain::errors::DomainError;
 use klynt_domain::models::{Email, User, UserDto, UserId};
 use klynt_domain::ports::{HealthCheck, RateLimiter};
+use klynt_domain::repositories::{EmailVerificationTokenRepository, PasswordResetTokenRepository};
 use klynt_domain::session::{SessionStore, SessionToken};
 use uuid::Uuid;
 
@@ -18,24 +20,36 @@ pub struct AppState {
     session_store: Arc<dyn SessionStore>,
     rate_limiter: Arc<dyn RateLimiter>,
     health_checks: Vec<Arc<dyn HealthCheck>>,
+    email_verification_repo: Arc<dyn EmailVerificationTokenRepository>,
+    password_reset_repo: Arc<dyn PasswordResetTokenRepository>,
+    audit_service: Arc<AuditService>,
+}
+
+/// Named dependency bag for constructing [`AppState`].
+pub struct AppStateDeps {
+    pub config: AppConfig,
+    pub user_service: Arc<UserService>,
+    pub auth_service: Arc<AuthService>,
+    pub session_store: Arc<dyn SessionStore>,
+    pub rate_limiter: Arc<dyn RateLimiter>,
+    pub health_checks: Vec<Arc<dyn HealthCheck>>,
+    pub email_verification_repo: Arc<dyn EmailVerificationTokenRepository>,
+    pub password_reset_repo: Arc<dyn PasswordResetTokenRepository>,
+    pub audit_service: Arc<AuditService>,
 }
 
 impl AppState {
-    pub fn new(
-        config: AppConfig,
-        user_service: Arc<UserService>,
-        auth_service: Arc<AuthService>,
-        session_store: Arc<dyn SessionStore>,
-        rate_limiter: Arc<dyn RateLimiter>,
-        health_checks: Vec<Arc<dyn HealthCheck>>,
-    ) -> Self {
+    pub fn new(deps: AppStateDeps) -> Self {
         Self {
-            config: Arc::new(config),
-            user_service,
-            auth_service,
-            session_store,
-            rate_limiter,
-            health_checks,
+            config: Arc::new(deps.config),
+            user_service: deps.user_service,
+            auth_service: deps.auth_service,
+            session_store: deps.session_store,
+            rate_limiter: deps.rate_limiter,
+            health_checks: deps.health_checks,
+            email_verification_repo: deps.email_verification_repo,
+            password_reset_repo: deps.password_reset_repo,
+            audit_service: deps.audit_service,
         }
     }
 
@@ -49,6 +63,18 @@ impl AppState {
 
     pub fn session_store(&self) -> &dyn SessionStore {
         &*self.session_store
+    }
+
+    pub fn email_verification_repo(&self) -> &dyn EmailVerificationTokenRepository {
+        &*self.email_verification_repo
+    }
+
+    pub fn password_reset_repo(&self) -> &dyn PasswordResetTokenRepository {
+        &*self.password_reset_repo
+    }
+
+    pub fn audit_service(&self) -> &AuditService {
+        &self.audit_service
     }
 
     pub async fn create_user(

@@ -1,4 +1,5 @@
 pub mod idempotency;
+pub mod in_memory_audit_event;
 pub mod in_memory_password_reset_token;
 pub mod in_memory_token;
 pub mod in_memory_user;

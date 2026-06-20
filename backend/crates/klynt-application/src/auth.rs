@@ -10,6 +10,7 @@ use klynt_domain::repositories::{EmailVerificationTokenRepository, PasswordReset
 use klynt_domain::session::{Session, SessionStore, SessionToken};
 use klynt_domain::tokens::{EmailVerificationToken, PasswordResetToken};
 
+use crate::audit::AuditService;
 use crate::users::UserService;
 
 pub struct AuthService {
@@ -18,6 +19,7 @@ pub struct AuthService {
     email_verification_repo: Arc<dyn EmailVerificationTokenRepository>,
     password_reset_repo: Arc<dyn PasswordResetTokenRepository>,
     email_service: SharedEmailService,
+    audit_service: Arc<AuditService>,
 }
 
 impl AuthService {
@@ -27,6 +29,7 @@ impl AuthService {
         email_verification_repo: Arc<dyn EmailVerificationTokenRepository>,
         password_reset_repo: Arc<dyn PasswordResetTokenRepository>,
         email_service: SharedEmailService,
+        audit_service: Arc<AuditService>,
     ) -> Self {
         Self {
             user_service,
@@ -34,6 +37,7 @@ impl AuthService {
             email_verification_repo,
             password_reset_repo,
             email_service,
+            audit_service,
         }
     }
 
@@ -49,12 +53,42 @@ impl AuthService {
         email: &Email,
         password: &str,
     ) -> Result<(SessionToken, UserDto), DomainError> {
-        let user = self.user_service.authenticate(ctx, email, password).await?;
+        let user = match self.user_service.authenticate(ctx, email, password).await {
+            Ok(user) => user,
+            Err(e) => {
+                if let Err(log_err) = self
+                    .audit_service
+                    .log_login_failed(ctx, email.as_str(), None, e.to_string())
+                    .await
+                {
+                    tracing::warn!(
+                        error = %log_err,
+                        action = "login_failed",
+                        request_id = ?ctx.request_id,
+                        "failed to log audit event"
+                    );
+                }
+                return Err(e);
+            }
+        };
         let user_id = user.id;
         let user_dto = UserDto::from(&user);
 
         let expires_at = Utc::now() + Session::DEFAULT_TTL;
         let token = self.session_store.create(ctx, user_id, expires_at).await?;
+
+        if let Err(e) = self
+            .audit_service
+            .log_session_created(ctx, user_id, token.0, None)
+            .await
+        {
+            tracing::warn!(
+                error = %e,
+                action = "session_created",
+                request_id = ?ctx.request_id,
+                "failed to log audit event"
+            );
+        }
 
         Ok((token, user_dto))
     }
@@ -73,6 +107,19 @@ impl AuthService {
             .user_service
             .create_pending_user(ctx, name, email, password, terms_accepted, terms_version)
             .await?;
+
+        if let Err(e) = self
+            .audit_service
+            .log_user_registered(ctx, user_id, None)
+            .await
+        {
+            tracing::warn!(
+                error = %e,
+                action = "user_registered",
+                request_id = ?ctx.request_id,
+                "failed to log audit event"
+            );
+        }
 
         let token = EmailVerificationToken::generate(user_id);
         self.email_verification_repo
@@ -111,6 +158,15 @@ impl AuthService {
 
         self.user_service.activate_user(ctx, user_id).await?;
 
+        if let Err(e) = self.audit_service.log_email_verified(ctx, user_id).await {
+            tracing::warn!(
+                error = %e,
+                action = "email_verified",
+                request_id = ?ctx.request_id,
+                "failed to log audit event"
+            );
+        }
+
         Ok(user_id)
     }
 
@@ -122,6 +178,7 @@ impl AuthService {
         ctx: &Ctx,
         email: &Email,
     ) -> Result<(), DomainError> {
+        // TODO(phase-2): audit password-reset request attempts (both found and not-found users)
         let user = match self.user_service.find_by_email(ctx, email).await {
             Ok(Some(user)) => user,
             Ok(None) => {
@@ -179,6 +236,15 @@ impl AuthService {
         self.user_service
             .update_password(ctx, user_id, new_password)
             .await?;
+
+        if let Err(e) = self.audit_service.log_password_reset(ctx, user_id).await {
+            tracing::warn!(
+                error = %e,
+                action = "password_reset",
+                request_id = ?ctx.request_id,
+                "failed to log audit event"
+            );
+        }
 
         Ok(())
     }

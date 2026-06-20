@@ -3,16 +3,19 @@ use std::sync::Arc;
 use axum::Router;
 use klynt_api::startup::build_router;
 use klynt_api::state::AppState;
+use klynt_application::audit::AuditService;
 use klynt_application::auth::AuthService;
 use klynt_application::users::UserService;
 use klynt_domain::config::AppConfig;
 use klynt_domain::models::UserDto;
 use klynt_domain::ports::{HealthCheck, IdempotencyStore, PasswordHasher, SharedEmailService};
+use klynt_domain::repositories::AuditEventRepository;
 use klynt_domain::session::SessionStore;
 use klynt_infrastructure::email::MockEmailService;
 use klynt_infrastructure::password_hasher::Argon2PasswordHasher;
 use klynt_infrastructure::rate_limiter::RateLimiter as InMemoryRateLimiter;
 use klynt_infrastructure::repositories::idempotency::InMemoryIdempotencyStore;
+use klynt_infrastructure::repositories::in_memory_audit_event::InMemoryAuditEventRepository;
 use klynt_infrastructure::repositories::in_memory_password_reset_token::InMemoryPasswordResetTokenRepository;
 use klynt_infrastructure::repositories::in_memory_token::InMemoryEmailVerificationTokenRepository;
 use klynt_infrastructure::repositories::in_memory_user::InMemoryUserRepository;
@@ -69,12 +72,16 @@ pub fn build_app_with_email_service(
     let password_reset_repo: Arc<dyn klynt_domain::repositories::PasswordResetTokenRepository> =
         Arc::new(InMemoryPasswordResetTokenRepository::new());
 
+    let audit_repo: Arc<dyn AuditEventRepository> = Arc::new(InMemoryAuditEventRepository::new());
+    let audit_service = Arc::new(AuditService::new(Arc::clone(&audit_repo)));
+
     let auth_service = Arc::new(AuthService::new(
         Arc::clone(&user_service),
         Arc::clone(&session_store_port),
-        email_verification_repo,
-        password_reset_repo,
+        Arc::clone(&email_verification_repo),
+        Arc::clone(&password_reset_repo),
         email_service,
+        Arc::clone(&audit_service),
     ));
 
     let health_checks: Vec<Arc<dyn HealthCheck>> = vec![
@@ -85,14 +92,17 @@ pub fn build_app_with_email_service(
         rate_limiter_health,
     ];
 
-    let state = Arc::new(AppState::new(
+    let state = Arc::new(AppState::new(klynt_api::state::AppStateDeps {
         config,
         user_service,
         auth_service,
-        session_store_port,
-        rate_limiter_port,
+        session_store: session_store_port,
+        rate_limiter: rate_limiter_port,
         health_checks,
-    ));
+        email_verification_repo,
+        password_reset_repo,
+        audit_service,
+    }));
 
     build_router(state)
 }

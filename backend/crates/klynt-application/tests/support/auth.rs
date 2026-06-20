@@ -5,13 +5,15 @@ use std::sync::{Arc, Mutex};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 
+use klynt_application::audit::AuditService;
 use klynt_application::auth::AuthService;
 use klynt_domain::ctx::Ctx;
 use klynt_domain::errors::DomainError;
 use klynt_domain::models::{Email, UserId};
 use klynt_domain::ports::{EmailService, SharedEmailService};
-use klynt_domain::repositories::PasswordResetTokenRepository;
+use klynt_domain::repositories::{AuditEventRepository, PasswordResetTokenRepository};
 use klynt_domain::session::{Session, SessionStore, SessionToken};
+use klynt_infrastructure::repositories::in_memory_audit_event::InMemoryAuditEventRepository;
 use klynt_infrastructure::repositories::in_memory_password_reset_token::InMemoryPasswordResetTokenRepository;
 use klynt_infrastructure::repositories::in_memory_token::InMemoryEmailVerificationTokenRepository;
 
@@ -76,6 +78,8 @@ pub fn auth_service() -> (
         Arc::new(InMemoryPasswordResetTokenRepository::new());
     let email_service_impl = Arc::new(FakeEmailService::default());
     let email_service: SharedEmailService = Arc::clone(&email_service_impl) as SharedEmailService;
+    let audit_repo: Arc<dyn AuditEventRepository> = Arc::new(InMemoryAuditEventRepository::new());
+    let audit_service = Arc::new(AuditService::new(audit_repo));
     let auth_service = AuthService::new(
         Arc::clone(&user_service),
         session_store,
@@ -83,6 +87,7 @@ pub fn auth_service() -> (
             as Arc<dyn klynt_domain::repositories::EmailVerificationTokenRepository>,
         password_reset_repo,
         email_service,
+        audit_service,
     );
     (auth_service, user_service, email_service_impl)
 }
