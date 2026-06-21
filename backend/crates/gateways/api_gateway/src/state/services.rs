@@ -94,7 +94,7 @@ impl Services {
         let token_store = Arc::new(TokenRepositoryAdapter::new(PgTokenStore::new(pool.clone())));
 
         let audit_repo = Arc::new(PgAuditEventRepository::new(pool.clone()));
-        let audit_service = Arc::new(klynt_application::audit::AuditService::new(audit_repo));
+        let audit_service = Arc::new(klynt_audit::AuditService::new(audit_repo));
         let audit_logger = Arc::new(AuthAuditLoggerAdapter::new(audit_service));
 
         let email_service: klynt_domain::ports::SharedEmailService =
@@ -136,7 +136,7 @@ impl Services {
         let user_repository = Arc::new(UserRepoAdapter::new(PgUserRepository::new(pool.clone())));
 
         let audit_repo = Arc::new(PgAuditEventRepository::new(pool.clone()));
-        let audit_service = Arc::new(klynt_application::audit::AuditService::new(audit_repo));
+        let audit_service = Arc::new(klynt_audit::AuditService::new(audit_repo));
         let audit_logger = Arc::new(UserAuditLoggerAdapter::new(audit_service));
 
         let password_hasher: Arc<dyn user_service::application::ports::PasswordHasher> =

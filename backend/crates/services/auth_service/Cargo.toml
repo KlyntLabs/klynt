@@ -13,7 +13,7 @@ klynt_contracts = { path = "../../../crates/shared/klynt_contracts" }
 
 # === Existing (will be removed after extraction) ===
 klynt-domain = { path = "../../../crates/klynt-domain" }
-klynt-application = { path = "../../../crates/klynt-application" }
+klynt_audit = { path = "../../../crates/infrastructure/klynt_audit" }
 klynt-infrastructure = { path = "../../../crates/klynt-infrastructure" }
 
 # === Async Runtime ===

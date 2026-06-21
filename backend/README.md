@@ -1,62 +1,44 @@
 # Klynt Backend
 
-Rust HTTP API for the Klynt Education Platform. Built with Axum, Tokio, and SQLx.
+Service-oriented Rust backend for the Klynt Education Platform. Built with Axum, Tokio, and SQLx.
 
-## Phase 1 Status — Core Auth Foundation
-
-Phase 1 delivers the foundational authentication and audit infrastructure:
-
-- **User registration** with email verification tokens
-- **Password reset** flow with single-use tokens
-- **Session-based login** with session-fixation protection (new session ID on every login)
-- **Audit logging** for security-relevant events (registration, verification, login, password reset)
-- **OpenAPI 3.1.0** specification for auth endpoints (`crates/klynt-api/src/openapi.yaml`)
-
-Adapters are production-backed: PostgreSQL/SQLx repositories for users, sessions, tokens and audit events, Redis for rate limiting and idempotency, and Argon2 for password hashing.
-
-## Crate Layout
-
-### Existing Crates
-
-| Crate | Responsibility |
-|-------|----------------|
-| `klynt-domain` | Entities, errors, ports/traits, config types. No framework dependencies. |
-| `klynt-application` | Use cases (`AuthService`, `UserService`, `AuditService`). Depends only on domain. |
-| `klynt-infrastructure` | Concrete adapters (Postgres/SQLx repos, Redis rate limiter/idempotency, Argon2 hasher, mock email). |
-| `klynt-api` | HTTP handlers, DTOs, routing, middleware, error mapping, OpenAPI spec. |
-| `klynt-server` | Binary entrypoint, telemetry, and the single composition root. |
-
-### Phase 1 Foundation Crates
-
-These crates are introduced alongside the existing ones and are not yet wired
-into the application layer. They provide the shared abstractions future
-services will depend on.
+## Architecture
 
 ```
-crates/
-├── core/
-│   └── klynt_core          # Base types, traits, request/execution context
-├── shared/
+backend/crates/
+├── core/                   # Base abstractions
+│   └── klynt_core
+├── shared/                 # Shared libraries
 │   ├── klynt_contracts     # DTOs for service boundaries
-│   ├── klynt_domain        # Shared domain types and errors
-│   ├── klynt_utils         # ID generation, crypto, time utilities
-│   └── klynt_typedenum     # Shared enums (roles, statuses)
-└── infrastructure/
-    ├── klynt_messaging     # Event messaging / pub-sub abstractions
-    ├── klynt_storage       # Database and repository abstractions
-    └── klynt_tracing       # Tracing subscriber and field constants
+│   ├── klynt_domain        # Legacy shared domain types (minimized)
+│   └── klynt_utils         # ID generation, crypto, time utilities
+├── infrastructure/         # Shared infrastructure
+│   ├── klynt_audit         # Audit logging service
+│   ├── klynt_messaging     # Event messaging abstractions
+│   ├── klynt_storage       # Storage abstractions
+│   ├── klynt_tracing       # Observability
+│   └── klynt-infrastructure # Repositories, email, hashing, rate limiting
+├── services/               # Business services
+│   ├── auth_service        # Authentication and authorization
+│   └── user_service        # User profile management
+├── gateways/               # HTTP entry points
+│   └── api_gateway         # HTTP API gateway
+└── klynt-server            # Minimal binary entrypoint
 ```
 
-| Crate | Responsibility |
-|-------|----------------|
-| `klynt_core` | Base types, constants, core traits, request and execution context. |
-| `klynt_utils` | ID generation, cryptographic helpers, and time utilities. |
-| `klynt_shared_domain` | Shared domain errors and types (`Email`, `Timestamp`, pagination). |
-| `klynt_contracts` | Request/response DTOs for auth, users, and common envelopes. |
-| `klynt_typedenum` | Shared enums such as `UserRole` and `UserStatus`. |
-| `klynt_storage` | SQLx/Postgres pool helpers and repository traits. |
-| `klynt_messaging` | Domain event envelope and message bus abstraction. |
-| `klynt_tracing` | Tracing initialization and standard field names. |
+## Services
+
+- `auth_service` — Authentication and authorization (register, login, email verification, password reset)
+- `user_service` — User profile management (profiles, password changes, user listing)
+
+## Gateway
+
+- `api_gateway` — HTTP API gateway; routes requests to services and provides middleware (auth, CORS, security headers, request IDs, error handling)
+
+## Shared Infrastructure
+
+- `klynt-infrastructure` — PostgreSQL repositories, Redis rate limiting/idempotency, Argon2 password hashing, mock email service
+- `klynt_audit` — Audit logging service used by both services through adapters
 
 ## Local Development
 
@@ -96,7 +78,7 @@ Expected tables after migrations:
 cargo run --bin klynt-server
 ```
 
-The API is available at `http://localhost:3001/api/v1`.
+The API is available at `http://localhost:3000/api/v1` by default.
 
 ## Testing
 
@@ -118,7 +100,7 @@ export REDIS_URL=redis://localhost:6379/0
 cargo llvm-cov --workspace --all-features --no-clean --fail-under-lines 84
 ```
 
-Phase 1 coverage gate: **≥ 84% lines**.
+Backend coverage gate: **≥ 84% lines**.
 
 ### Run linting and formatting checks
 
@@ -135,9 +117,9 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 | `POST` | `/api/v1/auth/verify-email` | Verify email with token |
 | `POST` | `/api/v1/auth/request-password-reset` | Request a password reset email |
 | `POST` | `/api/v1/auth/reset-password` | Reset password with token |
-| `POST` | `/api/v1/sessions` | Create a session (login) |
+| `POST` | `/api/v1/auth/login` | Create a session (login) |
 
-See `crates/klynt-api/src/openapi.yaml` for the full request/response schemas.
+See `crates/gateways/api_gateway/src/openapi.yaml` for the full request/response schemas.
 
 ## Environment Variables
 
@@ -148,6 +130,6 @@ Copy the root `.env.example` to `.env` and adjust as needed. Key backend variabl
 | `DATABASE_URL` | Postgres connection string | `postgresql://klynt:klynt@localhost:5432/klynt` |
 | `REDIS_URL` | Redis connection string | `redis://localhost:6379` |
 | `KLYNT_API__HOST` | API bind host | `127.0.0.1` |
-| `KLYNT_API__PORT` | API bind port | `3001` |
+| `KLYNT_API__PORT` | API bind port | `3000` |
 
 See `crates/klynt-domain/src/config.rs` for the full configuration shape.

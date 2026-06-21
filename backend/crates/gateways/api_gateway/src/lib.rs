@@ -17,10 +17,9 @@ pub mod routes;
 pub mod state;
 
 use axum::Router;
-use state::Services;
 
 pub use error::{GatewayError, GatewayResult};
-pub use state::Config;
+pub use state::{Config, Services};
 
 /// Run the API gateway — the single public interface.
 ///

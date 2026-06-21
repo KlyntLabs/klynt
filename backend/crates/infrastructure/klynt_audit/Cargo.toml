@@ -1,0 +1,16 @@
+[package]
+name = "klynt_audit"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+klynt-domain = { workspace = true }
+
+tokio = { workspace = true }
+async-trait = { workspace = true }
+tracing = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+
+[lints]
+workspace = true

@@ -10,13 +10,13 @@ use klynt_utils::UserId;
 use crate::application::ports::AuditLogger;
 use crate::infrastructure::conversion::{to_legacy_ctx, to_legacy_user_id};
 
-/// Adapter wrapping the legacy [`klynt_application::audit::AuditService`].
+/// Adapter wrapping the legacy [`klynt_audit::AuditService`].
 pub struct AuditLoggerAdapter {
-    inner: Arc<klynt_application::audit::AuditService>,
+    inner: Arc<klynt_audit::AuditService>,
 }
 
 impl AuditLoggerAdapter {
-    pub fn new(inner: Arc<klynt_application::audit::AuditService>) -> Self {
+    pub fn new(inner: Arc<klynt_audit::AuditService>) -> Self {
         Self { inner }
     }
 }

@@ -3,9 +3,7 @@ resolver = "2"
 members = [
     # === Existing (keep for Phase 1) ===
     "crates/klynt-domain",
-    "crates/klynt-application",
     "crates/klynt-infrastructure",
-    "crates/klynt-api",
     "crates/klynt-server",
 
     # === NEW - Phase 1 Foundation ===
@@ -18,6 +16,7 @@ members = [
     "crates/infrastructure/klynt_messaging",
     "crates/infrastructure/klynt_storage",
     "crates/infrastructure/klynt_tracing",
+    "crates/infrastructure/klynt_audit",
 
     # === NEW - Phase 2 ===
     "crates/services/auth_service",
@@ -93,9 +92,7 @@ prometheus = { version = "0.13", default-features = false }
 
 # Internal crates
 klynt-domain = { path = "crates/klynt-domain" }
-klynt-application = { path = "crates/klynt-application" }
 klynt-infrastructure = { path = "crates/klynt-infrastructure" }
-klynt-api = { path = "crates/klynt-api" }
 
 # === NEW - Internal crates ===
 klynt_core = { path = "crates/core/klynt_core" }
@@ -105,6 +102,7 @@ klynt_utils = { path = "crates/shared/klynt_utils" }
 klynt_messaging = { path = "crates/infrastructure/klynt_messaging" }
 klynt_storage = { path = "crates/infrastructure/klynt_storage" }
 klynt_tracing = { path = "crates/infrastructure/klynt_tracing" }
+klynt_audit = { path = "crates/infrastructure/klynt_audit" }
 
 # === NEW - Phase 2 ===
 auth_service = { path = "crates/services/auth_service" }

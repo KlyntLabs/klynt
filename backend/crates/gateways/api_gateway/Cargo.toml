@@ -16,9 +16,9 @@ klynt_utils = { path = "../../shared/klynt_utils" }
 klynt_tracing = { path = "../../infrastructure/klynt_tracing" }
 
 # === Legacy adapters (needed while auth_service bridges to the monolith) ===
-klynt-application = { path = "../../klynt-application" }
 klynt-domain = { path = "../../klynt-domain" }
 klynt-infrastructure = { path = "../../klynt-infrastructure" }
+klynt_audit = { path = "../../infrastructure/klynt_audit" }
 
 # === Web Framework ===
 axum = { workspace = true }

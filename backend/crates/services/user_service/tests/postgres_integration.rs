@@ -118,7 +118,7 @@ async fn audit_logger_adapter_creates_profile_updated_event() {
     let audit_repo = Arc::new(
         klynt_infrastructure::repositories::sqlx_audit_repo::PgAuditEventRepository::new(pool),
     );
-    let audit_service = Arc::new(klynt_application::audit::AuditService::new(audit_repo));
+    let audit_service = Arc::new(klynt_audit::AuditService::new(audit_repo));
     let adapter = AuditLoggerAdapter::new(audit_service);
     let ctx = test_ctx();
     let user_id = UserId::new();

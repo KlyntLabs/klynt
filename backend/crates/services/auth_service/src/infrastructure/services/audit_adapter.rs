@@ -9,13 +9,13 @@ use klynt_utils::UserId;
 
 use crate::application::ports::AuditLogger;
 
-/// Adapter wrapping the legacy [`klynt_application::audit::AuditService`].
+/// Adapter wrapping the legacy [`klynt_audit::AuditService`].
 pub struct AuditLoggerAdapter {
-    inner: Arc<klynt_application::audit::AuditService>,
+    inner: Arc<klynt_audit::AuditService>,
 }
 
 impl AuditLoggerAdapter {
-    pub fn new(inner: Arc<klynt_application::audit::AuditService>) -> Self {
+    pub fn new(inner: Arc<klynt_audit::AuditService>) -> Self {
         Self { inner }
     }
 }
@@ -157,7 +157,7 @@ mod tests {
 
     fn adapter() -> (AuditLoggerAdapter, Arc<CapturingRepo>) {
         let repo = Arc::new(CapturingRepo::default());
-        let audit = Arc::new(klynt_application::audit::AuditService::new(repo.clone()));
+        let audit = Arc::new(klynt_audit::AuditService::new(repo.clone()));
         (AuditLoggerAdapter::new(audit), repo)
     }
 
