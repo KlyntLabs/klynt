@@ -73,7 +73,7 @@ pub struct LogRequest {
 /// with borrowing `AppError` from response extensions).
 #[derive(Debug, Clone)]
 pub struct ErrorClassification {
-    pub error_code: &'static str,
+    pub error_code: String,
     pub message: String,
     pub severity: ErrorSeverity,
     pub category: ErrorCategory,
@@ -253,7 +253,7 @@ struct ResponseLogContext {
 #[derive(Serialize)]
 struct ErrorInfo {
     #[serde(rename = "type")]
-    type_: &'static str,
+    type_: String,
     message: String,
 }
 

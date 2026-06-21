@@ -14,7 +14,7 @@ use axum::{
 use serde::Serialize;
 use serde_json::Value;
 
-use crate::error::AppError;
+use crate::error::{AppError, ServiceError};
 use crate::logging::{log_request, LogEntry, LogRequest, LogResponse};
 use crate::request_context::{RequestContext, RequestId};
 
@@ -36,7 +36,7 @@ pub struct ApiResponse {
 #[derive(Debug, Serialize)]
 pub struct ApiErrorPayload {
     #[serde(rename = "type")]
-    pub error_type: &'static str,
+    pub error_type: String,
     pub code: u16,
     pub message: String,
     pub details: Option<Value>,
@@ -139,16 +139,16 @@ pub async fn mw_map_response(
         (ApiResponse::success(id, data, meta), parts.status, None)
     } else if let Some(app_err) = parts.extensions.get::<AppError>() {
         let error_payload = ApiErrorPayload {
-            error_type: app_err.kind.error_code(),
+            error_type: app_err.error_code(),
             code: parts.status.as_u16(),
-            message: sanitize_error_message(&app_err.kind),
-            details: None,
+            message: app_err.client_message(),
+            details: app_err.details(),
         };
         let classification = crate::logging::ErrorClassification {
-            error_code: app_err.kind.error_code(),
-            message: sanitize_error_message(&app_err.kind),
-            severity: app_err.kind.severity(),
-            category: app_err.kind.category(),
+            error_code: app_err.error_code(),
+            message: app_err.client_message(),
+            severity: app_err.severity(),
+            category: app_err.category(),
         };
         (
             ApiResponse::error(id, error_payload, meta),
@@ -159,7 +159,7 @@ pub async fn mw_map_response(
         let body_val: Value = serde_json::from_slice(&bytes).unwrap_or(Value::Null);
         let error_payload = if body_val != Value::Null {
             ApiErrorPayload {
-                error_type: "UNKNOWN_ERROR",
+                error_type: "UNKNOWN_ERROR".to_string(),
                 code: parts.status.as_u16(),
                 message: body_val
                     .get("message")
@@ -170,7 +170,7 @@ pub async fn mw_map_response(
             }
         } else {
             ApiErrorPayload {
-                error_type: "UNKNOWN_ERROR",
+                error_type: "UNKNOWN_ERROR".to_string(),
                 code: parts.status.as_u16(),
                 message: "An unexpected error occurred".to_string(),
                 details: None,
@@ -213,14 +213,6 @@ pub async fn mw_map_response(
     response
 }
 
-/// Avoid leaking internal error details for `Internal` variants.
-fn sanitize_error_message(kind: &crate::error::AppErrorKind) -> String {
-    match kind {
-        crate::error::AppErrorKind::Internal(_) => "something went wrong".to_string(),
-        other => other.to_string(),
-    }
-}
-
 impl ApiResponse {
     /// Serialize to a serde_json::Value for logging (without re-serializing the response).
     fn to_log_value(&self) -> Value {
@@ -230,8 +222,6 @@ impl ApiResponse {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
-
     use super::*;
 
     #[test]
@@ -260,7 +250,7 @@ mod tests {
             duration_ms: 3.1,
         };
         let error = ApiErrorPayload {
-            error_type: "AUTHENTICATION_REQUIRED",
+            error_type: "AUTHENTICATION_REQUIRED".to_string(),
             code: 401,
             message: "Authentication required".to_string(),
             details: None,
@@ -272,22 +262,5 @@ mod tests {
         assert!(json["data"].is_null());
         assert_eq!(json["error"]["type"], "AUTHENTICATION_REQUIRED");
         assert_eq!(json["error"]["code"], 401);
-    }
-
-    #[test]
-    fn sanitize_internal_error_hides_details() {
-        let kind = crate::error::AppErrorKind::Internal(Arc::new(std::io::Error::other(
-            "db password=secret",
-        )));
-        let msg = sanitize_error_message(&kind);
-        assert_eq!(msg, "something went wrong");
-        assert!(!msg.contains("secret"));
-    }
-
-    #[test]
-    fn sanitize_bad_request_shows_message() {
-        let kind = crate::error::AppErrorKind::BadRequest("invalid email".to_string());
-        let msg = sanitize_error_message(&kind);
-        assert_eq!(msg, "bad request: invalid email");
     }
 }

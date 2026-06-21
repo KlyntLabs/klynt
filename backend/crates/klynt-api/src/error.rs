@@ -2,6 +2,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
+use serde_json::Value;
 use uuid::Uuid;
 
 use klynt_domain::errors::{DomainError, ErrorKind};
@@ -20,7 +21,7 @@ pub enum AppErrorKind {
     #[error("too many requests")]
     RateLimited,
     #[error("internal server error")]
-    Internal(std::sync::Arc<dyn std::error::Error + Send + Sync>),
+    Internal(#[source] std::sync::Arc<dyn std::error::Error + Send + Sync>),
 }
 
 /// Severity used to drive log levels for errors.
@@ -64,6 +65,71 @@ impl ErrorCategory {
             ErrorCategory::Validation => "Validation",
             ErrorCategory::Infrastructure => "Infrastructure",
         }
+    }
+}
+
+/// Uniform error abstraction for all API-layer errors.
+///
+/// Any error type implementing this trait can flow through the centralized
+/// response mapper (`mw_map_response`) and the structured logging path
+/// without needing dedicated match arms. The trait provides:
+/// - HTTP status code
+/// - Stable error code string for the client
+/// - Severity (drives log level)
+/// - Category (drives observability dashboards)
+/// - Client-safe message (internal details are sanitized)
+/// - Optional structured details (e.g. validation field errors)
+/// - Optional Retry-After hint for rate limiting
+pub trait ServiceError: std::error::Error + Send + Sync {
+    fn status_code(&self) -> StatusCode;
+    fn error_code(&self) -> String;
+    fn severity(&self) -> ErrorSeverity;
+    fn category(&self) -> ErrorCategory;
+    fn client_message(&self) -> String;
+    fn details(&self) -> Option<Value> {
+        None
+    }
+    fn retry_after_seconds(&self) -> Option<u32> {
+        None
+    }
+    fn should_log(&self) -> bool {
+        self.severity() != ErrorSeverity::Low
+    }
+}
+
+impl ServiceError for AppErrorKind {
+    fn status_code(&self) -> StatusCode {
+        match self {
+            AppErrorKind::NotFound => StatusCode::NOT_FOUND,
+            AppErrorKind::BadRequest(_) => StatusCode::BAD_REQUEST,
+            AppErrorKind::Conflict(_) => StatusCode::CONFLICT,
+            AppErrorKind::Unauthorized => StatusCode::UNAUTHORIZED,
+            AppErrorKind::RateLimited => StatusCode::TOO_MANY_REQUESTS,
+            AppErrorKind::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+
+    fn error_code(&self) -> String {
+        AppErrorKind::error_code(self).to_string()
+    }
+
+    fn severity(&self) -> ErrorSeverity {
+        AppErrorKind::severity(self)
+    }
+
+    fn category(&self) -> ErrorCategory {
+        AppErrorKind::category(self)
+    }
+
+    fn client_message(&self) -> String {
+        match self {
+            AppErrorKind::Internal(_) => "something went wrong".to_string(),
+            other => other.to_string(),
+        }
+    }
+
+    fn retry_after_seconds(&self) -> Option<u32> {
+        AppErrorKind::retry_after_seconds(self)
     }
 }
 
@@ -157,16 +223,48 @@ impl From<DomainError> for AppError {
     }
 }
 
+impl std::fmt::Display for AppError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.kind)
+    }
+}
+
+impl std::error::Error for AppError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        self.kind.source()
+    }
+}
+
+impl ServiceError for AppError {
+    fn status_code(&self) -> StatusCode {
+        ServiceError::status_code(&self.kind)
+    }
+    fn error_code(&self) -> String {
+        ServiceError::error_code(&self.kind)
+    }
+    fn severity(&self) -> ErrorSeverity {
+        ServiceError::severity(&self.kind)
+    }
+    fn category(&self) -> ErrorCategory {
+        ServiceError::category(&self.kind)
+    }
+    fn client_message(&self) -> String {
+        ServiceError::client_message(&self.kind)
+    }
+    fn details(&self) -> Option<Value> {
+        ServiceError::details(&self.kind)
+    }
+    fn retry_after_seconds(&self) -> Option<u32> {
+        ServiceError::retry_after_seconds(&self.kind)
+    }
+    fn should_log(&self) -> bool {
+        ServiceError::should_log(&self.kind)
+    }
+}
+
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        let status = match &self.kind {
-            AppErrorKind::NotFound => StatusCode::NOT_FOUND,
-            AppErrorKind::BadRequest(_) => StatusCode::BAD_REQUEST,
-            AppErrorKind::Conflict(_) => StatusCode::CONFLICT,
-            AppErrorKind::Unauthorized => StatusCode::UNAUTHORIZED,
-            AppErrorKind::RateLimited => StatusCode::TOO_MANY_REQUESTS,
-            AppErrorKind::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        };
+        let status = ServiceError::status_code(&self.kind);
 
         let mut response = status.into_response();
         // Mark the response as JSON so mw_map_response will envelope it.
@@ -192,98 +290,56 @@ impl<T> WithRequestId<T> for Result<T, DomainError> {
 }
 
 #[cfg(test)]
-mod conversion_tests {
-    use super::*;
-    use klynt_domain::errors::{DomainError, NameError, PasswordError};
-
-    fn status_of(err: AppError) -> StatusCode {
-        let response = err.into_response();
-        response.status()
-    }
-
-    #[test]
-    fn conflict_error_becomes_409() {
-        let app_err = AppError::from(DomainError::AlreadyExists {
-            email: "ada@example.com".to_string(),
-        });
-        assert_eq!(status_of(app_err), StatusCode::CONFLICT);
-    }
-
-    #[test]
-    fn validation_error_becomes_400() {
-        let app_err = AppError::from(DomainError::WeakPassword(PasswordError::TooShort));
-        assert_eq!(status_of(app_err), StatusCode::BAD_REQUEST);
-    }
-
-    #[test]
-    fn not_found_becomes_404() {
-        let app_err = AppError::from(DomainError::NotFound);
-        assert_eq!(status_of(app_err), StatusCode::NOT_FOUND);
-    }
-
-    #[test]
-    fn rate_limited_becomes_429() {
-        let app_err = AppError::from(DomainError::RateLimited);
-        assert_eq!(status_of(app_err), StatusCode::TOO_MANY_REQUESTS);
-    }
-
-    #[test]
-    fn authentication_required_becomes_401() {
-        let app_err = AppError::from(DomainError::AuthenticationRequired);
-        assert_eq!(status_of(app_err), StatusCode::UNAUTHORIZED);
-    }
-
-    #[test]
-    fn bad_request_preserves_inner_message() {
-        let app_err = AppError::from(DomainError::InvalidName(NameError::Empty));
-        match app_err.kind {
-            AppErrorKind::BadRequest(msg) => assert_eq!(msg, "name is empty"),
-            other => panic!("expected BadRequest, got {other:?}"),
-        }
-    }
-
-    #[test]
-    fn conflict_preserves_inner_message() {
-        let app_err = AppError::from(DomainError::AlreadyExists {
-            email: "ada@example.com".to_string(),
-        });
-        match app_err.kind {
-            AppErrorKind::Conflict(msg) => assert!(msg.contains("email already registered")),
-            other => panic!("expected Conflict, got {other:?}"),
-        }
-    }
-
-    #[test]
-    fn internal_error_becomes_500() {
-        let app_err = AppError::from(DomainError::internal_msg("secrets"));
-        match app_err.kind {
-            kind @ AppErrorKind::Internal(_) => {
-                assert_eq!(
-                    status_of(AppError::new(kind, Uuid::nil())),
-                    StatusCode::INTERNAL_SERVER_ERROR
-                );
-            }
-            other => panic!("expected Internal, got {other:?}"),
-        }
-    }
-
-    #[test]
-    fn request_id_attached_via_extensions() {
-        let request_id = Uuid::new_v4();
-        let app_err = AppError::new(AppErrorKind::BadRequest("boom".to_string()), request_id);
-        let response = app_err.into_response();
-        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
-        let attached = response
-            .extensions()
-            .get::<AppError>()
-            .expect("AppError in extensions");
-        assert_eq!(attached.request_id, request_id);
-    }
-}
+mod conversion_tests;
 
 #[cfg(test)]
 mod classification_tests {
+    use std::error::Error;
+
     use super::*;
+
+    #[test]
+    fn service_error_trait_can_be_used_as_dyn() {
+        let kind = AppErrorKind::NotFound;
+        let dyn_err: &dyn ServiceError = &kind;
+        assert_eq!(dyn_err.error_code(), "NOT_FOUND");
+        assert_eq!(dyn_err.severity(), ErrorSeverity::Low);
+        assert_eq!(dyn_err.status_code(), StatusCode::NOT_FOUND);
+    }
+
+    #[test]
+    fn app_error_implements_service_error() {
+        let app_err = AppError::new(AppErrorKind::BadRequest("test".to_string()), Uuid::nil());
+        let dyn_err: &dyn ServiceError = &app_err;
+        assert_eq!(dyn_err.error_code(), "BAD_REQUEST");
+        assert_eq!(dyn_err.client_message(), "bad request: test");
+    }
+
+    #[test]
+    fn service_error_sanitizes_internal_message() {
+        let kind = AppErrorKind::Internal(std::sync::Arc::new(std::io::Error::other(
+            "db password=secret",
+        )));
+        let dyn_err: &dyn ServiceError = &kind;
+        assert_eq!(dyn_err.client_message(), "something went wrong");
+        assert!(!dyn_err.client_message().contains("secret"));
+    }
+
+    #[test]
+    fn service_error_defaults_details_and_retry_after() {
+        let kind = AppErrorKind::BadRequest("bad".to_string());
+        let dyn_err: &dyn ServiceError = &kind;
+        assert_eq!(dyn_err.details(), None);
+        assert_eq!(dyn_err.retry_after_seconds(), None);
+    }
+
+    #[test]
+    fn internal_error_preserves_source_chain() {
+        let inner = std::io::Error::other("db password=secret");
+        let kind = AppErrorKind::Internal(std::sync::Arc::new(inner));
+        let app_err = AppError::new(kind, Uuid::nil());
+        assert!(app_err.source().is_some());
+    }
 
     #[test]
     fn not_found_classification() {
