@@ -3,8 +3,7 @@ use std::sync::Arc;
 use klynt_application::auth::AuthService;
 use klynt_application::users::UserService;
 use klynt_domain::config::AppConfig;
-use klynt_domain::errors::DomainError;
-use klynt_domain::ports::{HealthCheck, RateLimiter};
+use klynt_domain::ports::{ComponentHealth, HealthCheck, RateLimiter};
 use klynt_domain::session::SessionStore;
 
 #[derive(Clone)]
@@ -63,10 +62,11 @@ impl AppState {
         &self.auth_service
     }
 
-    pub async fn check_health(&self) -> Result<(), DomainError> {
+    pub async fn check_health(&self) -> Vec<ComponentHealth> {
+        let mut results = Vec::with_capacity(self.health_checks.len());
         for check in &self.health_checks {
-            check.check().await?;
+            results.push(check.check().await);
         }
-        Ok(())
+        results
     }
 }

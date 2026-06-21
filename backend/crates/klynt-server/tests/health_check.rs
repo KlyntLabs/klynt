@@ -43,4 +43,16 @@ async fn readiness_returns_ok() {
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(json["status"], "ok");
+
+    let components = json["components"].as_array().expect("components array");
+    assert!(!components.is_empty());
+    for component in components {
+        assert!(component.get("name").is_some());
+        assert!(component.get("healthy").is_some());
+        assert!(component.get("latency_ms").is_some());
+    }
 }

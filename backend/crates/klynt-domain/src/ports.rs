@@ -5,11 +5,23 @@ use uuid::Uuid;
 
 use crate::errors::DomainError;
 
+/// Per-component health check result.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct ComponentHealth {
+    pub name: String,
+    pub healthy: bool,
+    pub latency_ms: f64,
+    pub error: Option<String>,
+}
+
 /// Health-check port for readiness probes.
 #[async_trait]
 pub trait HealthCheck: Send + Sync {
-    /// Returns `Ok(())` if the dependency is healthy.
-    async fn check(&self) -> Result<(), DomainError>;
+    /// Name of the component being checked (e.g. "postgres.user_repository").
+    fn name(&self) -> &str;
+
+    /// Check the component's health, returning timing + status.
+    async fn check(&self) -> ComponentHealth;
 }
 
 /// A generic idempotency cache.
