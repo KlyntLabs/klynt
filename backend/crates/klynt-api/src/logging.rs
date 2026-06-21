@@ -47,13 +47,13 @@ impl LogConfig {
     fn from_env() -> Self {
         Self {
             // Default false everywhere — PII minimization.
-            log_bodies: std::env::var("LOG_BODIES")
+            log_bodies: std::env::var("KLYNT_LOG_BODIES")
                 .map(|v| v == "true")
                 .unwrap_or(false),
-            log_success: std::env::var("LOG_SUCCESS")
+            log_success: std::env::var("KLYNT_LOG_SUCCESS")
                 .map(|v| v == "true")
                 .unwrap_or(false),
-            max_body_size: std::env::var("MAX_BODY_SIZE")
+            max_body_size: std::env::var("KLYNT_MAX_BODY_SIZE")
                 .ok()
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(10 * 1024),

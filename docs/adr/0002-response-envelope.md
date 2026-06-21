@@ -22,7 +22,12 @@ probes):
   "type": "success",
   "data": { ... },
   "error": null,
-  "meta": { "request_id", "trace_id", "timestamp", "duration_ms" }
+  "meta": {
+    "request_id": "<request-uuid>",
+    "trace_id": "<trace-uuid>",
+    "timestamp": "2026-06-21T00:00:00Z",
+    "duration_ms": 12.3
+  }
 }
 ```
 
@@ -51,3 +56,18 @@ handlers remain unchanged (they keep returning `Result<Json<T>, AppError>`).
   successes and read `response.data.error` for errors.
 - Non-JSON responses, 204 No Content, oversized responses (>1 MB), timeout 408s,
   and CORS preflights pass through without enveloping.
+- `MAX_ENVELOPE_BODY_SIZE` is a compile-time constant in
+  `backend/crates/klynt-api/src/response.rs` (default 1 MB), not a runtime env
+  var, to keep the envelope size boundary simple and predictable.
+
+## Related Files
+
+- `backend/crates/klynt-api/src/response.rs` — envelope struct and `mw_map_response`
+- `backend/crates/klynt-api/src/error.rs` — error mapping into the envelope
+- `backend/crates/klynt-api/src/request_context.rs` — request context (request_id,
+  trace_id, start_time) used by the envelope and logging
+- `backend/crates/klynt-api/src/logging.rs` — structured logging that consumes the
+  same request context
+- `backend/crates/klynt-api/src/startup.rs` — router wiring (health exempt, API wrapped)
+- `backend/crates/klynt-api/src/v1/mod.rs` — route module declarations
+- Frontend Axios interceptor (configured to unwrap `response.data.data`)
