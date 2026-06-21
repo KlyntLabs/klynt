@@ -36,6 +36,17 @@ pub enum ErrorSeverity {
     Critical,
 }
 
+impl ErrorSeverity {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            ErrorSeverity::Low => "Low",
+            ErrorSeverity::Medium => "Medium",
+            ErrorSeverity::High => "High",
+            ErrorSeverity::Critical => "Critical",
+        }
+    }
+}
+
 /// Category used to classify errors for observability.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ErrorCategory {
@@ -43,6 +54,17 @@ pub enum ErrorCategory {
     Authorization,
     Validation,
     Infrastructure,
+}
+
+impl ErrorCategory {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            ErrorCategory::Authentication => "Authentication",
+            ErrorCategory::Authorization => "Authorization",
+            ErrorCategory::Validation => "Validation",
+            ErrorCategory::Infrastructure => "Infrastructure",
+        }
+    }
 }
 
 impl AppErrorKind {

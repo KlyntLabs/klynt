@@ -8,12 +8,12 @@ use std::collections::HashMap;
 use std::sync::LazyLock;
 
 use axum::http::{Method, Uri};
-use klynt_domain::ctx::Ctx;
 use serde::Serialize;
 use serde_json::{json, Value};
 use serde_with::skip_serializing_none;
 use tracing::{debug, error, info};
 
+use crate::error::{ErrorCategory, ErrorSeverity};
 use crate::request_context::RequestContext;
 
 /// Fields whose values are redacted before logging.
@@ -67,8 +67,6 @@ static LOG_CONFIG: LazyLock<LogConfig> = LazyLock::new(LogConfig::from_env);
 pub struct LogRequest {
     pub uri: Uri,
     pub method: Method,
-    pub ctx: Option<Ctx>,
-    pub body: Option<Value>,
 }
 
 /// Owned error classification extracted at log time (avoids lifetime issues
@@ -77,6 +75,8 @@ pub struct LogRequest {
 pub struct ErrorClassification {
     pub error_code: &'static str,
     pub message: String,
+    pub severity: ErrorSeverity,
+    pub category: ErrorCategory,
 }
 
 /// Response info collected for logging.
@@ -147,31 +147,10 @@ pub fn log_request(entry: LogEntry) {
 
     let is_error = response.status >= 400;
 
-    // Skip successful requests if log_success is disabled.
-    if !is_error && !LOG_CONFIG.log_success {
+    // Successful requests are emitted at debug! unless KLYNT_LOG_SUCCESS is set.
+    if !is_error && !LOG_CONFIG.log_success && !tracing::enabled!(tracing::Level::DEBUG) {
         return;
     }
-
-    let user_id = request
-        .ctx
-        .and_then(|c| c.user_id)
-        .map(|id| id.0.to_string());
-
-    // Sanitize request body if logging bodies is enabled.
-    let req_body = if LOG_CONFIG.log_bodies {
-        let mut body = request.body;
-        if let Some(ref mut b) = body {
-            if let Some(s) = b.as_str() {
-                if s.len() > LOG_CONFIG.max_body_size {
-                    *b = json!(format!("[TRUNCATED: {} bytes]", s.len()));
-                }
-            }
-            sanitize_value(b);
-        }
-        body
-    } else {
-        None
-    };
 
     // Sanitize response body.
     let resp_body = if LOG_CONFIG.log_bodies {
@@ -189,16 +168,9 @@ pub fn log_request(entry: LogEntry) {
     };
 
     let (severity, category, error_info) = if let Some(classification) = response.error {
-        // Map the error code to severity/category by matching known codes.
-        let (sev, cat) = match classification.error_code {
-            "AUTHENTICATION_REQUIRED" => ("Low", "Authentication"),
-            "RATE_LIMITED" => ("Medium", "Authorization"),
-            "INTERNAL_ERROR" => ("High", "Infrastructure"),
-            _ => ("Low", "Validation"),
-        };
         (
-            Some(sev),
-            Some(cat),
+            Some(classification.severity.as_str()),
+            Some(classification.category.as_str()),
             Some(ErrorInfo {
                 type_: classification.error_code,
                 message: classification.message,
@@ -221,8 +193,6 @@ pub fn log_request(entry: LogEntry) {
             query: extract_query_params(&request.uri),
             client_ip: request_ctx.client_ip.clone(),
             user_agent: request_ctx.user_agent.clone(),
-            body: req_body,
-            user_id,
         },
         response: ResponseLogContext {
             status_code: response.status,
@@ -240,6 +210,8 @@ pub fn log_request(entry: LogEntry) {
     };
 
     if is_error {
+        error!("REQUEST LOG: {serialized}");
+    } else if LOG_CONFIG.log_success {
         info!("REQUEST LOG: {serialized}");
     } else {
         debug!("REQUEST LOG: {serialized}");
@@ -268,8 +240,6 @@ struct RequestLogContext {
     query: Option<Value>,
     client_ip: Option<String>,
     user_agent: Option<String>,
-    body: Option<Value>,
-    user_id: Option<String>,
 }
 
 #[skip_serializing_none]

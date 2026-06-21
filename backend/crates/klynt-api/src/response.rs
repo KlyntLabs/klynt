@@ -121,7 +121,6 @@ pub async fn mw_map_response(
     method: Method,
     res: Response,
 ) -> Response {
-    // Try to extract Ctx from the response extensions (set by ctx_resolve).
     let (parts, body) = res.into_parts();
 
     // Guard: non-JSON or oversized → pass through unchanged.
@@ -149,6 +148,8 @@ pub async fn mw_map_response(
         let classification = crate::logging::ErrorClassification {
             error_code: app_err.kind.error_code(),
             message: sanitize_error_message(&app_err.kind),
+            severity: app_err.kind.severity(),
+            category: app_err.kind.category(),
         };
         (
             ApiResponse::error(id, error_payload, meta),
@@ -194,8 +195,6 @@ pub async fn mw_map_response(
         request: LogRequest {
             uri: uri.clone(),
             method: method.clone(),
-            ctx: None,
-            body: None,
         },
         response: LogResponse {
             status: final_status.as_u16(),

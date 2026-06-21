@@ -19,7 +19,7 @@ use axum::{
     middleware::Next,
     response::Response,
 };
-use tracing::{info, instrument};
+use tracing::{debug, instrument};
 use uuid::Uuid;
 
 use crate::middleware::RequestId;
@@ -194,7 +194,7 @@ pub async fn request_context(
         .record("request_id", ctx.request_id.to_string())
         .record("trace_id", ctx.trace_id.to_string());
 
-    info!(
+    debug!(
         request_id = %ctx.request_id,
         trace_id = %ctx.trace_id,
         client_ip = ctx.client_ip.as_deref().unwrap_or("unknown"),
