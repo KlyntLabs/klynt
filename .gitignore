@@ -9,7 +9,7 @@
 backend/target/
 
 # Node
-frontend/node_modules/
+**/node_modules/
 frontend/dist/
 frontend/coverage/
 frontend/.vite/
@@ -35,3 +35,6 @@ backend/config/local.toml
 
 *storybook.log
 storybook-static
+
+# Brainstorming mockups
+.superpowers/

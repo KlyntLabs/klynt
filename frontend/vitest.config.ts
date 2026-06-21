@@ -8,7 +8,8 @@ import { defineConfig } from "vitest/config";
 const dirname =
   typeof __dirname !== "undefined" ? __dirname : path.dirname(fileURLToPath(import.meta.url));
 
-const isCI = process.env.CI === "true" || process.env.CI === "1";
+const enableStorybookBrowserTests =
+  process.env.STORYBOOK_TEST === "true" || process.env.STORYBOOK_TEST === "1";
 
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
@@ -39,12 +40,11 @@ export default defineConfig({
           exclude: ["e2e/**/*", "node_modules/**/*", "dist/**/*"],
         },
       },
-      // Storybook stories are tested locally with a real browser. In CI we skip
-      // the browser project because there are no stories yet and installing
-      // Playwright browsers adds several minutes (and occasional flakiness).
-      ...(isCI
-        ? []
-        : [
+      // Storybook stories can be tested in a real browser via `bun run test:storybook`.
+      // We keep them out of the default test run to avoid Playwright browser
+      // installation and flakiness in normal development and CI.
+      ...(enableStorybookBrowserTests
+        ? [
             {
               extends: true as const,
               plugins: [
@@ -68,7 +68,8 @@ export default defineConfig({
                 },
               },
             },
-          ]),
+          ]
+        : []),
     ],
   },
 });

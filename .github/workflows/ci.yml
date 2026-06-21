@@ -14,6 +14,7 @@ concurrency:
 permissions:
   contents: read
   checks: write
+  pull-requests: read
 
 env:
   CARGO_TERM_COLOR: always
@@ -55,6 +56,32 @@ jobs:
     defaults:
       run:
         working-directory: ./backend
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: test
+          POSTGRES_USER: klynt
+          POSTGRES_PASSWORD: klynt
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    env:
+      DATABASE_URL: postgresql://klynt:klynt@localhost:5432/test
+      REDIS_URL: redis://localhost:6379/0
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -79,7 +106,7 @@ jobs:
         run: cargo clippy --locked --all-targets --all-features -- -D warnings
 
       - name: Run tests with coverage
-        run: cargo llvm-cov --locked --workspace --all-features --no-clean --fail-under-lines 84
+        run: cargo llvm-cov --locked --workspace --all-features --no-clean --fail-under-lines 84 -- --include-ignored
 
       - name: Build release binary
         run: cargo build --locked --release --bin klynt-server
@@ -96,30 +123,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Install dependencies
-        run: npm ci
+        run: bun install --frozen-lockfile
 
       - name: Check formatting
-        run: npm run format:check
+        run: bun run format:check
 
       - name: Lint
-        run: npm run lint
+        run: bun run lint
 
       - name: Typecheck
-        run: npm run typecheck
+        run: bun run typecheck
 
       - name: Run tests with coverage
-        run: npm run test:coverage
+        run: bun run test:coverage
 
       - name: Production build
-        run: npm run build
+        run: bun run build
+
+      - name: Check frontend performance budget
+        run: bun run check:performance
 
   security-checks:
     name: Security checks

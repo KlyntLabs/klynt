@@ -8,6 +8,8 @@ import { routePaths } from "@/core/routing/route-paths";
 import { registerUser } from "@/features/auth/api/register";
 import type { RegisterInput, RegisterResponse } from "@/features/auth/api/types";
 
+const RATE_LIMIT_TOAST_DURATION = 5000;
+
 export function useRegister(): UseMutationResult<RegisterResponse, Error, RegisterInput, unknown> {
   const navigate = useNavigate();
   const addToast = useToastStore((state) => state.addToast);
@@ -17,9 +19,9 @@ export function useRegister(): UseMutationResult<RegisterResponse, Error, Regist
     mutationFn: (input: RegisterInput) => registerUser(input, idempotencyKeyRef.current),
     retry: 1,
     meta: { suppressToast: true },
-    onSuccess: (data) => {
+    onSuccess: (response) => {
       navigate(routePaths.registerSuccess, {
-        state: { user: { name: data.name, email: data.email } },
+        state: { user: { name: response.name, email: response.email } },
       });
     },
     onError: (error) => {
@@ -27,7 +29,7 @@ export function useRegister(): UseMutationResult<RegisterResponse, Error, Regist
         addToast({
           message: "Too many registration attempts. Please try again later.",
           type: "error",
-          duration: 5000,
+          duration: RATE_LIMIT_TOAST_DURATION,
         });
       }
     },

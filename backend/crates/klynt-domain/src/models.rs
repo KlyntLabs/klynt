@@ -82,6 +82,55 @@ impl Role {
     pub fn requires_institution(self) -> bool {
         matches!(self, Role::Teacher | Role::Admin)
     }
+
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Role::Student => "student",
+            Role::Teacher => "teacher",
+            Role::Admin => "admin",
+            Role::Parent => "parent",
+        }
+    }
+}
+
+impl std::fmt::Display for Role {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum GlobalRole {
+    Owner,
+    Admin,
+    #[default]
+    User,
+}
+
+impl GlobalRole {
+    pub fn parse(raw: &str) -> Result<Self, RoleError> {
+        match raw.to_lowercase().as_str() {
+            "owner" => Ok(Self::Owner),
+            "admin" => Ok(Self::Admin),
+            "user" => Ok(Self::User),
+            _ => Err(RoleError::Unknown),
+        }
+    }
+
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            GlobalRole::Owner => "owner",
+            GlobalRole::Admin => "admin",
+            GlobalRole::User => "user",
+        }
+    }
+}
+
+impl std::fmt::Display for GlobalRole {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -92,6 +141,31 @@ pub enum UserStatus {
     Suspended,
 }
 
+impl UserStatus {
+    pub fn parse(raw: &str) -> Result<Self, RoleError> {
+        match raw.to_lowercase().as_str() {
+            "pending_verification" => Ok(Self::PendingVerification),
+            "active" => Ok(Self::Active),
+            "suspended" => Ok(Self::Suspended),
+            _ => Err(RoleError::Unknown),
+        }
+    }
+
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            UserStatus::PendingVerification => "pending_verification",
+            UserStatus::Active => "active",
+            UserStatus::Suspended => "suspended",
+        }
+    }
+}
+
+impl std::fmt::Display for UserStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct User {
     pub id: UserId,
@@ -100,19 +174,23 @@ pub struct User {
     pub role: Role,
     pub institution_id: Option<Uuid>,
     pub status: UserStatus,
+    pub email_verified_at: Option<DateTime<Utc>>,
+    pub global_role: Option<GlobalRole>,
     pub password_hash: String,
     pub terms_accepted_at: DateTime<Utc>,
     pub terms_version: String,
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserDto {
     pub id: UserId,
     pub name: String,
     pub email: String,
     pub role: Role,
     pub status: UserStatus,
+    pub email_verified_at: Option<DateTime<Utc>>,
+    pub global_role: Option<GlobalRole>,
     pub created_at: DateTime<Utc>,
 }
 
@@ -124,6 +202,8 @@ impl From<&User> for UserDto {
             email: user.email.as_str().to_string(),
             role: user.role,
             status: user.status,
+            email_verified_at: user.email_verified_at,
+            global_role: user.global_role,
             created_at: user.created_at,
         }
     }
@@ -172,10 +252,35 @@ mod tests {
     }
 
     #[test]
+    fn role_round_trips_through_display() {
+        for role in [Role::Student, Role::Teacher, Role::Admin, Role::Parent] {
+            assert_eq!(Role::parse(&role.to_string()).unwrap(), role);
+        }
+    }
+
+    #[test]
     fn teacher_and_admin_require_institution() {
         assert!(Role::Teacher.requires_institution());
         assert!(Role::Admin.requires_institution());
         assert!(!Role::Student.requires_institution());
         assert!(!Role::Parent.requires_institution());
+    }
+
+    #[test]
+    fn user_status_round_trips() {
+        for status in [
+            UserStatus::PendingVerification,
+            UserStatus::Active,
+            UserStatus::Suspended,
+        ] {
+            assert_eq!(UserStatus::parse(&status.to_string()).unwrap(), status);
+        }
+    }
+
+    #[test]
+    fn global_role_round_trips() {
+        for role in [GlobalRole::Owner, GlobalRole::Admin, GlobalRole::User] {
+            assert_eq!(GlobalRole::parse(&role.to_string()).unwrap(), role);
+        }
     }
 }

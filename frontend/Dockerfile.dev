@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Development image for the Vite + React frontend with hot reload.
-FROM node:24-bookworm-slim
+FROM oven/bun:1
 
 WORKDIR /app/frontend
 
@@ -9,4 +9,4 @@ WORKDIR /app/frontend
 # then start the Vite dev server. --ignore-scripts avoids lefthook's prepare
 # script, which requires git (not present in the slim image).
 # --host 0.0.0.0 is required so Docker's port mapping can reach the dev server.
-CMD ["sh", "-c", "npm install --ignore-scripts && npm run dev -- --host 0.0.0.0"]
+CMD ["sh", "-c", "bun install --ignore-scripts && bun run dev -- --host 0.0.0.0"]

@@ -1,13 +1,13 @@
 # syntax=docker/dockerfile:1
 
 # ── Builder stage ────────────────────────────────────────────────────────────
-FROM node:24-alpine AS builder
+FROM oven/bun:1-alpine AS builder
 
 WORKDIR /app
 
 # Install dependencies first (cached unless package*.json change)
-COPY package*.json ./
-RUN npm ci --ignore-scripts
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile --ignore-scripts
 
 # Copy source and build the production bundle
 COPY . .
@@ -19,7 +19,7 @@ ARG VITE_APP_NAME=Klynt
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 ENV VITE_APP_NAME=${VITE_APP_NAME}
 
-RUN npm run build
+RUN bun run build
 
 # ── Runtime stage ────────────────────────────────────────────────────────────
 FROM nginxinc/nginx-unprivileged:alpine

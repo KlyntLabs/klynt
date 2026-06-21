@@ -1,11 +1,14 @@
 import { lazy, Suspense } from "react";
 import { createBrowserRouter, Outlet } from "react-router-dom";
 import { RootLayout } from "@/app/layout/root-layout";
+import { Spinner } from "@/components/ui/spinner";
 import { GuestRoute, ProtectedRoute, RoleGuard } from "@/core/auth";
-import { Spinner } from "@/core/ui/spinner";
+import { marketingRegistry } from "@/features/desktop/apps";
+import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
+import { MarketingShell } from "@/features/marketing/components/MarketingShell";
 import { routePaths } from "./route-paths";
 
-const HomePage = lazy(() => import("./home-page"));
+const DesktopEnvironment = lazy(() => import("@/features/desktop/components/DesktopEnvironment"));
 const RegisterPage = lazy(() =>
   import("@/features/auth").then((module) => ({ default: module.RegisterPage }))
 );
@@ -48,13 +51,33 @@ function AdminLayout() {
   );
 }
 
+function IndexRoute() {
+  const { viewMode } = useDesktopStore();
+
+  if (viewMode === "desktop") {
+    return (
+      <Suspense fallback={<Spinner />}>
+        <DesktopEnvironment />
+      </Suspense>
+    );
+  }
+
+  return <MarketingShell route={marketingRegistry.defaultApp.manifest.route} />;
+}
+
+const marketingRoutes = marketingRegistry.apps.map((app) => ({
+  path: app.manifest.route,
+  element: <MarketingShell route={app.manifest.route} />,
+}));
+
 export const router = createBrowserRouter([
   {
     path: routePaths.home,
     element: <RootLayout />,
     hydrateFallbackElement: <Spinner />,
     children: [
-      { index: true, element: <HomePage /> },
+      { index: true, element: <IndexRoute /> },
+      ...marketingRoutes,
       {
         element: <GuestLayout />,
         children: [

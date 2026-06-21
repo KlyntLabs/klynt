@@ -26,11 +26,10 @@ pub async fn rate_limit(
         .map(|r| r.0)
         .unwrap_or_else(Uuid::new_v4);
 
-    let allowed = request
-        .extensions()
-        .get::<ConnectInfo<SocketAddr>>()
-        .map(|ConnectInfo(addr)| state.rate_limiter().is_allowed(addr.ip()))
-        .unwrap_or(true);
+    let allowed = match request.extensions().get::<ConnectInfo<SocketAddr>>() {
+        Some(ConnectInfo(addr)) => state.rate_limiter().is_allowed(addr.ip()).await,
+        None => true,
+    };
 
     if !allowed {
         return Err(AppError::from(DomainError::RateLimited).with_request_id(request_id));

@@ -9,7 +9,7 @@ mod helpers;
 
 #[tokio::test]
 async fn liveness_returns_ok() {
-    let app = helpers::test_app();
+    let app = helpers::test_app().await;
 
     let response = app
         .oneshot(
@@ -30,7 +30,7 @@ async fn liveness_returns_ok() {
 
 #[tokio::test]
 async fn readiness_returns_ok() {
-    let app = helpers::test_app();
+    let app = helpers::test_app().await;
 
     let response = app
         .oneshot(

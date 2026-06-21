@@ -1,5 +1,5 @@
 # Docs: https://lefthook.dev/configuration/
-# Installed automatically via `npm run prepare` in frontend/
+# Installed automatically via `bun run prepare` in frontend/
 #
 # Policy:
 # - pre-commit: fast staged-only checks (format/lint)
@@ -11,9 +11,15 @@ pre-commit:
     rustfmt:
       glob: "**/*.rs"
       run: cd backend && cargo fmt --all -- --check
+    backend-file-size:
+      glob: "backend/crates/**/*.rs"
+      run: backend/scripts/check-file-size.sh {staged_files}
     biome-check:
       glob: "**/*.{js,ts,tsx,json,jsonc,css}"
-      run: cd frontend && npx @biomejs/biome check --error-on-warnings --no-errors-on-unmatched $(for f in {staged_files}; do echo "${f#frontend/}"; done)
+      run: cd frontend && bunx @biomejs/biome check --error-on-warnings --no-errors-on-unmatched $(for f in {staged_files}; do echo "${f#frontend/}"; done)
+    frontend-file-size:
+      glob: "frontend/src/**/*.{ts,tsx,js,jsx,css}"
+      run: frontend/scripts/check-file-size.sh {staged_files}
     gitleaks:
       run: |
         if ! command -v gitleaks >/dev/null 2>&1; then
@@ -32,7 +38,7 @@ pre-push:
           echo "⏭️  frontend-typecheck skipped (no frontend changes)"
           exit 0
         fi
-        cd frontend && npm run typecheck
+        cd frontend && bun run typecheck
     frontend-test:
       glob: "**/*.{js,ts,tsx}"
       run: |
@@ -41,7 +47,7 @@ pre-push:
           echo "⏭️  frontend-test skipped (no frontend changes)"
           exit 0
         fi
-        cd frontend && npm run test:coverage
+        cd frontend && bun run test:coverage
     frontend-build:
       glob: "**/*.{js,ts,tsx}"
       run: |
@@ -50,7 +56,16 @@ pre-push:
           echo "⏭️  frontend-build skipped (no frontend changes)"
           exit 0
         fi
-        cd frontend && npm run build
+        cd frontend && bun run build
+    frontend-performance-budget:
+      glob: "**/*.{js,ts,tsx,webp,png,jpg,jpeg,avif,gif}"
+      run: |
+        PUSH_TARGET=$(git rev-parse @{push} 2>/dev/null || echo "")
+        if [ -n "$PUSH_TARGET" ] && ! git diff --name-only "$PUSH_TARGET"..HEAD | grep -qE '^frontend/'; then
+          echo "⏭️  frontend-performance-budget skipped (no frontend changes)"
+          exit 0
+        fi
+        cd frontend && ./scripts/check-performance-budget.sh
     backend-format:
       glob: "**/*.rs"
       run: |
@@ -77,7 +92,7 @@ pre-push:
           echo "⏭️  backend-test skipped (no backend changes)"
           exit 0
         fi
-        cd backend && cargo llvm-cov nextest --workspace --all-features --no-clean --fail-under-lines 84
+        cd backend && DATABASE_URL=${DATABASE_URL:-postgresql://klynt:klynt@localhost:5432/test} REDIS_URL=${REDIS_URL:-redis://localhost:6379/0} cargo llvm-cov nextest --workspace --all-features --no-clean --fail-under-lines 84 -- --include-ignored
     backend-audit:
       glob: "**/*.rs"
       run: |

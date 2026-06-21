@@ -52,7 +52,7 @@ Run `just` to list recipes.
 | `just secret-scan` | Run `gitleaks` locally |
 | `just security-scan` | Run `semgrep` + `trivy` locally |
 
-Frontend-only: `npm run dev`, `npm run test:coverage`, `npm run lint`, `npm run typecheck`, `npm run build`.
+Frontend-only: `bun run dev`, `bun run test:coverage`, `bun run lint`, `bun run typecheck`, `bun run build`.
 
 Backend-only: `cargo run --bin klynt-server`, `cargo nextest run --all-features`, `cargo clippy --workspace --all-targets --all-features -- -D warnings`, `cargo fmt`.
 
@@ -80,6 +80,10 @@ Before changing code:
 - Edition 2021.
 - All Clippy warnings are errors (`-D warnings`).
 - `unsafe_code` is forbidden at the workspace level.
+- Source files (`backend/crates/*/src/**/*.rs`) should stay under **400 lines**.
+- Integration test files (`backend/crates/*/tests/**/*.rs`) may go up to **600 lines**.
+- Lefthook enforces this on staged files via `backend/scripts/check-file-size.sh`.
+- Axum handlers should stay thin; most logic belongs in application/domain crates.
 
 ### TypeScript / Frontend
 
@@ -95,8 +99,16 @@ Before changing code:
 
 ### UI Components
 
-- Reuse `frontend/src/components/ui/` primitives.
+- Reuse `frontend/src/components/ui/` primitives. These are shadcn/ui-style components migrated from `frontend-v2/` and adapted for Tailwind CSS v4.
+- The legacy `frontend/src/core/ui/` NeoBrutalist primitives and `frontend/src/features/home/` OS desktop have been removed; see `docs/adr/0001-frontend-v2-ui-migration.md`.
 - New UI must feel native to Klynt — browser-default styling is a signal that an existing primitive is missing.
+
+### File Size
+
+- Frontend source files (`frontend/src/**/*.{ts,tsx,js,jsx,css}`) should stay under **300 lines**.
+- Lefthook enforces this on staged files via `frontend/scripts/check-file-size.sh`.
+- If a file exceeds the limit, break it into smaller modules (e.g. extract hooks, helpers, sub-components) rather than raising the limit.
+- Override `KLYNT_MAX_FILE_LINES` locally only for temporary testing.
 
 ## Architecture at a Glance
 
@@ -155,7 +167,7 @@ Cargo workspace with dependency direction enforced by the compiler:
 Targets OWASP ASVS Level 1 now; Level 2 before PII/grades/payments.
 
 - No secrets in source control.
-- Lockfiles committed; install with `npm ci` / `--locked`.
+- Lockfiles committed; install with `bun install --frozen-lockfile` / `--locked`.
 - CORS from environment; security headers via `tower-http`.
 - Centralized errors that don't leak internals.
 - Input validated at boundaries (Zod frontend, `validator` backend).
@@ -186,6 +198,7 @@ Before claiming complete:
 - Deployment workflows are placeholders.
 - Prefer adding tools via `Cargo.toml` or `package.json` instead of global installs.
 - When modifying Docker files, validate with `docker compose config` and test `docker compose up --build` when possible.
+- **Frontend coverage gate**: The 92% lines/statements, 87% functions, 73% branches threshold is enforced. New presentational code (UI primitives, marketing pages, desktop chrome) must be covered by unit/integration tests, Storybook story renders, or browser tests so the gate stays green.
 
 ## Documentation References
 

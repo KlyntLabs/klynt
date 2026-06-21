@@ -13,7 +13,7 @@ async fn main() -> anyhow::Result<()> {
     let config = load_config()?;
     klynt_server::telemetry::init_telemetry(&config.log_level);
 
-    let app = build_app(config.clone());
+    let app = build_app(config.clone()).await;
 
     let addr = format!("{}:{}", config.api.host, config.api.port);
     let listener = TcpListener::bind(&addr).await?;

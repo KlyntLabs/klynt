@@ -4,12 +4,12 @@ This repo uses [lefthook](https://lefthook.dev/) for git hooks.
 
 ## Installation
 
-`npm install` in `frontend/` runs the `prepare` script, which installs the hooks into `.git/hooks/`.
+`bun install` in `frontend/` runs the `prepare` script, which installs the hooks into `.git/hooks/`.
 
 To reinstall manually:
 
 ```bash
-cd frontend && npx lefthook install
+cd frontend && bunx lefthook install
 ```
 
 ## Policy
@@ -31,9 +31,9 @@ Runs in parallel on staged files only:
 
 Runs the full check suite, but skips lanes when their directory did not change:
 
-- Frontend typecheck (`npm run typecheck`)
-- Frontend tests (`npm run test`)
-- Frontend production build (`npm run build`)
+- Frontend typecheck (`bun run typecheck`)
+- Frontend tests (`bun run test`)
+- Frontend production build (`bun run build`)
 - Backend format check (`cargo fmt --all -- --check`)
 - Backend clippy (`cargo clippy --all-targets --all-features -- -D warnings`)
 - Backend tests (`cargo test`)

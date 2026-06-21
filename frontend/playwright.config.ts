@@ -25,7 +25,7 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
     },
     {
-      command: "npm run dev",
+      command: "bun run dev",
       url: "http://localhost:5174",
       timeout: 120_000,
       reuseExistingServer: !process.env.CI,

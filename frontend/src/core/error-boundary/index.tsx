@@ -1,7 +1,7 @@
 import { ErrorBoundary as ReactErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
+import { Button } from "@/components/ui/button";
 import { logger } from "@/core/logger";
-import { Button } from "@/core/ui/button";
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;

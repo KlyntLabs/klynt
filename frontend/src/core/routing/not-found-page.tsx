@@ -1,16 +1,33 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { routePaths } from "@/core/routing/route-paths";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { routePaths } from "./route-paths";
 
 export default function NotFoundPage() {
   const { t } = useTranslation("ui");
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-semibold">{t("notFound.title")}</h1>
-      <Link to={routePaths.home} className="mt-4 inline-block text-primary hover:underline">
-        {t("notFound.goHome")}
-      </Link>
+    <div className="flex min-h-screen items-center justify-center p-6">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>{t("notFound.title")}</CardTitle>
+          <CardDescription>{t("notFound.message")}</CardDescription>
+        </CardHeader>
+        <CardContent />
+        <CardFooter>
+          <Button asChild className="w-full">
+            <Link to={routePaths.home}>{t("notFound.goHome")}</Link>
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

@@ -1,14 +1,11 @@
 use std::sync::Arc;
 
 use klynt_application::auth::AuthService;
-use klynt_application::users::{CreateUserRequest, UserService};
+use klynt_application::users::UserService;
 use klynt_domain::config::AppConfig;
-use klynt_domain::ctx::Ctx;
 use klynt_domain::errors::DomainError;
-use klynt_domain::models::{Email, User, UserDto, UserId};
 use klynt_domain::ports::{HealthCheck, RateLimiter};
-use klynt_domain::session::{SessionStore, SessionToken};
-use uuid::Uuid;
+use klynt_domain::session::SessionStore;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -20,22 +17,25 @@ pub struct AppState {
     health_checks: Vec<Arc<dyn HealthCheck>>,
 }
 
+/// Named dependency bag for constructing [`AppState`].
+pub struct AppStateDeps {
+    pub config: AppConfig,
+    pub user_service: Arc<UserService>,
+    pub auth_service: Arc<AuthService>,
+    pub session_store: Arc<dyn SessionStore>,
+    pub rate_limiter: Arc<dyn RateLimiter>,
+    pub health_checks: Vec<Arc<dyn HealthCheck>>,
+}
+
 impl AppState {
-    pub fn new(
-        config: AppConfig,
-        user_service: Arc<UserService>,
-        auth_service: Arc<AuthService>,
-        session_store: Arc<dyn SessionStore>,
-        rate_limiter: Arc<dyn RateLimiter>,
-        health_checks: Vec<Arc<dyn HealthCheck>>,
-    ) -> Self {
+    pub fn new(deps: AppStateDeps) -> Self {
         Self {
-            config: Arc::new(config),
-            user_service,
-            auth_service,
-            session_store,
-            rate_limiter,
-            health_checks,
+            config: Arc::new(deps.config),
+            user_service: deps.user_service,
+            auth_service: deps.auth_service,
+            session_store: deps.session_store,
+            rate_limiter: deps.rate_limiter,
+            health_checks: deps.health_checks,
         }
     }
 
@@ -51,28 +51,12 @@ impl AppState {
         &*self.session_store
     }
 
-    pub async fn create_user(
-        &self,
-        ctx: &Ctx,
-        idempotency_key: Uuid,
-        req: CreateUserRequest,
-    ) -> Result<UserDto, DomainError> {
-        self.user_service
-            .create_user(ctx, idempotency_key, req)
-            .await
+    pub fn user_service(&self) -> &UserService {
+        &self.user_service
     }
 
-    pub async fn find_user_by_id(&self, ctx: &Ctx, id: UserId) -> Result<User, DomainError> {
-        self.user_service.find_by_id(ctx, id).await
-    }
-
-    pub async fn login(
-        &self,
-        ctx: &Ctx,
-        email: &Email,
-        password: &str,
-    ) -> Result<(SessionToken, UserDto), DomainError> {
-        self.auth_service.login(ctx, email, password).await
+    pub fn auth_service(&self) -> &AuthService {
+        &self.auth_service
     }
 
     pub async fn check_health(&self) -> Result<(), DomainError> {

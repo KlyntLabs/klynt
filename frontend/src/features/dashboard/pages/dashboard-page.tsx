@@ -1,12 +1,20 @@
 import { useTranslation } from "react-i18next";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function DashboardPage() {
   const { t } = useTranslation("ui");
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-semibold">{t("dashboard.title")}</h1>
-      <p className="mt-2 text-muted-foreground">{t("dashboard.welcome")}</p>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("dashboard.title")}</CardTitle>
+          <CardDescription>{t("dashboard.welcome")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">{t("dashboard.placeholder")}</p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
