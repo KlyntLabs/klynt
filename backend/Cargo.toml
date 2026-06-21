@@ -21,6 +21,9 @@ members = [
 
     # === NEW - Phase 2 ===
     "crates/services/auth_service",
+
+    # === NEW - Phase 3 ===
+    "crates/gateways/api_gateway",
 ]
 
 [workspace.package]
@@ -102,6 +105,9 @@ klynt_tracing = { path = "crates/infrastructure/klynt_tracing" }
 
 # === NEW - Phase 2 ===
 auth_service = { path = "crates/services/auth_service" }
+
+# === NEW - Phase 3 ===
+api_gateway = { path = "crates/gateways/api_gateway" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
