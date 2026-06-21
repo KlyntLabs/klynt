@@ -103,13 +103,13 @@ async fn register_returns_201() {
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
-    assert!(json["user_id"]
+    assert!(json["data"]["user_id"]
         .as_str()
         .unwrap()
         .parse::<uuid::Uuid>()
         .is_ok());
     assert_eq!(
-        json["message"],
+        json["data"]["message"],
         "Registration successful. Please check your email to verify your account."
     );
 }
@@ -199,7 +199,7 @@ async fn verify_email_returns_200() {
         .to_bytes();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(
-        json["message"],
+        json["data"]["message"],
         "Email verified successfully. You can now log in."
     );
 
@@ -241,7 +241,7 @@ async fn request_password_reset_returns_200() {
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(
-        json["message"],
+        json["data"]["message"],
         "If an account exists with this email, a password reset link has been sent."
     );
 
@@ -278,7 +278,7 @@ async fn request_password_reset_for_unknown_email_returns_200() {
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(
-        json["message"],
+        json["data"]["message"],
         "If an account exists with this email, a password reset link has been sent."
     );
 }
@@ -356,7 +356,7 @@ async fn reset_password_with_valid_token_returns_200() {
         .to_bytes();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(
-        json["message"],
+        json["data"]["message"],
         "Password reset successfully. You can now log in with your new password."
     );
 

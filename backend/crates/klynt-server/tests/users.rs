@@ -72,10 +72,10 @@ async fn create_user_returns_201() {
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
-    assert_eq!(json["name"], "Ada Lovelace");
-    assert_eq!(json["email"], email);
-    assert_eq!(json["role"], "student");
-    assert_eq!(json["status"], "pending_verification");
+    assert_eq!(json["data"]["name"], "Ada Lovelace");
+    assert_eq!(json["data"]["email"], email);
+    assert_eq!(json["data"]["role"], "student");
+    assert_eq!(json["data"]["status"], "pending_verification");
 }
 
 #[tokio::test]
@@ -130,7 +130,7 @@ async fn idempotency_replay_returns_same_user() {
     let second_body = second.into_body().collect().await.unwrap().to_bytes();
     let second_json: serde_json::Value = serde_json::from_slice(&second_body).unwrap();
 
-    assert_eq!(first_json["id"], second_json["id"]);
+    assert_eq!(first_json["data"]["id"], second_json["data"]["id"]);
 }
 
 #[tokio::test]
@@ -417,8 +417,8 @@ async fn login_and_get_me_round_trip_works() {
         .unwrap()
         .to_bytes();
     let login_json: serde_json::Value = serde_json::from_slice(&login_body).unwrap();
-    let token = login_json["token"].as_str().unwrap();
-    assert_eq!(login_json["user"]["email"], email);
+    let token = login_json["data"]["token"].as_str().unwrap();
+    assert_eq!(login_json["data"]["user"]["email"], email);
 
     // Get me
     let me_response = app.oneshot(get_me_request(token)).await.unwrap();
@@ -426,7 +426,7 @@ async fn login_and_get_me_round_trip_works() {
 
     let me_body = me_response.into_body().collect().await.unwrap().to_bytes();
     let me_json: serde_json::Value = serde_json::from_slice(&me_body).unwrap();
-    assert_eq!(me_json["email"], email);
+    assert_eq!(me_json["data"]["email"], email);
 }
 
 #[tokio::test]
