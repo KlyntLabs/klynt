@@ -122,7 +122,6 @@ pub async fn mw_map_response(
     res: Response,
 ) -> Response {
     // Try to extract Ctx from the response extensions (set by ctx_resolve).
-    let _ctx = request_ctx.clone();
     let (parts, body) = res.into_parts();
 
     // Guard: non-JSON or oversized → pass through unchanged.
