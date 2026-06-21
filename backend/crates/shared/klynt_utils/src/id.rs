@@ -71,7 +71,7 @@ impl<T> std::fmt::Debug for Id<T> {
 pub type UserId = Id<UserIdMarker>;
 pub type SessionId = Id<SessionIdMarker>;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct UserIdMarker;
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SessionIdMarker;

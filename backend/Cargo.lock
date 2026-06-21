@@ -104,6 +104,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 
 [[package]]
+name = "auth_service"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "base64",
+ "chrono",
+ "klynt-application",
+ "klynt-domain",
+ "klynt-infrastructure",
+ "klynt_contracts",
+ "klynt_core",
+ "klynt_shared_domain",
+ "klynt_utils",
+ "rand 0.8.6",
+ "serde",
+ "sha2",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "uuid",
+ "validator",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1291,6 +1315,7 @@ name = "klynt_contracts"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "klynt_shared_domain",
  "klynt_utils",
  "serde",
  "serde_json",
@@ -1343,13 +1368,6 @@ dependencies = [
  "tracing",
  "tracing-error",
  "tracing-subscriber",
-]
-
-[[package]]
-name = "klynt_typedenum"
-version = "0.1.0"
-dependencies = [
- "serde",
 ]
 
 [[package]]

@@ -120,3 +120,23 @@ impl<T> PaginatedResponse<T> {
         Self::new(vec![], 0, page, page_size)
     }
 }
+
+/// User roles
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum UserRole {
+    Admin,
+    Instructor,
+    Student,
+}
+
+/// User status
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum UserStatus {
+    Active,
+    Inactive,
+    Suspended,
+    #[default]
+    Pending,
+}

@@ -1,6 +1,7 @@
 //! Authentication-related contracts.
 
 use chrono::{DateTime, Utc};
+use klynt_shared_domain::UserRole;
 use klynt_utils::UserId;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
@@ -30,6 +31,7 @@ pub struct UserSessionInfo {
     pub id: UserId,
     pub email: String,
     pub full_name: Option<String>,
+    pub role: UserRole,
 }
 
 /// Registration request
