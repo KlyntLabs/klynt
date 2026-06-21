@@ -1,7 +1,10 @@
 # ADR 0002: Unified Response Envelope
 
 **Date:** 2026-06-21
-**Status:** Accepted
+
+## Status
+
+Accepted
 
 ## Context
 
@@ -70,4 +73,4 @@ handlers remain unchanged (they keep returning `Result<Json<T>, AppError>`).
   same request context
 - `backend/crates/klynt-api/src/startup.rs` — router wiring (health exempt, API wrapped)
 - `backend/crates/klynt-api/src/v1/mod.rs` — route module declarations
-- Frontend Axios interceptor (configured to unwrap `response.data.data`)
+- Frontend Axios interceptor (to be added)

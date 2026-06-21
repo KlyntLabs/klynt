@@ -15,7 +15,8 @@ pub fn load_config() -> Result<AppConfig, ConfigError> {
         .add_source(
             Environment::with_prefix("KLYNT")
                 .prefix_separator("_")
-                .separator("__"),
+                .separator("__")
+                .try_parsing(true),
         )
         .set_default("api.host", api_default.host)?
         .set_default("api.port", api_default.port)?
