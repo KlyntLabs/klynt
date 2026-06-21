@@ -37,7 +37,7 @@ test:
 # Run all tests with coverage gates
 # Thresholds are ratchets: raise them only when current coverage improves.
 test-coverage:
-    cd backend && DATABASE_URL=${DATABASE_URL:-postgresql://klynt:klynt@localhost:5432/test} REDIS_URL=${REDIS_URL:-redis://localhost:6379/0} cargo llvm-cov --workspace --all-features --no-clean --fail-under-lines 84 -- --include-ignored
+    cd backend && DATABASE_URL=${DATABASE_URL:-postgresql://klynt:klynt@localhost:5432/test} REDIS_URL=${REDIS_URL:-redis://localhost:6379/0} cargo llvm-cov --workspace --all-features --fail-under-lines 84 -- --include-ignored
     cd frontend && bun run test:coverage
 
 # Run secret scan on the whole repo (requires gitleaks)
