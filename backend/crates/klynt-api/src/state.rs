@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
-use klynt_application::auth::AuthService;
-use klynt_application::users::UserService;
+use crate::services::AuthenticationServices;
 use klynt_domain::config::AppConfig;
 use klynt_domain::ports::{ComponentHealth, HealthCheck, RateLimiter};
 use klynt_domain::session::SessionStore;
@@ -9,8 +8,7 @@ use klynt_domain::session::SessionStore;
 #[derive(Clone)]
 pub struct AppState {
     config: Arc<AppConfig>,
-    user_service: Arc<UserService>,
-    auth_service: Arc<AuthService>,
+    auth_services: AuthenticationServices,
     session_store: Arc<dyn SessionStore>,
     rate_limiter: Arc<dyn RateLimiter>,
     health_checks: Vec<Arc<dyn HealthCheck>>,
@@ -19,8 +17,7 @@ pub struct AppState {
 /// Named dependency bag for constructing [`AppState`].
 pub struct AppStateDeps {
     pub config: AppConfig,
-    pub user_service: Arc<UserService>,
-    pub auth_service: Arc<AuthService>,
+    pub auth_services: AuthenticationServices,
     pub session_store: Arc<dyn SessionStore>,
     pub rate_limiter: Arc<dyn RateLimiter>,
     pub health_checks: Vec<Arc<dyn HealthCheck>>,
@@ -30,8 +27,7 @@ impl AppState {
     pub fn new(deps: AppStateDeps) -> Self {
         Self {
             config: Arc::new(deps.config),
-            user_service: deps.user_service,
-            auth_service: deps.auth_service,
+            auth_services: deps.auth_services,
             session_store: deps.session_store,
             rate_limiter: deps.rate_limiter,
             health_checks: deps.health_checks,
@@ -54,12 +50,8 @@ impl AppState {
         &*self.session_store
     }
 
-    pub fn user_service(&self) -> &UserService {
-        &self.user_service
-    }
-
-    pub fn auth_service(&self) -> &AuthService {
-        &self.auth_service
+    pub fn auth(&self) -> &AuthenticationServices {
+        &self.auth_services
     }
 
     pub async fn check_health(&self) -> Vec<ComponentHealth> {

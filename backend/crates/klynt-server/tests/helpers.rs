@@ -9,7 +9,6 @@ use axum::http::Request;
 use axum::Router;
 use klynt_domain::config::{ApiConfig, AppConfig, RateLimiterConfig};
 use klynt_domain::errors::DomainError;
-use klynt_domain::models::Email;
 use klynt_domain::ports::{EmailService, SharedEmailService};
 use klynt_infrastructure::email::MockEmailService;
 use klynt_server::composition::build_app_with_email_service;
@@ -71,12 +70,14 @@ pub struct FailingPasswordResetEmailService;
 
 #[async_trait]
 impl EmailService for FailingPasswordResetEmailService {
-    async fn send_verification(&self, _email: &Email, _token: &str) -> Result<(), DomainError> {
+    async fn send(
+        &self,
+        content: Box<dyn klynt_domain::email_content::EmailContent>,
+    ) -> Result<(), DomainError> {
+        if content.subject().contains("Reset") {
+            return Err(DomainError::internal_msg("password reset email failed"));
+        }
         Ok(())
-    }
-
-    async fn send_password_reset(&self, _email: &Email, _token: &str) -> Result<(), DomainError> {
-        Err(DomainError::internal_msg("password reset email failed"))
     }
 }
 

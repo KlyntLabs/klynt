@@ -16,7 +16,7 @@ fn register_payload(email: &str) -> String {
     serde_json::json!({
         "name": "Ada Lovelace",
         "email": email,
-        "password": "str0ng!passphrase",
+        "password": "Str0ng!passphrase",
         "role": "student",
         "terms_accepted": true,
         "terms_version": "2026-06-18"

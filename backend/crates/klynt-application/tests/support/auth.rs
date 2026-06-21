@@ -10,6 +10,7 @@ use klynt_application::audit::AuditService;
 use klynt_application::auth::AuthService;
 use klynt_domain::audit::AuditEvent;
 use klynt_domain::ctx::Ctx;
+use klynt_domain::email_content::EmailContent;
 use klynt_domain::errors::DomainError;
 use klynt_domain::models::{Email, UserId};
 use klynt_domain::ports::{EmailService, SharedEmailService};
@@ -19,22 +20,45 @@ use klynt_domain::tokens::TokenKind;
 
 use super::user_service;
 
+/// A recorded fake email.
+#[derive(Debug, Clone)]
+pub struct FakeSentEmail {
+    pub recipient: Email,
+    pub subject: String,
+    pub body_text: String,
+}
+
 #[derive(Debug, Default)]
 pub struct FakeEmailService {
-    pub sent: Mutex<Vec<(Email, String)>>,
+    pub sent: Mutex<Vec<FakeSentEmail>>,
+}
+
+impl FakeEmailService {
+    /// Extract the plaintext token from the first recorded email.
+    pub fn first_token(&self) -> String {
+        let sent = self.sent.lock().unwrap();
+        let email = sent.first().expect("no email was sent");
+        extract_token(&email.body_text)
+    }
+}
+
+fn extract_token(body_text: &str) -> String {
+    body_text
+        .lines()
+        .find(|line| line.contains("/verify/") || line.contains("/reset-password/"))
+        .and_then(|line| line.trim().split('/').next_back().map(|s| s.to_string()))
+        .expect("email body did not contain a token link")
 }
 
 #[async_trait]
 impl EmailService for FakeEmailService {
-    async fn send_verification(&self, email: &Email, token: &str) -> Result<(), DomainError> {
+    async fn send(&self, content: Box<dyn EmailContent>) -> Result<(), DomainError> {
         let mut sent = self.sent.lock().unwrap();
-        sent.push((email.clone(), token.to_string()));
-        Ok(())
-    }
-
-    async fn send_password_reset(&self, email: &Email, token: &str) -> Result<(), DomainError> {
-        let mut sent = self.sent.lock().unwrap();
-        sent.push((email.clone(), token.to_string()));
+        sent.push(FakeSentEmail {
+            recipient: content.recipient().clone(),
+            subject: content.subject(),
+            body_text: content.body_text(),
+        });
         Ok(())
     }
 }
@@ -145,6 +169,7 @@ pub fn auth_service() -> (
         token_store,
         email_service,
         audit_service,
+        "https://klynt.edu".to_string(),
     );
     (auth_service, user_service, email_service_impl)
 }

@@ -18,7 +18,7 @@ async fn register_creates_pending_user_and_sends_email() {
             &ctx,
             "Ada Lovelace".to_string(),
             &email,
-            "str0ng!passphrase",
+            "Str0ng!passphrase",
             true,
             "1.0".to_string(),
         )
@@ -31,8 +31,8 @@ async fn register_creates_pending_user_and_sends_email() {
 
     let sent = email_service.sent.lock().unwrap();
     assert_eq!(sent.len(), 1);
-    assert_eq!(sent[0].0.as_str(), "register@example.com");
-    assert!(!sent[0].1.is_empty());
+    assert_eq!(sent[0].recipient.as_str(), "register@example.com");
+    assert!(!sent[0].body_text.is_empty());
 }
 
 #[tokio::test]
@@ -46,17 +46,14 @@ async fn verify_email_activates_user() {
             &ctx,
             "Ada Lovelace".to_string(),
             &email,
-            "str0ng!passphrase",
+            "Str0ng!passphrase",
             true,
             "1.0".to_string(),
         )
         .await
         .unwrap();
 
-    let plaintext_token = {
-        let sent = email_service.sent.lock().unwrap();
-        sent[0].1.clone()
-    };
+    let plaintext_token = email_service.first_token();
 
     let verified_id = service.verify_email(&ctx, &plaintext_token).await.unwrap();
     assert_eq!(verified_id, user_id);

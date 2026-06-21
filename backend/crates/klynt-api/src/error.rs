@@ -5,7 +5,7 @@ use axum::{
 use serde_json::Value;
 use uuid::Uuid;
 
-use klynt_domain::errors::{DomainError, ErrorKind};
+use klynt_domain::errors::DomainError;
 
 /// The classification of an API error, without request-scoped metadata.
 #[derive(Debug, Clone, thiserror::Error)]
@@ -178,27 +178,6 @@ impl AppErrorKind {
     }
 }
 
-impl From<DomainError> for AppErrorKind {
-    fn from(err: DomainError) -> Self {
-        match err {
-            DomainError::Internal(e) => AppErrorKind::Internal(std::sync::Arc::from(e)),
-            other => {
-                let message = other.to_string();
-                match other.kind() {
-                    ErrorKind::NotFound => AppErrorKind::NotFound,
-                    ErrorKind::Conflict => AppErrorKind::Conflict(message),
-                    ErrorKind::Validation => AppErrorKind::BadRequest(message),
-                    ErrorKind::RateLimited => AppErrorKind::RateLimited {
-                        retry_after_seconds: None,
-                    },
-                    ErrorKind::AuthenticationRequired => AppErrorKind::Unauthorized,
-                    ErrorKind::Internal => unreachable!("internal variant handled above"),
-                }
-            }
-        }
-    }
-}
-
 /// An API-level error carrying request-scoped metadata.
 ///
 /// Handlers can attach the request ID with `.with_request_id(...)` so error
@@ -220,11 +199,28 @@ impl AppError {
         self.request_id = request_id;
         self
     }
+
+    /// Convert from DomainError using its HTTP metadata.
+    pub fn from_domain(err: DomainError, request_id: Uuid) -> Self {
+        let meta = err.http_metadata();
+        let kind = match meta.status_code {
+            StatusCode::NOT_FOUND => AppErrorKind::NotFound,
+            StatusCode::BAD_REQUEST => AppErrorKind::BadRequest(meta.client_message),
+            StatusCode::CONFLICT => AppErrorKind::Conflict(meta.client_message),
+            StatusCode::UNAUTHORIZED => AppErrorKind::Unauthorized,
+            StatusCode::TOO_MANY_REQUESTS => AppErrorKind::RateLimited {
+                retry_after_seconds: None,
+            },
+            StatusCode::INTERNAL_SERVER_ERROR => AppErrorKind::Internal(std::sync::Arc::from(err)),
+            _ => AppErrorKind::Internal(std::sync::Arc::from(err)),
+        };
+        Self::new(kind, request_id)
+    }
 }
 
 impl From<DomainError> for AppError {
     fn from(err: DomainError) -> Self {
-        Self::new(err.into(), Uuid::nil())
+        Self::from_domain(err, Uuid::nil())
     }
 }
 

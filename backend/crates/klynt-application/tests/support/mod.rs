@@ -121,7 +121,7 @@ pub fn sample_request() -> CreateUserRequest {
     CreateUserRequest {
         name: "Ada Lovelace".to_string(),
         email: format!("ada-{}@example.com", Uuid::new_v4()),
-        password: "str0ng!passphrase".to_string(),
+        password: "Str0ng!passphrase".to_string(),
         role: "student".to_string(),
         institution_id: None,
         terms_accepted: true,

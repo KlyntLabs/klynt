@@ -4,8 +4,10 @@ use chrono::Utc;
 use tracing::instrument;
 
 use klynt_domain::ctx::Ctx;
+use klynt_domain::email_content::{PasswordResetEmail, VerificationEmail};
 use klynt_domain::errors::DomainError;
 use klynt_domain::models::{Email, UserDto, UserId};
+use klynt_domain::password_policy::PasswordPolicy;
 use klynt_domain::ports::SharedEmailService;
 use klynt_domain::repositories::TokenStore;
 use klynt_domain::session::{Session, SessionStore, SessionToken};
@@ -20,6 +22,8 @@ pub struct AuthService {
     token_store: Arc<dyn TokenStore>,
     email_service: SharedEmailService,
     audit_service: Arc<AuditService>,
+    password_policy: PasswordPolicy,
+    base_url: String,
 }
 
 impl AuthService {
@@ -29,6 +33,7 @@ impl AuthService {
         token_store: Arc<dyn TokenStore>,
         email_service: SharedEmailService,
         audit_service: Arc<AuditService>,
+        base_url: String,
     ) -> Self {
         Self {
             user_service,
@@ -36,6 +41,8 @@ impl AuthService {
             token_store,
             email_service,
             audit_service,
+            password_policy: PasswordPolicy::default(),
+            base_url,
         }
     }
 
@@ -123,9 +130,9 @@ impl AuthService {
             )
             .await?;
 
-        self.email_service
-            .send_verification(email, &token.plaintext)
-            .await?;
+        let email_content =
+            VerificationEmail::new(email.clone(), token.plaintext, self.base_url.clone());
+        self.email_service.send(Box::new(email_content)).await?;
 
         Ok(user_id)
     }
@@ -183,12 +190,11 @@ impl AuthService {
             )
             .await?;
 
+        let email_content =
+            PasswordResetEmail::new(email.clone(), token.plaintext, self.base_url.clone());
+
         // Swallow email errors to prevent account enumeration during outages.
-        if let Err(e) = self
-            .email_service
-            .send_password_reset(email, &token.plaintext)
-            .await
-        {
+        if let Err(e) = self.email_service.send(Box::new(email_content)).await {
             tracing::warn!(
                 error = %e,
                 action = "password_reset_email",
@@ -208,7 +214,7 @@ impl AuthService {
         token: &str,
         new_password: &str,
     ) -> Result<(), DomainError> {
-        klynt_domain::models::validate_password(new_password)?;
+        self.password_policy.validate(new_password)?;
 
         let token_hash = Token::sha256_hash(token);
 

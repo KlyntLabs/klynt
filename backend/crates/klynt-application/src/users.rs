@@ -6,7 +6,8 @@ use uuid::Uuid;
 
 use klynt_domain::ctx::Ctx;
 use klynt_domain::errors::{DomainError, NameError};
-use klynt_domain::models::{validate_password, Email, Role, User, UserDto, UserId, UserStatus};
+use klynt_domain::models::{Email, Role, User, UserDto, UserId, UserStatus};
+use klynt_domain::password_policy::PasswordPolicy;
 use klynt_domain::ports::{HashedPassword, IdempotencyStore, PasswordHasher};
 use klynt_domain::repositories::{CreateResult, UserRepository};
 
@@ -25,6 +26,7 @@ pub struct UserService {
     user_repo: Arc<dyn UserRepository>,
     password_hasher: Arc<dyn PasswordHasher>,
     idempotency_store: Arc<dyn IdempotencyStore<UserDto>>,
+    password_policy: PasswordPolicy,
 }
 
 fn validate_name(name: &str) -> Result<String, DomainError> {
@@ -48,6 +50,7 @@ impl UserService {
             user_repo,
             password_hasher,
             idempotency_store,
+            password_policy: PasswordPolicy::default(),
         }
     }
 
@@ -68,7 +71,7 @@ impl UserService {
 
         let name = validate_name(&req.name)?;
         let email = Email::parse(&req.email)?;
-        validate_password(&req.password)?;
+        self.password_policy.validate(&req.password)?;
         let role = Role::parse(&req.role)?;
 
         if role.requires_institution() && req.institution_id.is_none() {
@@ -127,7 +130,7 @@ impl UserService {
         }
 
         let name = validate_name(&name)?;
-        validate_password(password)?;
+        self.password_policy.validate(password)?;
         let password_hash = self.password_hasher.hash(password).await?;
 
         let user = User {
@@ -216,7 +219,7 @@ impl UserService {
         user_id: UserId,
         new_password: &str,
     ) -> Result<(), DomainError> {
-        validate_password(new_password)?;
+        self.password_policy.validate(new_password)?;
         let password_hash = self.password_hasher.hash(new_password).await?;
         self.user_repo
             .update_password(ctx, user_id, &password_hash)

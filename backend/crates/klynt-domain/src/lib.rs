@@ -1,8 +1,10 @@
 pub mod audit;
 pub mod config;
 pub mod ctx;
+pub mod email_content;
 pub mod errors;
 pub mod models;
+pub mod password_policy;
 pub mod ports;
 pub mod repositories;
 pub mod session;

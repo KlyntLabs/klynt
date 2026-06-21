@@ -33,7 +33,7 @@ async fn create_pending_user_returns_user_id() {
             &ctx,
             "Ada Lovelace".to_string(),
             &email,
-            "str0ng!passphrase",
+            "Str0ng!passphrase",
             true,
             "1.0".to_string(),
         )
@@ -62,7 +62,7 @@ async fn create_pending_user_rejects_weak_password() {
         )
         .await;
 
-    assert!(matches!(result, Err(DomainError::WeakPassword(_))));
+    assert!(matches!(result, Err(DomainError::PasswordPolicy(_))));
 }
 
 #[tokio::test]
@@ -76,7 +76,7 @@ async fn create_pending_user_rejects_unaccepted_terms() {
             &ctx,
             "Ada".to_string(),
             &email,
-            "str0ng!passphrase",
+            "Str0ng!passphrase",
             false,
             "1.0".to_string(),
         )
@@ -96,7 +96,7 @@ async fn activate_user_verifies_email() {
             &ctx,
             "Ada Lovelace".to_string(),
             &email,
-            "str0ng!passphrase",
+            "Str0ng!passphrase",
             true,
             "1.0".to_string(),
         )
@@ -121,7 +121,7 @@ async fn update_password_changes_authentication() {
             &ctx,
             "Ada Lovelace".to_string(),
             &email,
-            "str0ng!passphrase",
+            "Str0ng!passphrase",
             true,
             "1.0".to_string(),
         )
@@ -129,18 +129,18 @@ async fn update_password_changes_authentication() {
         .unwrap();
 
     service
-        .update_password(&ctx, user_id, "n3w!longer-pass")
+        .update_password(&ctx, user_id, "N3w!longer-pass")
         .await
         .unwrap();
 
     // Simulate email verification so the user can authenticate.
     service.activate_user(&ctx, user_id).await.unwrap();
 
-    let auth = service.authenticate(&ctx, &email, "n3w!longer-pass").await;
+    let auth = service.authenticate(&ctx, &email, "N3w!longer-pass").await;
     assert!(auth.is_ok());
 
     let old_auth = service
-        .authenticate(&ctx, &email, "str0ng!passphrase")
+        .authenticate(&ctx, &email, "Str0ng!passphrase")
         .await;
     assert!(old_auth.is_err());
 }
@@ -156,7 +156,7 @@ async fn update_password_rejects_weak_password() {
             &ctx,
             "Ada Lovelace".to_string(),
             &email,
-            "str0ng!passphrase",
+            "Str0ng!passphrase",
             true,
             "1.0".to_string(),
         )
@@ -164,5 +164,5 @@ async fn update_password_rejects_weak_password() {
         .unwrap();
 
     let result = service.update_password(&ctx, user_id, "short").await;
-    assert!(matches!(result, Err(DomainError::WeakPassword(_))));
+    assert!(matches!(result, Err(DomainError::PasswordPolicy(_))));
 }

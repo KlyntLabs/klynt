@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::errors::{EmailError, PasswordError, RoleError};
+use crate::errors::{EmailError, RoleError};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct UserId(pub Uuid);
@@ -50,13 +50,6 @@ impl Email {
     pub fn as_str(&self) -> &str {
         &self.0
     }
-}
-
-pub fn validate_password(raw: &str) -> Result<(), PasswordError> {
-    if raw.len() < 12 {
-        return Err(PasswordError::TooShort);
-    }
-    Ok(())
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -234,12 +227,6 @@ mod tests {
         assert_eq!(Email::parse("ada@"), Err(EmailError::InvalidFormat));
         assert_eq!(Email::parse("@example.com"), Err(EmailError::InvalidFormat));
         assert_eq!(Email::parse("ada@example"), Err(EmailError::InvalidFormat));
-    }
-
-    #[test]
-    fn password_must_be_at_least_12_chars() {
-        assert_eq!(validate_password("short1!"), Err(PasswordError::TooShort));
-        assert!(validate_password("long-enough-pass").is_ok());
     }
 
     #[test]

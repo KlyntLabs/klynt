@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use axum::Router;
+use klynt_api::services::AuthenticationServices;
 use klynt_api::startup::build_router;
 use klynt_api::state::AppState;
 use klynt_application::audit::AuditService;
@@ -88,12 +89,23 @@ pub async fn build_app_with_email_service(
 
     let audit_service = Arc::new(AuditService::new(Arc::clone(&audit_repo)));
 
+    let base_url = format!(
+        "{}://{}",
+        if config.api.host.contains("localhost") || config.api.host == "127.0.0.1" {
+            "http"
+        } else {
+            "https"
+        },
+        config.api.host
+    );
+
     let auth_service = Arc::new(AuthService::new(
         Arc::clone(&user_service),
         Arc::clone(&session_store) as Arc<dyn SessionStore>,
         Arc::clone(&token_store),
         email_service,
         Arc::clone(&audit_service),
+        base_url,
     ));
 
     let health_checks: Vec<Arc<dyn HealthCheck>> = vec![
@@ -102,10 +114,11 @@ pub async fn build_app_with_email_service(
         rate_limiter_health,
     ];
 
+    let auth_services = AuthenticationServices::new(user_service, auth_service);
+
     let state = Arc::new(AppState::new(klynt_api::state::AppStateDeps {
         config,
-        user_service,
-        auth_service,
+        auth_services,
         session_store: Arc::clone(&session_store) as Arc<dyn SessionStore>,
         rate_limiter: rate_limiter_port,
         health_checks,

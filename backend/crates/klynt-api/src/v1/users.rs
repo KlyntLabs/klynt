@@ -51,7 +51,8 @@ pub async fn create_user(
 ) -> Result<impl IntoResponse, AppError> {
     let idempotency_key = parse_idempotency_key(&headers, request_id.0)?;
     let user_dto = state
-        .user_service()
+        .auth()
+        .users()
         .create_user(&Ctx::guest(request_id.0), idempotency_key, req.into())
         .await
         .with_request_id(request_id.0)?;
@@ -69,7 +70,8 @@ pub async fn get_me(
         .ok_or_else(|| klynt_domain::errors::DomainError::AuthenticationRequired)?;
 
     let user = state
-        .user_service()
+        .auth()
+        .users()
         .find_by_id(&ctx, user_id)
         .await
         .with_request_id(request_id.0)?;

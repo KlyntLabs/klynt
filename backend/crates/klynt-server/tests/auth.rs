@@ -16,7 +16,7 @@ fn register_payload(email: &str) -> String {
     serde_json::json!({
         "name": "Ada Lovelace",
         "email": email,
-        "password": "str0ng!passphrase",
+        "password": "Str0ng!passphrase",
         "terms_accepted": true,
         "terms_version": "2026-06-18"
     })
@@ -117,7 +117,7 @@ async fn register_returns_201() {
 #[tokio::test]
 async fn register_with_invalid_email_returns_400() {
     let app = helpers::test_app().await;
-    let body = register_payload_with("Ada Lovelace", "not-an-email", "str0ng!passphrase", true);
+    let body = register_payload_with("Ada Lovelace", "not-an-email", "Str0ng!passphrase", true);
 
     let response = app.oneshot(post_auth_register_request(body)).await.unwrap();
 
@@ -139,7 +139,7 @@ async fn register_with_weak_password_returns_400() {
 async fn register_with_unaccepted_terms_returns_400() {
     let app = helpers::test_app().await;
     let email = unique_email("terms");
-    let body = register_payload_with("Ada Lovelace", &email, "str0ng!passphrase", false);
+    let body = register_payload_with("Ada Lovelace", &email, "Str0ng!passphrase", false);
 
     let response = app.oneshot(post_auth_register_request(body)).await.unwrap();
 
@@ -340,7 +340,7 @@ async fn reset_password_with_valid_token_returns_200() {
     let recorded = email_service.recorded_password_resets();
     let (_email, token) = recorded.first().expect("password reset email was recorded");
 
-    let new_password = "new-str0ng!passphrase";
+    let new_password = "new-Str0ng!passphrase";
     let reset_response = app
         .clone()
         .oneshot(post_auth_reset_password_request(token, new_password))
@@ -406,7 +406,7 @@ async fn reset_password_with_invalid_token_returns_400() {
     let response = app
         .oneshot(post_auth_reset_password_request(
             "not-a-real-token",
-            "new-str0ng!passphrase",
+            "new-Str0ng!passphrase",
         ))
         .await
         .unwrap();

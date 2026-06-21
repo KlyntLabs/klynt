@@ -34,7 +34,8 @@ pub async fn login(
 
     let ctx = klynt_domain::ctx::Ctx::guest(request_id.0);
     let (token, user) = state
-        .auth_service()
+        .auth()
+        .auth()
         .login(&ctx, &email, &body.password)
         .await
         .with_request_id(request_id.0)?;

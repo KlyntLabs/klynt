@@ -92,7 +92,7 @@ async fn register_verify_login_and_get_me_round_trip_with_postgres() {
     let (app, email_service) = app_with_email().await;
     let suffix = Uuid::new_v4();
     let email = format!("smoke-{suffix}@example.com");
-    let password = "str0ng!passphrase";
+    let password = "Str0ng!passphrase";
 
     // Register a new user.
     let register_response = app

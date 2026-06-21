@@ -1,8 +1,8 @@
-use config::{Config, ConfigError, Environment, File};
+use config::{Config, ConfigError as LoaderConfigError, Environment, File};
 
-use klynt_domain::config::{ApiConfig, AppConfig, RateLimiterConfig};
+use klynt_domain::config::{ApiConfig, AppConfig, RateLimiterConfig, Validated};
 
-pub fn load_config() -> Result<AppConfig, ConfigError> {
+pub fn load_config() -> Result<AppConfig, LoaderConfigError> {
     let base_path = std::env::current_dir().expect("failed to determine current directory");
     let config_dir = base_path.join("config");
 
@@ -31,5 +31,10 @@ pub fn load_config() -> Result<AppConfig, ConfigError> {
         .set_default("redis_url", None::<String>)?
         .build()?;
 
-    config.try_deserialize()
+    let app_config: AppConfig = config.try_deserialize()?;
+    app_config
+        .validated()
+        .map_err(|e| LoaderConfigError::Message(e.to_string()))?;
+
+    Ok(app_config)
 }

@@ -1,6 +1,7 @@
 use thiserror::Error;
 
 use crate::models::Role;
+use crate::password_policy::PasswordPolicyError;
 
 #[derive(Debug, Error, PartialEq)]
 pub enum EmailError {
@@ -8,12 +9,6 @@ pub enum EmailError {
     Empty,
     #[error("invalid email format")]
     InvalidFormat,
-}
-
-#[derive(Debug, Error, PartialEq)]
-pub enum PasswordError {
-    #[error("password must be at least 12 characters")]
-    TooShort,
 }
 
 #[derive(Debug, Error, PartialEq)]
@@ -57,7 +52,7 @@ pub enum DomainError {
     #[error("{0}")]
     InvalidEmail(#[from] EmailError),
     #[error("{0}")]
-    WeakPassword(#[from] PasswordError),
+    PasswordPolicy(#[from] PasswordPolicyError),
     #[error("{0}")]
     InvalidRole(#[from] RoleError),
     #[error("{0}")]
@@ -108,7 +103,7 @@ impl DomainError {
             DomainError::NotFound => ErrorKind::NotFound,
             DomainError::AlreadyExists { .. } => ErrorKind::Conflict,
             DomainError::InvalidEmail(_)
-            | DomainError::WeakPassword(_)
+            | DomainError::PasswordPolicy(_)
             | DomainError::InvalidRole(_)
             | DomainError::InvalidToken(_)
             | DomainError::InvalidName(_)
@@ -120,6 +115,62 @@ impl DomainError {
             DomainError::Internal(_) => ErrorKind::Internal,
         }
     }
+
+    /// Get HTTP status code for this error.
+    pub fn http_status_code(&self) -> axum::http::StatusCode {
+        match self.kind() {
+            ErrorKind::NotFound => axum::http::StatusCode::NOT_FOUND,
+            ErrorKind::Conflict => axum::http::StatusCode::CONFLICT,
+            ErrorKind::Validation => axum::http::StatusCode::BAD_REQUEST,
+            ErrorKind::RateLimited => axum::http::StatusCode::TOO_MANY_REQUESTS,
+            ErrorKind::AuthenticationRequired => axum::http::StatusCode::UNAUTHORIZED,
+            ErrorKind::Internal => axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+
+    /// Get stable error code string for client responses.
+    pub fn error_code(&self) -> &'static str {
+        match self {
+            DomainError::NotFound => "NOT_FOUND",
+            DomainError::AlreadyExists { .. } => "ALREADY_EXISTS",
+            DomainError::InvalidEmail(_) => "INVALID_EMAIL",
+            DomainError::PasswordPolicy(_) => "INVALID_PASSWORD",
+            DomainError::InvalidRole(_) => "INVALID_ROLE",
+            DomainError::InvalidToken(_) => "INVALID_TOKEN",
+            DomainError::InvalidName(_) => "INVALID_NAME",
+            DomainError::InstitutionRequired(_) => "INSTITUTION_REQUIRED",
+            DomainError::TermsNotAccepted => "TERMS_NOT_ACCEPTED",
+            DomainError::RateLimited => "RATE_LIMITED",
+            DomainError::InvalidSessionToken => "INVALID_SESSION_TOKEN",
+            DomainError::AuthenticationRequired => "AUTHENTICATION_REQUIRED",
+            DomainError::Internal(_) => "INTERNAL_ERROR",
+        }
+    }
+
+    /// Get client-safe error message.
+    pub fn client_message(&self) -> String {
+        match self {
+            DomainError::Internal(_) => "Something went wrong".to_string(),
+            other => other.to_string(),
+        }
+    }
+
+    /// Get full HTTP metadata for this error.
+    pub fn http_metadata(&self) -> HttpMetadata {
+        HttpMetadata {
+            status_code: self.http_status_code(),
+            error_code: self.error_code(),
+            client_message: self.client_message(),
+        }
+    }
+}
+
+/// HTTP-facing metadata derived from a [`DomainError`].
+#[derive(Debug)]
+pub struct HttpMetadata {
+    pub status_code: axum::http::StatusCode,
+    pub error_code: &'static str,
+    pub client_message: String,
 }
 
 #[cfg(test)]
@@ -143,10 +194,10 @@ mod classification_tests {
     }
 
     #[test]
-    fn weak_password_is_validation() {
-        let err = DomainError::WeakPassword(PasswordError::TooShort);
+    fn password_policy_violation_is_validation() {
+        let err = DomainError::PasswordPolicy(PasswordPolicyError::TooShort { min_length: 12 });
         assert_eq!(err.kind(), ErrorKind::Validation);
-        assert_eq!(err.to_string(), "password must be at least 12 characters");
+        assert!(err.to_string().contains("too short"));
     }
 
     #[test]
@@ -224,5 +275,51 @@ mod classification_tests {
             DomainError::AuthenticationRequired.kind(),
             ErrorKind::AuthenticationRequired
         );
+    }
+
+    #[test]
+    fn password_policy_too_short_is_validation() {
+        let policy_err = PasswordPolicyError::TooShort { min_length: 12 };
+        let domain_err = DomainError::from(policy_err);
+        assert_eq!(domain_err.kind(), ErrorKind::Validation);
+    }
+
+    #[test]
+    fn password_policy_missing_uppercase_is_validation() {
+        let policy_err = PasswordPolicyError::MissingUppercase;
+        let domain_err = DomainError::from(policy_err);
+        assert_eq!(domain_err.kind(), ErrorKind::Validation);
+    }
+}
+
+#[cfg(test)]
+mod http_metadata_tests {
+    use super::*;
+    use axum::http::StatusCode;
+
+    #[test]
+    fn not_found_has_correct_http_metadata() {
+        let err = DomainError::NotFound;
+        let meta = err.http_metadata();
+        assert_eq!(meta.status_code, StatusCode::NOT_FOUND);
+        assert_eq!(meta.error_code, "NOT_FOUND");
+    }
+
+    #[test]
+    fn internal_error_sanitizes_message() {
+        let err = DomainError::internal_msg("database exploded");
+        let meta = err.http_metadata();
+        assert_eq!(meta.status_code, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(meta.client_message, "Something went wrong");
+        assert_eq!(meta.error_code, "INTERNAL_ERROR");
+    }
+
+    #[test]
+    fn password_policy_error_maps_to_bad_request() {
+        let policy_err = PasswordPolicyError::TooShort { min_length: 12 };
+        let err = DomainError::from(policy_err);
+        let meta = err.http_metadata();
+        assert_eq!(meta.status_code, StatusCode::BAD_REQUEST);
+        assert_eq!(meta.error_code, "INVALID_PASSWORD");
     }
 }

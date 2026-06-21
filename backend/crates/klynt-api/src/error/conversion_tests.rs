@@ -1,7 +1,8 @@
 use axum::http::StatusCode;
 
 use super::*;
-use klynt_domain::errors::{DomainError, NameError, PasswordError};
+use klynt_domain::errors::{DomainError, NameError};
+use klynt_domain::password_policy::PasswordPolicyError;
 
 fn status_of(err: AppError) -> StatusCode {
     let response = err.into_response();
@@ -18,7 +19,9 @@ fn conflict_error_becomes_409() {
 
 #[test]
 fn validation_error_becomes_400() {
-    let app_err = AppError::from(DomainError::WeakPassword(PasswordError::TooShort));
+    let app_err = AppError::from(DomainError::PasswordPolicy(PasswordPolicyError::TooShort {
+        min_length: 12,
+    }));
     assert_eq!(status_of(app_err), StatusCode::BAD_REQUEST);
 }
 

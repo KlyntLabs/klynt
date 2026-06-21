@@ -16,7 +16,7 @@ fn register_payload(email: &str) -> String {
     serde_json::json!({
         "name": "Ada Lovelace",
         "email": email,
-        "password": "str0ng!passphrase",
+        "password": "Str0ng!passphrase",
         "role": "student",
         "terms_accepted": true,
         "terms_version": "2026-06-18"
@@ -186,7 +186,7 @@ async fn invalid_email_returns_400() {
     let body = register_payload_with(
         "Grace Hopper",
         "not-an-email",
-        "str0ng!passphrase",
+        "Str0ng!passphrase",
         "student",
         true,
         None,
@@ -207,7 +207,7 @@ async fn unknown_role_returns_400() {
     let body = register_payload_with(
         "Grace Hopper",
         &email,
-        "str0ng!passphrase",
+        "Str0ng!passphrase",
         "wizard",
         true,
         None,
@@ -228,7 +228,7 @@ async fn institution_required_for_teacher_returns_400() {
     let body = register_payload_with(
         "Grace Hopper",
         &email,
-        "str0ng!passphrase",
+        "Str0ng!passphrase",
         "teacher",
         true,
         None,
@@ -249,7 +249,7 @@ async fn terms_not_accepted_returns_400() {
     let body = register_payload_with(
         "Grace Hopper",
         &email,
-        "str0ng!passphrase",
+        "Str0ng!passphrase",
         "student",
         false,
         None,
@@ -271,7 +271,7 @@ async fn empty_or_too_long_name_returns_400() {
     let empty_body = register_payload_with(
         "   ",
         &empty_email,
-        "str0ng!passphrase",
+        "Str0ng!passphrase",
         "student",
         true,
         None,
@@ -288,7 +288,7 @@ async fn empty_or_too_long_name_returns_400() {
     let long_body = register_payload_with(
         &long_name,
         &long_email,
-        "str0ng!passphrase",
+        "Str0ng!passphrase",
         "student",
         true,
         None,
@@ -375,7 +375,7 @@ async fn login_and_get_me_round_trip_works() {
         .oneshot(post_auth_register_request(register_payload_with(
             "Ada Lovelace",
             &email,
-            "str0ng!passphrase",
+            "Str0ng!passphrase",
             "student",
             true,
             None,
@@ -404,7 +404,7 @@ async fn login_and_get_me_round_trip_works() {
         .clone()
         .oneshot(post_sessions_request(login_payload(
             &email,
-            "str0ng!passphrase",
+            "Str0ng!passphrase",
         )))
         .await
         .unwrap();
@@ -441,7 +441,7 @@ async fn login_with_unverified_email_returns_401() {
             register_payload_with(
                 "Ada Lovelace",
                 &email,
-                "str0ng!passphrase",
+                "Str0ng!passphrase",
                 "student",
                 true,
                 None,
@@ -454,7 +454,7 @@ async fn login_with_unverified_email_returns_401() {
     let login_response = app
         .oneshot(post_sessions_request(login_payload(
             &email,
-            "str0ng!passphrase",
+            "Str0ng!passphrase",
         )))
         .await
         .unwrap();
@@ -473,7 +473,7 @@ async fn login_with_wrong_password_returns_401() {
             register_payload_with(
                 "Ada Lovelace",
                 &email,
-                "str0ng!passphrase",
+                "Str0ng!passphrase",
                 "student",
                 true,
                 None,

@@ -69,7 +69,8 @@ pub async fn register(
 
     let ctx = Ctx::guest(request_id.0);
     let user_id = state
-        .auth_service()
+        .auth()
+        .auth()
         .register(
             &ctx,
             body.name,
@@ -101,7 +102,8 @@ pub async fn verify_email(
     // The user ID is intentionally omitted from the response; the client only
     // needs confirmation that the email address was verified.
     let _user_id = state
-        .auth_service()
+        .auth()
+        .auth()
         .verify_email(&ctx, &body.token)
         .await
         .with_request_id(request_id.0)?;
@@ -124,7 +126,8 @@ pub async fn request_password_reset(
 
     let ctx = Ctx::guest(request_id.0);
     state
-        .auth_service()
+        .auth()
+        .auth()
         .request_password_reset(&ctx, &email)
         .await
         .with_request_id(request_id.0)?;
@@ -146,7 +149,8 @@ pub async fn reset_password(
 ) -> Result<impl IntoResponse, AppError> {
     let ctx = Ctx::guest(request_id.0);
     state
-        .auth_service()
+        .auth()
+        .auth()
         .reset_password(&ctx, &body.token, &body.new_password)
         .await
         .with_request_id(request_id.0)?;
