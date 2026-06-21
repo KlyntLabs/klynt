@@ -19,12 +19,12 @@ use axum::{
     middleware::Next,
     response::Response,
 };
-use tracing::{debug, instrument};
+use tracing::debug;
 use uuid::Uuid;
 
 use crate::state::AppState;
 
-const REQUEST_ID_HEADER: &str = "x-request-id";
+pub(crate) const REQUEST_ID_HEADER: &str = "x-request-id";
 const TRACE_ID_HEADER: &str = "x-trace-id";
 
 /// Request-scoped correlation identifier.
@@ -192,9 +192,16 @@ pub fn build_request_context(
     }
 }
 
+/// Record the canonical `request_id` and `trace_id` from `RequestContext`
+/// onto the current tracing span.
+pub(crate) fn record_request_context_span(ctx: &RequestContext) {
+    tracing::Span::current()
+        .record("request_id", ctx.request_id.to_string())
+        .record("trace_id", ctx.trace_id.to_string());
+}
+
 /// Middleware: build `RequestContext`, insert into extensions + task-local,
-/// record tracing span fields, echo `x-request-id`.
-#[instrument(skip(state, req, next), fields(request_id, trace_id))]
+/// record tracing span fields on the parent access span, echo the request-id header.
 pub async fn request_context(
     State(state): State<Arc<AppState>>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
@@ -208,9 +215,7 @@ pub async fn request_context(
     req.extensions_mut().insert(ctx.clone());
 
     // Record span fields.
-    tracing::Span::current()
-        .record("request_id", ctx.request_id.to_string())
-        .record("trace_id", ctx.trace_id.to_string());
+    record_request_context_span(&ctx);
 
     debug!(
         request_id = %ctx.request_id,
@@ -249,7 +254,7 @@ mod tests {
     use axum::http::{HeaderMap, HeaderValue};
     use std::net::{IpAddr, Ipv4Addr};
 
-    fn socket() -> SocketAddr {
+    pub(crate) fn socket() -> SocketAddr {
         SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080)
     }
 
@@ -346,3 +351,6 @@ mod tests {
         assert!(ip_matches_cidr("127.0.0.1".parse().unwrap(), "127.0.0.1"));
     }
 }
+
+#[cfg(test)]
+mod span_tests;

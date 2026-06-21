@@ -2,7 +2,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use axum::{
-    http::{HeaderName, HeaderValue, Method, StatusCode},
+    http::{HeaderName, HeaderValue, Method, Request, StatusCode},
     middleware, Router,
 };
 use tower_http::{
@@ -12,7 +12,7 @@ use tower_http::{
 use crate::middleware::ctx_resolve;
 use crate::middleware::security_headers::security_headers;
 use crate::rate_limit::rate_limit;
-use crate::request_context::request_context;
+use crate::request_context::{request_context, REQUEST_ID_HEADER};
 use crate::response::mw_map_response;
 use crate::state::AppState;
 use crate::v1;
@@ -22,7 +22,7 @@ const ALLOWED_METHODS: [Method; 4] = [Method::GET, Method::POST, Method::PUT, Me
 const ALLOWED_HEADERS: [HeaderName; 4] = [
     HeaderName::from_static("content-type"),
     HeaderName::from_static("idempotency-key"),
-    HeaderName::from_static("x-request-id"),
+    HeaderName::from_static(REQUEST_ID_HEADER),
     HeaderName::from_static("authorization"),
 ];
 
@@ -75,7 +75,23 @@ pub fn build_router(state: Arc<AppState>) -> Router {
     Router::new()
         .merge(health)
         .merge(api)
-        .layer(TraceLayer::new_for_http())
+        .layer(
+            TraceLayer::new_for_http().make_span_with(|req: &Request<_>| {
+                let request_id = req
+                    .headers()
+                    .get(REQUEST_ID_HEADER)
+                    .and_then(|v| v.to_str().ok())
+                    .unwrap_or("-");
+                tracing::debug_span!(
+                    "http.request",
+                    method = %req.method(),
+                    uri = %req.uri(),
+                    version = ?req.version(),
+                    request_id = %request_id,
+                    trace_id = tracing::field::Empty,
+                )
+            }),
+        )
         .layer(CompressionLayer::new())
         .layer(TimeoutLayer::with_status_code(
             StatusCode::REQUEST_TIMEOUT,
