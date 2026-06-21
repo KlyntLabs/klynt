@@ -9,12 +9,21 @@ use auth_service::{
     domain::{Session, SessionStore, SessionToken, TokenKind, TokenStore},
     error::AuthError,
     models::User,
-    AuthConfig, AuthService, Dependencies,
+    AuthConfig, AuthService, Dependencies as AuthDependencies,
 };
 use chrono::{DateTime, Utc};
 use klynt_core::ctx::ExecutionContext;
 use klynt_shared_domain::{UserRole, UserStatus};
 use klynt_utils::UserId;
+use user_service::{
+    application::ports::{
+        AuditLogger as UserAuditLogger, Clock as UserClock, PasswordHasher as UserPasswordHasher,
+        UserRepository as UserRepoPort,
+    },
+    domain::User as UserServiceUser,
+    error::UserError,
+    Dependencies as UserDependencies, UserConfig, UserService,
+};
 
 /// Fixed clock for deterministic tests.
 #[derive(Clone)]
@@ -273,7 +282,7 @@ pub fn build_test_auth_service() -> (AuthService, Arc<FakeUserRepository>, Arc<F
     let user_repository = Arc::new(FakeUserRepository::default());
     let service = AuthService::new(
         AuthConfig::default(),
-        Dependencies {
+        AuthDependencies {
             user_repository: user_repository.clone(),
             session_store: Arc::new(FakeSessionStore::default()),
             token_store: Arc::new(FakeTokenStore::default()),
@@ -336,16 +345,149 @@ impl klynt_domain::session::SessionStore for LegacyFakeSessionStore {
     }
 }
 
+/// Fake user repository for user_service tests.
+#[derive(Default)]
+pub struct FakeUserServiceRepository {
+    users: Mutex<HashMap<klynt_utils::UserId, UserServiceUser>>,
+}
+
+impl FakeUserServiceRepository {
+    /// Insert a user into the fake repository.
+    pub fn insert(&self, user: UserServiceUser) {
+        self.users.lock().unwrap().insert(user.id, user);
+    }
+}
+
+#[async_trait]
+impl UserRepoPort for FakeUserServiceRepository {
+    async fn find_by_id(
+        &self,
+        _ctx: &ExecutionContext,
+        id: klynt_utils::UserId,
+    ) -> Result<Option<UserServiceUser>, UserError> {
+        Ok(self.users.lock().unwrap().get(&id).cloned())
+    }
+
+    async fn update(
+        &self,
+        _ctx: &ExecutionContext,
+        user: &UserServiceUser,
+    ) -> Result<(), UserError> {
+        self.users.lock().unwrap().insert(user.id, user.clone());
+        Ok(())
+    }
+
+    async fn delete(
+        &self,
+        _ctx: &ExecutionContext,
+        id: klynt_utils::UserId,
+    ) -> Result<(), UserError> {
+        let mut users = self.users.lock().unwrap();
+        let mut user = users.get(&id).ok_or(UserError::NotFound)?.clone();
+        user.deleted_at = Some(Utc::now());
+        users.insert(id, user);
+        Ok(())
+    }
+
+    async fn list(
+        &self,
+        _ctx: &ExecutionContext,
+        pagination: klynt_shared_domain::PaginationRequest,
+    ) -> Result<(Vec<UserServiceUser>, u64), UserError> {
+        let users: Vec<UserServiceUser> = self
+            .users
+            .lock()
+            .unwrap()
+            .values()
+            .filter(|u| !u.is_deleted())
+            .cloned()
+            .collect();
+        let total = users.len() as u64;
+        let offset = pagination.offset() as usize;
+        let limit = pagination.page_size as usize;
+        let items = users.into_iter().skip(offset).take(limit).collect();
+        Ok((items, total))
+    }
+}
+
+/// Stub audit logger for user_service tests.
+#[derive(Default, Clone)]
+pub struct StubUserAuditLogger;
+
+#[async_trait]
+impl UserAuditLogger for StubUserAuditLogger {
+    async fn log_profile_updated(&self, _ctx: &ExecutionContext, _user_id: klynt_utils::UserId) {}
+    async fn log_password_changed(&self, _ctx: &ExecutionContext, _user_id: klynt_utils::UserId) {}
+    async fn log_user_deleted(&self, _ctx: &ExecutionContext, _user_id: klynt_utils::UserId) {}
+}
+
+/// Fake password hasher for user_service tests.
+#[derive(Default, Clone)]
+pub struct FakeUserPasswordHasher;
+
+#[async_trait]
+impl UserPasswordHasher for FakeUserPasswordHasher {
+    async fn verify(&self, password: &str, hash: &str) -> Result<bool, UserError> {
+        Ok(password == hash)
+    }
+
+    async fn hash(&self, password: &str) -> Result<String, UserError> {
+        Ok(password.to_string())
+    }
+}
+
+/// Fixed clock for user_service tests.
+#[derive(Clone)]
+pub struct FixedUserClock {
+    pub now: DateTime<Utc>,
+}
+
+impl UserClock for FixedUserClock {
+    fn now(&self) -> DateTime<Utc> {
+        self.now
+    }
+}
+
+/// Build a fake user service and its backing repository for tests.
+pub fn build_test_user_service() -> (UserService, Arc<FakeUserServiceRepository>) {
+    let repo = Arc::new(FakeUserServiceRepository::default());
+    let service = UserService::new(
+        UserConfig::default(),
+        UserDependencies {
+            user_repository: repo.clone(),
+            audit_logger: Arc::new(StubUserAuditLogger),
+            password_hasher: Arc::new(FakeUserPasswordHasher),
+            clock: Arc::new(FixedUserClock { now: Utc::now() }),
+        },
+    )
+    .expect("valid test dependencies");
+
+    (service, repo)
+}
+
+/// Build test gateway services with exposed fakes for protected route tests.
+pub fn build_test_services_with_fakes() -> (
+    api_gateway::state::Services,
+    Arc<LegacyFakeSessionStore>,
+    Arc<FakeUserServiceRepository>,
+) {
+    let (auth_service, _, _) = build_test_auth_service();
+    let session_store = Arc::new(LegacyFakeSessionStore::default());
+    let (user_service, user_repo) = build_test_user_service();
+
+    let services = api_gateway::state::Services {
+        auth: Arc::new(auth_service),
+        user: Arc::new(user_service),
+        session_store: session_store.clone(),
+    };
+
+    (services, session_store, user_repo)
+}
+
 /// Build test gateway services.
 pub fn build_test_services() -> api_gateway::state::Services {
-    let (auth_service, _, _) = build_test_auth_service();
-
-    // The session store field is unused by public auth routes, so we provide a
-    // stubbed fake implementation. Tests for protected routes can override this.
-    api_gateway::state::Services {
-        auth: Arc::new(auth_service),
-        session_store: Arc::new(LegacyFakeSessionStore::default()),
-    }
+    let (services, _, _) = build_test_services_with_fakes();
+    services
 }
 
 /// Default test configuration.

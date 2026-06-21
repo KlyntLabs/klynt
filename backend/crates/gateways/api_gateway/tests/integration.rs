@@ -6,6 +6,10 @@ use axum::{
     body::Body,
     http::{Method, Request, StatusCode},
 };
+use chrono::{Duration, Utc};
+use klynt_domain::session::SessionStore;
+use klynt_shared_domain::{Email, UserRole, UserStatus};
+use klynt_utils::UserId;
 use tower::ServiceExt;
 
 mod support;
@@ -268,4 +272,190 @@ async fn malformed_json_returns_bad_request() {
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+}
+
+async fn authenticated_app() -> (axum::Router, UserId, String) {
+    let (services, session_store, user_repo) = support::build_test_services_with_fakes();
+    let config = support::test_config();
+
+    let user_id = UserId::new();
+    let expires_at = Utc::now() + Duration::hours(1);
+
+    let token = session_store
+        .create(
+            &klynt_domain::ctx::Ctx::guest(uuid::Uuid::new_v4()),
+            klynt_domain::models::UserId(user_id.inner()),
+            expires_at,
+        )
+        .await
+        .unwrap();
+
+    user_repo.insert(user_service::domain::User {
+        id: user_id,
+        email: Email::new("ada@example.com".to_string()),
+        full_name: Some("Ada Lovelace".to_string()),
+        password_hash: "old-password".to_string(),
+        status: UserStatus::Active,
+        role: UserRole::Student,
+        created_at: Utc::now(),
+        updated_at: None,
+        deleted_at: None,
+    });
+
+    (
+        api_gateway::create_router(config, services),
+        user_id,
+        token.0.to_string(),
+    )
+}
+
+#[tokio::test]
+async fn get_me_returns_authenticated_user_profile() {
+    let (app, _user_id, token) = authenticated_app().await;
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/api/v1/users/me")
+                .header("Authorization", format!("Bearer {token}"))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(json["data"]["email"], "ada@example.com");
+    assert_eq!(json["data"]["full_name"], "Ada Lovelace");
+}
+
+#[tokio::test]
+async fn update_profile_changes_full_name() {
+    let (app, _user_id, token) = authenticated_app().await;
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::PATCH)
+                .uri("/api/v1/users/me")
+                .header("Authorization", format!("Bearer {token}"))
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    serde_json::json!({ "full_name": "New Name" }).to_string(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(json["data"]["full_name"], "New Name");
+}
+
+#[tokio::test]
+async fn change_password_with_valid_password_succeeds() {
+    let (app, _user_id, token) = authenticated_app().await;
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/api/v1/users/me/password")
+                .header("Authorization", format!("Bearer {token}"))
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    serde_json::json!({
+                        "current_password": "old-password",
+                        "new_password": "new-password",
+                    })
+                    .to_string(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+}
+
+#[tokio::test]
+async fn change_password_with_invalid_password_returns_unauthorized() {
+    let (app, _user_id, token) = authenticated_app().await;
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/api/v1/users/me/password")
+                .header("Authorization", format!("Bearer {token}"))
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    serde_json::json!({
+                        "current_password": "wrong-password",
+                        "new_password": "new-password",
+                    })
+                    .to_string(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+}
+
+#[tokio::test]
+async fn protected_user_routes_require_authentication() {
+    let app = app();
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/api/v1/users/me")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+}
+
+#[tokio::test]
+async fn list_users_returns_paginated_response() {
+    let (app, _user_id, token) = authenticated_app().await;
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/api/v1/users?page=1&page_size=10")
+                .header("Authorization", format!("Bearer {token}"))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert!(json["data"]["items"].is_array());
+    assert_eq!(json["data"]["page"], 1);
+    assert_eq!(json["data"]["page_size"], 10);
 }

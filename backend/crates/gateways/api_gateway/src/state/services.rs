@@ -4,10 +4,16 @@ use std::sync::Arc;
 
 use auth_service::{
     infrastructure::{
-        repositories::{SessionRepositoryAdapter, TokenRepositoryAdapter, UserRepositoryAdapter},
-        services::{AuditLoggerAdapter, EmailSenderAdapter, PasswordHasherAdapter},
+        repositories::{
+            SessionRepositoryAdapter, TokenRepositoryAdapter,
+            UserRepositoryAdapter as AuthUserRepositoryAdapter,
+        },
+        services::{
+            AuditLoggerAdapter as AuthAuditLoggerAdapter, EmailSenderAdapter,
+            PasswordHasherAdapter as AuthPasswordHasherAdapter,
+        },
     },
-    AuthConfig, AuthService, Dependencies,
+    AuthConfig, AuthService, Dependencies as AuthDependencies,
 };
 use klynt_infrastructure::{
     email::MockEmailService,
@@ -17,6 +23,16 @@ use klynt_infrastructure::{
         sqlx_audit_repo::PgAuditEventRepository, sqlx_token_repo::PgTokenStore,
     },
 };
+use user_service::{
+    infrastructure::{
+        repositories::UserRepositoryAdapter as UserRepoAdapter,
+        services::{
+            AuditLoggerAdapter as UserAuditLoggerAdapter,
+            PasswordHasherAdapter as UserPasswordHasherAdapter,
+        },
+    },
+    Dependencies as UserDependencies, UserConfig, UserService,
+};
 
 use super::Config;
 
@@ -24,10 +40,9 @@ use super::Config;
 #[derive(Clone)]
 pub struct Services {
     pub auth: Arc<AuthService>,
+    pub user: Arc<UserService>,
     /// Session store exposed for HTTP authentication middleware.
     pub session_store: Arc<dyn klynt_domain::session::SessionStore>,
-    // Future services:
-    // pub user: Arc<user_service::UserService>,
 }
 
 impl Services {
@@ -50,10 +65,12 @@ impl Services {
             .await
             .map_err(|e| crate::GatewayError::configuration(format!("Migrations: {e}")))?;
 
-        let (auth_service, session_store) = Self::create_auth_service(config, pool).await?;
+        let (auth_service, session_store) = Self::create_auth_service(config, pool.clone()).await?;
+        let user_service = Self::create_user_service(config, pool).await?;
 
         Ok(Self {
             auth: Arc::new(auth_service),
+            user: Arc::new(user_service),
             session_store,
         })
     }
@@ -63,7 +80,7 @@ impl Services {
         pool: sqlx::PgPool,
     ) -> Result<(AuthService, Arc<dyn klynt_domain::session::SessionStore>), crate::GatewayError>
     {
-        let user_repository = Arc::new(UserRepositoryAdapter::new(PgUserRepository::new(
+        let user_repository = Arc::new(AuthUserRepositoryAdapter::new(PgUserRepository::new(
             pool.clone(),
         )));
         // The auth service adapter needs a concrete type implementing the legacy
@@ -78,14 +95,14 @@ impl Services {
 
         let audit_repo = Arc::new(PgAuditEventRepository::new(pool.clone()));
         let audit_service = Arc::new(klynt_application::audit::AuditService::new(audit_repo));
-        let audit_logger = Arc::new(AuditLoggerAdapter::new(audit_service));
+        let audit_logger = Arc::new(AuthAuditLoggerAdapter::new(audit_service));
 
         let email_service: klynt_domain::ports::SharedEmailService =
             Arc::new(MockEmailService::new());
         let email_sender = Arc::new(EmailSenderAdapter::new(email_service));
 
         let password_hasher: Arc<dyn auth_service::application::ports::PasswordHasher> =
-            Arc::new(PasswordHasherAdapter::new(Argon2PasswordHasher::new()));
+            Arc::new(AuthPasswordHasherAdapter::new(Argon2PasswordHasher::new()));
 
         let clock: Arc<dyn auth_service::application::ports::Clock> =
             Arc::new(auth_service::application::ports::SystemClock);
@@ -97,7 +114,7 @@ impl Services {
                 token_duration_secs: 3600,
                 password_policy: None,
             },
-            Dependencies {
+            AuthDependencies {
                 user_repository,
                 session_store,
                 token_store,
@@ -110,5 +127,33 @@ impl Services {
         .map_err(|e| crate::GatewayError::configuration(format!("Auth service: {e}")))?;
 
         Ok((auth_service, legacy_session_store))
+    }
+
+    async fn create_user_service(
+        _config: &Config,
+        pool: sqlx::PgPool,
+    ) -> Result<UserService, crate::GatewayError> {
+        let user_repository = Arc::new(UserRepoAdapter::new(PgUserRepository::new(pool.clone())));
+
+        let audit_repo = Arc::new(PgAuditEventRepository::new(pool.clone()));
+        let audit_service = Arc::new(klynt_application::audit::AuditService::new(audit_repo));
+        let audit_logger = Arc::new(UserAuditLoggerAdapter::new(audit_service));
+
+        let password_hasher: Arc<dyn user_service::application::ports::PasswordHasher> =
+            Arc::new(UserPasswordHasherAdapter::new(Argon2PasswordHasher::new()));
+
+        let clock: Arc<dyn user_service::application::ports::Clock> =
+            Arc::new(user_service::application::ports::SystemClock);
+
+        UserService::new(
+            UserConfig::default(),
+            UserDependencies {
+                user_repository,
+                audit_logger,
+                password_hasher,
+                clock,
+            },
+        )
+        .map_err(|e| crate::GatewayError::configuration(format!("User service: {e}")))
     }
 }

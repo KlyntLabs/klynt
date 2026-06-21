@@ -36,6 +36,7 @@ pub enum AuditAction {
     UserEmailVerified,
     UserPasswordChanged,
     UserPasswordReset,
+    UserProfileUpdated,
     UserSuspended,
     UserDeleted,
 
@@ -151,6 +152,7 @@ impl FromStr for AuditAction {
             "user_email_verified" => Ok(AuditAction::UserEmailVerified),
             "user_password_changed" => Ok(AuditAction::UserPasswordChanged),
             "user_password_reset" => Ok(AuditAction::UserPasswordReset),
+            "user_profile_updated" => Ok(AuditAction::UserProfileUpdated),
             "user_suspended" => Ok(AuditAction::UserSuspended),
             "user_deleted" => Ok(AuditAction::UserDeleted),
             "session_created" => Ok(AuditAction::SessionCreated),
@@ -177,6 +179,7 @@ impl Display for AuditAction {
             AuditAction::UserEmailVerified => "user_email_verified",
             AuditAction::UserPasswordChanged => "user_password_changed",
             AuditAction::UserPasswordReset => "user_password_reset",
+            AuditAction::UserProfileUpdated => "user_profile_updated",
             AuditAction::UserSuspended => "user_suspended",
             AuditAction::UserDeleted => "user_deleted",
             AuditAction::SessionCreated => "session_created",

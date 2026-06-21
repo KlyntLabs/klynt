@@ -82,6 +82,40 @@ impl AuditService {
         self.repo.log(ctx, event).await
     }
 
+    /// Log profile update.
+    pub async fn log_profile_updated(&self, ctx: &Ctx, user_id: UserId) -> Result<(), DomainError> {
+        let event = AuditEvent::new(AuditAction::UserProfileUpdated, ResourceType::User)
+            .with_actor(user_id)
+            .with_resource(user_id.0)
+            .with_request_id(ctx.request_id);
+
+        self.repo.log(ctx, event).await
+    }
+
+    /// Log password change.
+    pub async fn log_password_changed(
+        &self,
+        ctx: &Ctx,
+        user_id: UserId,
+    ) -> Result<(), DomainError> {
+        let event = AuditEvent::new(AuditAction::UserPasswordChanged, ResourceType::User)
+            .with_actor(user_id)
+            .with_resource(user_id.0)
+            .with_request_id(ctx.request_id);
+
+        self.repo.log(ctx, event).await
+    }
+
+    /// Log user deletion.
+    pub async fn log_user_deleted(&self, ctx: &Ctx, user_id: UserId) -> Result<(), DomainError> {
+        let event = AuditEvent::new(AuditAction::UserDeleted, ResourceType::User)
+            .with_actor(user_id)
+            .with_resource(user_id.0)
+            .with_request_id(ctx.request_id);
+
+        self.repo.log(ctx, event).await
+    }
+
     /// Log failed authentication attempt.
     pub async fn log_login_failed(
         &self,

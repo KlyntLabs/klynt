@@ -3,8 +3,9 @@
 pub mod auth;
 pub mod health;
 pub mod openapi;
+pub mod users;
 
-use axum::Router;
+use axum::{middleware, Router};
 
 use crate::state::{Config, Services};
 
@@ -19,7 +20,7 @@ pub fn create_router(config: Config, services: Services) -> Router {
         // OpenAPI spec
         .route("/openapi.json", axum::routing::get(openapi::openapi_spec))
         // API v1 routes
-        .nest("/api/v1", api_v1_routes())
+        .nest("/api/v1", api_v1_routes(services.clone()))
         // CORS (applies to all routes)
         .layer(crate::middleware::cors::cors_layer(&allowed_origins))
         // Security headers
@@ -38,10 +39,15 @@ pub fn create_router(config: Config, services: Services) -> Router {
 }
 
 /// API v1 routes.
-fn api_v1_routes() -> Router<Services> {
+fn api_v1_routes(services: Services) -> Router<Services> {
+    let protected_user_routes = users::routes().layer(middleware::from_fn_with_state(
+        services,
+        crate::middleware::auth::require_auth,
+    ));
+
     Router::new()
         // Auth routes (no authentication required)
         .nest("/auth", auth::routes())
-    // Protected routes (require authentication)
-    // .nest("/users", user_routes()) // Future
+        // Protected routes (require authentication)
+        .nest("/users", protected_user_routes)
 }

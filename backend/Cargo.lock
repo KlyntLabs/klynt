@@ -64,6 +64,7 @@ dependencies = [
  "tower",
  "tower-http",
  "tracing",
+ "user_service",
  "uuid",
 ]
 
@@ -1303,6 +1304,7 @@ dependencies = [
  "chrono",
  "config",
  "klynt-domain",
+ "klynt_shared_domain",
  "rand 0.8.6",
  "rand_core 0.6.4",
  "redis",
@@ -3042,6 +3044,27 @@ dependencies = [
  "idna",
  "percent-encoding",
  "serde",
+]
+
+[[package]]
+name = "user_service"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "klynt-application",
+ "klynt-domain",
+ "klynt-infrastructure",
+ "klynt_core",
+ "klynt_shared_domain",
+ "klynt_utils",
+ "serde",
+ "sqlx",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "uuid",
+ "validator",
 ]
 
 [[package]]

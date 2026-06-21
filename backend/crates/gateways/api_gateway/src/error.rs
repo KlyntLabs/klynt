@@ -35,6 +35,10 @@ pub enum GatewayError {
     /// Auth service errors.
     #[error("Auth error: {0}")]
     Auth(#[from] auth_service::AuthError),
+
+    /// User service errors.
+    #[error("User error: {0}")]
+    User(#[from] user_service::UserError),
 }
 
 impl GatewayError {
@@ -74,6 +78,25 @@ impl GatewayError {
                 auth_service::AuthError::RateLimited => StatusCode::TOO_MANY_REQUESTS,
                 auth_service::AuthError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
                 auth_service::AuthError::Domain(domain_error) => match domain_error {
+                    klynt_shared_domain::DomainError::InvalidInput(_)
+                    | klynt_shared_domain::DomainError::Validation(_) => StatusCode::BAD_REQUEST,
+                    klynt_shared_domain::DomainError::NotFound(_) => StatusCode::NOT_FOUND,
+                    klynt_shared_domain::DomainError::Conflict(_) => StatusCode::CONFLICT,
+                    klynt_shared_domain::DomainError::NotPermitted(_) => StatusCode::FORBIDDEN,
+                    klynt_shared_domain::DomainError::Internal(_) => {
+                        StatusCode::INTERNAL_SERVER_ERROR
+                    }
+                },
+            },
+            Self::User(user_error) => match user_error {
+                user_service::UserError::NotFound => StatusCode::NOT_FOUND,
+                user_service::UserError::UserDeleted
+                | user_service::UserError::CannotDeleteAdmin
+                | user_service::UserError::SelfDeleteNotAllowed => StatusCode::FORBIDDEN,
+                user_service::UserError::InvalidPassword => StatusCode::UNAUTHORIZED,
+                user_service::UserError::Validation(_) => StatusCode::BAD_REQUEST,
+                user_service::UserError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
+                user_service::UserError::Domain(domain_error) => match domain_error {
                     klynt_shared_domain::DomainError::InvalidInput(_)
                     | klynt_shared_domain::DomainError::Validation(_) => StatusCode::BAD_REQUEST,
                     klynt_shared_domain::DomainError::NotFound(_) => StatusCode::NOT_FOUND,

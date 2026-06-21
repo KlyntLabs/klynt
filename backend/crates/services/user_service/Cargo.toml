@@ -1,0 +1,37 @@
+[package]
+name = "user_service"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# === Phase 1 Foundation ===
+klynt_core = { path = "../../../crates/core/klynt_core" }
+klynt_shared_domain = { path = "../../../crates/shared/klynt_domain" }
+klynt_utils = { path = "../../../crates/shared/klynt_utils" }
+
+# === Existing (will be removed after extraction) ===
+klynt-domain = { path = "../../../crates/klynt-domain" }
+klynt-application = { path = "../../../crates/klynt-application" }
+klynt-infrastructure = { path = "../../../crates/klynt-infrastructure" }
+
+# === Async Runtime ===
+tokio = { workspace = true }
+async-trait = { workspace = true }
+
+# === Serialization ===
+serde = { workspace = true }
+
+# === Time ===
+chrono = { workspace = true }
+
+# === IDs ===
+uuid = { workspace = true }
+
+# === Validation ===
+validator = { workspace = true }
+
+# === Error Handling ===
+thiserror = { workspace = true }
+
+[dev-dependencies]
+sqlx = { workspace = true }

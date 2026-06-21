@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 # === Services ===
 auth_service = { path = "../../services/auth_service" }
+user_service = { path = "../../services/user_service" }
 
 # === Phase 1 Foundation ===
 klynt_core = { path = "../../core/klynt_core" }
