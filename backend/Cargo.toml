@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/core/klynt_base",
+    "crates/klynt_base",
     "crates/shared/klynt_common",
     "crates/infrastructure/klynt_persistence",
     "crates/infrastructure/klynt_telemetry",
@@ -75,7 +75,7 @@ redis = { version = "0.27", features = ["tokio-comp"] }
 prometheus = { version = "0.13", default-features = false }
 
 # Internal crates
-klynt_base = { path = "crates/core/klynt_base" }
+klynt_base = { path = "crates/klynt_base" }
 klynt_common = { path = "crates/shared/klynt_common" }
 klynt_persistence = { path = "crates/infrastructure/klynt_persistence" }
 klynt_telemetry = { path = "crates/infrastructure/klynt_telemetry" }

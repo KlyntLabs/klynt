@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 # === Phase 1 Foundation ===
-klynt_base = { path = "../../../crates/core/klynt_base" }
+klynt_base = { path = "../../../crates/klynt_base" }
 klynt_common = { path = "../../shared/klynt_common" }
 
 # === Storage and infrastructure adapters ===

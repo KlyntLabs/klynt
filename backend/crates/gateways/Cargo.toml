@@ -9,7 +9,7 @@ auth_service = { path = "../services/auth_service" }
 user_service = { path = "../services/user_service" }
 
 # === Phase 1 Foundation ===
-klynt_base = { path = "../core/klynt_base" }
+klynt_base = { path = "../klynt_base" }
 klynt_common = { path = "../shared/klynt_common" }
 
 # === Storage and infrastructure adapters ===

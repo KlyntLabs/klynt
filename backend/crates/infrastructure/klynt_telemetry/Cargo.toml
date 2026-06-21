@@ -8,7 +8,7 @@ workspace = true
 
 [dependencies]
 # Internal crates
-klynt_base = { path = "../../core/klynt_base" }
+klynt_base = { path = "../../klynt_base" }
 klynt_common = { path = "../../shared/klynt_common" }
 
 # Tracing
