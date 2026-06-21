@@ -11,6 +11,7 @@
 //! - **Tests**: Cross the same interface as callers
 
 pub mod application;
+pub mod builder;
 pub mod domain;
 pub mod error;
 pub mod infrastructure;
@@ -27,6 +28,7 @@ use klynt_common::contracts::auth::{
 use klynt_common::util::UserId;
 
 // Public exports
+pub use builder::AuthBuilder;
 pub use domain::{PasswordPolicy, SessionToken};
 pub use error::{AuthError, AuthResult};
 
@@ -64,10 +66,15 @@ pub struct AuthService {
 }
 
 impl AuthService {
+    /// Return a builder for constructing the service with sensible defaults.
+    pub fn builder() -> AuthBuilder {
+        AuthBuilder::new()
+    }
+
     /// Create a new auth service with given configuration and dependencies.
     ///
-    /// This is the **only** way to construct the service — all dependencies
-    /// are wired here (composition root responsibility).
+    /// Prefer [`AuthService::builder`] for production wiring; this constructor
+    /// remains available for tests and custom dependency injection.
     pub fn new(config: AuthConfig, dependencies: Dependencies) -> Result<Self, AuthError> {
         let password_policy = config.password_policy.clone().unwrap_or_default();
 

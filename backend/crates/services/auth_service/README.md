@@ -4,14 +4,28 @@ Authentication service for the Klynt platform — a deep module with a small pub
 
 ## Public Interface
 
+### Builder (recommended for production)
+
 ```rust
-use auth_service::{AuthService, AuthConfig, Dependencies};
+use auth_service::{AuthService, AuthConfig};
 use klynt_common::contracts::{LoginRequest, RegistrationRequest};
 use klynt_base::ctx::ExecutionContext;
 
-let service = AuthService::new(config, dependencies)?;
+let service = AuthService::builder()
+    .with_config(AuthConfig { ... })
+    .with_pool(pool)
+    .build()
+    .await?;
 let response = service.login(&ctx, LoginRequest { ... }).await?;
 let user_id = service.register(&ctx, RegistrationRequest { ... }).await?;
+```
+
+### Manual constructor
+
+```rust
+use auth_service::{AuthService, AuthConfig, Dependencies};
+
+let service = AuthService::new(config, dependencies)?;
 ```
 
 ### Core Methods
@@ -28,6 +42,7 @@ let user_id = service.register(&ctx, RegistrationRequest { ... }).await?;
 ```
 src/
 ├── lib.rs              # Public interface
+├── builder.rs          # Fluent builder for production wiring
 ├── domain/             # Auth-specific domain (sessions, tokens, password policy)
 ├── application/        # Use case orchestration + ports
 ├── infrastructure/     # Adapters for repositories and services

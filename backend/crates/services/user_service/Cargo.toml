@@ -31,5 +31,7 @@ validator = { workspace = true }
 # === Error Handling ===
 thiserror = { workspace = true }
 
-[dev-dependencies]
+# === Database ===
 sqlx = { workspace = true }
+
+[dev-dependencies]

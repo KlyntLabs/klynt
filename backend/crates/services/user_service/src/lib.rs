@@ -11,6 +11,7 @@
 //! - **Tests**: Cross the same interface as callers
 
 pub mod application;
+pub mod builder;
 pub mod domain;
 pub mod error;
 pub mod infrastructure;
@@ -23,6 +24,7 @@ use klynt_base::ports::{Clock, PasswordHasher};
 use klynt_common::domain::PaginationRequest;
 use klynt_common::util::UserId;
 
+pub use builder::UserBuilder;
 pub use error::{UserError, UserResult};
 pub use models::{ProfileUpdate, UserProfile};
 
@@ -56,7 +58,15 @@ pub struct UserService {
 }
 
 impl UserService {
+    /// Return a builder for constructing the service with sensible defaults.
+    pub fn builder() -> UserBuilder {
+        UserBuilder::new()
+    }
+
     /// Create a new user service.
+    ///
+    /// Prefer [`UserService::builder`] for production wiring; this constructor
+    /// remains available for tests and custom dependency injection.
     pub fn new(config: UserConfig, dependencies: Dependencies) -> Result<Self, UserError> {
         Ok(Self {
             config,
