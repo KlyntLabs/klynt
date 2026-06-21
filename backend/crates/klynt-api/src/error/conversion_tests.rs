@@ -30,8 +30,44 @@ fn not_found_becomes_404() {
 
 #[test]
 fn rate_limited_becomes_429() {
-    let app_err = AppError::from(DomainError::RateLimited);
+    let app_err = AppError::new(
+        AppErrorKind::RateLimited {
+            retry_after_seconds: Some(60),
+        },
+        Uuid::nil(),
+    );
     assert_eq!(status_of(app_err), StatusCode::TOO_MANY_REQUESTS);
+}
+
+#[test]
+fn rate_limited_includes_retry_after_header() {
+    let app_err = AppError::new(
+        AppErrorKind::RateLimited {
+            retry_after_seconds: Some(42),
+        },
+        Uuid::nil(),
+    );
+    let response = app_err.into_response();
+    let retry_after = response
+        .headers()
+        .get(axum::http::header::RETRY_AFTER)
+        .expect("Retry-After header missing");
+    assert_eq!(retry_after, "42");
+}
+
+#[test]
+fn rate_limited_without_retry_after_omits_header() {
+    let app_err = AppError::new(
+        AppErrorKind::RateLimited {
+            retry_after_seconds: None,
+        },
+        Uuid::nil(),
+    );
+    let response = app_err.into_response();
+    assert!(response
+        .headers()
+        .get(axum::http::header::RETRY_AFTER)
+        .is_none());
 }
 
 #[test]

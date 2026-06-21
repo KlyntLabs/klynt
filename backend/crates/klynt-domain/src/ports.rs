@@ -28,9 +28,34 @@ where
     async fn get_or_insert(&self, key: Uuid, value: T) -> Result<Option<T>, DomainError>;
 }
 
+/// Result of a rate-limit check.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RateLimitDecision {
+    pub allowed: bool,
+    /// Seconds remaining in the current window. `None` if not rate-limited
+    /// or if the backend cannot determine the TTL.
+    pub retry_after_seconds: Option<u32>,
+}
+
+impl RateLimitDecision {
+    pub fn allowed() -> Self {
+        Self {
+            allowed: true,
+            retry_after_seconds: None,
+        }
+    }
+
+    pub fn denied(retry_after: u32) -> Self {
+        Self {
+            allowed: false,
+            retry_after_seconds: Some(retry_after),
+        }
+    }
+}
+
 #[async_trait]
 pub trait RateLimiter: Send + Sync {
-    async fn is_allowed(&self, ip: IpAddr) -> bool;
+    async fn check(&self, ip: IpAddr) -> RateLimitDecision;
 }
 
 pub mod email;

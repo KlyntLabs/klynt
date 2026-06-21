@@ -63,7 +63,7 @@ pub fn build_router(state: Arc<AppState>) -> Router {
             ctx_resolve,
         ))
         .layer(middleware::from_fn_with_state(
-            Arc::clone(&state),
+            state.rate_limiter_arc(),
             rate_limit,
         ))
         .layer(middleware::from_fn_with_state(

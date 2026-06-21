@@ -19,7 +19,7 @@ pub enum AppErrorKind {
     #[error("unauthorized")]
     Unauthorized,
     #[error("too many requests")]
-    RateLimited,
+    RateLimited { retry_after_seconds: Option<u32> },
     #[error("internal server error")]
     Internal(#[source] std::sync::Arc<dyn std::error::Error + Send + Sync>),
 }
@@ -104,7 +104,7 @@ impl ServiceError for AppErrorKind {
             AppErrorKind::BadRequest(_) => StatusCode::BAD_REQUEST,
             AppErrorKind::Conflict(_) => StatusCode::CONFLICT,
             AppErrorKind::Unauthorized => StatusCode::UNAUTHORIZED,
-            AppErrorKind::RateLimited => StatusCode::TOO_MANY_REQUESTS,
+            AppErrorKind::RateLimited { .. } => StatusCode::TOO_MANY_REQUESTS,
             AppErrorKind::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
@@ -141,7 +141,7 @@ impl AppErrorKind {
             AppErrorKind::BadRequest(_) => "BAD_REQUEST",
             AppErrorKind::Conflict(_) => "CONFLICT",
             AppErrorKind::Unauthorized => "AUTHENTICATION_REQUIRED",
-            AppErrorKind::RateLimited => "RATE_LIMITED",
+            AppErrorKind::RateLimited { .. } => "RATE_LIMITED",
             AppErrorKind::Internal(_) => "INTERNAL_ERROR",
         }
     }
@@ -152,7 +152,7 @@ impl AppErrorKind {
             | AppErrorKind::BadRequest(_)
             | AppErrorKind::Conflict(_)
             | AppErrorKind::Unauthorized => ErrorSeverity::Low,
-            AppErrorKind::RateLimited => ErrorSeverity::Medium,
+            AppErrorKind::RateLimited { .. } => ErrorSeverity::Medium,
             AppErrorKind::Internal(_) => ErrorSeverity::High,
         }
     }
@@ -160,7 +160,7 @@ impl AppErrorKind {
     pub fn category(&self) -> ErrorCategory {
         match self {
             AppErrorKind::Unauthorized => ErrorCategory::Authentication,
-            AppErrorKind::RateLimited => ErrorCategory::Authorization,
+            AppErrorKind::RateLimited { .. } => ErrorCategory::Authorization,
             AppErrorKind::NotFound | AppErrorKind::BadRequest(_) | AppErrorKind::Conflict(_) => {
                 ErrorCategory::Validation
             }
@@ -168,10 +168,13 @@ impl AppErrorKind {
         }
     }
 
-    /// Hook for future `Retry-After` header emission. `None` for all current variants.
     pub fn retry_after_seconds(&self) -> Option<u32> {
-        let _ = self;
-        None
+        match self {
+            AppErrorKind::RateLimited {
+                retry_after_seconds,
+            } => *retry_after_seconds,
+            _ => None,
+        }
     }
 }
 
@@ -185,7 +188,9 @@ impl From<DomainError> for AppErrorKind {
                     ErrorKind::NotFound => AppErrorKind::NotFound,
                     ErrorKind::Conflict => AppErrorKind::Conflict(message),
                     ErrorKind::Validation => AppErrorKind::BadRequest(message),
-                    ErrorKind::RateLimited => AppErrorKind::RateLimited,
+                    ErrorKind::RateLimited => AppErrorKind::RateLimited {
+                        retry_after_seconds: None,
+                    },
                     ErrorKind::AuthenticationRequired => AppErrorKind::Unauthorized,
                     ErrorKind::Internal => unreachable!("internal variant handled above"),
                 }
@@ -272,6 +277,16 @@ impl IntoResponse for AppError {
             axum::http::header::CONTENT_TYPE,
             "application/json".parse().unwrap(),
         );
+
+        // Add Retry-After header for rate-limited responses.
+        if let Some(secs) = self.kind.retry_after_seconds() {
+            response.headers_mut().insert(
+                axum::http::header::RETRY_AFTER,
+                axum::http::HeaderValue::from_str(&secs.to_string())
+                    .expect("u32 seconds are always a valid Retry-After value"),
+            );
+        }
+
         // Insert the error into extensions so mw_map_response can read it.
         response.extensions_mut().insert(self);
         response
@@ -290,109 +305,7 @@ impl<T> WithRequestId<T> for Result<T, DomainError> {
 }
 
 #[cfg(test)]
-mod conversion_tests;
+mod classification_tests;
 
 #[cfg(test)]
-mod classification_tests {
-    use std::error::Error;
-
-    use super::*;
-
-    #[test]
-    fn service_error_trait_can_be_used_as_dyn() {
-        let kind = AppErrorKind::NotFound;
-        let dyn_err: &dyn ServiceError = &kind;
-        assert_eq!(dyn_err.error_code(), "NOT_FOUND");
-        assert_eq!(dyn_err.severity(), ErrorSeverity::Low);
-        assert_eq!(dyn_err.status_code(), StatusCode::NOT_FOUND);
-    }
-
-    #[test]
-    fn app_error_implements_service_error() {
-        let app_err = AppError::new(AppErrorKind::BadRequest("test".to_string()), Uuid::nil());
-        let dyn_err: &dyn ServiceError = &app_err;
-        assert_eq!(dyn_err.error_code(), "BAD_REQUEST");
-        assert_eq!(dyn_err.client_message(), "bad request: test");
-    }
-
-    #[test]
-    fn service_error_sanitizes_internal_message() {
-        let kind = AppErrorKind::Internal(std::sync::Arc::new(std::io::Error::other(
-            "db password=secret",
-        )));
-        let dyn_err: &dyn ServiceError = &kind;
-        assert_eq!(dyn_err.client_message(), "something went wrong");
-        assert!(!dyn_err.client_message().contains("secret"));
-    }
-
-    #[test]
-    fn service_error_defaults_details_and_retry_after() {
-        let kind = AppErrorKind::BadRequest("bad".to_string());
-        let dyn_err: &dyn ServiceError = &kind;
-        assert_eq!(dyn_err.details(), None);
-        assert_eq!(dyn_err.retry_after_seconds(), None);
-    }
-
-    #[test]
-    fn internal_error_preserves_source_chain() {
-        let inner = std::io::Error::other("db password=secret");
-        let kind = AppErrorKind::Internal(std::sync::Arc::new(inner));
-        let app_err = AppError::new(kind, Uuid::nil());
-        assert!(app_err.source().is_some());
-    }
-
-    #[test]
-    fn not_found_classification() {
-        assert_eq!(AppErrorKind::NotFound.severity(), ErrorSeverity::Low);
-        assert_eq!(AppErrorKind::NotFound.category(), ErrorCategory::Validation);
-        assert_eq!(AppErrorKind::NotFound.error_code(), "NOT_FOUND");
-        assert_eq!(AppErrorKind::NotFound.retry_after_seconds(), None);
-    }
-
-    #[test]
-    fn bad_request_classification() {
-        let kind = AppErrorKind::BadRequest("msg".to_string());
-        assert_eq!(kind.severity(), ErrorSeverity::Low);
-        assert_eq!(kind.category(), ErrorCategory::Validation);
-        assert_eq!(kind.error_code(), "BAD_REQUEST");
-    }
-
-    #[test]
-    fn conflict_classification() {
-        let kind = AppErrorKind::Conflict("msg".to_string());
-        assert_eq!(kind.severity(), ErrorSeverity::Low);
-        assert_eq!(kind.category(), ErrorCategory::Validation);
-        assert_eq!(kind.error_code(), "CONFLICT");
-    }
-
-    #[test]
-    fn unauthorized_classification() {
-        assert_eq!(AppErrorKind::Unauthorized.severity(), ErrorSeverity::Low);
-        assert_eq!(
-            AppErrorKind::Unauthorized.category(),
-            ErrorCategory::Authentication
-        );
-        assert_eq!(
-            AppErrorKind::Unauthorized.error_code(),
-            "AUTHENTICATION_REQUIRED"
-        );
-    }
-
-    #[test]
-    fn rate_limited_classification() {
-        assert_eq!(AppErrorKind::RateLimited.severity(), ErrorSeverity::Medium);
-        assert_eq!(
-            AppErrorKind::RateLimited.category(),
-            ErrorCategory::Authorization
-        );
-        assert_eq!(AppErrorKind::RateLimited.error_code(), "RATE_LIMITED");
-    }
-
-    #[test]
-    fn internal_classification() {
-        let kind = AppErrorKind::Internal(std::sync::Arc::new(std::io::Error::other("boom")));
-        assert_eq!(kind.severity(), ErrorSeverity::High);
-        assert_eq!(kind.category(), ErrorCategory::Infrastructure);
-        assert_eq!(kind.error_code(), "INTERNAL_ERROR");
-    }
-}
+mod conversion_tests;

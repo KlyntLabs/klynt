@@ -47,6 +47,10 @@ impl AppState {
         &*self.rate_limiter
     }
 
+    pub fn rate_limiter_arc(&self) -> Arc<dyn RateLimiter> {
+        Arc::clone(&self.rate_limiter)
+    }
+
     pub fn session_store(&self) -> &dyn SessionStore {
         &*self.session_store
     }
