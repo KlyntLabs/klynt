@@ -26,6 +26,7 @@ pub fn load_config() -> Result<AppConfig, ConfigError> {
         .set_default("rate_limiter.max_requests", rl_default.max_requests as u64)?
         .set_default("rate_limiter.window_seconds", rl_default.window_seconds)?
         .set_default("log_level", "info")?
+        .set_default("hsts_enabled", false)?
         .set_default("database_url", None::<String>)?
         .set_default("redis_url", None::<String>)?
         .build()?;

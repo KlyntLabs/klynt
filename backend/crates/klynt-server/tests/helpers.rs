@@ -28,6 +28,7 @@ pub fn test_config() -> AppConfig {
             window_seconds: 60,
         },
         log_level: "error".to_string(),
+        hsts_enabled: false,
         database_url: Some(
             std::env::var("DATABASE_URL")
                 .unwrap_or_else(|_| "postgresql://klynt:klynt@localhost:5432/test".to_string()),

@@ -42,6 +42,8 @@ pub struct AppConfig {
     pub api: ApiConfig,
     pub rate_limiter: RateLimiterConfig,
     pub log_level: String,
+    #[serde(default)]
+    pub hsts_enabled: bool,
     pub database_url: Option<String>,
     pub redis_url: Option<String>,
 }

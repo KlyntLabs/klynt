@@ -10,6 +10,7 @@ use tower_http::{
 };
 
 use crate::middleware::ctx_resolve;
+use crate::middleware::security_headers::security_headers;
 use crate::rate_limit::rate_limit;
 use crate::request_context::request_context;
 use crate::response::mw_map_response;
@@ -28,7 +29,7 @@ const ALLOWED_HEADERS: [HeaderName; 4] = [
 /// Build the application router with the full middleware stack.
 ///
 /// Layer order (outermost → innermost at runtime):
-/// CORS → Timeout → Compression → Trace → (health: raw | api: request_context → rate_limit → ctx_resolve → map_response → handler)
+/// CORS → security_headers → Timeout → Compression → Trace → (health: raw | api: request_context → rate_limit → ctx_resolve → map_response → handler)
 pub fn build_router(state: Arc<AppState>) -> Router {
     let origins: Vec<HeaderValue> = state
         .config()
@@ -42,6 +43,8 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         .allow_origin(origins)
         .allow_methods(ALLOWED_METHODS)
         .allow_headers(ALLOWED_HEADERS);
+
+    let hsts_enabled = state.config().hsts_enabled;
 
     // --- Health router: NO envelope, NO request_context, NO logging ---
     let health = Router::new()
@@ -78,5 +81,8 @@ pub fn build_router(state: Arc<AppState>) -> Router {
             StatusCode::REQUEST_TIMEOUT,
             Duration::from_secs(30),
         ))
+        .layer(middleware::from_fn(move |req, next| {
+            security_headers(hsts_enabled, req, next)
+        }))
         .layer(cors)
 }
