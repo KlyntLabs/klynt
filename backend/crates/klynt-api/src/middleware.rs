@@ -24,18 +24,15 @@ const BEARER_PREFIX: &str = "Bearer ";
 #[derive(Debug, Clone, Copy)]
 pub struct RequestId(pub Uuid);
 
-impl<S: Send + Sync> axum::extract::FromRequestParts<S> for RequestId {
-    type Rejection = axum::http::StatusCode;
+impl<S: Send + Sync> FromRequestParts<S> for RequestId {
+    type Rejection = StatusCode;
 
-    async fn from_request_parts(
-        parts: &mut axum::http::request::Parts,
-        _state: &S,
-    ) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
         parts
             .extensions
             .get::<RequestId>()
             .copied()
-            .ok_or(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+            .ok_or(StatusCode::INTERNAL_SERVER_ERROR)
     }
 }
 
