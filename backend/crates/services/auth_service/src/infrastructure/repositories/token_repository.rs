@@ -70,14 +70,14 @@ mod tests {
 
     use super::*;
 
-    type LegacyTokenKey = (klynt_persistence::tokens::TokenKind, String);
-    type LegacyTokenEntry = (klynt_common::util::UserId, DateTime<Utc>, bool);
+    type PersistenceTokenKey = (klynt_persistence::tokens::TokenKind, String);
+    type PersistenceTokenEntry = (klynt_common::util::UserId, DateTime<Utc>, bool);
 
-    struct FakeLegacyTokenStore {
-        tokens: Mutex<HashMap<LegacyTokenKey, LegacyTokenEntry>>,
+    struct FakePersistenceTokenStore {
+        tokens: Mutex<HashMap<PersistenceTokenKey, PersistenceTokenEntry>>,
     }
 
-    impl Default for FakeLegacyTokenStore {
+    impl Default for FakePersistenceTokenStore {
         fn default() -> Self {
             Self {
                 tokens: Mutex::new(HashMap::new()),
@@ -86,7 +86,7 @@ mod tests {
     }
 
     #[async_trait]
-    impl klynt_persistence::repositories::TokenStore for FakeLegacyTokenStore {
+    impl klynt_persistence::repositories::TokenStore for FakePersistenceTokenStore {
         async fn save(
             &self,
             _ctx: &ExecutionContext,
@@ -128,7 +128,7 @@ mod tests {
 
     #[tokio::test]
     async fn save_and_consume_round_trip() {
-        let adapter = TokenRepositoryAdapter::new(FakeLegacyTokenStore::default());
+        let adapter = TokenRepositoryAdapter::new(FakePersistenceTokenStore::default());
         let user_id = UserId::new();
         let hash = "token-hash".to_string();
         let expires_at = Utc::now() + chrono::Duration::hours(1);
@@ -147,7 +147,7 @@ mod tests {
 
     #[tokio::test]
     async fn double_consume_fails() {
-        let adapter = TokenRepositoryAdapter::new(FakeLegacyTokenStore::default());
+        let adapter = TokenRepositoryAdapter::new(FakePersistenceTokenStore::default());
         let user_id = UserId::new();
         let hash = "token-hash".to_string();
         let expires_at = Utc::now() + chrono::Duration::hours(1);

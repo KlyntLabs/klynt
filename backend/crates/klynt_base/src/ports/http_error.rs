@@ -35,7 +35,7 @@ impl HttpError for klynt_common::domain::DomainError {
             | Self::TermsNotAccepted
             | Self::InvalidSessionToken => StatusCode::BAD_REQUEST,
             Self::NotFound(_) => StatusCode::NOT_FOUND,
-            Self::Conflict(_) | Self::AlreadyExists { .. } => StatusCode::CONFLICT,
+            Self::Conflict(_) => StatusCode::CONFLICT,
             Self::NotPermitted(_) | Self::AuthenticationRequired => StatusCode::FORBIDDEN,
             Self::RateLimited => StatusCode::TOO_MANY_REQUESTS,
             Self::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
@@ -55,7 +55,6 @@ impl HttpError for klynt_common::domain::DomainError {
             Self::InvalidSessionToken => "INVALID_SESSION_TOKEN",
             Self::NotFound(_) => "NOT_FOUND",
             Self::Conflict(_) => "CONFLICT",
-            Self::AlreadyExists { .. } => "ALREADY_EXISTS",
             Self::NotPermitted(_) => "FORBIDDEN",
             Self::AuthenticationRequired => "AUTHENTICATION_REQUIRED",
             Self::RateLimited => "RATE_LIMITED",

@@ -3,35 +3,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-/// Email address wrapper
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(transparent)]
-pub struct Email(String);
-
-impl Email {
-    /// Create new email (does not validate)
-    pub fn new(email: String) -> Self {
-        Self(email.to_lowercase())
-    }
-
-    /// Get inner value
-    pub fn inner(&self) -> &str {
-        &self.0
-    }
-
-    /// Validate email format
-    pub fn validate(&self) -> bool {
-        // Simple email validation
-        self.0.contains('@') && self.0.contains('.')
-    }
-}
-
-impl std::fmt::Display for Email {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
 /// Timestamp wrapper
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(transparent)]
@@ -144,14 +115,6 @@ pub enum UserStatus {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn email_stores_lower_case_value() {
-        let email = Email::new("Admin@Klynt.Dev".to_string());
-        assert_eq!(email.inner(), "admin@klynt.dev");
-        assert!(email.validate());
-        assert_eq!(email.to_string(), "admin@klynt.dev");
-    }
 
     #[test]
     fn timestamp_now_is_past_or_present() {

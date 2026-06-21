@@ -47,8 +47,16 @@ impl Email {
         &self.0
     }
 
-    /// Create email without validation (for tests).
-    pub fn unsafe_new(email: String) -> Self {
+    /// Get inner string (alias for [`as_str`] for consistency with other
+    /// newtype wrappers such as [`UserId::inner`]).
+    pub fn inner(&self) -> &str {
+        &self.0
+    }
+
+    /// Create an email address without validating it.
+    ///
+    /// Prefer [`Email::parse`] for untrusted input.
+    pub fn new(email: String) -> Self {
         Self(email.to_lowercase())
     }
 }
@@ -109,8 +117,8 @@ mod tests {
     }
 
     #[test]
-    fn unsafe_new_preserves_lower_case() {
-        let email = Email::unsafe_new("Admin@Klynt.Dev".to_string());
+    fn new_preserves_lower_case() {
+        let email = Email::new("Admin@Klynt.Dev".to_string());
         assert_eq!(email.as_str(), "admin@klynt.dev");
     }
 }

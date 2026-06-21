@@ -25,10 +25,6 @@ pub enum DomainError {
     #[error("Internal error: {0}")]
     Internal(String),
 
-    // Legacy domain error variants preserved during migration
-    #[error("email already registered: {email}")]
-    AlreadyExists { email: String },
-
     #[error("{0}")]
     InvalidEmail(#[from] EmailError),
 
@@ -150,13 +146,7 @@ mod tests {
     }
 
     #[test]
-    fn legacy_variants_display() {
-        assert!(DomainError::AlreadyExists {
-            email: "a@b.com".to_string()
-        }
-        .to_string()
-        .contains("a@b.com"));
-
+    fn domain_error_variants_display() {
         assert!(DomainError::InvalidEmail(EmailError::Empty)
             .to_string()
             .contains("empty"));

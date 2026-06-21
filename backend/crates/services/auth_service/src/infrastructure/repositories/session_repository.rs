@@ -81,13 +81,13 @@ mod tests {
 
     use super::*;
 
-    struct FakeLegacySessionStore {
+    struct FakePersistenceSessionStore {
         sessions: Mutex<
             HashMap<klynt_persistence::session::SessionToken, klynt_persistence::session::Session>,
         >,
     }
 
-    impl Default for FakeLegacySessionStore {
+    impl Default for FakePersistenceSessionStore {
         fn default() -> Self {
             Self {
                 sessions: Mutex::new(HashMap::new()),
@@ -96,7 +96,7 @@ mod tests {
     }
 
     #[async_trait]
-    impl klynt_persistence::session::SessionStore for FakeLegacySessionStore {
+    impl klynt_persistence::session::SessionStore for FakePersistenceSessionStore {
         async fn create(
             &self,
             _ctx: &ExecutionContext,
@@ -143,7 +143,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_returns_session_token() {
-        let adapter = SessionRepositoryAdapter::new(FakeLegacySessionStore::default());
+        let adapter = SessionRepositoryAdapter::new(FakePersistenceSessionStore::default());
         let ctx = ExecutionContext::new(RequestContext::new());
         let user_id = UserId::new();
         let expires_at = Utc::now() + chrono::Duration::hours(1);
@@ -154,7 +154,7 @@ mod tests {
 
     #[tokio::test]
     async fn find_valid_round_trips_session() {
-        let adapter = SessionRepositoryAdapter::new(FakeLegacySessionStore::default());
+        let adapter = SessionRepositoryAdapter::new(FakePersistenceSessionStore::default());
         let ctx = ExecutionContext::new(RequestContext::new());
         let user_id = UserId::new();
         let expires_at = Utc::now() + chrono::Duration::hours(1);
@@ -168,7 +168,7 @@ mod tests {
 
     #[tokio::test]
     async fn revoke_removes_session() {
-        let adapter = SessionRepositoryAdapter::new(FakeLegacySessionStore::default());
+        let adapter = SessionRepositoryAdapter::new(FakePersistenceSessionStore::default());
         let ctx = ExecutionContext::new(RequestContext::new());
         let user_id = UserId::new();
         let expires_at = Utc::now() + chrono::Duration::hours(1);

@@ -46,7 +46,7 @@ impl UserRow {
 
         Ok(User {
             id: UserId(self.id),
-            email: klynt_common::domain::Email::new(self.email),
+            email: Email::new(self.email),
             full_name: if self.name.is_empty() {
                 None
             } else {

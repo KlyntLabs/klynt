@@ -1,10 +1,10 @@
-//! Adapter from user_service `PasswordHasher` port to legacy password hasher.
+//! Adapter from user_service `PasswordHasher` port to the persistence password hasher.
 
 use async_trait::async_trait;
 
 use klynt_base::ports::{PasswordHashError, PasswordHasher};
 
-/// Adapter wrapping a legacy [`klynt_persistence::ports::PasswordHasher`].
+/// Adapter wrapping a [`klynt_persistence::ports::PasswordHasher`].
 pub struct PasswordHasherAdapter<T> {
     inner: T,
 }

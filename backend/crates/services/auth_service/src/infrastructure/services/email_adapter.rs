@@ -1,4 +1,4 @@
-//! Adapter from auth_service `EmailSender` port to legacy email service.
+//! Adapter from auth_service `EmailSender` port to the persistence email service.
 
 use async_trait::async_trait;
 
@@ -7,7 +7,7 @@ use klynt_base::ctx::ExecutionContext;
 use crate::application::ports::EmailSender;
 use crate::error::AuthError;
 
-/// Adapter wrapping a legacy [`klynt_persistence::ports::SharedEmailService`].
+/// Adapter wrapping a [`klynt_persistence::ports::SharedEmailService`].
 pub struct EmailSenderAdapter {
     inner: klynt_persistence::ports::SharedEmailService,
 }
@@ -27,14 +27,14 @@ impl EmailSender for EmailSenderAdapter {
         token: &str,
         base_url: &str,
     ) -> Result<(), AuthError> {
-        let legacy_email = klynt_common::util::Email::parse(email).map_err(|e| {
+        let parsed_email = klynt_common::util::Email::parse(email).map_err(|e| {
             AuthError::Domain(klynt_common::domain::DomainError::InvalidInput(
                 e.to_string(),
             ))
         })?;
 
         let content = klynt_persistence::email_content::VerificationEmail::new(
-            legacy_email,
+            parsed_email,
             token.to_string(),
             base_url.to_string(),
         );
@@ -51,14 +51,14 @@ impl EmailSender for EmailSenderAdapter {
         token: &str,
         base_url: &str,
     ) -> Result<(), AuthError> {
-        let legacy_email = klynt_common::util::Email::parse(email).map_err(|e| {
+        let parsed_email = klynt_common::util::Email::parse(email).map_err(|e| {
             AuthError::Domain(klynt_common::domain::DomainError::InvalidInput(
                 e.to_string(),
             ))
         })?;
 
         let content = klynt_persistence::email_content::PasswordResetEmail::new(
-            legacy_email,
+            parsed_email,
             token.to_string(),
             base_url.to_string(),
         );
