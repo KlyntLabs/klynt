@@ -39,6 +39,7 @@ pub fn build_router(state: Arc<AppState>) -> Router {
 
     Router::new()
         .nest("/api/v1", v1::router())
+        .nest("/api/v1", v1::health_router())
         .with_state(Arc::clone(&state))
         .layer(middleware::from_fn_with_state(
             Arc::clone(&state),
