@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use crate::application::ports::PasswordHasher;
 use crate::error::AuthError;
 
-/// Adapter wrapping a legacy [`klynt_storage::ports::PasswordHasher`].
+/// Adapter wrapping a legacy [`klynt_persistence::ports::PasswordHasher`].
 pub struct PasswordHasherAdapter<T> {
     inner: T,
 }
@@ -19,7 +19,7 @@ impl<T> PasswordHasherAdapter<T> {
 #[async_trait]
 impl<T> PasswordHasher for PasswordHasherAdapter<T>
 where
-    T: klynt_storage::ports::PasswordHasher,
+    T: klynt_persistence::ports::PasswordHasher,
 {
     async fn hash(&self, password: &str) -> Result<String, AuthError> {
         self.inner
@@ -27,14 +27,14 @@ where
             .await
             .map(|hashed| hashed.as_str().to_string())
             .map_err(|e| {
-                AuthError::Domain(klynt_shared_domain::DomainError::Internal(e.to_string()))
+                AuthError::Domain(klynt_common::domain::DomainError::Internal(e.to_string()))
             })
     }
 
     async fn verify(&self, password: &str, hash: &str) -> Result<bool, AuthError> {
-        let hashed = klynt_storage::ports::HashedPassword::new(hash);
+        let hashed = klynt_persistence::ports::HashedPassword::new(hash);
         self.inner.verify(password, &hashed).await.map_err(|e| {
-            AuthError::Domain(klynt_shared_domain::DomainError::Internal(e.to_string()))
+            AuthError::Domain(klynt_common::domain::DomainError::Internal(e.to_string()))
         })
     }
 }
@@ -45,7 +45,7 @@ mod tests {
 
     #[tokio::test]
     async fn hashes_and_verifies_password() {
-        let hasher = klynt_infrastructure::password_hasher::Argon2PasswordHasher::new();
+        let hasher = klynt_persistence::password_hasher::Argon2PasswordHasher::new();
         let adapter = PasswordHasherAdapter::new(hasher);
 
         let hash = adapter.hash("Str0ng!Pass#123").await.unwrap();

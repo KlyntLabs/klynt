@@ -5,9 +5,9 @@
 use std::sync::Arc;
 
 use chrono::Utc;
-use klynt_core::ctx::{ExecutionContext, RequestContext};
-use klynt_shared_domain::{PaginationRequest, UserStatus};
-use klynt_utils::UserId;
+use klynt_base::ctx::{ExecutionContext, RequestContext};
+use klynt_common::domain::{PaginationRequest, UserStatus};
+use klynt_common::util::UserId;
 use user_service::{
     application::ports::{AuditLogger, PasswordHasher, UserRepository},
     infrastructure::{
@@ -40,7 +40,7 @@ async fn user_repository_adapter_round_trips_with_postgres() {
         return;
     };
 
-    let repo = klynt_infrastructure::repositories::pg_user::PgUserRepository::new(pool.clone());
+    let repo = klynt_persistence::repositories::pg_user::PgUserRepository::new(pool.clone());
     let adapter = UserRepositoryAdapter::new(repo);
     let ctx = test_ctx();
 
@@ -101,7 +101,7 @@ async fn user_repository_adapter_round_trips_with_postgres() {
 async fn password_hasher_adapter_hashes_and_verifies_with_argon2() {
     let _ = setup_pool().await;
 
-    let hasher = klynt_infrastructure::password_hasher::Argon2PasswordHasher::new();
+    let hasher = klynt_persistence::password_hasher::Argon2PasswordHasher::new();
     let adapter = PasswordHasherAdapter::new(hasher);
 
     let hash = adapter.hash("Str0ng!Pass#123").await.unwrap();
@@ -116,9 +116,9 @@ async fn audit_logger_adapter_creates_profile_updated_event() {
     };
 
     let audit_repo = Arc::new(
-        klynt_infrastructure::repositories::sqlx_audit_repo::PgAuditEventRepository::new(pool),
+        klynt_persistence::repositories::sqlx_audit_repo::PgAuditEventRepository::new(pool),
     );
-    let audit_service = Arc::new(klynt_audit::AuditService::new(audit_repo));
+    let audit_service = Arc::new(klynt_telemetry::audit::AuditService::new(audit_repo));
     let adapter = AuditLoggerAdapter::new(audit_service);
     let ctx = test_ctx();
     let user_id = UserId::new();

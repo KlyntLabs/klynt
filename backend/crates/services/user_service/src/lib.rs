@@ -18,9 +18,9 @@ pub mod models;
 
 use std::sync::Arc;
 
-use klynt_core::ctx::ExecutionContext;
-use klynt_shared_domain::PaginationRequest;
-use klynt_utils::UserId;
+use klynt_base::ctx::ExecutionContext;
+use klynt_common::domain::PaginationRequest;
+use klynt_common::util::UserId;
 
 pub use error::{UserError, UserResult};
 pub use models::{ProfileUpdate, UserProfile};
@@ -119,7 +119,7 @@ impl UserService {
         &self,
         ctx: &ExecutionContext,
         pagination: PaginationRequest,
-    ) -> Result<klynt_shared_domain::PaginatedResponse<UserProfile>, UserError> {
+    ) -> Result<klynt_common::domain::PaginatedResponse<UserProfile>, UserError> {
         application::use_cases::list_users::execute(self, ctx, pagination).await
     }
 

@@ -1,0 +1,14 @@
+[package]
+name = "klynt_base"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Time
+chrono = { workspace = true }
+
+# IDs
+uuid = { workspace = true }
+
+# Internal crates
+klynt_common = { path = "../../shared/klynt_common" }

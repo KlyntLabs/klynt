@@ -1,6 +1,6 @@
 //! User service errors.
 
-use klynt_shared_domain::DomainError;
+use klynt_common::domain::DomainError;
 
 /// User service-specific error type.
 #[derive(thiserror::Error, Debug)]

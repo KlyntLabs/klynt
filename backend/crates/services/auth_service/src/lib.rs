@@ -19,9 +19,11 @@ pub mod models;
 use std::sync::Arc;
 
 use chrono::Duration;
-use klynt_contracts::auth::{LoginRequest, LoginResponse, RegistrationRequest, UserSessionInfo};
-use klynt_core::ctx::ExecutionContext;
-use klynt_utils::UserId;
+use klynt_base::ctx::ExecutionContext;
+use klynt_common::contracts::auth::{
+    LoginRequest, LoginResponse, RegistrationRequest, UserSessionInfo,
+};
+use klynt_common::util::UserId;
 
 // Public exports
 pub use domain::{PasswordPolicy, SessionToken};

@@ -7,22 +7,18 @@ Service-oriented Rust backend for the Klynt Education Platform. Built with Axum,
 ```
 backend/crates/
 ├── core/                   # Base abstractions
-│   └── klynt_core
-├── shared/                 # Shared libraries
-│   ├── klynt_contracts     # DTOs for service boundaries
-│   ├── klynt_domain        # Legacy shared domain types (minimized)
-│   └── klynt_utils         # ID generation, crypto, time utilities
+│   └── klynt_base          # Foundation types and context
+├── shared/                 # Shared types and utilities
+│   └── klynt_common        # Domain types, contracts, errors, utilities
 ├── infrastructure/         # Shared infrastructure
-│   ├── klynt_audit         # Audit logging service
-│   ├── klynt_messaging     # Event messaging abstractions
-│   ├── klynt_storage       # Storage abstractions
-│   ├── klynt_tracing       # Observability
-│   └── klynt-infrastructure # Repositories, email, hashing, rate limiting
+│   ├── klynt_persistence   # Repositories, storage ports, rate limiting, email, hashing
+│   ├── klynt_telemetry     # Tracing, audit logging, metrics, health-check ports
+│   └── klynt_config        # Configuration loading and validation
 ├── services/               # Business services
 │   ├── auth_service        # Authentication and authorization
 │   └── user_service        # User profile management
 ├── gateways/               # HTTP entry points
-│   └── api_gateway         # HTTP API gateway
+│   └── gateways            # HTTP API gateway + composition root
 └── klynt-server            # Minimal binary entrypoint
 ```
 
@@ -33,12 +29,13 @@ backend/crates/
 
 ## Gateway
 
-- `api_gateway` — HTTP API gateway; routes requests to services and provides middleware (auth, CORS, security headers, request IDs, error handling)
+- `gateways` — HTTP API gateway; routes requests to services and provides middleware (auth, CORS, security headers, request IDs, error handling)
 
 ## Shared Infrastructure
 
-- `klynt-infrastructure` — PostgreSQL repositories, Redis rate limiting/idempotency, Argon2 password hashing, mock email service
-- `klynt_audit` — Audit logging service used by both services through adapters
+- `klynt_persistence` — PostgreSQL repositories, Redis rate limiting/idempotency, Argon2 password hashing, mock email service, session/token stores
+- `klynt_telemetry` — Tracing setup, audit logging service, health-check ports, and metrics
+- `klynt_config` — Application configuration loading from files and environment
 
 ## Local Development
 
@@ -119,7 +116,7 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 | `POST` | `/api/v1/auth/reset-password` | Reset password with token |
 | `POST` | `/api/v1/auth/login` | Create a session (login) |
 
-See `crates/gateways/api_gateway/src/openapi.yaml` for the full request/response schemas.
+See `crates/gateways/src/openapi.yaml` for the full request/response schemas.
 
 ## Environment Variables
 
@@ -132,4 +129,4 @@ Copy the root `.env.example` to `.env` and adjust as needed. Key backend variabl
 | `KLYNT_API__HOST` | API bind host | `127.0.0.1` |
 | `KLYNT_API__PORT` | API bind port | `3000` |
 
-See `crates/klynt-domain/src/config.rs` for the full configuration shape.
+See `crates/infrastructure/klynt_config/src/lib.rs` for the full configuration shape.

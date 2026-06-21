@@ -1,7 +1,7 @@
 //! Update profile use case.
 
-use klynt_core::ctx::ExecutionContext;
-use klynt_utils::UserId;
+use klynt_base::ctx::ExecutionContext;
+use klynt_common::util::UserId;
 use validator::Validate;
 
 use crate::error::UserError;

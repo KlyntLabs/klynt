@@ -1,8 +1,8 @@
 //! User domain logic.
 
 use chrono::{DateTime, Utc};
-use klynt_shared_domain::{Email, UserRole, UserStatus};
-use klynt_utils::UserId;
+use klynt_common::domain::{Email, UserRole, UserStatus};
+use klynt_common::util::UserId;
 
 use crate::error::UserError;
 

@@ -4,19 +4,19 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 
-use klynt_core::ctx::ExecutionContext;
-use klynt_utils::UserId;
+use klynt_base::ctx::ExecutionContext;
+use klynt_common::util::UserId;
 
 use crate::application::ports::AuditLogger;
 use crate::infrastructure::conversion::{to_legacy_ctx, to_legacy_user_id};
 
-/// Adapter wrapping the legacy [`klynt_audit::AuditService`].
+/// Adapter wrapping the legacy [`klynt_telemetry::audit::AuditService`].
 pub struct AuditLoggerAdapter {
-    inner: Arc<klynt_audit::AuditService>,
+    inner: Arc<klynt_telemetry::audit::AuditService>,
 }
 
 impl AuditLoggerAdapter {
-    pub fn new(inner: Arc<klynt_audit::AuditService>) -> Self {
+    pub fn new(inner: Arc<klynt_telemetry::audit::AuditService>) -> Self {
         Self { inner }
     }
 }

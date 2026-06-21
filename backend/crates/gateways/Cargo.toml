@@ -9,16 +9,12 @@ auth_service = { path = "../services/auth_service" }
 user_service = { path = "../services/user_service" }
 
 # === Phase 1 Foundation ===
-klynt_core = { path = "../core/klynt_core" }
-klynt_contracts = { path = "../shared/klynt_contracts" }
-klynt_shared_domain = { path = "../shared/klynt_domain" }
-klynt_utils = { path = "../shared/klynt_utils" }
-klynt_tracing = { path = "../infrastructure/klynt_tracing" }
+klynt_base = { path = "../core/klynt_base" }
+klynt_common = { path = "../shared/klynt_common" }
 
 # === Storage and infrastructure adapters ===
-klynt_storage = { path = "../infrastructure/klynt_storage" }
-klynt-infrastructure = { path = "../klynt-infrastructure" }
-klynt_audit = { path = "../infrastructure/klynt_audit" }
+klynt_persistence = { path = "../infrastructure/klynt_persistence" }
+klynt_telemetry = { path = "../infrastructure/klynt_telemetry" }
 
 # === Web Framework ===
 axum = { workspace = true }
@@ -42,6 +38,7 @@ tracing = { workspace = true }
 
 # === Configuration ===
 config = { workspace = true }
+klynt_config = { workspace = true }
 
 # === Time ===
 chrono = { workspace = true }

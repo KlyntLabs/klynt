@@ -110,13 +110,10 @@ dependencies = [
  "async-trait",
  "base64",
  "chrono",
- "klynt-infrastructure",
- "klynt_audit",
- "klynt_contracts",
- "klynt_core",
- "klynt_shared_domain",
- "klynt_storage",
- "klynt_utils",
+ "klynt_base",
+ "klynt_common",
+ "klynt_persistence",
+ "klynt_telemetry",
  "rand 0.8.6",
  "serde",
  "sha2",
@@ -729,14 +726,11 @@ dependencies = [
  "axum",
  "chrono",
  "config",
- "klynt-infrastructure",
- "klynt_audit",
- "klynt_contracts",
- "klynt_core",
- "klynt_shared_domain",
- "klynt_storage",
- "klynt_tracing",
- "klynt_utils",
+ "klynt_base",
+ "klynt_common",
+ "klynt_config",
+ "klynt_persistence",
+ "klynt_telemetry",
  "serde",
  "serde_json",
  "sqlx",
@@ -1143,32 +1137,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "klynt-infrastructure"
-version = "0.1.0"
-dependencies = [
- "argon2",
- "async-trait",
- "base64",
- "chrono",
- "config",
- "klynt_audit",
- "klynt_core",
- "klynt_shared_domain",
- "klynt_storage",
- "klynt_utils",
- "rand 0.8.6",
- "rand_core 0.6.4",
- "redis",
- "serde",
- "serde_json",
- "sqlx",
- "thiserror",
- "tokio",
- "tracing",
- "uuid",
-]
-
-[[package]]
 name = "klynt-server"
 version = "0.1.0"
 dependencies = [
@@ -1179,76 +1147,57 @@ dependencies = [
 ]
 
 [[package]]
-name = "klynt_audit"
+name = "klynt_base"
 version = "0.1.0"
 dependencies = [
- "async-trait",
  "chrono",
- "klynt_core",
- "klynt_shared_domain",
- "klynt_utils",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
+ "klynt_common",
  "uuid",
 ]
 
 [[package]]
-name = "klynt_contracts"
+name = "klynt_common"
 version = "0.1.0"
 dependencies = [
+ "base64",
  "chrono",
- "klynt_shared_domain",
- "klynt_utils",
+ "rand 0.8.6",
  "serde",
  "serde_json",
+ "sha2",
+ "thiserror",
+ "time",
+ "ulid",
+ "uuid",
  "validator",
 ]
 
 [[package]]
-name = "klynt_core"
+name = "klynt_config"
 version = "0.1.0"
 dependencies = [
- "chrono",
- "klynt_utils",
- "uuid",
-]
-
-[[package]]
-name = "klynt_messaging"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "chrono",
+ "config",
  "serde",
- "serde_json",
  "thiserror",
 ]
 
 [[package]]
-name = "klynt_shared_domain"
+name = "klynt_persistence"
 version = "0.1.0"
 dependencies = [
- "chrono",
- "klynt_utils",
- "serde",
- "serde_json",
- "thiserror",
-]
-
-[[package]]
-name = "klynt_storage"
-version = "0.1.0"
-dependencies = [
+ "argon2",
  "async-trait",
  "base64",
  "chrono",
- "klynt_core",
- "klynt_shared_domain",
- "klynt_utils",
+ "klynt_base",
+ "klynt_common",
+ "klynt_config",
+ "klynt_telemetry",
  "rand 0.8.6",
+ "rand_core 0.6.4",
+ "redis",
  "serde",
+ "serde_json",
  "sha2",
  "sqlx",
  "thiserror",
@@ -1258,27 +1207,19 @@ dependencies = [
 ]
 
 [[package]]
-name = "klynt_tracing"
+name = "klynt_telemetry"
 version = "0.1.0"
 dependencies = [
- "klynt_core",
+ "async-trait",
+ "chrono",
+ "klynt_base",
+ "klynt_common",
+ "serde",
+ "serde_json",
+ "tokio",
  "tracing",
  "tracing-error",
  "tracing-subscriber",
-]
-
-[[package]]
-name = "klynt_utils"
-version = "0.1.0"
-dependencies = [
- "base64",
- "chrono",
- "rand 0.8.6",
- "serde",
- "sha2",
- "thiserror",
- "time",
- "ulid",
  "uuid",
 ]
 
@@ -2798,12 +2739,10 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "chrono",
- "klynt-infrastructure",
- "klynt_audit",
- "klynt_core",
- "klynt_shared_domain",
- "klynt_storage",
- "klynt_utils",
+ "klynt_base",
+ "klynt_common",
+ "klynt_persistence",
+ "klynt_telemetry",
  "serde",
  "sqlx",
  "thiserror",

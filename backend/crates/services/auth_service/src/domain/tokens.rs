@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use chrono::{DateTime, Duration, Utc};
 
-use klynt_utils::UserId;
+use klynt_common::util::UserId;
 
 use crate::error::AuthError;
 

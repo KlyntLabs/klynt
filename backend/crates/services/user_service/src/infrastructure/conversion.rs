@@ -1,72 +1,80 @@
 //! Type conversions between user_service types and legacy klynt-domain types.
 
-use klynt_core::ctx::ExecutionContext;
+use klynt_base::ctx::ExecutionContext;
 
 use crate::error::UserError;
 
 /// Convert new execution context to legacy `Ctx`.
-pub fn to_legacy_ctx(ctx: &ExecutionContext) -> klynt_core::ctx::Ctx {
-    let actor_id = ctx.actor_id.map(klynt_utils::UserId);
-    klynt_core::ctx::Ctx {
+pub fn to_legacy_ctx(ctx: &ExecutionContext) -> klynt_base::ctx::Ctx {
+    let actor_id = ctx.actor_id.map(klynt_common::util::UserId);
+    klynt_base::ctx::Ctx {
         request_id: ctx.request.request_id.0,
         user_id: actor_id,
     }
 }
 
 /// Convert new `UserId` to legacy `UserId`.
-pub fn to_legacy_user_id(user_id: klynt_utils::UserId) -> klynt_utils::UserId {
-    klynt_utils::UserId(user_id.inner())
+pub fn to_legacy_user_id(user_id: klynt_common::util::UserId) -> klynt_common::util::UserId {
+    klynt_common::util::UserId(user_id.inner())
 }
 
 /// Convert legacy `UserId` to new `UserId`.
-pub fn from_legacy_user_id(user_id: klynt_utils::UserId) -> klynt_utils::UserId {
-    klynt_utils::UserId::from_uuid(user_id.0)
+pub fn from_legacy_user_id(user_id: klynt_common::util::UserId) -> klynt_common::util::UserId {
+    klynt_common::util::UserId::from_uuid(user_id.0)
 }
 
 /// Convert legacy `Role` to shared `UserRole`.
-pub fn from_legacy_role(role: klynt_utils::Role) -> klynt_shared_domain::UserRole {
+pub fn from_legacy_role(role: klynt_common::util::Role) -> klynt_common::domain::UserRole {
     match role {
-        klynt_utils::Role::Student => klynt_shared_domain::UserRole::Student,
-        klynt_utils::Role::Teacher => klynt_shared_domain::UserRole::Instructor,
-        klynt_utils::Role::Admin => klynt_shared_domain::UserRole::Admin,
+        klynt_common::util::Role::Student => klynt_common::domain::UserRole::Student,
+        klynt_common::util::Role::Teacher => klynt_common::domain::UserRole::Instructor,
+        klynt_common::util::Role::Admin => klynt_common::domain::UserRole::Admin,
         // Parent is not represented in the new shared domain; map to Student as least privilege.
-        klynt_utils::Role::Parent => klynt_shared_domain::UserRole::Student,
+        klynt_common::util::Role::Parent => klynt_common::domain::UserRole::Student,
     }
 }
 
 /// Convert shared `UserRole` to legacy `Role`.
-pub fn to_legacy_role(role: klynt_shared_domain::UserRole) -> klynt_utils::Role {
+pub fn to_legacy_role(role: klynt_common::domain::UserRole) -> klynt_common::util::Role {
     match role {
-        klynt_shared_domain::UserRole::Student => klynt_utils::Role::Student,
-        klynt_shared_domain::UserRole::Instructor => klynt_utils::Role::Teacher,
-        klynt_shared_domain::UserRole::Admin => klynt_utils::Role::Admin,
+        klynt_common::domain::UserRole::Student => klynt_common::util::Role::Student,
+        klynt_common::domain::UserRole::Instructor => klynt_common::util::Role::Teacher,
+        klynt_common::domain::UserRole::Admin => klynt_common::util::Role::Admin,
     }
 }
 
 /// Convert legacy `UserStatus` to shared `UserStatus`.
-pub fn from_legacy_status(status: klynt_utils::UserStatus) -> klynt_shared_domain::UserStatus {
+pub fn from_legacy_status(
+    status: klynt_common::util::UserStatus,
+) -> klynt_common::domain::UserStatus {
     match status {
-        klynt_utils::UserStatus::PendingVerification => klynt_shared_domain::UserStatus::Pending,
-        klynt_utils::UserStatus::Active => klynt_shared_domain::UserStatus::Active,
-        klynt_utils::UserStatus::Suspended => klynt_shared_domain::UserStatus::Suspended,
+        klynt_common::util::UserStatus::PendingVerification => {
+            klynt_common::domain::UserStatus::Pending
+        }
+        klynt_common::util::UserStatus::Active => klynt_common::domain::UserStatus::Active,
+        klynt_common::util::UserStatus::Suspended => klynt_common::domain::UserStatus::Suspended,
     }
 }
 
 /// Convert shared `UserStatus` to legacy `UserStatus`.
-pub fn to_legacy_status(status: klynt_shared_domain::UserStatus) -> klynt_utils::UserStatus {
+pub fn to_legacy_status(
+    status: klynt_common::domain::UserStatus,
+) -> klynt_common::util::UserStatus {
     match status {
-        klynt_shared_domain::UserStatus::Active => klynt_utils::UserStatus::Active,
-        klynt_shared_domain::UserStatus::Inactive => klynt_utils::UserStatus::Suspended,
-        klynt_shared_domain::UserStatus::Suspended => klynt_utils::UserStatus::Suspended,
-        klynt_shared_domain::UserStatus::Pending => klynt_utils::UserStatus::PendingVerification,
+        klynt_common::domain::UserStatus::Active => klynt_common::util::UserStatus::Active,
+        klynt_common::domain::UserStatus::Inactive => klynt_common::util::UserStatus::Suspended,
+        klynt_common::domain::UserStatus::Suspended => klynt_common::util::UserStatus::Suspended,
+        klynt_common::domain::UserStatus::Pending => {
+            klynt_common::util::UserStatus::PendingVerification
+        }
     }
 }
 
 /// Convert legacy `User` to user_service domain `User`.
-pub fn from_legacy_user(user: klynt_infrastructure::repositories::User) -> crate::domain::User {
+pub fn from_legacy_user(user: klynt_persistence::repositories::User) -> crate::domain::User {
     crate::domain::User {
         id: from_legacy_user_id(user.id),
-        email: klynt_shared_domain::Email::new(user.email.as_str().to_string()),
+        email: klynt_common::domain::Email::new(user.email.as_str().to_string()),
         full_name: if user.name.is_empty() {
             None
         } else {
@@ -84,12 +92,12 @@ pub fn from_legacy_user(user: klynt_infrastructure::repositories::User) -> crate
 /// Convert user_service domain `User` to legacy `User`.
 pub fn to_legacy_user(
     user: crate::domain::User,
-) -> Result<klynt_infrastructure::repositories::User, UserError> {
-    Ok(klynt_infrastructure::repositories::User {
+) -> Result<klynt_persistence::repositories::User, UserError> {
+    Ok(klynt_persistence::repositories::User {
         id: to_legacy_user_id(user.id),
         name: user.full_name.unwrap_or_default(),
-        email: klynt_utils::Email::parse(user.email.inner()).map_err(|e| {
-            UserError::Domain(klynt_shared_domain::DomainError::InvalidInput(
+        email: klynt_common::util::Email::parse(user.email.inner()).map_err(|e| {
+            UserError::Domain(klynt_common::domain::DomainError::InvalidInput(
                 e.to_string(),
             ))
         })?,
@@ -105,16 +113,16 @@ pub fn to_legacy_user(
     })
 }
 
-pub fn map_legacy_error(err: klynt_shared_domain::DomainError) -> UserError {
-    UserError::Domain(klynt_shared_domain::DomainError::Internal(err.to_string()))
+pub fn map_legacy_error(err: klynt_common::domain::DomainError) -> UserError {
+    UserError::Domain(klynt_common::domain::DomainError::Internal(err.to_string()))
 }
 
 #[cfg(test)]
 mod tests {
     use chrono::Utc;
-    use klynt_core::ctx::RequestContext;
-    use klynt_shared_domain::{UserRole, UserStatus};
-    use klynt_utils::UserId;
+    use klynt_base::ctx::RequestContext;
+    use klynt_common::domain::{UserRole, UserStatus};
+    use klynt_common::util::UserId;
 
     use super::*;
 
@@ -128,9 +136,9 @@ mod tests {
 
     #[test]
     fn ctx_preserves_request_id() {
-        let request_id = klynt_core::ctx::RequestId::new();
+        let request_id = klynt_base::ctx::RequestId::new();
         let ctx =
-            ExecutionContext::new(klynt_core::ctx::RequestContext::with_request_id(request_id));
+            ExecutionContext::new(klynt_base::ctx::RequestContext::with_request_id(request_id));
         let legacy = to_legacy_ctx(&ctx);
         assert_eq!(legacy.request_id, request_id.0);
         assert!(legacy.user_id.is_none());
@@ -140,7 +148,7 @@ mod tests {
     fn ctx_maps_actor_to_user_id() {
         let user_id = UserId::new();
         let ctx = ExecutionContext::new(RequestContext::new())
-            .with_actor(user_id.inner(), klynt_core::ctx::ActorType::User);
+            .with_actor(user_id.inner(), klynt_base::ctx::ActorType::User);
         let legacy = to_legacy_ctx(&ctx);
         assert_eq!(legacy.user_id, Some(to_legacy_user_id(user_id)));
     }
@@ -148,7 +156,7 @@ mod tests {
     #[test]
     fn maps_active_status() {
         assert_eq!(
-            from_legacy_status(klynt_utils::UserStatus::Active),
+            from_legacy_status(klynt_common::util::UserStatus::Active),
             UserStatus::Active
         );
     }
@@ -156,7 +164,7 @@ mod tests {
     #[test]
     fn maps_pending_verification_to_pending() {
         assert_eq!(
-            from_legacy_status(klynt_utils::UserStatus::PendingVerification),
+            from_legacy_status(klynt_common::util::UserStatus::PendingVerification),
             UserStatus::Pending
         );
     }
@@ -164,7 +172,7 @@ mod tests {
     #[test]
     fn maps_suspended_to_suspended() {
         assert_eq!(
-            from_legacy_status(klynt_utils::UserStatus::Suspended),
+            from_legacy_status(klynt_common::util::UserStatus::Suspended),
             UserStatus::Suspended
         );
     }
@@ -172,16 +180,19 @@ mod tests {
     #[test]
     fn maps_roles_to_shared_domain() {
         assert_eq!(
-            from_legacy_role(klynt_utils::Role::Student),
+            from_legacy_role(klynt_common::util::Role::Student),
             UserRole::Student
         );
         assert_eq!(
-            from_legacy_role(klynt_utils::Role::Teacher),
+            from_legacy_role(klynt_common::util::Role::Teacher),
             UserRole::Instructor
         );
-        assert_eq!(from_legacy_role(klynt_utils::Role::Admin), UserRole::Admin);
         assert_eq!(
-            from_legacy_role(klynt_utils::Role::Parent),
+            from_legacy_role(klynt_common::util::Role::Admin),
+            UserRole::Admin
+        );
+        assert_eq!(
+            from_legacy_role(klynt_common::util::Role::Parent),
             UserRole::Student
         );
     }
@@ -209,19 +220,19 @@ mod tests {
     #[test]
     fn inactive_maps_to_legacy_suspended() {
         let legacy = to_legacy_status(UserStatus::Inactive);
-        assert_eq!(legacy, klynt_utils::UserStatus::Suspended);
+        assert_eq!(legacy, klynt_common::util::UserStatus::Suspended);
         assert_eq!(from_legacy_status(legacy), UserStatus::Suspended);
     }
 
     #[test]
     fn converts_legacy_user() {
-        let user = klynt_infrastructure::repositories::User {
-            id: klynt_utils::UserId::new(),
+        let user = klynt_persistence::repositories::User {
+            id: klynt_common::util::UserId::new(),
             name: "Ada".to_string(),
-            email: klynt_utils::Email::parse("ada@example.com").unwrap(),
-            role: klynt_utils::Role::Student,
+            email: klynt_common::util::Email::parse("ada@example.com").unwrap(),
+            role: klynt_common::util::Role::Student,
             institution_id: None,
-            status: klynt_utils::UserStatus::Active,
+            status: klynt_common::util::UserStatus::Active,
             email_verified_at: None,
             global_role: None,
             password_hash: "hash".to_string(),
@@ -243,7 +254,7 @@ mod tests {
     fn to_legacy_user_round_trips() {
         let user = crate::domain::User {
             id: UserId::new(),
-            email: klynt_shared_domain::Email::new("ada@example.com".to_string()),
+            email: klynt_common::domain::Email::new("ada@example.com".to_string()),
             full_name: Some("Ada".to_string()),
             password_hash: "hash".to_string(),
             status: UserStatus::Active,
@@ -264,13 +275,13 @@ mod tests {
 
     #[test]
     fn empty_name_maps_to_none_full_name() {
-        let user = klynt_infrastructure::repositories::User {
-            id: klynt_utils::UserId::new(),
+        let user = klynt_persistence::repositories::User {
+            id: klynt_common::util::UserId::new(),
             name: "".to_string(),
-            email: klynt_utils::Email::parse("ada@example.com").unwrap(),
-            role: klynt_utils::Role::Student,
+            email: klynt_common::util::Email::parse("ada@example.com").unwrap(),
+            role: klynt_common::util::Role::Student,
             institution_id: None,
-            status: klynt_utils::UserStatus::Active,
+            status: klynt_common::util::UserStatus::Active,
             email_verified_at: None,
             global_role: None,
             password_hash: "hash".to_string(),
@@ -285,11 +296,11 @@ mod tests {
 
     #[test]
     fn map_legacy_error_wraps_domain_error() {
-        let legacy = klynt_shared_domain::DomainError::NotFound("not found".to_string());
+        let legacy = klynt_common::domain::DomainError::NotFound("not found".to_string());
         let err = map_legacy_error(legacy);
         assert!(matches!(
             err,
-            UserError::Domain(klynt_shared_domain::DomainError::Internal(_))
+            UserError::Domain(klynt_common::domain::DomainError::Internal(_))
         ));
     }
 }

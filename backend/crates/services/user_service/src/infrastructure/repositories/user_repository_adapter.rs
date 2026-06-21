@@ -2,10 +2,10 @@
 
 use async_trait::async_trait;
 
-use klynt_core::ctx::ExecutionContext;
-use klynt_infrastructure::repositories::pg_user::PgUserRepository;
-use klynt_shared_domain::PaginationRequest;
-use klynt_utils::UserId;
+use klynt_base::ctx::ExecutionContext;
+use klynt_common::domain::PaginationRequest;
+use klynt_common::util::UserId;
+use klynt_persistence::repositories::pg_user::PgUserRepository;
 
 use crate::application::ports::UserRepository;
 use crate::domain::User;

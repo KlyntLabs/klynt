@@ -6,9 +6,9 @@ use std::sync::{Arc, Mutex};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 
-use klynt_core::ctx::{ExecutionContext, RequestContext};
-use klynt_shared_domain::{Email, PaginationRequest, UserRole, UserStatus};
-use klynt_utils::UserId;
+use klynt_base::ctx::{ExecutionContext, RequestContext};
+use klynt_common::domain::{Email, PaginationRequest, UserRole, UserStatus};
+use klynt_common::util::UserId;
 use user_service::application::ports::{AuditLogger, Clock, PasswordHasher, UserRepository};
 use user_service::domain::User;
 use user_service::error::UserError;

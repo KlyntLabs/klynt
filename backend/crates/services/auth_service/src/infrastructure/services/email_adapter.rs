@@ -2,18 +2,18 @@
 
 use async_trait::async_trait;
 
-use klynt_core::ctx::ExecutionContext;
+use klynt_base::ctx::ExecutionContext;
 
 use crate::application::ports::EmailSender;
 use crate::error::AuthError;
 
-/// Adapter wrapping a legacy [`klynt_storage::ports::SharedEmailService`].
+/// Adapter wrapping a legacy [`klynt_persistence::ports::SharedEmailService`].
 pub struct EmailSenderAdapter {
-    inner: klynt_storage::ports::SharedEmailService,
+    inner: klynt_persistence::ports::SharedEmailService,
 }
 
 impl EmailSenderAdapter {
-    pub fn new(inner: klynt_storage::ports::SharedEmailService) -> Self {
+    pub fn new(inner: klynt_persistence::ports::SharedEmailService) -> Self {
         Self { inner }
     }
 }
@@ -27,20 +27,20 @@ impl EmailSender for EmailSenderAdapter {
         token: &str,
         base_url: &str,
     ) -> Result<(), AuthError> {
-        let legacy_email = klynt_utils::Email::parse(email).map_err(|e| {
-            AuthError::Domain(klynt_shared_domain::DomainError::InvalidInput(
+        let legacy_email = klynt_common::util::Email::parse(email).map_err(|e| {
+            AuthError::Domain(klynt_common::domain::DomainError::InvalidInput(
                 e.to_string(),
             ))
         })?;
 
-        let content = klynt_storage::email_content::VerificationEmail::new(
+        let content = klynt_persistence::email_content::VerificationEmail::new(
             legacy_email,
             token.to_string(),
             base_url.to_string(),
         );
 
         self.inner.send(Box::new(content)).await.map_err(|e| {
-            AuthError::Domain(klynt_shared_domain::DomainError::Internal(e.to_string()))
+            AuthError::Domain(klynt_common::domain::DomainError::Internal(e.to_string()))
         })
     }
 
@@ -51,20 +51,20 @@ impl EmailSender for EmailSenderAdapter {
         token: &str,
         base_url: &str,
     ) -> Result<(), AuthError> {
-        let legacy_email = klynt_utils::Email::parse(email).map_err(|e| {
-            AuthError::Domain(klynt_shared_domain::DomainError::InvalidInput(
+        let legacy_email = klynt_common::util::Email::parse(email).map_err(|e| {
+            AuthError::Domain(klynt_common::domain::DomainError::InvalidInput(
                 e.to_string(),
             ))
         })?;
 
-        let content = klynt_storage::email_content::PasswordResetEmail::new(
+        let content = klynt_persistence::email_content::PasswordResetEmail::new(
             legacy_email,
             token.to_string(),
             base_url.to_string(),
         );
 
         self.inner.send(Box::new(content)).await.map_err(|e| {
-            AuthError::Domain(klynt_shared_domain::DomainError::Internal(e.to_string()))
+            AuthError::Domain(klynt_common::domain::DomainError::Internal(e.to_string()))
         })
     }
 }
@@ -74,11 +74,11 @@ mod tests {
     use std::sync::Arc;
 
     use super::*;
-    use klynt_core::ctx::RequestContext;
+    use klynt_base::ctx::RequestContext;
 
     #[tokio::test]
     async fn send_verification_records_email() {
-        let mock = Arc::new(klynt_infrastructure::email::MockEmailService::new());
+        let mock = Arc::new(klynt_persistence::email::MockEmailService::new());
         let adapter = EmailSenderAdapter::new(mock.clone());
         let ctx = ExecutionContext::new(RequestContext::new());
 
@@ -95,7 +95,7 @@ mod tests {
 
     #[tokio::test]
     async fn send_password_reset_records_email() {
-        let mock = Arc::new(klynt_infrastructure::email::MockEmailService::new());
+        let mock = Arc::new(klynt_persistence::email::MockEmailService::new());
         let adapter = EmailSenderAdapter::new(mock.clone());
         let ctx = ExecutionContext::new(RequestContext::new());
 

@@ -3,14 +3,14 @@
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 
-use klynt_core::ctx::{ExecutionContext, RequestContext};
-use klynt_utils::UserId;
+use klynt_base::ctx::{ExecutionContext, RequestContext};
+use klynt_common::util::UserId;
 
 use crate::domain::{TokenKind, TokenStore as AuthTokenStore};
 use crate::error::AuthError;
 use crate::infrastructure::conversion::{from_legacy_user_id, to_legacy_ctx, to_legacy_user_id};
 
-/// Adapter wrapping a legacy [`klynt_infrastructure::repositories::TokenStore`].
+/// Adapter wrapping a legacy [`klynt_persistence::repositories::TokenStore`].
 pub struct TokenRepositoryAdapter<T> {
     inner: T,
 }
@@ -24,7 +24,7 @@ impl<T> TokenRepositoryAdapter<T> {
 #[async_trait]
 impl<T> AuthTokenStore for TokenRepositoryAdapter<T>
 where
-    T: klynt_infrastructure::repositories::TokenStore,
+    T: klynt_persistence::repositories::TokenStore,
 {
     async fn save(
         &self,
@@ -61,15 +61,15 @@ where
     }
 }
 
-fn to_legacy_kind(kind: TokenKind) -> klynt_storage::tokens::TokenKind {
+fn to_legacy_kind(kind: TokenKind) -> klynt_persistence::tokens::TokenKind {
     match kind {
-        TokenKind::EmailVerification => klynt_storage::tokens::TokenKind::EmailVerification,
-        TokenKind::PasswordReset => klynt_storage::tokens::TokenKind::PasswordReset,
+        TokenKind::EmailVerification => klynt_persistence::tokens::TokenKind::EmailVerification,
+        TokenKind::PasswordReset => klynt_persistence::tokens::TokenKind::PasswordReset,
     }
 }
 
-fn map_legacy_error(err: klynt_shared_domain::DomainError) -> AuthError {
-    AuthError::Domain(klynt_shared_domain::DomainError::Internal(err.to_string()))
+fn map_legacy_error(err: klynt_common::domain::DomainError) -> AuthError {
+    AuthError::Domain(klynt_common::domain::DomainError::Internal(err.to_string()))
 }
 
 #[cfg(test)]
@@ -79,8 +79,8 @@ mod tests {
 
     use super::*;
 
-    type LegacyTokenKey = (klynt_storage::tokens::TokenKind, String);
-    type LegacyTokenEntry = (klynt_utils::UserId, DateTime<Utc>, bool);
+    type LegacyTokenKey = (klynt_persistence::tokens::TokenKind, String);
+    type LegacyTokenEntry = (klynt_common::util::UserId, DateTime<Utc>, bool);
 
     struct FakeLegacyTokenStore {
         tokens: Mutex<HashMap<LegacyTokenKey, LegacyTokenEntry>>,
@@ -95,15 +95,15 @@ mod tests {
     }
 
     #[async_trait]
-    impl klynt_infrastructure::repositories::TokenStore for FakeLegacyTokenStore {
+    impl klynt_persistence::repositories::TokenStore for FakeLegacyTokenStore {
         async fn save(
             &self,
-            _ctx: &klynt_core::ctx::Ctx,
-            kind: klynt_storage::tokens::TokenKind,
-            user_id: klynt_utils::UserId,
+            _ctx: &klynt_base::ctx::Ctx,
+            kind: klynt_persistence::tokens::TokenKind,
+            user_id: klynt_common::util::UserId,
             token_hash: &str,
             expires_at: DateTime<Utc>,
-        ) -> Result<(), klynt_shared_domain::DomainError> {
+        ) -> Result<(), klynt_common::domain::DomainError> {
             self.tokens
                 .lock()
                 .unwrap()
@@ -113,23 +113,23 @@ mod tests {
 
         async fn consume(
             &self,
-            _ctx: &klynt_core::ctx::Ctx,
-            kind: klynt_storage::tokens::TokenKind,
+            _ctx: &klynt_base::ctx::Ctx,
+            kind: klynt_persistence::tokens::TokenKind,
             token_hash: &str,
-        ) -> Result<klynt_utils::UserId, klynt_shared_domain::DomainError> {
+        ) -> Result<klynt_common::util::UserId, klynt_common::domain::DomainError> {
             let mut tokens = self.tokens.lock().unwrap();
             match tokens.get_mut(&(kind, token_hash.to_string())) {
                 Some((user_id, expires_at, used)) => {
                     if *used || *expires_at <= Utc::now() {
-                        return Err(klynt_shared_domain::DomainError::InvalidToken(
-                            klynt_shared_domain::TokenError::Invalid,
+                        return Err(klynt_common::domain::DomainError::InvalidToken(
+                            klynt_common::domain::TokenError::Invalid,
                         ));
                     }
                     *used = true;
                     Ok(*user_id)
                 }
-                None => Err(klynt_shared_domain::DomainError::InvalidToken(
-                    klynt_shared_domain::TokenError::Invalid,
+                None => Err(klynt_common::domain::DomainError::InvalidToken(
+                    klynt_common::domain::TokenError::Invalid,
                 )),
             }
         }

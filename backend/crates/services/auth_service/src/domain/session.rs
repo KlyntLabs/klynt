@@ -5,8 +5,8 @@ use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use klynt_core::ctx::ExecutionContext;
-use klynt_utils::UserId;
+use klynt_base::ctx::ExecutionContext;
+use klynt_common::util::UserId;
 
 use crate::error::AuthError;
 

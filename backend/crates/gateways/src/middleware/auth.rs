@@ -7,8 +7,8 @@ use axum::{
     response::{IntoResponse, Response},
 };
 
-use klynt_core::ctx::{ActorType, ExecutionContext, RequestContext};
-use klynt_storage::session::SessionToken;
+use klynt_base::ctx::{ActorType, ExecutionContext, RequestContext};
+use klynt_persistence::session::SessionToken;
 
 use crate::state::Services;
 
@@ -46,7 +46,7 @@ pub async fn require_auth(
 ) -> Result<Response, crate::GatewayError> {
     let request_id = request
         .extensions()
-        .get::<klynt_core::ctx::RequestId>()
+        .get::<klynt_base::ctx::RequestId>()
         .copied()
         .unwrap_or_default();
 
@@ -55,7 +55,7 @@ pub async fn require_auth(
 
     let session = services
         .session_store
-        .find_valid(&klynt_core::ctx::Ctx::guest(request_id.0), &token)
+        .find_valid(&klynt_base::ctx::Ctx::guest(request_id.0), &token)
         .await
         .map_err(|e| crate::GatewayError::Internal(format!("Session lookup failed: {e}")))?
         .ok_or_else(|| {

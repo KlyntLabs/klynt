@@ -12,9 +12,9 @@ use auth_service::{
     AuthConfig, AuthService, Dependencies as AuthDependencies,
 };
 use chrono::{DateTime, Utc};
-use klynt_core::ctx::ExecutionContext;
-use klynt_shared_domain::{UserRole, UserStatus};
-use klynt_utils::UserId;
+use klynt_base::ctx::ExecutionContext;
+use klynt_common::domain::{UserRole, UserStatus};
+use klynt_common::util::UserId;
 use user_service::{
     application::ports::{
         AuditLogger as UserAuditLogger, Clock as UserClock, PasswordHasher as UserPasswordHasher,
@@ -300,19 +300,21 @@ pub fn build_test_auth_service() -> (AuthService, Arc<FakeUserRepository>, Arc<F
 /// Fake legacy session store for middleware tests.
 #[derive(Default)]
 pub struct LegacyFakeSessionStore {
-    sessions: Mutex<HashMap<klynt_storage::session::SessionToken, klynt_storage::session::Session>>,
+    sessions: Mutex<
+        HashMap<klynt_persistence::session::SessionToken, klynt_persistence::session::Session>,
+    >,
 }
 
 #[async_trait]
-impl klynt_storage::session::SessionStore for LegacyFakeSessionStore {
+impl klynt_persistence::session::SessionStore for LegacyFakeSessionStore {
     async fn create(
         &self,
-        _ctx: &klynt_core::ctx::Ctx,
-        user_id: klynt_utils::UserId,
+        _ctx: &klynt_base::ctx::Ctx,
+        user_id: klynt_common::util::UserId,
         expires_at: DateTime<Utc>,
-    ) -> Result<klynt_storage::session::SessionToken, klynt_shared_domain::DomainError> {
-        let token = klynt_storage::session::SessionToken::new();
-        let session = klynt_storage::session::Session {
+    ) -> Result<klynt_persistence::session::SessionToken, klynt_common::domain::DomainError> {
+        let token = klynt_persistence::session::SessionToken::new();
+        let session = klynt_persistence::session::Session {
             token,
             user_id,
             expires_at,
@@ -323,9 +325,10 @@ impl klynt_storage::session::SessionStore for LegacyFakeSessionStore {
 
     async fn find_valid(
         &self,
-        _ctx: &klynt_core::ctx::Ctx,
-        token: &klynt_storage::session::SessionToken,
-    ) -> Result<Option<klynt_storage::session::Session>, klynt_shared_domain::DomainError> {
+        _ctx: &klynt_base::ctx::Ctx,
+        token: &klynt_persistence::session::SessionToken,
+    ) -> Result<Option<klynt_persistence::session::Session>, klynt_common::domain::DomainError>
+    {
         Ok(self
             .sessions
             .lock()
@@ -337,9 +340,9 @@ impl klynt_storage::session::SessionStore for LegacyFakeSessionStore {
 
     async fn revoke(
         &self,
-        _ctx: &klynt_core::ctx::Ctx,
-        token: &klynt_storage::session::SessionToken,
-    ) -> Result<(), klynt_shared_domain::DomainError> {
+        _ctx: &klynt_base::ctx::Ctx,
+        token: &klynt_persistence::session::SessionToken,
+    ) -> Result<(), klynt_common::domain::DomainError> {
         self.sessions.lock().unwrap().remove(token);
         Ok(())
     }
@@ -348,7 +351,7 @@ impl klynt_storage::session::SessionStore for LegacyFakeSessionStore {
 /// Fake user repository for user_service tests.
 #[derive(Default)]
 pub struct FakeUserServiceRepository {
-    users: Mutex<HashMap<klynt_utils::UserId, UserServiceUser>>,
+    users: Mutex<HashMap<klynt_common::util::UserId, UserServiceUser>>,
 }
 
 impl FakeUserServiceRepository {
@@ -363,7 +366,7 @@ impl UserRepoPort for FakeUserServiceRepository {
     async fn find_by_id(
         &self,
         _ctx: &ExecutionContext,
-        id: klynt_utils::UserId,
+        id: klynt_common::util::UserId,
     ) -> Result<Option<UserServiceUser>, UserError> {
         Ok(self.users.lock().unwrap().get(&id).cloned())
     }
@@ -380,7 +383,7 @@ impl UserRepoPort for FakeUserServiceRepository {
     async fn delete(
         &self,
         _ctx: &ExecutionContext,
-        id: klynt_utils::UserId,
+        id: klynt_common::util::UserId,
     ) -> Result<(), UserError> {
         let mut users = self.users.lock().unwrap();
         let mut user = users.get(&id).ok_or(UserError::NotFound)?.clone();
@@ -392,7 +395,7 @@ impl UserRepoPort for FakeUserServiceRepository {
     async fn list(
         &self,
         _ctx: &ExecutionContext,
-        pagination: klynt_shared_domain::PaginationRequest,
+        pagination: klynt_common::domain::PaginationRequest,
     ) -> Result<(Vec<UserServiceUser>, u64), UserError> {
         let users: Vec<UserServiceUser> = self
             .users
@@ -416,9 +419,24 @@ pub struct StubUserAuditLogger;
 
 #[async_trait]
 impl UserAuditLogger for StubUserAuditLogger {
-    async fn log_profile_updated(&self, _ctx: &ExecutionContext, _user_id: klynt_utils::UserId) {}
-    async fn log_password_changed(&self, _ctx: &ExecutionContext, _user_id: klynt_utils::UserId) {}
-    async fn log_user_deleted(&self, _ctx: &ExecutionContext, _user_id: klynt_utils::UserId) {}
+    async fn log_profile_updated(
+        &self,
+        _ctx: &ExecutionContext,
+        _user_id: klynt_common::util::UserId,
+    ) {
+    }
+    async fn log_password_changed(
+        &self,
+        _ctx: &ExecutionContext,
+        _user_id: klynt_common::util::UserId,
+    ) {
+    }
+    async fn log_user_deleted(
+        &self,
+        _ctx: &ExecutionContext,
+        _user_id: klynt_common::util::UserId,
+    ) {
+    }
 }
 
 /// Fake password hasher for user_service tests.

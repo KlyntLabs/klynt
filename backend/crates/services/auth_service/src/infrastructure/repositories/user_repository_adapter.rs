@@ -2,8 +2,8 @@
 
 use async_trait::async_trait;
 
-use klynt_core::ctx::ExecutionContext;
-use klynt_utils::UserId;
+use klynt_base::ctx::ExecutionContext;
+use klynt_common::util::UserId;
 
 use crate::application::ports::UserRepository;
 use crate::error::AuthError;
@@ -11,7 +11,7 @@ use crate::infrastructure::conversion::{
     from_legacy_user, from_legacy_user_id, to_legacy_ctx, to_legacy_user_id,
 };
 
-/// Adapter wrapping a legacy [`klynt_infrastructure::repositories::UserRepository`].
+/// Adapter wrapping a legacy [`klynt_persistence::repositories::UserRepository`].
 pub struct UserRepositoryAdapter<T> {
     inner: T,
 }
@@ -25,7 +25,7 @@ impl<T> UserRepositoryAdapter<T> {
 #[async_trait]
 impl<T> UserRepository for UserRepositoryAdapter<T>
 where
-    T: klynt_infrastructure::repositories::UserRepository,
+    T: klynt_persistence::repositories::UserRepository,
 {
     async fn find_by_email(
         &self,
@@ -33,8 +33,8 @@ where
         email: &str,
     ) -> Result<Option<crate::models::User>, AuthError> {
         let legacy_ctx = to_legacy_ctx(ctx);
-        let legacy_email = klynt_utils::Email::parse(email).map_err(|e| {
-            AuthError::Domain(klynt_shared_domain::DomainError::InvalidInput(
+        let legacy_email = klynt_common::util::Email::parse(email).map_err(|e| {
+            AuthError::Domain(klynt_common::domain::DomainError::InvalidInput(
                 e.to_string(),
             ))
         })?;
@@ -54,21 +54,21 @@ where
         password_hash: &str,
     ) -> Result<UserId, AuthError> {
         let legacy_ctx = to_legacy_ctx(ctx);
-        let legacy_email = klynt_utils::Email::parse(email).map_err(|e| {
-            AuthError::Domain(klynt_shared_domain::DomainError::InvalidInput(
+        let legacy_email = klynt_common::util::Email::parse(email).map_err(|e| {
+            AuthError::Domain(klynt_common::domain::DomainError::InvalidInput(
                 e.to_string(),
             ))
         })?;
 
         let name = full_name.unwrap_or_default();
         let user_id = to_legacy_user_id(UserId::new());
-        let user = klynt_infrastructure::repositories::User {
+        let user = klynt_persistence::repositories::User {
             id: user_id,
             name,
             email: legacy_email.clone(),
-            role: klynt_utils::Role::Student,
+            role: klynt_common::util::Role::Student,
             institution_id: None,
-            status: klynt_utils::UserStatus::PendingVerification,
+            status: klynt_common::util::UserStatus::PendingVerification,
             email_verified_at: None,
             global_role: None,
             password_hash: password_hash.to_string(),
@@ -82,11 +82,11 @@ where
             .create_if_not_exists(&legacy_ctx, &legacy_email, &user)
             .await
         {
-            Ok(klynt_infrastructure::repositories::CreateResult::Created) => {
+            Ok(klynt_persistence::repositories::CreateResult::Created) => {
                 Ok(from_legacy_user_id(user_id))
             }
-            Ok(klynt_infrastructure::repositories::CreateResult::AlreadyExists(_)) => Err(
-                AuthError::Domain(klynt_shared_domain::DomainError::Conflict(format!(
+            Ok(klynt_persistence::repositories::CreateResult::AlreadyExists(_)) => Err(
+                AuthError::Domain(klynt_common::domain::DomainError::Conflict(format!(
                     "email already registered: {email}"
                 ))),
             ),
@@ -116,7 +116,7 @@ where
     ) -> Result<(), AuthError> {
         let legacy_ctx = to_legacy_ctx(ctx);
         let legacy_user_id = to_legacy_user_id(user_id);
-        let hashed = klynt_storage::ports::HashedPassword::new(password_hash);
+        let hashed = klynt_persistence::ports::HashedPassword::new(password_hash);
 
         self.inner
             .update_password(&legacy_ctx, legacy_user_id, &hashed)
@@ -125,8 +125,8 @@ where
     }
 }
 
-fn map_legacy_error(err: klynt_shared_domain::DomainError) -> AuthError {
-    AuthError::Domain(klynt_shared_domain::DomainError::Internal(err.to_string()))
+fn map_legacy_error(err: klynt_common::domain::DomainError) -> AuthError {
+    AuthError::Domain(klynt_common::domain::DomainError::Internal(err.to_string()))
 }
 
 #[cfg(test)]
@@ -135,10 +135,10 @@ mod tests {
     use std::sync::Mutex;
 
     use super::*;
-    use klynt_core::ctx::RequestContext;
+    use klynt_base::ctx::RequestContext;
 
     struct FakeLegacyUserRepository {
-        users: Mutex<HashMap<String, klynt_infrastructure::repositories::User>>,
+        users: Mutex<HashMap<String, klynt_persistence::repositories::User>>,
     }
 
     impl Default for FakeLegacyUserRepository {
@@ -150,57 +150,51 @@ mod tests {
     }
 
     #[async_trait]
-    impl klynt_infrastructure::repositories::UserRepository for FakeLegacyUserRepository {
+    impl klynt_persistence::repositories::UserRepository for FakeLegacyUserRepository {
         async fn create_if_not_exists(
             &self,
-            _ctx: &klynt_core::ctx::Ctx,
-            email: &klynt_utils::Email,
-            user: &klynt_infrastructure::repositories::User,
-        ) -> Result<
-            klynt_infrastructure::repositories::CreateResult,
-            klynt_shared_domain::DomainError,
-        > {
+            _ctx: &klynt_base::ctx::Ctx,
+            email: &klynt_common::util::Email,
+            user: &klynt_persistence::repositories::User,
+        ) -> Result<klynt_persistence::repositories::CreateResult, klynt_common::domain::DomainError>
+        {
             let mut users = self.users.lock().unwrap();
             if users.contains_key(email.as_str()) {
                 return Ok(
-                    klynt_infrastructure::repositories::CreateResult::AlreadyExists(user.clone()),
+                    klynt_persistence::repositories::CreateResult::AlreadyExists(user.clone()),
                 );
             }
             users.insert(email.as_str().to_string(), user.clone());
-            Ok(klynt_infrastructure::repositories::CreateResult::Created)
+            Ok(klynt_persistence::repositories::CreateResult::Created)
         }
 
         async fn find_by_email(
             &self,
-            _ctx: &klynt_core::ctx::Ctx,
-            email: &klynt_utils::Email,
-        ) -> Result<
-            Option<klynt_infrastructure::repositories::User>,
-            klynt_shared_domain::DomainError,
-        > {
+            _ctx: &klynt_base::ctx::Ctx,
+            email: &klynt_common::util::Email,
+        ) -> Result<Option<klynt_persistence::repositories::User>, klynt_common::domain::DomainError>
+        {
             Ok(self.users.lock().unwrap().get(email.as_str()).cloned())
         }
 
         async fn find_by_id(
             &self,
-            _ctx: &klynt_core::ctx::Ctx,
-            _id: klynt_utils::UserId,
-        ) -> Result<
-            Option<klynt_infrastructure::repositories::User>,
-            klynt_shared_domain::DomainError,
-        > {
+            _ctx: &klynt_base::ctx::Ctx,
+            _id: klynt_common::util::UserId,
+        ) -> Result<Option<klynt_persistence::repositories::User>, klynt_common::domain::DomainError>
+        {
             Ok(None)
         }
 
         async fn set_email_verified(
             &self,
-            _ctx: &klynt_core::ctx::Ctx,
-            user_id: klynt_utils::UserId,
-        ) -> Result<(), klynt_shared_domain::DomainError> {
+            _ctx: &klynt_base::ctx::Ctx,
+            user_id: klynt_common::util::UserId,
+        ) -> Result<(), klynt_common::domain::DomainError> {
             let mut users = self.users.lock().unwrap();
             for user in users.values_mut() {
                 if user.id == user_id {
-                    user.status = klynt_utils::UserStatus::Active;
+                    user.status = klynt_common::util::UserStatus::Active;
                     return Ok(());
                 }
             }
@@ -209,10 +203,10 @@ mod tests {
 
         async fn update_password(
             &self,
-            _ctx: &klynt_core::ctx::Ctx,
-            user_id: klynt_utils::UserId,
-            password_hash: &klynt_storage::ports::HashedPassword,
-        ) -> Result<(), klynt_shared_domain::DomainError> {
+            _ctx: &klynt_base::ctx::Ctx,
+            user_id: klynt_common::util::UserId,
+            password_hash: &klynt_persistence::ports::HashedPassword,
+        ) -> Result<(), klynt_common::domain::DomainError> {
             let mut users = self.users.lock().unwrap();
             for user in users.values_mut() {
                 if user.id == user_id {
@@ -263,7 +257,7 @@ mod tests {
         assert!(matches!(
             result,
             Err(AuthError::Domain(
-                klynt_shared_domain::DomainError::Conflict(_)
+                klynt_common::domain::DomainError::Conflict(_)
             ))
         ));
     }

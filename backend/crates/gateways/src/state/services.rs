@@ -15,7 +15,7 @@ use auth_service::{
     },
     AuthConfig, AuthService, Dependencies as AuthDependencies,
 };
-use klynt_infrastructure::{
+use klynt_persistence::{
     email::MockEmailService,
     password_hasher::Argon2PasswordHasher,
     repositories::{
@@ -42,7 +42,7 @@ pub struct Services {
     pub auth: Arc<AuthService>,
     pub user: Arc<UserService>,
     /// Session store exposed for HTTP authentication middleware.
-    pub session_store: Arc<dyn klynt_storage::session::SessionStore>,
+    pub session_store: Arc<dyn klynt_persistence::session::SessionStore>,
 }
 
 impl Services {
@@ -78,8 +78,13 @@ impl Services {
     async fn create_auth_service(
         config: &Config,
         pool: sqlx::PgPool,
-    ) -> Result<(AuthService, Arc<dyn klynt_storage::session::SessionStore>), crate::GatewayError>
-    {
+    ) -> Result<
+        (
+            AuthService,
+            Arc<dyn klynt_persistence::session::SessionStore>,
+        ),
+        crate::GatewayError,
+    > {
         let user_repository = Arc::new(AuthUserRepositoryAdapter::new(PgUserRepository::new(
             pool.clone(),
         )));
@@ -89,15 +94,15 @@ impl Services {
         let session_store = Arc::new(SessionRepositoryAdapter::new(PgSessionStore::new(
             pool.clone(),
         )));
-        let legacy_session_store: Arc<dyn klynt_storage::session::SessionStore> =
+        let legacy_session_store: Arc<dyn klynt_persistence::session::SessionStore> =
             Arc::new(PgSessionStore::new(pool.clone()));
         let token_store = Arc::new(TokenRepositoryAdapter::new(PgTokenStore::new(pool.clone())));
 
         let audit_repo = Arc::new(PgAuditEventRepository::new(pool.clone()));
-        let audit_service = Arc::new(klynt_audit::AuditService::new(audit_repo));
+        let audit_service = Arc::new(klynt_telemetry::audit::AuditService::new(audit_repo));
         let audit_logger = Arc::new(AuthAuditLoggerAdapter::new(audit_service));
 
-        let email_service: klynt_storage::ports::SharedEmailService =
+        let email_service: klynt_persistence::ports::SharedEmailService =
             Arc::new(MockEmailService::new());
         let email_sender = Arc::new(EmailSenderAdapter::new(email_service));
 
@@ -136,7 +141,7 @@ impl Services {
         let user_repository = Arc::new(UserRepoAdapter::new(PgUserRepository::new(pool.clone())));
 
         let audit_repo = Arc::new(PgAuditEventRepository::new(pool.clone()));
-        let audit_service = Arc::new(klynt_audit::AuditService::new(audit_repo));
+        let audit_service = Arc::new(klynt_telemetry::audit::AuditService::new(audit_repo));
         let audit_logger = Arc::new(UserAuditLoggerAdapter::new(audit_service));
 
         let password_hasher: Arc<dyn user_service::application::ports::PasswordHasher> =

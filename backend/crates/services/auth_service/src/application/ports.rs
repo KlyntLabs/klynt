@@ -3,8 +3,8 @@
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 
-use klynt_core::ctx::ExecutionContext;
-use klynt_utils::UserId;
+use klynt_base::ctx::ExecutionContext;
+use klynt_common::util::UserId;
 
 use crate::error::AuthError;
 use crate::models::User;

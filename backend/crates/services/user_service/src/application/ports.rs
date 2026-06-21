@@ -3,9 +3,9 @@
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 
-use klynt_core::ctx::ExecutionContext;
-use klynt_shared_domain::PaginationRequest;
-use klynt_utils::UserId;
+use klynt_base::ctx::ExecutionContext;
+use klynt_common::domain::PaginationRequest;
+use klynt_common::util::UserId;
 
 use crate::domain::User;
 use crate::error::UserError;

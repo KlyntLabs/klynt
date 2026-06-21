@@ -6,8 +6,8 @@ Authentication service for the Klynt platform — a deep module with a small pub
 
 ```rust
 use auth_service::{AuthService, AuthConfig, Dependencies};
-use klynt_contracts::auth::{LoginRequest, RegistrationRequest};
-use klynt_core::ctx::ExecutionContext;
+use klynt_common::contracts::{LoginRequest, RegistrationRequest};
+use klynt_base::ctx::ExecutionContext;
 
 let service = AuthService::new(config, dependencies)?;
 let response = service.login(&ctx, LoginRequest { ... }).await?;

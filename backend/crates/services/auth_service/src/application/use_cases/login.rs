@@ -1,7 +1,7 @@
 //! Login use case - authenticate user and create session.
 
-use klynt_contracts::auth::{LoginRequest, LoginResponse};
-use klynt_core::ctx::ExecutionContext;
+use klynt_base::ctx::ExecutionContext;
+use klynt_common::contracts::auth::{LoginRequest, LoginResponse};
 use validator::Validate;
 
 use crate::error::AuthError;

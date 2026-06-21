@@ -60,13 +60,13 @@ impl Config {
     /// Load configuration from the environment using the existing Klynt config
     /// loader, then map it to the gateway-specific shape.
     pub fn from_env() -> Result<Self, config::ConfigError> {
-        let app_config = klynt_infrastructure::config::load_config()?;
+        let app_config = klynt_config::load_config()?;
         Ok(Self::from(app_config))
     }
 }
 
-impl From<klynt_infrastructure::config::AppConfig> for Config {
-    fn from(config: klynt_infrastructure::config::AppConfig) -> Self {
+impl From<klynt_config::AppConfig> for Config {
+    fn from(config: klynt_config::AppConfig) -> Self {
         let bind_address = format!("{}:{}", config.api.host, config.api.port);
         let base_url = format!(
             "{}://{}",

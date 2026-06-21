@@ -2,8 +2,8 @@
 
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 
-use klynt_contracts::auth::{LoginRequest, RegistrationRequest};
-use klynt_core::ctx::{ExecutionContext, RequestContext};
+use klynt_base::ctx::{ExecutionContext, RequestContext};
+use klynt_common::contracts::auth::{LoginRequest, RegistrationRequest};
 
 use crate::response::SuccessResponse;
 use crate::state::Services;

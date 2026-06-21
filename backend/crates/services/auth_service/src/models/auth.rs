@@ -1,8 +1,8 @@
 //! Auth-specific models and DTOs.
 
 use chrono::{DateTime, Utc};
-use klynt_shared_domain::{UserRole, UserStatus};
-use klynt_utils::UserId;
+use klynt_common::domain::{UserRole, UserStatus};
+use klynt_common::util::UserId;
 
 /// Internal user representation (from repository).
 #[derive(Debug, Clone)]

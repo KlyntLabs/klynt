@@ -5,16 +5,12 @@ edition = "2021"
 
 [dependencies]
 # === Phase 1 Foundation ===
-klynt_core = { path = "../../../crates/core/klynt_core" }
-klynt_shared_domain = { path = "../../../crates/shared/klynt_domain" }
-klynt_utils = { path = "../../../crates/shared/klynt_utils" }
-klynt_contracts = { path = "../../../crates/shared/klynt_contracts" }
-
+klynt_base = { path = "../../../crates/core/klynt_base" }
+klynt_common = { path = "../../shared/klynt_common" }
 
 # === Storage and infrastructure adapters ===
-klynt_storage = { path = "../../../crates/infrastructure/klynt_storage" }
-klynt_audit = { path = "../../../crates/infrastructure/klynt_audit" }
-klynt-infrastructure = { path = "../../../crates/klynt-infrastructure" }
+klynt_persistence = { path = "../../../crates/infrastructure/klynt_persistence" }
+klynt_telemetry = { path = "../../../crates/infrastructure/klynt_telemetry" }
 
 # === Async Runtime ===
 tokio = { workspace = true }

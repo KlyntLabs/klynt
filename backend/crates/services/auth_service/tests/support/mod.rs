@@ -14,9 +14,9 @@ use auth_service::domain::{SessionStore, TokenStore};
 use auth_service::error::AuthError;
 use auth_service::models::User;
 use auth_service::{AuthConfig, AuthService, Dependencies};
-use klynt_core::ctx::{ExecutionContext, RequestContext};
-use klynt_shared_domain::{UserRole, UserStatus};
-use klynt_utils::UserId;
+use klynt_base::ctx::{ExecutionContext, RequestContext};
+use klynt_common::domain::{UserRole, UserStatus};
+use klynt_common::util::UserId;
 
 /// Fixed clock for deterministic tests.
 #[derive(Clone)]

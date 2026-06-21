@@ -1,0 +1,31 @@
+[package]
+name = "klynt_telemetry"
+version.workspace = true
+edition.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+# Internal crates
+klynt_base = { path = "../../core/klynt_base" }
+klynt_common = { path = "../../shared/klynt_common" }
+
+# Tracing
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+tracing-error = { workspace = true }
+
+# Async
+tokio = { workspace = true }
+async-trait = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# IDs
+uuid = { workspace = true }
+
+# Time
+chrono = { workspace = true }

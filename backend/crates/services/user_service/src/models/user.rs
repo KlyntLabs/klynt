@@ -1,8 +1,8 @@
 //! User DTOs for API boundaries.
 
 use chrono::{DateTime, Utc};
-use klynt_shared_domain::{UserRole, UserStatus};
-use klynt_utils::UserId;
+use klynt_common::domain::{UserRole, UserStatus};
+use klynt_common::util::UserId;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 

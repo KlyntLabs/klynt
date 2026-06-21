@@ -78,28 +78,28 @@ impl GatewayError {
                 auth_service::AuthError::RateLimited => StatusCode::TOO_MANY_REQUESTS,
                 auth_service::AuthError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
                 auth_service::AuthError::Domain(domain_error) => match domain_error {
-                    klynt_shared_domain::DomainError::InvalidInput(_)
-                    | klynt_shared_domain::DomainError::Validation(_)
-                    | klynt_shared_domain::DomainError::InvalidEmail(_)
-                    | klynt_shared_domain::DomainError::InvalidRole(_)
-                    | klynt_shared_domain::DomainError::InvalidToken(_)
-                    | klynt_shared_domain::DomainError::InvalidName(_)
-                    | klynt_shared_domain::DomainError::InstitutionRequired(_)
-                    | klynt_shared_domain::DomainError::TermsNotAccepted
-                    | klynt_shared_domain::DomainError::InvalidSessionToken => {
+                    klynt_common::domain::DomainError::InvalidInput(_)
+                    | klynt_common::domain::DomainError::Validation(_)
+                    | klynt_common::domain::DomainError::InvalidEmail(_)
+                    | klynt_common::domain::DomainError::InvalidRole(_)
+                    | klynt_common::domain::DomainError::InvalidToken(_)
+                    | klynt_common::domain::DomainError::InvalidName(_)
+                    | klynt_common::domain::DomainError::InstitutionRequired(_)
+                    | klynt_common::domain::DomainError::TermsNotAccepted
+                    | klynt_common::domain::DomainError::InvalidSessionToken => {
                         StatusCode::BAD_REQUEST
                     }
-                    klynt_shared_domain::DomainError::NotFound(_) => StatusCode::NOT_FOUND,
-                    klynt_shared_domain::DomainError::Conflict(_)
-                    | klynt_shared_domain::DomainError::AlreadyExists { .. } => {
+                    klynt_common::domain::DomainError::NotFound(_) => StatusCode::NOT_FOUND,
+                    klynt_common::domain::DomainError::Conflict(_)
+                    | klynt_common::domain::DomainError::AlreadyExists { .. } => {
                         StatusCode::CONFLICT
                     }
-                    klynt_shared_domain::DomainError::NotPermitted(_)
-                    | klynt_shared_domain::DomainError::AuthenticationRequired => {
+                    klynt_common::domain::DomainError::NotPermitted(_)
+                    | klynt_common::domain::DomainError::AuthenticationRequired => {
                         StatusCode::FORBIDDEN
                     }
-                    klynt_shared_domain::DomainError::RateLimited => StatusCode::TOO_MANY_REQUESTS,
-                    klynt_shared_domain::DomainError::Internal(_) => {
+                    klynt_common::domain::DomainError::RateLimited => StatusCode::TOO_MANY_REQUESTS,
+                    klynt_common::domain::DomainError::Internal(_) => {
                         StatusCode::INTERNAL_SERVER_ERROR
                     }
                 },
@@ -113,28 +113,28 @@ impl GatewayError {
                 user_service::UserError::Validation(_) => StatusCode::BAD_REQUEST,
                 user_service::UserError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
                 user_service::UserError::Domain(domain_error) => match domain_error {
-                    klynt_shared_domain::DomainError::InvalidInput(_)
-                    | klynt_shared_domain::DomainError::Validation(_)
-                    | klynt_shared_domain::DomainError::InvalidEmail(_)
-                    | klynt_shared_domain::DomainError::InvalidRole(_)
-                    | klynt_shared_domain::DomainError::InvalidToken(_)
-                    | klynt_shared_domain::DomainError::InvalidName(_)
-                    | klynt_shared_domain::DomainError::InstitutionRequired(_)
-                    | klynt_shared_domain::DomainError::TermsNotAccepted
-                    | klynt_shared_domain::DomainError::InvalidSessionToken => {
+                    klynt_common::domain::DomainError::InvalidInput(_)
+                    | klynt_common::domain::DomainError::Validation(_)
+                    | klynt_common::domain::DomainError::InvalidEmail(_)
+                    | klynt_common::domain::DomainError::InvalidRole(_)
+                    | klynt_common::domain::DomainError::InvalidToken(_)
+                    | klynt_common::domain::DomainError::InvalidName(_)
+                    | klynt_common::domain::DomainError::InstitutionRequired(_)
+                    | klynt_common::domain::DomainError::TermsNotAccepted
+                    | klynt_common::domain::DomainError::InvalidSessionToken => {
                         StatusCode::BAD_REQUEST
                     }
-                    klynt_shared_domain::DomainError::NotFound(_) => StatusCode::NOT_FOUND,
-                    klynt_shared_domain::DomainError::Conflict(_)
-                    | klynt_shared_domain::DomainError::AlreadyExists { .. } => {
+                    klynt_common::domain::DomainError::NotFound(_) => StatusCode::NOT_FOUND,
+                    klynt_common::domain::DomainError::Conflict(_)
+                    | klynt_common::domain::DomainError::AlreadyExists { .. } => {
                         StatusCode::CONFLICT
                     }
-                    klynt_shared_domain::DomainError::NotPermitted(_)
-                    | klynt_shared_domain::DomainError::AuthenticationRequired => {
+                    klynt_common::domain::DomainError::NotPermitted(_)
+                    | klynt_common::domain::DomainError::AuthenticationRequired => {
                         StatusCode::FORBIDDEN
                     }
-                    klynt_shared_domain::DomainError::RateLimited => StatusCode::TOO_MANY_REQUESTS,
-                    klynt_shared_domain::DomainError::Internal(_) => {
+                    klynt_common::domain::DomainError::RateLimited => StatusCode::TOO_MANY_REQUESTS,
+                    klynt_common::domain::DomainError::Internal(_) => {
                         StatusCode::INTERNAL_SERVER_ERROR
                     }
                 },
@@ -241,37 +241,37 @@ mod tests {
             ),
             (
                 GatewayError::from(auth_service::AuthError::Domain(
-                    klynt_shared_domain::DomainError::InvalidInput("input".to_string()),
+                    klynt_common::domain::DomainError::InvalidInput("input".to_string()),
                 )),
                 StatusCode::BAD_REQUEST,
             ),
             (
                 GatewayError::from(auth_service::AuthError::Domain(
-                    klynt_shared_domain::DomainError::Validation("invalid".to_string()),
+                    klynt_common::domain::DomainError::Validation("invalid".to_string()),
                 )),
                 StatusCode::BAD_REQUEST,
             ),
             (
                 GatewayError::from(auth_service::AuthError::Domain(
-                    klynt_shared_domain::DomainError::NotFound("missing".to_string()),
+                    klynt_common::domain::DomainError::NotFound("missing".to_string()),
                 )),
                 StatusCode::NOT_FOUND,
             ),
             (
                 GatewayError::from(auth_service::AuthError::Domain(
-                    klynt_shared_domain::DomainError::Conflict("duplicate".to_string()),
+                    klynt_common::domain::DomainError::Conflict("duplicate".to_string()),
                 )),
                 StatusCode::CONFLICT,
             ),
             (
                 GatewayError::from(auth_service::AuthError::Domain(
-                    klynt_shared_domain::DomainError::NotPermitted("no".to_string()),
+                    klynt_common::domain::DomainError::NotPermitted("no".to_string()),
                 )),
                 StatusCode::FORBIDDEN,
             ),
             (
                 GatewayError::from(auth_service::AuthError::Domain(
-                    klynt_shared_domain::DomainError::Internal("domain".to_string()),
+                    klynt_common::domain::DomainError::Internal("domain".to_string()),
                 )),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ),

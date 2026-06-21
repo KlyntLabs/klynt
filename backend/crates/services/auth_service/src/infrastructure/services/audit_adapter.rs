@@ -4,18 +4,18 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 
-use klynt_core::ctx::ExecutionContext;
-use klynt_utils::UserId;
+use klynt_base::ctx::ExecutionContext;
+use klynt_common::util::UserId;
 
 use crate::application::ports::AuditLogger;
 
-/// Adapter wrapping the legacy [`klynt_audit::AuditService`].
+/// Adapter wrapping the legacy [`klynt_telemetry::audit::AuditService`].
 pub struct AuditLoggerAdapter {
-    inner: Arc<klynt_audit::AuditService>,
+    inner: Arc<klynt_telemetry::audit::AuditService>,
 }
 
 impl AuditLoggerAdapter {
-    pub fn new(inner: Arc<klynt_audit::AuditService>) -> Self {
+    pub fn new(inner: Arc<klynt_telemetry::audit::AuditService>) -> Self {
         Self { inner }
     }
 }
@@ -129,10 +129,10 @@ mod tests {
     use std::sync::Mutex;
 
     use super::*;
-    use klynt_core::ctx::RequestContext;
+    use klynt_base::ctx::RequestContext;
 
     struct CapturingRepo {
-        events: Mutex<Vec<klynt_audit::types::AuditEvent>>,
+        events: Mutex<Vec<klynt_telemetry::audit::types::AuditEvent>>,
     }
 
     impl Default for CapturingRepo {
@@ -144,12 +144,12 @@ mod tests {
     }
 
     #[async_trait]
-    impl klynt_infrastructure::repositories::AuditEventRepository for CapturingRepo {
+    impl klynt_persistence::repositories::AuditEventRepository for CapturingRepo {
         async fn log(
             &self,
-            _ctx: &klynt_core::ctx::Ctx,
-            event: klynt_audit::types::AuditEvent,
-        ) -> Result<(), klynt_shared_domain::DomainError> {
+            _ctx: &klynt_base::ctx::Ctx,
+            event: klynt_telemetry::audit::types::AuditEvent,
+        ) -> Result<(), klynt_common::domain::DomainError> {
             self.events.lock().unwrap().push(event);
             Ok(())
         }
@@ -157,7 +157,7 @@ mod tests {
 
     fn adapter() -> (AuditLoggerAdapter, Arc<CapturingRepo>) {
         let repo = Arc::new(CapturingRepo::default());
-        let audit = Arc::new(klynt_audit::AuditService::new(repo.clone()));
+        let audit = Arc::new(klynt_telemetry::audit::AuditService::new(repo.clone()));
         (AuditLoggerAdapter::new(audit), repo)
     }
 
@@ -173,7 +173,7 @@ mod tests {
         assert_eq!(events.len(), 1);
         assert_eq!(
             events[0].action,
-            klynt_audit::types::AuditAction::UserRegistered
+            klynt_telemetry::audit::types::AuditAction::UserRegistered
         );
     }
 
@@ -189,7 +189,7 @@ mod tests {
         assert_eq!(events.len(), 1);
         assert_eq!(
             events[0].action,
-            klynt_audit::types::AuditAction::UserEmailVerified
+            klynt_telemetry::audit::types::AuditAction::UserEmailVerified
         );
     }
 
@@ -205,7 +205,7 @@ mod tests {
         assert_eq!(events.len(), 1);
         assert_eq!(
             events[0].action,
-            klynt_audit::types::AuditAction::UserPasswordReset
+            klynt_telemetry::audit::types::AuditAction::UserPasswordReset
         );
     }
 }

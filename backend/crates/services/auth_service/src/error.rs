@@ -1,6 +1,6 @@
 //! Auth service errors.
 
-use klynt_shared_domain::DomainError;
+use klynt_common::domain::DomainError;
 
 use crate::domain::PasswordPolicyError;
 

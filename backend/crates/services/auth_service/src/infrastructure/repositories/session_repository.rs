@@ -3,14 +3,14 @@
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 
-use klynt_core::ctx::ExecutionContext;
-use klynt_utils::UserId;
+use klynt_base::ctx::ExecutionContext;
+use klynt_common::util::UserId;
 
 use crate::domain::{Session, SessionStore as AuthSessionStore, SessionToken};
 use crate::error::AuthError;
 use crate::infrastructure::conversion::{to_legacy_ctx, to_legacy_user_id};
 
-/// Adapter wrapping a legacy [`klynt_storage::session::SessionStore`].
+/// Adapter wrapping a legacy [`klynt_persistence::session::SessionStore`].
 pub struct SessionRepositoryAdapter<T> {
     inner: T,
 }
@@ -24,7 +24,7 @@ impl<T> SessionRepositoryAdapter<T> {
 #[async_trait]
 impl<T> AuthSessionStore for SessionRepositoryAdapter<T>
 where
-    T: klynt_storage::session::SessionStore,
+    T: klynt_persistence::session::SessionStore,
 {
     async fn create(
         &self,
@@ -48,7 +48,7 @@ where
         token: &SessionToken,
     ) -> Result<Option<Session>, AuthError> {
         let legacy_ctx = to_legacy_ctx(ctx);
-        let legacy_token = klynt_storage::session::SessionToken(token.0);
+        let legacy_token = klynt_persistence::session::SessionToken(token.0);
 
         self.inner
             .find_valid(&legacy_ctx, &legacy_token)
@@ -59,7 +59,7 @@ where
 
     async fn revoke(&self, ctx: &ExecutionContext, token: &SessionToken) -> Result<(), AuthError> {
         let legacy_ctx = to_legacy_ctx(ctx);
-        let legacy_token = klynt_storage::session::SessionToken(token.0);
+        let legacy_token = klynt_persistence::session::SessionToken(token.0);
 
         self.inner
             .revoke(&legacy_ctx, &legacy_token)
@@ -68,16 +68,16 @@ where
     }
 }
 
-fn map_session(session: klynt_storage::session::Session) -> Session {
+fn map_session(session: klynt_persistence::session::Session) -> Session {
     Session {
         token: SessionToken(session.token.0),
-        user_id: klynt_utils::UserId::from_uuid(session.user_id.0),
+        user_id: klynt_common::util::UserId::from_uuid(session.user_id.0),
         expires_at: session.expires_at,
     }
 }
 
-fn map_legacy_error(err: klynt_shared_domain::DomainError) -> AuthError {
-    AuthError::Domain(klynt_shared_domain::DomainError::Internal(err.to_string()))
+fn map_legacy_error(err: klynt_common::domain::DomainError) -> AuthError {
+    AuthError::Domain(klynt_common::domain::DomainError::Internal(err.to_string()))
 }
 
 #[cfg(test)]
@@ -88,8 +88,9 @@ mod tests {
     use super::*;
 
     struct FakeLegacySessionStore {
-        sessions:
-            Mutex<HashMap<klynt_storage::session::SessionToken, klynt_storage::session::Session>>,
+        sessions: Mutex<
+            HashMap<klynt_persistence::session::SessionToken, klynt_persistence::session::Session>,
+        >,
     }
 
     impl Default for FakeLegacySessionStore {
@@ -101,16 +102,16 @@ mod tests {
     }
 
     #[async_trait]
-    impl klynt_storage::session::SessionStore for FakeLegacySessionStore {
+    impl klynt_persistence::session::SessionStore for FakeLegacySessionStore {
         async fn create(
             &self,
-            _ctx: &klynt_core::ctx::Ctx,
-            user_id: klynt_utils::UserId,
+            _ctx: &klynt_base::ctx::Ctx,
+            user_id: klynt_common::util::UserId,
             expires_at: DateTime<Utc>,
-        ) -> Result<klynt_storage::session::SessionToken, klynt_shared_domain::DomainError>
+        ) -> Result<klynt_persistence::session::SessionToken, klynt_common::domain::DomainError>
         {
-            let token = klynt_storage::session::SessionToken::new();
-            let session = klynt_storage::session::Session {
+            let token = klynt_persistence::session::SessionToken::new();
+            let session = klynt_persistence::session::Session {
                 token,
                 user_id,
                 expires_at,
@@ -121,9 +122,9 @@ mod tests {
 
         async fn find_valid(
             &self,
-            _ctx: &klynt_core::ctx::Ctx,
-            token: &klynt_storage::session::SessionToken,
-        ) -> Result<Option<klynt_storage::session::Session>, klynt_shared_domain::DomainError>
+            _ctx: &klynt_base::ctx::Ctx,
+            token: &klynt_persistence::session::SessionToken,
+        ) -> Result<Option<klynt_persistence::session::Session>, klynt_common::domain::DomainError>
         {
             Ok(self
                 .sessions
@@ -136,15 +137,15 @@ mod tests {
 
         async fn revoke(
             &self,
-            _ctx: &klynt_core::ctx::Ctx,
-            token: &klynt_storage::session::SessionToken,
-        ) -> Result<(), klynt_shared_domain::DomainError> {
+            _ctx: &klynt_base::ctx::Ctx,
+            token: &klynt_persistence::session::SessionToken,
+        ) -> Result<(), klynt_common::domain::DomainError> {
             self.sessions.lock().unwrap().remove(token);
             Ok(())
         }
     }
 
-    use klynt_core::ctx::RequestContext;
+    use klynt_base::ctx::RequestContext;
 
     #[tokio::test]
     async fn create_returns_session_token() {
