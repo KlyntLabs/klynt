@@ -227,7 +227,7 @@ mod conversion_tests {
     }
 
     #[test]
-    fn internal_error_becomes_500_and_sanitizes_message() {
+    fn internal_error_becomes_500() {
         let app_err = AppError::from(DomainError::internal_msg("secrets"));
         match app_err.kind {
             kind @ AppErrorKind::Internal(_) => {
@@ -241,11 +241,16 @@ mod conversion_tests {
     }
 
     #[test]
-    fn request_id_appears_in_error_body() {
+    fn request_id_attached_via_extensions() {
         let request_id = Uuid::new_v4();
         let app_err = AppError::new(AppErrorKind::BadRequest("boom".to_string()), request_id);
         let response = app_err.into_response();
         assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        let attached = response
+            .extensions()
+            .get::<AppError>()
+            .expect("AppError in extensions");
+        assert_eq!(attached.request_id, request_id);
     }
 }
 
