@@ -295,19 +295,19 @@ pub fn build_test_auth_service() -> (AuthService, Arc<FakeUserRepository>, Arc<F
     (service, user_repository, email_sender)
 }
 
-/// Fake legacy session store for middleware tests.
+/// Fake persistence session store for middleware tests.
 #[derive(Default)]
-pub struct LegacyFakeSessionStore {
+pub struct FakePersistenceSessionStore {
     sessions: Mutex<
         HashMap<klynt_persistence::session::SessionToken, klynt_persistence::session::Session>,
     >,
 }
 
 #[async_trait]
-impl klynt_persistence::session::SessionStore for LegacyFakeSessionStore {
+impl klynt_persistence::session::SessionStore for FakePersistenceSessionStore {
     async fn create(
         &self,
-        _ctx: &klynt_base::ctx::Ctx,
+        _ctx: &ExecutionContext,
         user_id: klynt_common::util::UserId,
         expires_at: DateTime<Utc>,
     ) -> Result<klynt_persistence::session::SessionToken, klynt_common::domain::DomainError> {
@@ -323,7 +323,7 @@ impl klynt_persistence::session::SessionStore for LegacyFakeSessionStore {
 
     async fn find_valid(
         &self,
-        _ctx: &klynt_base::ctx::Ctx,
+        _ctx: &ExecutionContext,
         token: &klynt_persistence::session::SessionToken,
     ) -> Result<Option<klynt_persistence::session::Session>, klynt_common::domain::DomainError>
     {
@@ -338,7 +338,7 @@ impl klynt_persistence::session::SessionStore for LegacyFakeSessionStore {
 
     async fn revoke(
         &self,
-        _ctx: &klynt_base::ctx::Ctx,
+        _ctx: &ExecutionContext,
         token: &klynt_persistence::session::SessionToken,
     ) -> Result<(), klynt_common::domain::DomainError> {
         self.sessions.lock().unwrap().remove(token);
@@ -480,11 +480,11 @@ pub fn build_test_user_service() -> (UserService, Arc<FakeUserServiceRepository>
 /// Build test gateway services with exposed fakes for protected route tests.
 pub fn build_test_services_with_fakes() -> (
     gateways::state::Services,
-    Arc<LegacyFakeSessionStore>,
+    Arc<FakePersistenceSessionStore>,
     Arc<FakeUserServiceRepository>,
 ) {
     let (auth_service, _, _) = build_test_auth_service();
-    let session_store = Arc::new(LegacyFakeSessionStore::default());
+    let session_store = Arc::new(FakePersistenceSessionStore::default());
     let (user_service, user_repo) = build_test_user_service();
 
     let services = gateways::state::Services {

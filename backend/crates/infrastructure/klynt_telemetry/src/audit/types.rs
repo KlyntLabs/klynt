@@ -6,7 +6,7 @@ use std::fmt::{self, Display};
 use std::str::FromStr;
 use uuid::Uuid;
 
-use klynt_base::ctx::Ctx;
+use klynt_base::ctx::ExecutionContext;
 use klynt_common::util::UserId;
 
 /// Immutable audit event for compliance and security tracking.
@@ -238,7 +238,7 @@ pub trait AuditEventRepository: Send + Sync {
     /// Log an audit event (append-only).
     async fn log(
         &self,
-        ctx: &Ctx,
+        ctx: &ExecutionContext,
         event: AuditEvent,
     ) -> Result<(), klynt_common::domain::DomainError>;
 }

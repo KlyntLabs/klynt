@@ -1,6 +1,8 @@
 //! User service errors.
 
-use klynt_base::ports::PasswordHashError;
+use axum::http::StatusCode;
+
+use klynt_base::ports::{HttpError, PasswordHashError};
 use klynt_common::domain::DomainError;
 
 /// User service-specific error type.
@@ -53,6 +55,34 @@ impl UserError {
     /// Constructor for invalid password.
     pub fn invalid_password() -> Self {
         Self::InvalidPassword
+    }
+}
+
+impl HttpError for UserError {
+    fn status_code(&self) -> StatusCode {
+        match self {
+            Self::NotFound => StatusCode::NOT_FOUND,
+            Self::UserDeleted | Self::CannotDeleteAdmin | Self::SelfDeleteNotAllowed => {
+                StatusCode::FORBIDDEN
+            }
+            Self::InvalidPassword => StatusCode::UNAUTHORIZED,
+            Self::Validation(_) => StatusCode::BAD_REQUEST,
+            Self::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::Domain(err) => err.status_code(),
+        }
+    }
+
+    fn error_code(&self) -> &'static str {
+        match self {
+            Self::NotFound => "NOT_FOUND",
+            Self::UserDeleted => "USER_DELETED",
+            Self::CannotDeleteAdmin => "CANNOT_DELETE_ADMIN",
+            Self::SelfDeleteNotAllowed => "SELF_DELETE_NOT_ALLOWED",
+            Self::InvalidPassword => "INVALID_PASSWORD",
+            Self::Validation(_) => "VALIDATION_ERROR",
+            Self::Internal(_) => "INTERNAL_SERVER_ERROR",
+            Self::Domain(err) => err.error_code(),
+        }
     }
 }
 

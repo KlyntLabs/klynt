@@ -9,7 +9,7 @@ use klynt_persistence::repositories::pg_user::PgUserRepository;
 
 use crate::application::ports::UserRepository;
 use crate::error::UserError;
-use crate::infrastructure::conversion::{map_legacy_error, to_legacy_ctx, to_legacy_user_id};
+use crate::infrastructure::error::map_domain_error;
 
 /// Adapter wrapping a concrete [`PgUserRepository`].
 pub struct UserRepositoryAdapter {
@@ -29,32 +29,24 @@ impl UserRepository for UserRepositoryAdapter {
         ctx: &ExecutionContext,
         id: UserId,
     ) -> Result<Option<User>, UserError> {
-        let legacy_ctx = to_legacy_ctx(ctx);
-        let legacy_id = to_legacy_user_id(id);
-
         self.inner
-            .find_by_id_full(&legacy_ctx, legacy_id)
+            .find_by_id_full(ctx, id)
             .await
-            .map_err(map_legacy_error)
+            .map_err(map_domain_error)
     }
 
     async fn update(&self, ctx: &ExecutionContext, user: &User) -> Result<(), UserError> {
-        let legacy_ctx = to_legacy_ctx(ctx);
-
         self.inner
-            .update_full(&legacy_ctx, user)
+            .update_full(ctx, user)
             .await
-            .map_err(map_legacy_error)
+            .map_err(map_domain_error)
     }
 
     async fn delete(&self, ctx: &ExecutionContext, id: UserId) -> Result<(), UserError> {
-        let legacy_ctx = to_legacy_ctx(ctx);
-        let legacy_id = to_legacy_user_id(id);
-
         self.inner
-            .soft_delete(&legacy_ctx, legacy_id)
+            .soft_delete(ctx, id)
             .await
-            .map_err(map_legacy_error)
+            .map_err(map_domain_error)
     }
 
     async fn list(
@@ -62,11 +54,9 @@ impl UserRepository for UserRepositoryAdapter {
         ctx: &ExecutionContext,
         pagination: PaginationRequest,
     ) -> Result<(Vec<User>, u64), UserError> {
-        let legacy_ctx = to_legacy_ctx(ctx);
-
         self.inner
-            .list_full(&legacy_ctx, pagination)
+            .list_full(ctx, pagination)
             .await
-            .map_err(map_legacy_error)
+            .map_err(map_domain_error)
     }
 }

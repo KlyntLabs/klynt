@@ -4,6 +4,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Json, Response},
 };
+use klynt_base::ports::HttpError;
 
 /// Gateway error type.
 #[derive(thiserror::Error, Debug)]
@@ -67,78 +68,23 @@ impl GatewayError {
             Self::Configuration(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Self::ServiceUnavailable(_) => StatusCode::SERVICE_UNAVAILABLE,
             Self::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            Self::Auth(auth_error) => match auth_error {
-                auth_service::AuthError::InvalidCredentials
-                | auth_service::AuthError::AccountInactive
-                | auth_service::AuthError::AccountLocked
-                | auth_service::AuthError::PasswordResetRequired => StatusCode::UNAUTHORIZED,
-                auth_service::AuthError::InvalidToken => StatusCode::BAD_REQUEST,
-                auth_service::AuthError::PasswordPolicy(_) => StatusCode::BAD_REQUEST,
-                auth_service::AuthError::UserNotFound => StatusCode::NOT_FOUND,
-                auth_service::AuthError::RateLimited => StatusCode::TOO_MANY_REQUESTS,
-                auth_service::AuthError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
-                auth_service::AuthError::Domain(domain_error) => match domain_error {
-                    klynt_common::domain::DomainError::InvalidInput(_)
-                    | klynt_common::domain::DomainError::Validation(_)
-                    | klynt_common::domain::DomainError::InvalidEmail(_)
-                    | klynt_common::domain::DomainError::InvalidRole(_)
-                    | klynt_common::domain::DomainError::InvalidToken(_)
-                    | klynt_common::domain::DomainError::InvalidName(_)
-                    | klynt_common::domain::DomainError::InstitutionRequired(_)
-                    | klynt_common::domain::DomainError::TermsNotAccepted
-                    | klynt_common::domain::DomainError::InvalidSessionToken => {
-                        StatusCode::BAD_REQUEST
-                    }
-                    klynt_common::domain::DomainError::NotFound(_) => StatusCode::NOT_FOUND,
-                    klynt_common::domain::DomainError::Conflict(_)
-                    | klynt_common::domain::DomainError::AlreadyExists { .. } => {
-                        StatusCode::CONFLICT
-                    }
-                    klynt_common::domain::DomainError::NotPermitted(_)
-                    | klynt_common::domain::DomainError::AuthenticationRequired => {
-                        StatusCode::FORBIDDEN
-                    }
-                    klynt_common::domain::DomainError::RateLimited => StatusCode::TOO_MANY_REQUESTS,
-                    klynt_common::domain::DomainError::Internal(_) => {
-                        StatusCode::INTERNAL_SERVER_ERROR
-                    }
-                },
-            },
-            Self::User(user_error) => match user_error {
-                user_service::UserError::NotFound => StatusCode::NOT_FOUND,
-                user_service::UserError::UserDeleted
-                | user_service::UserError::CannotDeleteAdmin
-                | user_service::UserError::SelfDeleteNotAllowed => StatusCode::FORBIDDEN,
-                user_service::UserError::InvalidPassword => StatusCode::UNAUTHORIZED,
-                user_service::UserError::Validation(_) => StatusCode::BAD_REQUEST,
-                user_service::UserError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
-                user_service::UserError::Domain(domain_error) => match domain_error {
-                    klynt_common::domain::DomainError::InvalidInput(_)
-                    | klynt_common::domain::DomainError::Validation(_)
-                    | klynt_common::domain::DomainError::InvalidEmail(_)
-                    | klynt_common::domain::DomainError::InvalidRole(_)
-                    | klynt_common::domain::DomainError::InvalidToken(_)
-                    | klynt_common::domain::DomainError::InvalidName(_)
-                    | klynt_common::domain::DomainError::InstitutionRequired(_)
-                    | klynt_common::domain::DomainError::TermsNotAccepted
-                    | klynt_common::domain::DomainError::InvalidSessionToken => {
-                        StatusCode::BAD_REQUEST
-                    }
-                    klynt_common::domain::DomainError::NotFound(_) => StatusCode::NOT_FOUND,
-                    klynt_common::domain::DomainError::Conflict(_)
-                    | klynt_common::domain::DomainError::AlreadyExists { .. } => {
-                        StatusCode::CONFLICT
-                    }
-                    klynt_common::domain::DomainError::NotPermitted(_)
-                    | klynt_common::domain::DomainError::AuthenticationRequired => {
-                        StatusCode::FORBIDDEN
-                    }
-                    klynt_common::domain::DomainError::RateLimited => StatusCode::TOO_MANY_REQUESTS,
-                    klynt_common::domain::DomainError::Internal(_) => {
-                        StatusCode::INTERNAL_SERVER_ERROR
-                    }
-                },
-            },
+            Self::Auth(auth_error) => auth_error.status_code(),
+            Self::User(user_error) => user_error.status_code(),
+        }
+    }
+
+    fn error_code(&self) -> &'static str {
+        match self {
+            Self::BadRequest(_) => "BAD_REQUEST",
+            Self::Unauthorized(_) => "UNAUTHORIZED",
+            Self::Forbidden(_) => "FORBIDDEN",
+            Self::NotFound(_) => "NOT_FOUND",
+            Self::Conflict(_) => "CONFLICT",
+            Self::Configuration(_) => "CONFIGURATION_ERROR",
+            Self::ServiceUnavailable(_) => "SERVICE_UNAVAILABLE",
+            Self::Internal(_) => "INTERNAL_SERVER_ERROR",
+            Self::Auth(auth_error) => auth_error.error_code(),
+            Self::User(user_error) => user_error.error_code(),
         }
     }
 }
@@ -149,7 +95,7 @@ impl IntoResponse for GatewayError {
         let body = serde_json::json!({
             "success": false,
             "error": self.to_string(),
-            "code": status.canonical_reason().unwrap_or("UNKNOWN"),
+            "code": self.error_code(),
         });
 
         (status, Json(body)).into_response()

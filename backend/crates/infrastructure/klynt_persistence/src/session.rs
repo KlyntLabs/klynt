@@ -8,6 +8,8 @@ use uuid::Uuid;
 
 use crate::Error;
 
+use klynt_base::ctx::ExecutionContext;
+
 /// Opaque bearer token used to authenticate requests.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(transparent)]
@@ -64,7 +66,7 @@ pub trait SessionStore: Send + Sync {
     /// Create a new session for `user_id` and return its bearer token.
     async fn create(
         &self,
-        ctx: &klynt_base::ctx::Ctx,
+        ctx: &ExecutionContext,
         user_id: UserId,
         expires_at: DateTime<Utc>,
     ) -> Result<SessionToken, Error>;
@@ -72,12 +74,12 @@ pub trait SessionStore: Send + Sync {
     /// Find a non-expired session by token.
     async fn find_valid(
         &self,
-        ctx: &klynt_base::ctx::Ctx,
+        ctx: &ExecutionContext,
         token: &SessionToken,
     ) -> Result<Option<Session>, Error>;
 
     /// Revoke a session by token.
-    async fn revoke(&self, ctx: &klynt_base::ctx::Ctx, token: &SessionToken) -> Result<(), Error>;
+    async fn revoke(&self, ctx: &ExecutionContext, token: &SessionToken) -> Result<(), Error>;
 }
 
 #[cfg(test)]

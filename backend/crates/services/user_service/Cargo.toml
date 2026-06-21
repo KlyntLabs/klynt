@@ -28,7 +28,11 @@ validator = { workspace = true }
 # === Error Handling ===
 thiserror = { workspace = true }
 
+# === Web framework (status-code mapping only) ===
+axum = { workspace = true }
+
 # === Database ===
 sqlx = { workspace = true }
 
 [dev-dependencies]
+klynt_base = { path = "../../../crates/klynt_base", features = ["testkit"] }

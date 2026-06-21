@@ -1112,3 +1112,38 @@ Overall success criteria across all candidates:
 
 **Related issues:**
 - None yet (will be filed if blockers arise)
+
+---
+
+## Implementation Notes
+
+### Candidate 3 — Unify Execution Context
+
+- Removed the legacy `klynt_base::ctx::Ctx` type.
+- Migrated all persistence, telemetry, service, and gateway code to `ExecutionContext`/`RequestContext`.
+- Deleted per-service `conversion.rs` files and identity conversion helpers (`to_legacy_ctx`, `to_legacy_user_id`, `from_legacy_user_id`).
+- Updated in-memory test fakes to implement the new context signatures.
+
+### Candidate 5 — Extract Error Mapping Adapter
+
+- Added `klynt_base::ports::HttpError` trait with default `INTERNAL_SERVER_ERROR` mappings.
+- Implemented `HttpError` for `klynt_common::domain::DomainError` in `klynt_base`.
+- Implemented `HttpError` for `auth_service::AuthError` and `user_service::UserError` in their respective crates.
+- Simplified `gateways/src/error.rs` so `GatewayError::status_code()` delegates to `HttpError::status_code()` and the JSON body uses `HttpError::error_code()`.
+
+### Candidate 6 — Reduce Test Surface Area
+
+- Added a `testkit` feature to `klynt_base` with shared test doubles:
+  - `TestClock` — freezable/advanceable `Clock` implementation.
+  - `TestPasswordHasher` — deterministic, prefix-based `PasswordHasher`.
+  - `test_ctx()` — generic `ExecutionContext` helper.
+  - `sample_user()` / `sample_active_user()` — domain model factories.
+- Updated `auth_service` and `user_service` test support modules to use `klynt_base::testkit`, removing duplicate `FixedClock`, `TestClock`, `TestPasswordHasher`, `test_ctx`, and sample-user helpers.
+- Service-specific fakes (`FakeUserRepository`, `FakeSessionStore`, etc.) remain in each service crate because they implement service-specific ports; centralizing them would introduce dependency cycles.
+
+### Verification
+
+- `cargo fmt --check` ✅
+- `cargo clippy --workspace --all-targets --all-features -- -D warnings` ✅
+- `cargo test --workspace` ✅
+- `cargo machete` ✅

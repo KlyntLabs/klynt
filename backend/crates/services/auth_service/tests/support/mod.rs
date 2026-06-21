@@ -1,4 +1,7 @@
 //! Test support utilities and fake implementations.
+//!
+//! Cross-cutting test doubles come from [`klynt_base::testkit`]; this module
+//! keeps only the auth-service-specific fakes.
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -11,43 +14,12 @@ use auth_service::domain::{Session, SessionToken, TokenKind};
 use auth_service::domain::{SessionStore, TokenStore};
 use auth_service::error::AuthError;
 use auth_service::{AuthConfig, AuthService, Dependencies};
-use klynt_base::ctx::{ExecutionContext, RequestContext};
-use klynt_base::ports::{Clock, PasswordHashError, PasswordHasher};
+use klynt_base::ctx::ExecutionContext;
+use klynt_base::testkit::sample_user;
 use klynt_common::domain::{Email, User, UserRole, UserStatus};
 use klynt_common::util::UserId;
 
-/// Fixed clock for deterministic tests.
-#[derive(Clone)]
-pub struct FixedClock {
-    pub now: DateTime<Utc>,
-}
-
-impl FixedClock {
-    pub fn new(now: DateTime<Utc>) -> Self {
-        Self { now }
-    }
-}
-
-impl Clock for FixedClock {
-    fn now(&self) -> DateTime<Utc> {
-        self.now
-    }
-}
-
-/// Fake password hasher that accepts any password matching "hash-{password}".
-#[derive(Default, Clone)]
-pub struct FakePasswordHasher;
-
-#[async_trait]
-impl PasswordHasher for FakePasswordHasher {
-    async fn hash(&self, password: &str) -> Result<String, PasswordHashError> {
-        Ok(format!("hash-{password}"))
-    }
-
-    async fn verify(&self, password: &str, hash: &str) -> Result<bool, PasswordHashError> {
-        Ok(hash == format!("hash-{password}"))
-    }
-}
+pub use klynt_base::testkit::{test_ctx, TestClock, TestPasswordHasher};
 
 /// Fake user repository backed by an in-memory map.
 pub struct FakeUserRepository {
@@ -288,8 +260,8 @@ pub fn build_test_service() -> (AuthService, Arc<FakeUserRepository>, Arc<FakeEm
             token_store: Arc::new(FakeTokenStore::default()),
             email_sender: email_sender.clone(),
             audit_logger: Arc::new(StubAuditLogger),
-            password_hasher: Arc::new(FakePasswordHasher),
-            clock: Arc::new(FixedClock::new(Utc::now())),
+            password_hasher: Arc::new(TestPasswordHasher::new()),
+            clock: Arc::new(TestClock::new()),
         },
     )
     .expect("valid test dependencies");
@@ -297,22 +269,7 @@ pub fn build_test_service() -> (AuthService, Arc<FakeUserRepository>, Arc<FakeEm
     (service, user_repository, email_sender)
 }
 
-/// Build a test execution context.
-pub fn test_ctx() -> ExecutionContext {
-    ExecutionContext::new(RequestContext::new())
-}
-
-/// Create a test user model.
+/// Create a test user model pre-hashed for the default [`TestPasswordHasher`].
 pub fn test_user(email: &str, password: &str, status: UserStatus) -> User {
-    User {
-        id: UserId::new(),
-        email: Email::new(email.to_string()),
-        password_hash: format!("hash-{password}"),
-        full_name: Some("Test User".to_string()),
-        status,
-        role: UserRole::Student,
-        created_at: Utc::now(),
-        updated_at: None,
-        deleted_at: None,
-    }
+    sample_user(email, "Test User", &format!("hash-{password}"), status)
 }

@@ -4,7 +4,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::session::{Session, SessionStore, SessionToken};
-use klynt_base::ctx::Ctx;
+use klynt_base::ctx::ExecutionContext;
 use klynt_common::domain::DomainError;
 use klynt_common::util::UserId;
 
@@ -27,7 +27,7 @@ impl PgSessionStore {
 impl SessionStore for PgSessionStore {
     async fn create(
         &self,
-        _ctx: &Ctx,
+        _ctx: &ExecutionContext,
         user_id: UserId,
         expires_at: DateTime<Utc>,
     ) -> Result<SessionToken, DomainError> {
@@ -51,7 +51,7 @@ impl SessionStore for PgSessionStore {
 
     async fn find_valid(
         &self,
-        _ctx: &Ctx,
+        _ctx: &ExecutionContext,
         token: &SessionToken,
     ) -> Result<Option<Session>, DomainError> {
         let row: Option<(Uuid, DateTime<Utc>)> = sqlx::query_as(
@@ -74,7 +74,11 @@ impl SessionStore for PgSessionStore {
         }))
     }
 
-    async fn revoke(&self, _ctx: &Ctx, token: &SessionToken) -> Result<(), DomainError> {
+    async fn revoke(
+        &self,
+        _ctx: &ExecutionContext,
+        token: &SessionToken,
+    ) -> Result<(), DomainError> {
         sqlx::query(
             r#"
             DELETE FROM sessions

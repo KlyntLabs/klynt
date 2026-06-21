@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use sqlx::PgPool;
 
 use crate::repositories::AuditEventRepository;
-use klynt_base::ctx::Ctx;
+use klynt_base::ctx::ExecutionContext;
 use klynt_common::domain::DomainError;
 use klynt_telemetry::audit::types::AuditEvent;
 
@@ -19,7 +19,7 @@ impl PgAuditEventRepository {
 
 #[async_trait]
 impl AuditEventRepository for PgAuditEventRepository {
-    async fn log(&self, _ctx: &Ctx, event: AuditEvent) -> Result<(), DomainError> {
+    async fn log(&self, _ctx: &ExecutionContext, event: AuditEvent) -> Result<(), DomainError> {
         sqlx::query(
             r#"
             INSERT INTO audit_events (

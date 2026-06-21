@@ -9,7 +9,6 @@ use klynt_common::util::UserId;
 
 use crate::application::ports::UserRepository;
 use crate::error::AuthError;
-use crate::infrastructure::conversion::{to_legacy_ctx, to_legacy_user_id};
 
 /// Adapter wrapping a [`klynt_persistence::repositories::UserRepository`].
 pub struct UserRepositoryAdapter<T> {
@@ -32,15 +31,14 @@ where
         ctx: &ExecutionContext,
         email: &str,
     ) -> Result<Option<User>, AuthError> {
-        let legacy_ctx = to_legacy_ctx(ctx);
-        let legacy_email = klynt_common::util::Email::parse(email).map_err(|e| {
+        let email = klynt_common::util::Email::parse(email).map_err(|e| {
             AuthError::Domain(klynt_common::domain::DomainError::InvalidInput(
                 e.to_string(),
             ))
         })?;
 
         self.inner
-            .find_by_email(&legacy_ctx, &legacy_email)
+            .find_by_email(ctx, &email)
             .await
             .map_err(map_persistence_error)
     }
@@ -52,8 +50,7 @@ where
         email: &str,
         password_hash: &str,
     ) -> Result<UserId, AuthError> {
-        let legacy_ctx = to_legacy_ctx(ctx);
-        let legacy_email = klynt_common::util::Email::parse(email).map_err(|e| {
+        let email = klynt_common::util::Email::parse(email).map_err(|e| {
             AuthError::Domain(klynt_common::domain::DomainError::InvalidInput(
                 e.to_string(),
             ))
@@ -62,7 +59,7 @@ where
         let user_id = UserId::new();
         let user = User {
             id: user_id,
-            email: Email::new(legacy_email.as_str().to_string()),
+            email: Email::new(email.as_str().to_string()),
             full_name,
             password_hash: password_hash.to_string(),
             status: UserStatus::Pending,
@@ -72,11 +69,7 @@ where
             deleted_at: None,
         };
 
-        match self
-            .inner
-            .create_if_not_exists(&legacy_ctx, &legacy_email, &user)
-            .await
-        {
+        match self.inner.create_if_not_exists(ctx, &email, &user).await {
             Ok(klynt_persistence::repositories::CreateResult::Created) => Ok(user_id),
             Ok(klynt_persistence::repositories::CreateResult::AlreadyExists(_)) => Err(
                 AuthError::Domain(klynt_common::domain::DomainError::Conflict(format!(
@@ -92,11 +85,8 @@ where
         ctx: &ExecutionContext,
         user_id: UserId,
     ) -> Result<(), AuthError> {
-        let legacy_ctx = to_legacy_ctx(ctx);
-        let legacy_user_id = to_legacy_user_id(user_id);
-
         self.inner
-            .set_email_verified(&legacy_ctx, legacy_user_id)
+            .set_email_verified(ctx, user_id)
             .await
             .map_err(map_persistence_error)
     }
@@ -107,12 +97,10 @@ where
         user_id: UserId,
         password_hash: &str,
     ) -> Result<(), AuthError> {
-        let legacy_ctx = to_legacy_ctx(ctx);
-        let legacy_user_id = to_legacy_user_id(user_id);
         let hashed = klynt_persistence::ports::HashedPassword::new(password_hash);
 
         self.inner
-            .update_password(&legacy_ctx, legacy_user_id, &hashed)
+            .update_password(ctx, user_id, &hashed)
             .await
             .map_err(map_persistence_error)
     }
@@ -146,7 +134,7 @@ mod tests {
     impl klynt_persistence::repositories::UserRepository for FakePersistenceRepository {
         async fn create_if_not_exists(
             &self,
-            _ctx: &klynt_base::ctx::Ctx,
+            _ctx: &ExecutionContext,
             email: &klynt_common::util::Email,
             user: &User,
         ) -> Result<klynt_persistence::repositories::CreateResult, klynt_common::domain::DomainError>
@@ -163,7 +151,7 @@ mod tests {
 
         async fn find_by_email(
             &self,
-            _ctx: &klynt_base::ctx::Ctx,
+            _ctx: &ExecutionContext,
             email: &klynt_common::util::Email,
         ) -> Result<Option<User>, klynt_common::domain::DomainError> {
             Ok(self.users.lock().unwrap().get(email.as_str()).cloned())
@@ -171,7 +159,7 @@ mod tests {
 
         async fn find_by_id(
             &self,
-            _ctx: &klynt_base::ctx::Ctx,
+            _ctx: &ExecutionContext,
             _id: klynt_common::util::UserId,
         ) -> Result<Option<User>, klynt_common::domain::DomainError> {
             Ok(None)
@@ -179,7 +167,7 @@ mod tests {
 
         async fn set_email_verified(
             &self,
-            _ctx: &klynt_base::ctx::Ctx,
+            _ctx: &ExecutionContext,
             user_id: klynt_common::util::UserId,
         ) -> Result<(), klynt_common::domain::DomainError> {
             let mut users = self.users.lock().unwrap();
@@ -194,7 +182,7 @@ mod tests {
 
         async fn update_password(
             &self,
-            _ctx: &klynt_base::ctx::Ctx,
+            _ctx: &ExecutionContext,
             user_id: klynt_common::util::UserId,
             password_hash: &klynt_persistence::ports::HashedPassword,
         ) -> Result<(), klynt_common::domain::DomainError> {

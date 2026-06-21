@@ -5,7 +5,7 @@ use chrono::{DateTime, Utc};
 
 use crate::ports::HashedPassword;
 use crate::tokens::TokenKind;
-use klynt_base::ctx::Ctx;
+use klynt_base::ctx::ExecutionContext;
 use klynt_common::domain::{DomainError, User};
 use klynt_common::util::{Email, UserId};
 
@@ -28,21 +28,33 @@ pub enum CreateResult {
 pub trait UserRepository: Send + Sync {
     async fn create_if_not_exists(
         &self,
-        ctx: &Ctx,
+        ctx: &ExecutionContext,
         email: &Email,
         user: &User,
     ) -> Result<CreateResult, DomainError>;
 
-    async fn find_by_email(&self, ctx: &Ctx, email: &Email) -> Result<Option<User>, DomainError>;
-    async fn find_by_id(&self, ctx: &Ctx, id: UserId) -> Result<Option<User>, DomainError>;
+    async fn find_by_email(
+        &self,
+        ctx: &ExecutionContext,
+        email: &Email,
+    ) -> Result<Option<User>, DomainError>;
+    async fn find_by_id(
+        &self,
+        ctx: &ExecutionContext,
+        id: UserId,
+    ) -> Result<Option<User>, DomainError>;
 
     /// Mark the user's email as verified and activate the account.
-    async fn set_email_verified(&self, ctx: &Ctx, user_id: UserId) -> Result<(), DomainError>;
+    async fn set_email_verified(
+        &self,
+        ctx: &ExecutionContext,
+        user_id: UserId,
+    ) -> Result<(), DomainError>;
 
     /// Update the user's password hash.
     async fn update_password(
         &self,
-        ctx: &Ctx,
+        ctx: &ExecutionContext,
         user_id: UserId,
         password_hash: &HashedPassword,
     ) -> Result<(), DomainError>;
@@ -54,7 +66,7 @@ pub trait TokenStore: Send + Sync {
     /// Store a token hash with its expiry.
     async fn save(
         &self,
-        ctx: &Ctx,
+        ctx: &ExecutionContext,
         kind: TokenKind,
         user_id: UserId,
         token_hash: &str,
@@ -65,7 +77,7 @@ pub trait TokenStore: Send + Sync {
     /// expired, and mark it used — all in one step.
     async fn consume(
         &self,
-        ctx: &Ctx,
+        ctx: &ExecutionContext,
         kind: TokenKind,
         token_hash: &str,
     ) -> Result<UserId, DomainError>;

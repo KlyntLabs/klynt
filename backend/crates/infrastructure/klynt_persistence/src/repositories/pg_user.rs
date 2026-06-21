@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use crate::ports::HashedPassword;
 use crate::repositories::{CreateResult, UserRepository};
-use klynt_base::ctx::Ctx;
+use klynt_base::ctx::ExecutionContext;
 use klynt_common::domain::{DomainError, User, UserRole, UserStatus};
 use klynt_common::util::{Email, Role as DbRole, UserId, UserStatus as DbUserStatus};
 
@@ -100,7 +100,7 @@ fn status_from_db(status: DbUserStatus) -> UserStatus {
 impl UserRepository for PgUserRepository {
     async fn create_if_not_exists(
         &self,
-        _ctx: &Ctx,
+        _ctx: &ExecutionContext,
         email: &Email,
         user: &User,
     ) -> Result<CreateResult, DomainError> {
@@ -143,7 +143,11 @@ impl UserRepository for PgUserRepository {
         Ok(CreateResult::AlreadyExists(existing))
     }
 
-    async fn find_by_email(&self, _ctx: &Ctx, email: &Email) -> Result<Option<User>, DomainError> {
+    async fn find_by_email(
+        &self,
+        _ctx: &ExecutionContext,
+        email: &Email,
+    ) -> Result<Option<User>, DomainError> {
         let row: Option<UserRow> = sqlx::query_as(
             r#"
             SELECT
@@ -163,7 +167,11 @@ impl UserRepository for PgUserRepository {
         row.map(|r| r.into_user()).transpose()
     }
 
-    async fn find_by_id(&self, _ctx: &Ctx, id: UserId) -> Result<Option<User>, DomainError> {
+    async fn find_by_id(
+        &self,
+        _ctx: &ExecutionContext,
+        id: UserId,
+    ) -> Result<Option<User>, DomainError> {
         let row: Option<UserRow> = sqlx::query_as(
             r#"
             SELECT
@@ -183,7 +191,11 @@ impl UserRepository for PgUserRepository {
         row.map(|r| r.into_user()).transpose()
     }
 
-    async fn set_email_verified(&self, _ctx: &Ctx, user_id: UserId) -> Result<(), DomainError> {
+    async fn set_email_verified(
+        &self,
+        _ctx: &ExecutionContext,
+        user_id: UserId,
+    ) -> Result<(), DomainError> {
         let result = sqlx::query(
             r#"
             UPDATE users
@@ -204,7 +216,7 @@ impl UserRepository for PgUserRepository {
 
     async fn update_password(
         &self,
-        _ctx: &Ctx,
+        _ctx: &ExecutionContext,
         user_id: UserId,
         password_hash: &HashedPassword,
     ) -> Result<(), DomainError> {
@@ -234,7 +246,7 @@ impl PgUserRepository {
     /// returned domain model.
     pub async fn find_by_id_full(
         &self,
-        _ctx: &Ctx,
+        _ctx: &ExecutionContext,
         id: UserId,
     ) -> Result<Option<User>, DomainError> {
         let row: Option<UserRow> = sqlx::query_as(
@@ -260,7 +272,7 @@ impl PgUserRepository {
     /// List non-deleted users with pagination.
     pub async fn list_full(
         &self,
-        _ctx: &Ctx,
+        _ctx: &ExecutionContext,
         pagination: klynt_common::domain::PaginationRequest,
     ) -> Result<(Vec<User>, u64), DomainError> {
         let rows: Vec<UserRow> = sqlx::query_as(
@@ -303,7 +315,11 @@ impl PgUserRepository {
     }
 
     /// Update a user's mutable fields from the canonical domain model.
-    pub async fn update_full(&self, _ctx: &Ctx, user: &User) -> Result<(), DomainError> {
+    pub async fn update_full(
+        &self,
+        _ctx: &ExecutionContext,
+        user: &User,
+    ) -> Result<(), DomainError> {
         let result = sqlx::query(
             r#"
             UPDATE users
@@ -331,7 +347,11 @@ impl PgUserRepository {
     }
 
     /// Soft delete a user by setting `deleted_at` to the current timestamp.
-    pub async fn soft_delete(&self, _ctx: &Ctx, user_id: UserId) -> Result<(), DomainError> {
+    pub async fn soft_delete(
+        &self,
+        _ctx: &ExecutionContext,
+        user_id: UserId,
+    ) -> Result<(), DomainError> {
         let result = sqlx::query(
             r#"
             UPDATE users

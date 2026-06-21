@@ -4,7 +4,7 @@ use sqlx::PgPool;
 
 use crate::repositories::TokenStore;
 use crate::tokens::TokenKind;
-use klynt_base::ctx::Ctx;
+use klynt_base::ctx::ExecutionContext;
 use klynt_common::domain::error::{DomainError, TokenError};
 use klynt_common::util::UserId;
 
@@ -28,7 +28,7 @@ impl PgTokenStore {
 impl TokenStore for PgTokenStore {
     async fn save(
         &self,
-        _ctx: &Ctx,
+        _ctx: &ExecutionContext,
         kind: TokenKind,
         user_id: UserId,
         token_hash: &str,
@@ -69,7 +69,7 @@ impl TokenStore for PgTokenStore {
 
     async fn consume(
         &self,
-        _ctx: &Ctx,
+        _ctx: &ExecutionContext,
         kind: TokenKind,
         token_hash: &str,
     ) -> Result<UserId, DomainError> {
@@ -116,6 +116,7 @@ impl TokenStore for PgTokenStore {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use klynt_base::ctx::{ExecutionContext, RequestContext};
     use uuid::Uuid;
 
     async fn test_pool() -> PgPool {
@@ -155,7 +156,7 @@ mod tests {
     async fn saves_and_consumes_email_verification_token() {
         let pool = test_pool().await;
         let store = PgTokenStore::new(pool.clone());
-        let ctx = Ctx::guest(Uuid::new_v4());
+        let ctx = ExecutionContext::new(RequestContext::new());
 
         let user_id = seed_user(&pool).await;
         let token_hash = format!("hash-{}", Uuid::new_v4());
@@ -183,7 +184,7 @@ mod tests {
     async fn saves_and_consumes_password_reset_token() {
         let pool = test_pool().await;
         let store = PgTokenStore::new(pool.clone());
-        let ctx = Ctx::guest(Uuid::new_v4());
+        let ctx = ExecutionContext::new(RequestContext::new());
 
         let user_id = seed_user(&pool).await;
         let token_hash = format!("hash-reset-{}", Uuid::new_v4());
@@ -211,7 +212,7 @@ mod tests {
     async fn double_consume_fails() {
         let pool = test_pool().await;
         let store = PgTokenStore::new(pool.clone());
-        let ctx = Ctx::guest(Uuid::new_v4());
+        let ctx = ExecutionContext::new(RequestContext::new());
 
         let user_id = seed_user(&pool).await;
         let token_hash = format!("hash-used-{}", Uuid::new_v4());
@@ -246,7 +247,7 @@ mod tests {
     async fn expired_token_cannot_be_consumed() {
         let pool = test_pool().await;
         let store = PgTokenStore::new(pool.clone());
-        let ctx = Ctx::guest(Uuid::new_v4());
+        let ctx = ExecutionContext::new(RequestContext::new());
 
         let user_id = seed_user(&pool).await;
         let token_hash = format!("hash-expired-{}", Uuid::new_v4());

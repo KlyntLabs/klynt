@@ -7,6 +7,7 @@ use axum::{
     http::{Method, Request, StatusCode},
 };
 use chrono::{Duration, Utc};
+use klynt_base::ctx::{ExecutionContext, RequestContext};
 use klynt_common::domain::{Email, UserRole, UserStatus};
 use klynt_common::util::UserId;
 use klynt_persistence::session::SessionStore;
@@ -283,7 +284,7 @@ async fn authenticated_app() -> (axum::Router, UserId, String) {
 
     let token = session_store
         .create(
-            &klynt_base::ctx::Ctx::guest(uuid::Uuid::new_v4()),
+            &ExecutionContext::new(RequestContext::new()),
             klynt_common::util::UserId(user_id.inner()),
             expires_at,
         )

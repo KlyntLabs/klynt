@@ -16,5 +16,14 @@ async-trait = { workspace = true }
 # Error handling
 thiserror = { workspace = true }
 
+# Web framework (used only for the HTTP-agnostic status code abstraction)
+axum = { workspace = true }
+
 # Internal crates
 klynt_common = { path = "../shared/klynt_common" }
+
+[features]
+testkit = []
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt", "macros"] }

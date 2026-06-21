@@ -7,7 +7,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 
-use klynt_base::ctx::{ActorType, ExecutionContext, RequestContext};
+use klynt_base::ctx::{ActorType, ExecutionContext, RequestContext, RequestId};
 use klynt_persistence::session::SessionToken;
 
 use crate::state::Services;
@@ -46,24 +46,25 @@ pub async fn require_auth(
 ) -> Result<Response, crate::GatewayError> {
     let request_id = request
         .extensions()
-        .get::<klynt_base::ctx::RequestId>()
+        .get::<RequestId>()
         .copied()
         .unwrap_or_default();
 
     let token = extract_bearer_token(request.headers())
         .ok_or_else(|| crate::GatewayError::Unauthorized("Missing bearer token".to_string()))?;
 
+    let ctx = ExecutionContext::new(RequestContext::with_request_id(RequestId(request_id.0)));
+
     let session = services
         .session_store
-        .find_valid(&klynt_base::ctx::Ctx::guest(request_id.0), &token)
+        .find_valid(&ctx, &token)
         .await
         .map_err(|e| crate::GatewayError::Internal(format!("Session lookup failed: {e}")))?
         .ok_or_else(|| {
             crate::GatewayError::Unauthorized("Invalid or expired session".to_string())
         })?;
 
-    let ctx = ExecutionContext::new(RequestContext::with_request_id(request_id))
-        .with_actor(session.user_id.0, ActorType::User);
+    let ctx = ctx.with_actor(session.user_id.0, ActorType::User);
 
     request.extensions_mut().insert(ctx);
     Ok(next.run(request).await)

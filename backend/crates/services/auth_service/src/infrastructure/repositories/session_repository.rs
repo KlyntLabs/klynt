@@ -1,4 +1,4 @@
-//! Adapter from legacy session store to auth_service `SessionStore` port.
+//! Adapter from persistence session store to auth_service `SessionStore` port.
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
@@ -8,9 +8,8 @@ use klynt_common::util::UserId;
 
 use crate::domain::{Session, SessionStore as AuthSessionStore, SessionToken};
 use crate::error::AuthError;
-use crate::infrastructure::conversion::{to_legacy_ctx, to_legacy_user_id};
 
-/// Adapter wrapping a legacy [`klynt_persistence::session::SessionStore`].
+/// Adapter wrapping a [`klynt_persistence::session::SessionStore`].
 pub struct SessionRepositoryAdapter<T> {
     inner: T,
 }
@@ -32,14 +31,11 @@ where
         user_id: UserId,
         expires_at: DateTime<Utc>,
     ) -> Result<SessionToken, AuthError> {
-        let legacy_ctx = to_legacy_ctx(ctx);
-        let legacy_user_id = to_legacy_user_id(user_id);
-
         self.inner
-            .create(&legacy_ctx, legacy_user_id, expires_at)
+            .create(ctx, user_id, expires_at)
             .await
             .map(|token| SessionToken(token.0))
-            .map_err(map_legacy_error)
+            .map_err(map_persistence_error)
     }
 
     async fn find_valid(
@@ -47,36 +43,34 @@ where
         ctx: &ExecutionContext,
         token: &SessionToken,
     ) -> Result<Option<Session>, AuthError> {
-        let legacy_ctx = to_legacy_ctx(ctx);
-        let legacy_token = klynt_persistence::session::SessionToken(token.0);
+        let persistence_token = klynt_persistence::session::SessionToken(token.0);
 
         self.inner
-            .find_valid(&legacy_ctx, &legacy_token)
+            .find_valid(ctx, &persistence_token)
             .await
             .map(|maybe_session| maybe_session.map(map_session))
-            .map_err(map_legacy_error)
+            .map_err(map_persistence_error)
     }
 
     async fn revoke(&self, ctx: &ExecutionContext, token: &SessionToken) -> Result<(), AuthError> {
-        let legacy_ctx = to_legacy_ctx(ctx);
-        let legacy_token = klynt_persistence::session::SessionToken(token.0);
+        let persistence_token = klynt_persistence::session::SessionToken(token.0);
 
         self.inner
-            .revoke(&legacy_ctx, &legacy_token)
+            .revoke(ctx, &persistence_token)
             .await
-            .map_err(map_legacy_error)
+            .map_err(map_persistence_error)
     }
 }
 
 fn map_session(session: klynt_persistence::session::Session) -> Session {
     Session {
         token: SessionToken(session.token.0),
-        user_id: klynt_common::util::UserId::from_uuid(session.user_id.0),
+        user_id: session.user_id,
         expires_at: session.expires_at,
     }
 }
 
-fn map_legacy_error(err: klynt_common::domain::DomainError) -> AuthError {
+fn map_persistence_error(err: klynt_common::domain::DomainError) -> AuthError {
     AuthError::Domain(klynt_common::domain::DomainError::Internal(err.to_string()))
 }
 
@@ -105,7 +99,7 @@ mod tests {
     impl klynt_persistence::session::SessionStore for FakeLegacySessionStore {
         async fn create(
             &self,
-            _ctx: &klynt_base::ctx::Ctx,
+            _ctx: &ExecutionContext,
             user_id: klynt_common::util::UserId,
             expires_at: DateTime<Utc>,
         ) -> Result<klynt_persistence::session::SessionToken, klynt_common::domain::DomainError>
@@ -122,7 +116,7 @@ mod tests {
 
         async fn find_valid(
             &self,
-            _ctx: &klynt_base::ctx::Ctx,
+            _ctx: &ExecutionContext,
             token: &klynt_persistence::session::SessionToken,
         ) -> Result<Option<klynt_persistence::session::Session>, klynt_common::domain::DomainError>
         {
@@ -137,7 +131,7 @@ mod tests {
 
         async fn revoke(
             &self,
-            _ctx: &klynt_base::ctx::Ctx,
+            _ctx: &ExecutionContext,
             token: &klynt_persistence::session::SessionToken,
         ) -> Result<(), klynt_common::domain::DomainError> {
             self.sessions.lock().unwrap().remove(token);

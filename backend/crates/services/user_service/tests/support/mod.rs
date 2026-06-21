@@ -1,18 +1,27 @@
 //! Test support utilities for user_service integration tests.
+//!
+//! Cross-cutting test doubles come from [`klynt_base::testkit`]; this module
+//! keeps only the user-service-specific fakes.
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 
-use klynt_base::ctx::{ExecutionContext, RequestContext};
-use klynt_base::ports::{Clock, PasswordHashError, PasswordHasher};
-use klynt_common::domain::{Email, PaginationRequest, User, UserRole, UserStatus};
+use klynt_base::ctx::ExecutionContext;
+use klynt_common::domain::{PaginationRequest, User, UserStatus};
 use klynt_common::util::UserId;
 use user_service::application::ports::{AuditLogger, UserRepository};
 use user_service::error::UserError;
 use user_service::{Dependencies, UserConfig, UserService};
+
+pub use klynt_base::testkit::{test_ctx, TestClock, TestPasswordHasher};
+
+/// Create an active sample user for tests.
+pub fn sample_user(email: &str, full_name: &str, password_hash: &str) -> User {
+    klynt_base::testkit::sample_user(email, full_name, password_hash, UserStatus::Active)
+}
 
 /// In-memory user repository for testing.
 pub struct TestUserRepo {
@@ -131,37 +140,6 @@ impl AuditLogger for TestAuditLogger {
     }
 }
 
-/// Test password hasher that stores passwords in plain text (tests only).
-pub struct TestPasswordHasher;
-
-#[async_trait]
-impl PasswordHasher for TestPasswordHasher {
-    async fn verify(&self, password: &str, hash: &str) -> Result<bool, PasswordHashError> {
-        Ok(password == hash)
-    }
-
-    async fn hash(&self, password: &str) -> Result<String, PasswordHashError> {
-        Ok(password.to_string())
-    }
-}
-
-/// Test clock that returns a fixed timestamp.
-pub struct TestClock {
-    now: DateTime<Utc>,
-}
-
-impl TestClock {
-    pub fn new(now: DateTime<Utc>) -> Self {
-        Self { now }
-    }
-}
-
-impl Clock for TestClock {
-    fn now(&self) -> DateTime<Utc> {
-        self.now
-    }
-}
-
 /// Build a user service and its backing test repository.
 pub fn build_test_service() -> (UserService, Arc<TestUserRepo>, Arc<TestAuditLogger>) {
     let repo = Arc::new(TestUserRepo::new());
@@ -171,31 +149,11 @@ pub fn build_test_service() -> (UserService, Arc<TestUserRepo>, Arc<TestAuditLog
         Dependencies {
             user_repository: repo.clone(),
             audit_logger: audit.clone(),
-            password_hasher: Arc::new(TestPasswordHasher),
-            clock: Arc::new(TestClock::new(Utc::now())),
+            password_hasher: Arc::new(TestPasswordHasher::with_prefix("")),
+            clock: Arc::new(TestClock::new()),
         },
     )
     .expect("service construction should succeed");
 
     (service, repo, audit)
-}
-
-/// Create a test execution context.
-pub fn test_ctx() -> ExecutionContext {
-    ExecutionContext::new(RequestContext::new())
-}
-
-/// Create a sample domain user with the given password hash.
-pub fn sample_user(email: &str, full_name: &str, password_hash: &str) -> User {
-    User {
-        id: UserId::new(),
-        email: Email::new(email.to_string()),
-        full_name: Some(full_name.to_string()),
-        password_hash: password_hash.to_string(),
-        status: UserStatus::Active,
-        role: UserRole::Student,
-        created_at: Utc::now(),
-        updated_at: None,
-        deleted_at: None,
-    }
 }

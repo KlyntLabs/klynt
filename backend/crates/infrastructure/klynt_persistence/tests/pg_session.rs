@@ -1,7 +1,7 @@
 //! Integration tests for the PostgreSQL session store.
 
 use chrono::{Duration, Utc};
-use klynt_base::ctx::Ctx;
+use klynt_base::ctx::{ExecutionContext, RequestContext};
 use klynt_common::util::{Email, UserId, UserStatus};
 use klynt_persistence::repositories::pg_session::PgSessionStore;
 use klynt_persistence::session::SessionStore;
@@ -49,7 +49,7 @@ async fn create_and_find_session() {
     let pool = setup_pool().await;
     let user_id = create_test_user(&pool).await;
     let store = PgSessionStore::new(pool);
-    let ctx = Ctx::guest(Uuid::new_v4());
+    let ctx = ExecutionContext::new(RequestContext::new());
     let expires_at = Utc::now() + Duration::hours(1);
 
     let token = store.create(&ctx, user_id, expires_at).await.unwrap();
@@ -65,7 +65,7 @@ async fn expired_session_is_not_found() {
     let pool = setup_pool().await;
     let user_id = create_test_user(&pool).await;
     let store = PgSessionStore::new(pool);
-    let ctx = Ctx::guest(Uuid::new_v4());
+    let ctx = ExecutionContext::new(RequestContext::new());
     let expires_at = Utc::now() - Duration::hours(1);
 
     let token = store.create(&ctx, user_id, expires_at).await.unwrap();
@@ -79,7 +79,7 @@ async fn revoked_session_is_not_found() {
     let pool = setup_pool().await;
     let user_id = create_test_user(&pool).await;
     let store = PgSessionStore::new(pool);
-    let ctx = Ctx::guest(Uuid::new_v4());
+    let ctx = ExecutionContext::new(RequestContext::new());
     let expires_at = Utc::now() + Duration::hours(1);
 
     let token = store.create(&ctx, user_id, expires_at).await.unwrap();

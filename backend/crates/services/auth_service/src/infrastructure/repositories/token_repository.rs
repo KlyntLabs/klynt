@@ -1,4 +1,4 @@
-//! Adapter from legacy token store to auth_service `TokenStore` port.
+//! Adapter from persistence token store to auth_service `TokenStore` port.
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
@@ -8,9 +8,8 @@ use klynt_common::util::UserId;
 
 use crate::domain::{TokenKind, TokenStore as AuthTokenStore};
 use crate::error::AuthError;
-use crate::infrastructure::conversion::{from_legacy_user_id, to_legacy_ctx, to_legacy_user_id};
 
-/// Adapter wrapping a legacy [`klynt_persistence::repositories::TokenStore`].
+/// Adapter wrapping a [`klynt_persistence::repositories::TokenStore`].
 pub struct TokenRepositoryAdapter<T> {
     inner: T,
 }
@@ -33,42 +32,34 @@ where
         token_hash: &str,
         expires_at: DateTime<Utc>,
     ) -> Result<(), AuthError> {
-        let legacy_ctx = to_legacy_ctx(&ExecutionContext::new(RequestContext::new()));
-        let legacy_kind = to_legacy_kind(kind);
-        let legacy_user_id = to_legacy_user_id(user_id);
+        let ctx = ExecutionContext::new(RequestContext::new());
+        let kind = to_persistence_kind(kind);
 
         self.inner
-            .save(
-                &legacy_ctx,
-                legacy_kind,
-                legacy_user_id,
-                token_hash,
-                expires_at,
-            )
+            .save(&ctx, kind, user_id, token_hash, expires_at)
             .await
-            .map_err(map_legacy_error)
+            .map_err(map_persistence_error)
     }
 
     async fn consume(&self, kind: TokenKind, token_hash: &str) -> Result<UserId, AuthError> {
-        let legacy_ctx = to_legacy_ctx(&ExecutionContext::new(RequestContext::new()));
-        let legacy_kind = to_legacy_kind(kind);
+        let ctx = ExecutionContext::new(RequestContext::new());
+        let kind = to_persistence_kind(kind);
 
         self.inner
-            .consume(&legacy_ctx, legacy_kind, token_hash)
+            .consume(&ctx, kind, token_hash)
             .await
-            .map(from_legacy_user_id)
-            .map_err(map_legacy_error)
+            .map_err(map_persistence_error)
     }
 }
 
-fn to_legacy_kind(kind: TokenKind) -> klynt_persistence::tokens::TokenKind {
+fn to_persistence_kind(kind: TokenKind) -> klynt_persistence::tokens::TokenKind {
     match kind {
         TokenKind::EmailVerification => klynt_persistence::tokens::TokenKind::EmailVerification,
         TokenKind::PasswordReset => klynt_persistence::tokens::TokenKind::PasswordReset,
     }
 }
 
-fn map_legacy_error(err: klynt_common::domain::DomainError) -> AuthError {
+fn map_persistence_error(err: klynt_common::domain::DomainError) -> AuthError {
     AuthError::Domain(klynt_common::domain::DomainError::Internal(err.to_string()))
 }
 
@@ -98,7 +89,7 @@ mod tests {
     impl klynt_persistence::repositories::TokenStore for FakeLegacyTokenStore {
         async fn save(
             &self,
-            _ctx: &klynt_base::ctx::Ctx,
+            _ctx: &ExecutionContext,
             kind: klynt_persistence::tokens::TokenKind,
             user_id: klynt_common::util::UserId,
             token_hash: &str,
@@ -113,7 +104,7 @@ mod tests {
 
         async fn consume(
             &self,
-            _ctx: &klynt_base::ctx::Ctx,
+            _ctx: &ExecutionContext,
             kind: klynt_persistence::tokens::TokenKind,
             token_hash: &str,
         ) -> Result<klynt_common::util::UserId, klynt_common::domain::DomainError> {
