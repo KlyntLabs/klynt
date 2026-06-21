@@ -16,8 +16,7 @@ use serde_json::Value;
 
 use crate::error::AppError;
 use crate::logging::{log_request, LogEntry, LogRequest, LogResponse};
-use crate::middleware::RequestId;
-use crate::request_context::RequestContext;
+use crate::request_context::{RequestContext, RequestId};
 
 /// Maximum response body size to buffer for envelope wrapping (1 MB).
 const MAX_ENVELOPE_BODY_SIZE: usize = 1024 * 1024;

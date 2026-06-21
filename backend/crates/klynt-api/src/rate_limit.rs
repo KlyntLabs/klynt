@@ -11,7 +11,7 @@ use uuid::Uuid;
 use klynt_domain::errors::DomainError;
 
 use crate::error::AppError;
-use crate::middleware::RequestId;
+use crate::request_context::RequestId;
 use crate::state::AppState;
 
 /// Axum middleware that rejects requests once the client IP exceeds the rate limit.

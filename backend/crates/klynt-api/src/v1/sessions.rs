@@ -7,7 +7,7 @@ use uuid::Uuid;
 use klynt_domain::models::{Email, UserDto};
 
 use crate::error::{AppError, WithRequestId};
-use crate::middleware::RequestId;
+use crate::request_context::RequestId;
 use crate::state::AppState;
 
 #[derive(Debug, Deserialize)]

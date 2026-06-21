@@ -22,11 +22,29 @@ use axum::{
 use tracing::{debug, instrument};
 use uuid::Uuid;
 
-use crate::middleware::RequestId;
 use crate::state::AppState;
 
 const REQUEST_ID_HEADER: &str = "x-request-id";
 const TRACE_ID_HEADER: &str = "x-trace-id";
+
+/// Request-scoped correlation identifier.
+#[derive(Debug, Clone, Copy)]
+pub struct RequestId(pub Uuid);
+
+impl<S: Send + Sync> axum::extract::FromRequestParts<S> for RequestId {
+    type Rejection = axum::http::StatusCode;
+
+    async fn from_request_parts(
+        parts: &mut axum::http::request::Parts,
+        _state: &S,
+    ) -> Result<Self, Self::Rejection> {
+        parts
+            .extensions
+            .get::<RequestId>()
+            .copied()
+            .ok_or(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+    }
+}
 
 /// Request-scoped context built from headers and connection info.
 #[derive(Debug, Clone)]

@@ -1,3 +1,5 @@
+//! Authentication middleware: resolve `Ctx` from session token, gate protected routes.
+
 use std::sync::Arc;
 
 use axum::{
@@ -7,6 +9,7 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Response},
 };
+
 use uuid::Uuid;
 
 use klynt_domain::ctx::Ctx;
@@ -14,47 +17,11 @@ use klynt_domain::errors::DomainError;
 use klynt_domain::session::{SessionStore, SessionToken};
 
 use crate::error::AppError;
+use crate::request_context::RequestId;
 use crate::state::AppState;
 
-pub const REQUEST_ID_HEADER: &str = "x-request-id";
 const AUTHORIZATION_HEADER: &str = "authorization";
 const BEARER_PREFIX: &str = "Bearer ";
-
-/// Request-scoped correlation identifier.
-#[derive(Debug, Clone, Copy)]
-pub struct RequestId(pub Uuid);
-
-impl<S: Send + Sync> FromRequestParts<S> for RequestId {
-    type Rejection = StatusCode;
-
-    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
-        parts
-            .extensions
-            .get::<RequestId>()
-            .copied()
-            .ok_or(StatusCode::INTERNAL_SERVER_ERROR)
-    }
-}
-
-/// Ensures every request has a `RequestId` extension and that the ID is echoed
-/// back in the response headers.
-pub async fn propagate_request_id(mut request: Request, next: Next) -> Response {
-    let request_id = request
-        .headers()
-        .get(REQUEST_ID_HEADER)
-        .and_then(|value| value.to_str().ok())
-        .and_then(|text| Uuid::parse_str(text).ok())
-        .unwrap_or_else(Uuid::new_v4);
-
-    request.extensions_mut().insert(RequestId(request_id));
-
-    let mut response = next.run(request).await;
-    if let Ok(value) = request_id.to_string().parse() {
-        response.headers_mut().insert(REQUEST_ID_HEADER, value);
-    }
-
-    response
-}
 
 /// HTTP-facing wrapper around the domain `Ctx`.
 ///

@@ -14,7 +14,8 @@ use klynt_domain::ctx::Ctx;
 use klynt_domain::models::UserDto;
 
 use crate::error::{AppError, AppErrorKind, WithRequestId};
-use crate::middleware::{CtxW, RequestId};
+use crate::middleware::auth::CtxW;
+use crate::request_context::RequestId;
 use crate::state::AppState;
 
 #[derive(Debug, Deserialize)]
