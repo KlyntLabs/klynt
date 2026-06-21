@@ -1,37 +1,13 @@
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
-    Json,
 };
-use serde::Serialize;
-use tracing::error;
 use uuid::Uuid;
 
 use klynt_domain::errors::{DomainError, ErrorKind};
 
-#[derive(Debug, Serialize)]
-pub struct ApiErrorBody {
-    pub code: String,
-    pub message: String,
-    pub request_id: String,
-}
-
-impl ApiErrorBody {
-    pub fn new(
-        code: impl Into<String>,
-        message: impl Into<String>,
-        request_id: impl Into<String>,
-    ) -> Self {
-        Self {
-            code: code.into(),
-            message: message.into(),
-            request_id: request_id.into(),
-        }
-    }
-}
-
 /// The classification of an API error, without request-scoped metadata.
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, Clone, thiserror::Error)]
 pub enum AppErrorKind {
     #[error("resource not found")]
     NotFound,
@@ -44,7 +20,7 @@ pub enum AppErrorKind {
     #[error("too many requests")]
     RateLimited,
     #[error("internal server error")]
-    Internal(Box<dyn std::error::Error + Send + Sync>),
+    Internal(std::sync::Arc<dyn std::error::Error + Send + Sync>),
 }
 
 /// Severity used to drive log levels for errors.
@@ -114,7 +90,7 @@ impl AppErrorKind {
 impl From<DomainError> for AppErrorKind {
     fn from(err: DomainError) -> Self {
         match err {
-            DomainError::Internal(e) => AppErrorKind::Internal(e),
+            DomainError::Internal(e) => AppErrorKind::Internal(std::sync::Arc::from(e)),
             other => {
                 let message = other.to_string();
                 match other.kind() {
@@ -136,9 +112,9 @@ impl From<DomainError> for AppErrorKind {
 /// responses include correlation data. The `From<DomainError>` impl defaults to
 /// a nil UUID for the rare cases where `?` is used without an explicit request
 /// ID; in practice every handler should attach the real ID.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AppError {
-    kind: AppErrorKind,
+    pub kind: AppErrorKind,
     request_id: Uuid,
 }
 
@@ -161,39 +137,19 @@ impl From<DomainError> for AppError {
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        let request_id = self.request_id.to_string();
-
-        let (status, body) = match &self.kind {
-            AppErrorKind::NotFound => (
-                StatusCode::NOT_FOUND,
-                ApiErrorBody::new("not_found", self.kind.to_string(), &request_id),
-            ),
-            AppErrorKind::BadRequest(msg) => (
-                StatusCode::BAD_REQUEST,
-                ApiErrorBody::new("bad_request", msg.clone(), &request_id),
-            ),
-            AppErrorKind::Conflict(msg) => (
-                StatusCode::CONFLICT,
-                ApiErrorBody::new("conflict", msg.clone(), &request_id),
-            ),
-            AppErrorKind::Unauthorized => (
-                StatusCode::UNAUTHORIZED,
-                ApiErrorBody::new("unauthorized", "authentication required", &request_id),
-            ),
-            AppErrorKind::RateLimited => (
-                StatusCode::TOO_MANY_REQUESTS,
-                ApiErrorBody::new("rate_limited", "too many requests", &request_id),
-            ),
-            AppErrorKind::Internal(err) => {
-                error!(error = ?err, request_id, "internal server error");
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    ApiErrorBody::new("internal_error", "something went wrong", &request_id),
-                )
-            }
+        let status = match &self.kind {
+            AppErrorKind::NotFound => StatusCode::NOT_FOUND,
+            AppErrorKind::BadRequest(_) => StatusCode::BAD_REQUEST,
+            AppErrorKind::Conflict(_) => StatusCode::CONFLICT,
+            AppErrorKind::Unauthorized => StatusCode::UNAUTHORIZED,
+            AppErrorKind::RateLimited => StatusCode::TOO_MANY_REQUESTS,
+            AppErrorKind::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
         };
 
-        (status, Json(body)).into_response()
+        let mut response = status.into_response();
+        // Insert the error into extensions so mw_map_response can read it.
+        response.extensions_mut().insert(self);
+        response
     }
 }
 
@@ -346,7 +302,7 @@ mod classification_tests {
 
     #[test]
     fn internal_classification() {
-        let kind = AppErrorKind::Internal(Box::new(std::io::Error::other("boom")));
+        let kind = AppErrorKind::Internal(std::sync::Arc::new(std::io::Error::other("boom")));
         assert_eq!(kind.severity(), ErrorSeverity::High);
         assert_eq!(kind.category(), ErrorCategory::Infrastructure);
         assert_eq!(kind.error_code(), "INTERNAL_ERROR");
