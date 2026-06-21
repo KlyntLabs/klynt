@@ -16,9 +16,6 @@ klynt_telemetry = { path = "../../../crates/infrastructure/klynt_telemetry" }
 tokio = { workspace = true }
 async-trait = { workspace = true }
 
-# === Serialization ===
-serde = { workspace = true }
-
 # === Time ===
 chrono = { workspace = true }
 

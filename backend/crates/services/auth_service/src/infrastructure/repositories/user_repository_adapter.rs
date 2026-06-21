@@ -1,18 +1,17 @@
-//! Adapter from legacy user repository to auth_service `UserRepository` port.
+//! Adapter from persistence user repository to auth_service `UserRepository` port.
 
 use async_trait::async_trait;
+use chrono::Utc;
 
 use klynt_base::ctx::ExecutionContext;
-use klynt_common::domain::User;
+use klynt_common::domain::{Email, User, UserRole, UserStatus};
 use klynt_common::util::UserId;
 
 use crate::application::ports::UserRepository;
 use crate::error::AuthError;
-use crate::infrastructure::conversion::{
-    from_legacy_user, from_legacy_user_id, to_legacy_ctx, to_legacy_user_id,
-};
+use crate::infrastructure::conversion::{to_legacy_ctx, to_legacy_user_id};
 
-/// Adapter wrapping a legacy [`klynt_persistence::repositories::UserRepository`].
+/// Adapter wrapping a [`klynt_persistence::repositories::UserRepository`].
 pub struct UserRepositoryAdapter<T> {
     inner: T,
 }
@@ -43,8 +42,7 @@ where
         self.inner
             .find_by_email(&legacy_ctx, &legacy_email)
             .await
-            .map(|maybe_user| maybe_user.map(from_legacy_user))
-            .map_err(map_legacy_error)
+            .map_err(map_persistence_error)
     }
 
     async fn create_pending_user(
@@ -61,21 +59,17 @@ where
             ))
         })?;
 
-        let name = full_name.unwrap_or_default();
-        let user_id = to_legacy_user_id(UserId::new());
-        let user = klynt_persistence::repositories::User {
+        let user_id = UserId::new();
+        let user = User {
             id: user_id,
-            name,
-            email: legacy_email.clone(),
-            role: klynt_common::util::Role::Student,
-            institution_id: None,
-            status: klynt_common::util::UserStatus::PendingVerification,
-            email_verified_at: None,
-            global_role: None,
+            email: Email::new(legacy_email.as_str().to_string()),
+            full_name,
             password_hash: password_hash.to_string(),
-            terms_accepted_at: chrono::Utc::now(),
-            terms_version: "1.0".to_string(),
-            created_at: chrono::Utc::now(),
+            status: UserStatus::Pending,
+            role: UserRole::Student,
+            created_at: Utc::now(),
+            updated_at: None,
+            deleted_at: None,
         };
 
         match self
@@ -83,15 +77,13 @@ where
             .create_if_not_exists(&legacy_ctx, &legacy_email, &user)
             .await
         {
-            Ok(klynt_persistence::repositories::CreateResult::Created) => {
-                Ok(from_legacy_user_id(user_id))
-            }
+            Ok(klynt_persistence::repositories::CreateResult::Created) => Ok(user_id),
             Ok(klynt_persistence::repositories::CreateResult::AlreadyExists(_)) => Err(
                 AuthError::Domain(klynt_common::domain::DomainError::Conflict(format!(
                     "email already registered: {email}"
                 ))),
             ),
-            Err(e) => Err(map_legacy_error(e)),
+            Err(e) => Err(map_persistence_error(e)),
         }
     }
 
@@ -106,7 +98,7 @@ where
         self.inner
             .set_email_verified(&legacy_ctx, legacy_user_id)
             .await
-            .map_err(map_legacy_error)
+            .map_err(map_persistence_error)
     }
 
     async fn update_password(
@@ -122,11 +114,11 @@ where
         self.inner
             .update_password(&legacy_ctx, legacy_user_id, &hashed)
             .await
-            .map_err(map_legacy_error)
+            .map_err(map_persistence_error)
     }
 }
 
-fn map_legacy_error(err: klynt_common::domain::DomainError) -> AuthError {
+fn map_persistence_error(err: klynt_common::domain::DomainError) -> AuthError {
     AuthError::Domain(klynt_common::domain::DomainError::Internal(err.to_string()))
 }
 
@@ -138,11 +130,11 @@ mod tests {
     use super::*;
     use klynt_base::ctx::RequestContext;
 
-    struct FakeLegacyUserRepository {
-        users: Mutex<HashMap<String, klynt_persistence::repositories::User>>,
+    struct FakePersistenceRepository {
+        users: Mutex<HashMap<String, User>>,
     }
 
-    impl Default for FakeLegacyUserRepository {
+    impl Default for FakePersistenceRepository {
         fn default() -> Self {
             Self {
                 users: Mutex::new(HashMap::new()),
@@ -151,18 +143,18 @@ mod tests {
     }
 
     #[async_trait]
-    impl klynt_persistence::repositories::UserRepository for FakeLegacyUserRepository {
+    impl klynt_persistence::repositories::UserRepository for FakePersistenceRepository {
         async fn create_if_not_exists(
             &self,
             _ctx: &klynt_base::ctx::Ctx,
             email: &klynt_common::util::Email,
-            user: &klynt_persistence::repositories::User,
+            user: &User,
         ) -> Result<klynt_persistence::repositories::CreateResult, klynt_common::domain::DomainError>
         {
             let mut users = self.users.lock().unwrap();
-            if users.contains_key(email.as_str()) {
+            if let Some(existing) = users.get(email.as_str()) {
                 return Ok(
-                    klynt_persistence::repositories::CreateResult::AlreadyExists(user.clone()),
+                    klynt_persistence::repositories::CreateResult::AlreadyExists(existing.clone()),
                 );
             }
             users.insert(email.as_str().to_string(), user.clone());
@@ -173,8 +165,7 @@ mod tests {
             &self,
             _ctx: &klynt_base::ctx::Ctx,
             email: &klynt_common::util::Email,
-        ) -> Result<Option<klynt_persistence::repositories::User>, klynt_common::domain::DomainError>
-        {
+        ) -> Result<Option<User>, klynt_common::domain::DomainError> {
             Ok(self.users.lock().unwrap().get(email.as_str()).cloned())
         }
 
@@ -182,8 +173,7 @@ mod tests {
             &self,
             _ctx: &klynt_base::ctx::Ctx,
             _id: klynt_common::util::UserId,
-        ) -> Result<Option<klynt_persistence::repositories::User>, klynt_common::domain::DomainError>
-        {
+        ) -> Result<Option<User>, klynt_common::domain::DomainError> {
             Ok(None)
         }
 
@@ -195,7 +185,7 @@ mod tests {
             let mut users = self.users.lock().unwrap();
             for user in users.values_mut() {
                 if user.id == user_id {
-                    user.status = klynt_common::util::UserStatus::Active;
+                    user.status = UserStatus::Active;
                     return Ok(());
                 }
             }
@@ -221,7 +211,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_and_find_user() {
-        let adapter = UserRepositoryAdapter::new(FakeLegacyUserRepository::default());
+        let adapter = UserRepositoryAdapter::new(FakePersistenceRepository::default());
         let ctx = ExecutionContext::new(RequestContext::new());
 
         let user_id = adapter
@@ -244,7 +234,7 @@ mod tests {
 
     #[tokio::test]
     async fn duplicate_email_returns_conflict() {
-        let adapter = UserRepositoryAdapter::new(FakeLegacyUserRepository::default());
+        let adapter = UserRepositoryAdapter::new(FakePersistenceRepository::default());
         let ctx = ExecutionContext::new(RequestContext::new());
 
         adapter
@@ -265,7 +255,7 @@ mod tests {
 
     #[tokio::test]
     async fn activate_user_changes_status() {
-        let adapter = UserRepositoryAdapter::new(FakeLegacyUserRepository::default());
+        let adapter = UserRepositoryAdapter::new(FakePersistenceRepository::default());
         let ctx = ExecutionContext::new(RequestContext::new());
 
         let user_id = adapter
@@ -284,7 +274,7 @@ mod tests {
 
     #[tokio::test]
     async fn update_password_changes_hash() {
-        let adapter = UserRepositoryAdapter::new(FakeLegacyUserRepository::default());
+        let adapter = UserRepositoryAdapter::new(FakePersistenceRepository::default());
         let ctx = ExecutionContext::new(RequestContext::new());
 
         let user_id = adapter

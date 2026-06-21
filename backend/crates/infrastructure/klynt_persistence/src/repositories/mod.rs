@@ -6,9 +6,8 @@ use chrono::{DateTime, Utc};
 use crate::ports::HashedPassword;
 use crate::tokens::TokenKind;
 use klynt_base::ctx::Ctx;
-use klynt_common::util::{Email, GlobalRole, Role, UserId, UserStatus};
-
-use klynt_common::domain::DomainError;
+use klynt_common::domain::{DomainError, User};
+use klynt_common::util::{Email, UserId};
 
 pub use klynt_telemetry::audit::types::AuditEventRepository;
 
@@ -22,51 +21,6 @@ pub mod sqlx_token_repo;
 pub enum CreateResult {
     Created,
     AlreadyExists(User),
-}
-
-/// Legacy user model used by repository implementations.
-#[derive(Debug, Clone)]
-pub struct User {
-    pub id: UserId,
-    pub name: String,
-    pub email: Email,
-    pub role: Role,
-    pub institution_id: Option<uuid::Uuid>,
-    pub status: UserStatus,
-    pub email_verified_at: Option<DateTime<Utc>>,
-    pub global_role: Option<GlobalRole>,
-    pub password_hash: String,
-    pub terms_accepted_at: DateTime<Utc>,
-    pub terms_version: String,
-    pub created_at: DateTime<Utc>,
-}
-
-/// Legacy user DTO used by repository implementations.
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct UserDto {
-    pub id: UserId,
-    pub name: String,
-    pub email: String,
-    pub role: Role,
-    pub status: UserStatus,
-    pub email_verified_at: Option<DateTime<Utc>>,
-    pub global_role: Option<GlobalRole>,
-    pub created_at: DateTime<Utc>,
-}
-
-impl From<&User> for UserDto {
-    fn from(user: &User) -> Self {
-        Self {
-            id: user.id,
-            name: user.name.clone(),
-            email: user.email.as_str().to_string(),
-            role: user.role,
-            status: user.status,
-            email_verified_at: user.email_verified_at,
-            global_role: user.global_role,
-            created_at: user.created_at,
-        }
-    }
 }
 
 /// User repository trait.
@@ -115,40 +69,4 @@ pub trait TokenStore: Send + Sync {
         kind: TokenKind,
         token_hash: &str,
     ) -> Result<UserId, DomainError>;
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn dummy_user() -> User {
-        User {
-            id: UserId::new(),
-            name: "Ada Lovelace".to_string(),
-            email: Email::parse("ada@klynt.dev").unwrap(),
-            role: Role::Teacher,
-            institution_id: None,
-            status: UserStatus::Active,
-            email_verified_at: None,
-            global_role: None,
-            password_hash: "hash".to_string(),
-            terms_accepted_at: Utc::now(),
-            terms_version: "1".to_string(),
-            created_at: Utc::now(),
-        }
-    }
-
-    #[test]
-    fn user_dto_from_user_copies_fields() {
-        let user = dummy_user();
-        let dto = UserDto::from(&user);
-        assert_eq!(dto.id, user.id);
-        assert_eq!(dto.name, user.name);
-        assert_eq!(dto.email, user.email.as_str());
-        assert_eq!(dto.role, user.role);
-        assert_eq!(dto.status, user.status);
-        assert_eq!(dto.email_verified_at, user.email_verified_at);
-        assert_eq!(dto.global_role, user.global_role);
-        assert_eq!(dto.created_at, user.created_at);
-    }
 }

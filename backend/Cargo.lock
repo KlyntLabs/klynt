@@ -2746,7 +2746,6 @@ dependencies = [
  "klynt_common",
  "klynt_persistence",
  "klynt_telemetry",
- "serde",
  "sqlx",
  "thiserror",
  "tokio",

@@ -4,11 +4,10 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::ports::HashedPassword;
-use crate::repositories::User;
 use crate::repositories::{CreateResult, UserRepository};
 use klynt_base::ctx::Ctx;
-use klynt_common::domain::DomainError;
-use klynt_common::util::{Email, GlobalRole, Role, UserId, UserStatus};
+use klynt_common::domain::{DomainError, User, UserRole, UserStatus};
+use klynt_common::util::{Email, Role as DbRole, UserId, UserStatus as DbUserStatus};
 
 /// PostgreSQL implementation of the user repository.
 pub struct PgUserRepository {
@@ -32,54 +31,68 @@ struct UserRow {
     name: String,
     password_hash: String,
     status: String,
-    email_verified_at: Option<DateTime<Utc>>,
-    global_role: Option<String>,
     created_at: DateTime<Utc>,
-    terms_accepted_at: DateTime<Utc>,
-    terms_version: String,
     role: String,
-    institution_id: Option<Uuid>,
     #[sqlx(default)]
     deleted_at: Option<DateTime<Utc>>,
 }
 
 impl UserRow {
-    pub fn deleted_at(&self) -> Option<DateTime<Utc>> {
-        self.deleted_at
-    }
-}
-
-impl UserRow {
     fn into_user(self) -> Result<User, DomainError> {
-        let role = Role::parse(&self.role)
+        let role = DbRole::parse(&self.role)
             .map_err(|e| DomainError::internal_msg(format!("invalid role in database: {e:?}")))?;
-        let status = UserStatus::parse(&self.status)
+        let status = DbUserStatus::parse(&self.status)
             .map_err(|e| DomainError::internal_msg(format!("invalid status in database: {e:?}")))?;
-        let global_role = self
-            .global_role
-            .map(|r| {
-                GlobalRole::parse(&r).map_err(|e| {
-                    DomainError::internal_msg(format!("invalid global_role in database: {e:?}"))
-                })
-            })
-            .transpose()?;
 
         Ok(User {
             id: UserId(self.id),
-            email: Email::parse(&self.email).map_err(|e| {
-                DomainError::internal_msg(format!("invalid email in database: {e}"))
-            })?,
-            name: self.name,
-            role,
-            institution_id: self.institution_id,
-            status,
-            email_verified_at: self.email_verified_at,
-            global_role,
+            email: klynt_common::domain::Email::new(self.email),
+            full_name: if self.name.is_empty() {
+                None
+            } else {
+                Some(self.name)
+            },
             password_hash: self.password_hash,
-            terms_accepted_at: self.terms_accepted_at,
-            terms_version: self.terms_version,
+            status: status_from_db(status),
+            role: role_from_db(role),
             created_at: self.created_at,
+            updated_at: None,
+            deleted_at: self.deleted_at,
         })
+    }
+}
+
+fn role_to_db(role: UserRole) -> DbRole {
+    match role {
+        UserRole::Student => DbRole::Student,
+        UserRole::Instructor => DbRole::Teacher,
+        UserRole::Admin => DbRole::Admin,
+    }
+}
+
+fn role_from_db(role: DbRole) -> UserRole {
+    match role {
+        DbRole::Student => UserRole::Student,
+        DbRole::Teacher => UserRole::Instructor,
+        DbRole::Admin => UserRole::Admin,
+        // Parent is not represented in the shared domain; map to Student as least privilege.
+        DbRole::Parent => UserRole::Student,
+    }
+}
+
+fn status_to_db(status: UserStatus) -> DbUserStatus {
+    match status {
+        UserStatus::Active => DbUserStatus::Active,
+        UserStatus::Inactive | UserStatus::Suspended => DbUserStatus::Suspended,
+        UserStatus::Pending => DbUserStatus::PendingVerification,
+    }
+}
+
+fn status_from_db(status: DbUserStatus) -> UserStatus {
+    match status {
+        DbUserStatus::Active => UserStatus::Active,
+        DbUserStatus::PendingVerification => UserStatus::Pending,
+        DbUserStatus::Suspended => UserStatus::Suspended,
     }
 }
 
@@ -106,15 +119,15 @@ impl UserRepository for PgUserRepository {
         )
         .bind(user.id.0)
         .bind(email.as_str())
-        .bind(&user.name)
+        .bind(user.full_name.as_deref().unwrap_or(""))
         .bind(&user.password_hash)
-        .bind(user.status.as_str())
-        .bind(user.email_verified_at)
-        .bind(user.global_role.map(|r| r.as_str().to_string()))
-        .bind(user.terms_accepted_at)
-        .bind(&user.terms_version)
-        .bind(user.role.as_str())
-        .bind(user.institution_id)
+        .bind(status_to_db(user.status).as_str())
+        .bind(None::<DateTime<Utc>>)
+        .bind(None::<String>)
+        .bind(user.created_at)
+        .bind("1.0")
+        .bind(role_to_db(user.role).as_str())
+        .bind(None::<Uuid>)
         .fetch_optional(&self.pool)
         .await
         .map_err(DomainError::internal)?;
@@ -217,13 +230,13 @@ impl UserRepository for PgUserRepository {
 
 /// Extended user repository operations used by the user_service.
 impl PgUserRepository {
-    /// Find a user by ID, returning the user together with the optional
-    /// soft-delete timestamp.
+    /// Find a user by ID, including the optional soft-delete timestamp in the
+    /// returned domain model.
     pub async fn find_by_id_full(
         &self,
         _ctx: &Ctx,
         id: UserId,
-    ) -> Result<Option<(User, Option<DateTime<Utc>>)>, DomainError> {
+    ) -> Result<Option<User>, DomainError> {
         let row: Option<UserRow> = sqlx::query_as(
             r#"
             SELECT
@@ -241,20 +254,15 @@ impl PgUserRepository {
         .await
         .map_err(DomainError::internal)?;
 
-        row.map(|r| {
-            let deleted_at = r.deleted_at();
-            r.into_user().map(|u| (u, deleted_at))
-        })
-        .transpose()
+        row.map(|r| r.into_user()).transpose()
     }
 
-    /// List non-deleted users with pagination, returning each user together
-    /// with its soft-delete timestamp (`None` for active users).
+    /// List non-deleted users with pagination.
     pub async fn list_full(
         &self,
         _ctx: &Ctx,
         pagination: klynt_common::domain::PaginationRequest,
-    ) -> Result<(Vec<(User, Option<DateTime<Utc>>)>, u64), DomainError> {
+    ) -> Result<(Vec<User>, u64), DomainError> {
         let rows: Vec<UserRow> = sqlx::query_as(
             r#"
             SELECT
@@ -288,16 +296,13 @@ impl PgUserRepository {
 
         let users = rows
             .into_iter()
-            .map(|r| {
-                let deleted_at = r.deleted_at();
-                r.into_user().map(|u| (u, deleted_at))
-            })
+            .map(|r| r.into_user())
             .collect::<Result<Vec<_>, _>>()?;
 
         Ok((users, total as u64))
     }
 
-    /// Update a user's mutable fields.
+    /// Update a user's mutable fields from the canonical domain model.
     pub async fn update_full(&self, _ctx: &Ctx, user: &User) -> Result<(), DomainError> {
         let result = sqlx::query(
             r#"
@@ -306,17 +311,13 @@ impl PgUserRepository {
                 name = $1,
                 status = $2,
                 role = $3,
-                institution_id = $4,
-                global_role = $5,
-                password_hash = $6
-            WHERE id = $7
+                password_hash = $4
+            WHERE id = $5
             "#,
         )
-        .bind(&user.name)
-        .bind(user.status.as_str())
-        .bind(user.role.as_str())
-        .bind(user.institution_id)
-        .bind(user.global_role.map(|r| r.as_str().to_string()))
+        .bind(user.full_name.as_deref().unwrap_or(""))
+        .bind(status_to_db(user.status).as_str())
+        .bind(role_to_db(user.role).as_str())
         .bind(&user.password_hash)
         .bind(user.id.0)
         .execute(&self.pool)
