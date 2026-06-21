@@ -45,16 +45,18 @@ pub fn from_legacy_status(
     }
 }
 
-/// Convert legacy `User` to auth_service `User` model.
-pub fn from_legacy_user(user: klynt_persistence::repositories::User) -> crate::models::User {
-    crate::models::User {
+/// Convert legacy `User` to shared domain `User`.
+pub fn from_legacy_user(user: klynt_persistence::repositories::User) -> klynt_common::domain::User {
+    klynt_common::domain::User {
         id: from_legacy_user_id(user.id),
-        email: user.email.as_str().to_string(),
+        email: klynt_common::domain::Email::new(user.email.as_str().to_string()),
         password_hash: user.password_hash,
         full_name: Some(user.name),
         status: from_legacy_status(user.status),
         role: from_legacy_role(user.role),
         created_at: user.created_at,
+        updated_at: Some(user.created_at), // Legacy schema always maintains updated_at.
+        deleted_at: None,
     }
 }
 
@@ -149,7 +151,7 @@ mod tests {
 
         let converted = from_legacy_user(user.clone());
         assert_eq!(converted.id.inner(), user.id.0);
-        assert_eq!(converted.email, "ada@example.com");
+        assert_eq!(converted.email.inner(), "ada@example.com");
         assert_eq!(converted.full_name, Some("Ada".to_string()));
         assert_eq!(converted.status, UserStatus::Active);
         assert_eq!(converted.role, UserRole::Student);

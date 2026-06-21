@@ -17,8 +17,8 @@ pub struct UserProfile {
     pub created_at: DateTime<Utc>,
 }
 
-impl From<crate::domain::User> for UserProfile {
-    fn from(user: crate::domain::User) -> Self {
+impl From<klynt_common::domain::User> for UserProfile {
+    fn from(user: klynt_common::domain::User) -> Self {
         Self {
             id: user.id,
             email: user.email.inner().to_string(),

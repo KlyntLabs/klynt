@@ -4,6 +4,7 @@ use klynt_base::ctx::ExecutionContext;
 use klynt_common::util::UserId;
 use validator::Validate;
 
+use crate::domain::UserExt;
 use crate::error::UserError;
 use crate::models::{ProfileUpdate, UserProfile};
 use crate::UserService;

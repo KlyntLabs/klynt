@@ -3,6 +3,7 @@
 use async_trait::async_trait;
 
 use klynt_base::ctx::ExecutionContext;
+use klynt_common::domain::User;
 use klynt_common::util::UserId;
 
 use crate::application::ports::UserRepository;
@@ -31,7 +32,7 @@ where
         &self,
         ctx: &ExecutionContext,
         email: &str,
-    ) -> Result<Option<crate::models::User>, AuthError> {
+    ) -> Result<Option<User>, AuthError> {
         let legacy_ctx = to_legacy_ctx(ctx);
         let legacy_email = klynt_common::util::Email::parse(email).map_err(|e| {
             AuthError::Domain(klynt_common::domain::DomainError::InvalidInput(

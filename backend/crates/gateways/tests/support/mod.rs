@@ -8,17 +8,15 @@ use auth_service::{
     application::ports::{AuditLogger, EmailSender, UserRepository},
     domain::{Session, SessionStore, SessionToken, TokenKind, TokenStore},
     error::AuthError,
-    models::User,
     AuthConfig, AuthService, Dependencies as AuthDependencies,
 };
 use chrono::{DateTime, Utc};
 use klynt_base::ctx::ExecutionContext;
 use klynt_base::ports::{Clock, PasswordHashError, PasswordHasher};
-use klynt_common::domain::{UserRole, UserStatus};
+use klynt_common::domain::{Email, User, UserRole, UserStatus};
 use klynt_common::util::UserId;
 use user_service::{
     application::ports::{AuditLogger as UserAuditLogger, UserRepository as UserRepoPort},
-    domain::User as UserServiceUser,
     error::UserError,
     Dependencies as UserDependencies, UserConfig, UserService,
 };
@@ -89,12 +87,14 @@ impl UserRepository for FakeUserRepository {
         let user_id = UserId::new();
         let user = User {
             id: user_id,
-            email: email.to_string(),
+            email: Email::new(email.to_string()),
             password_hash: password_hash.to_string(),
             full_name,
             status: UserStatus::Pending,
             role: UserRole::Student,
             created_at: Utc::now(),
+            updated_at: None,
+            deleted_at: None,
         };
         self.users.lock().unwrap().insert(email.to_string(), user);
         Ok(user_id)
@@ -349,12 +349,12 @@ impl klynt_persistence::session::SessionStore for LegacyFakeSessionStore {
 /// Fake user repository for user_service tests.
 #[derive(Default)]
 pub struct FakeUserServiceRepository {
-    users: Mutex<HashMap<klynt_common::util::UserId, UserServiceUser>>,
+    users: Mutex<HashMap<klynt_common::util::UserId, User>>,
 }
 
 impl FakeUserServiceRepository {
     /// Insert a user into the fake repository.
-    pub fn insert(&self, user: UserServiceUser) {
+    pub fn insert(&self, user: User) {
         self.users.lock().unwrap().insert(user.id, user);
     }
 }
@@ -365,15 +365,11 @@ impl UserRepoPort for FakeUserServiceRepository {
         &self,
         _ctx: &ExecutionContext,
         id: klynt_common::util::UserId,
-    ) -> Result<Option<UserServiceUser>, UserError> {
+    ) -> Result<Option<User>, UserError> {
         Ok(self.users.lock().unwrap().get(&id).cloned())
     }
 
-    async fn update(
-        &self,
-        _ctx: &ExecutionContext,
-        user: &UserServiceUser,
-    ) -> Result<(), UserError> {
+    async fn update(&self, _ctx: &ExecutionContext, user: &User) -> Result<(), UserError> {
         self.users.lock().unwrap().insert(user.id, user.clone());
         Ok(())
     }
@@ -394,8 +390,8 @@ impl UserRepoPort for FakeUserServiceRepository {
         &self,
         _ctx: &ExecutionContext,
         pagination: klynt_common::domain::PaginationRequest,
-    ) -> Result<(Vec<UserServiceUser>, u64), UserError> {
-        let users: Vec<UserServiceUser> = self
+    ) -> Result<(Vec<User>, u64), UserError> {
+        let users: Vec<User> = self
             .users
             .lock()
             .unwrap()

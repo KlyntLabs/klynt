@@ -3,10 +3,10 @@
 use async_trait::async_trait;
 
 use klynt_base::ctx::ExecutionContext;
+use klynt_common::domain::User;
 use klynt_common::util::UserId;
 
 use crate::error::AuthError;
-use crate::models::User;
 
 /// Port for user lookups and mutations needed by auth flows.
 #[async_trait]

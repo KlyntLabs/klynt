@@ -1,12 +1,11 @@
-//! User domain logic.
+//! User aggregate root.
 
 use chrono::{DateTime, Utc};
-use klynt_common::domain::{Email, UserRole, UserStatus};
-use klynt_common::util::UserId;
 
-use crate::error::UserError;
+use crate::domain::{Email, UserRole, UserStatus};
+use crate::util::UserId;
 
-/// User aggregate root.
+/// User aggregate root — canonical domain model shared across services.
 #[derive(Debug, Clone)]
 pub struct User {
     pub id: UserId,
@@ -21,38 +20,19 @@ pub struct User {
 }
 
 impl User {
-    /// Check if user is active.
+    /// Check if the user is active (not suspended, pending, or soft-deleted).
     pub fn is_active(&self) -> bool {
         self.status == UserStatus::Active && self.deleted_at.is_none()
     }
 
-    /// Check if user is deleted.
+    /// Check if the user has been soft-deleted.
     pub fn is_deleted(&self) -> bool {
         self.deleted_at.is_some()
     }
 
-    /// Check if user can be deleted.
+    /// Check if the user can be deleted.
     pub fn can_delete(&self) -> bool {
         !self.is_deleted() && self.role != UserRole::Admin
-    }
-
-    /// Soft delete the user.
-    pub fn delete(&mut self, now: DateTime<Utc>) -> Result<(), UserError> {
-        if !self.can_delete() {
-            return Err(UserError::CannotDeleteAdmin);
-        }
-        self.deleted_at = Some(now);
-        Ok(())
-    }
-
-    /// Update profile.
-    pub fn update_profile(&mut self, full_name: Option<String>) -> Result<(), UserError> {
-        if self.is_deleted() {
-            return Err(UserError::UserDeleted);
-        }
-        self.full_name = full_name;
-        self.updated_at = Some(Utc::now());
-        Ok(())
     }
 }
 
@@ -97,38 +77,9 @@ mod tests {
     }
 
     #[test]
-    fn cannot_delete_admin() {
+    fn admin_cannot_be_deleted() {
         let mut user = sample_user();
         user.role = UserRole::Admin;
-        assert!(matches!(
-            user.delete(Utc::now()),
-            Err(UserError::CannotDeleteAdmin)
-        ));
-    }
-
-    #[test]
-    fn soft_delete_sets_deleted_at() {
-        let mut user = sample_user();
-        let now = Utc::now();
-        user.delete(now).unwrap();
-        assert_eq!(user.deleted_at, Some(now));
-    }
-
-    #[test]
-    fn update_profile_changes_full_name() {
-        let mut user = sample_user();
-        user.update_profile(Some("New Name".to_string())).unwrap();
-        assert_eq!(user.full_name, Some("New Name".to_string()));
-        assert!(user.updated_at.is_some());
-    }
-
-    #[test]
-    fn cannot_update_deleted_user_profile() {
-        let mut user = sample_user();
-        user.deleted_at = Some(Utc::now());
-        assert!(matches!(
-            user.update_profile(Some("Name".to_string())),
-            Err(UserError::UserDeleted)
-        ));
+        assert!(!user.can_delete());
     }
 }

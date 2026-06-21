@@ -3,12 +3,11 @@
 use async_trait::async_trait;
 
 use klynt_base::ctx::ExecutionContext;
-use klynt_common::domain::PaginationRequest;
+use klynt_common::domain::{PaginationRequest, User};
 use klynt_common::util::UserId;
 use klynt_persistence::repositories::pg_user::PgUserRepository;
 
 use crate::application::ports::UserRepository;
-use crate::domain::User;
 use crate::error::UserError;
 use crate::infrastructure::conversion::{
     from_legacy_user, map_legacy_error, to_legacy_ctx, to_legacy_user, to_legacy_user_id,

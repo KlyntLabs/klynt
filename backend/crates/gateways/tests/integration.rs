@@ -290,7 +290,7 @@ async fn authenticated_app() -> (axum::Router, UserId, String) {
         .await
         .unwrap();
 
-    user_repo.insert(user_service::domain::User {
+    user_repo.insert(klynt_common::domain::User {
         id: user_id,
         email: Email::new("ada@example.com".to_string()),
         full_name: Some("Ada Lovelace".to_string()),

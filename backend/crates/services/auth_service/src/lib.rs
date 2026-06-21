@@ -22,9 +22,7 @@ use std::sync::Arc;
 use chrono::Duration;
 use klynt_base::ctx::ExecutionContext;
 use klynt_base::ports::{Clock, PasswordHasher};
-use klynt_common::contracts::auth::{
-    LoginRequest, LoginResponse, RegistrationRequest, UserSessionInfo,
-};
+use klynt_common::contracts::auth::{LoginRequest, LoginResponse, RegistrationRequest};
 use klynt_common::util::UserId;
 
 // Public exports
@@ -223,15 +221,4 @@ pub(crate) struct InternalState {
     pub audit_logger: Arc<dyn AuditLogger>,
     pub password_hasher: Arc<dyn PasswordHasher>,
     pub clock: Arc<dyn Clock>,
-}
-
-impl From<crate::models::User> for UserSessionInfo {
-    fn from(user: crate::models::User) -> Self {
-        Self {
-            id: user.id,
-            email: user.email,
-            full_name: user.full_name,
-            role: user.role,
-        }
-    }
 }

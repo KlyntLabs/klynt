@@ -3,6 +3,7 @@
 use klynt_base::ctx::ExecutionContext;
 use klynt_common::util::UserId;
 
+use crate::domain::UserExt;
 use crate::error::UserError;
 use crate::UserService;
 

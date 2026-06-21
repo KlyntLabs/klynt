@@ -10,11 +10,10 @@ use auth_service::application::ports::{AuditLogger, EmailSender, UserRepository}
 use auth_service::domain::{Session, SessionToken, TokenKind};
 use auth_service::domain::{SessionStore, TokenStore};
 use auth_service::error::AuthError;
-use auth_service::models::User;
 use auth_service::{AuthConfig, AuthService, Dependencies};
 use klynt_base::ctx::{ExecutionContext, RequestContext};
 use klynt_base::ports::{Clock, PasswordHashError, PasswordHasher};
-use klynt_common::domain::{UserRole, UserStatus};
+use klynt_common::domain::{Email, User, UserRole, UserStatus};
 use klynt_common::util::UserId;
 
 /// Fixed clock for deterministic tests.
@@ -89,12 +88,14 @@ impl UserRepository for FakeUserRepository {
         let user_id = UserId::new();
         let user = User {
             id: user_id,
-            email: email.to_string(),
+            email: Email::new(email.to_string()),
             password_hash: password_hash.to_string(),
             full_name,
             status: UserStatus::Pending,
             role: UserRole::Student,
             created_at: Utc::now(),
+            updated_at: None,
+            deleted_at: None,
         };
         self.users.lock().unwrap().insert(email.to_string(), user);
         Ok(user_id)
@@ -305,11 +306,13 @@ pub fn test_ctx() -> ExecutionContext {
 pub fn test_user(email: &str, password: &str, status: UserStatus) -> User {
     User {
         id: UserId::new(),
-        email: email.to_string(),
+        email: Email::new(email.to_string()),
         password_hash: format!("hash-{password}"),
         full_name: Some("Test User".to_string()),
         status,
         role: UserRole::Student,
         created_at: Utc::now(),
+        updated_at: None,
+        deleted_at: None,
     }
 }

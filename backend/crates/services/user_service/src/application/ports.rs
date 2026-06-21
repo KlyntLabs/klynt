@@ -3,10 +3,9 @@
 use async_trait::async_trait;
 
 use klynt_base::ctx::ExecutionContext;
-use klynt_common::domain::PaginationRequest;
+use klynt_common::domain::{PaginationRequest, User};
 use klynt_common::util::UserId;
 
-use crate::domain::User;
 use crate::error::UserError;
 
 #[async_trait]

@@ -34,6 +34,17 @@ pub struct UserSessionInfo {
     pub role: UserRole,
 }
 
+impl From<crate::domain::User> for UserSessionInfo {
+    fn from(user: crate::domain::User) -> Self {
+        Self {
+            id: user.id,
+            email: user.email.inner().to_string(),
+            full_name: user.full_name,
+            role: user.role,
+        }
+    }
+}
+
 /// Registration request
 #[derive(Debug, Clone, Deserialize, Validate)]
 pub struct RegistrationRequest {

@@ -70,9 +70,9 @@ pub fn to_legacy_status(
     }
 }
 
-/// Convert legacy `User` to user_service domain `User`.
-pub fn from_legacy_user(user: klynt_persistence::repositories::User) -> crate::domain::User {
-    crate::domain::User {
+/// Convert legacy `User` to shared domain `User`.
+pub fn from_legacy_user(user: klynt_persistence::repositories::User) -> klynt_common::domain::User {
+    klynt_common::domain::User {
         id: from_legacy_user_id(user.id),
         email: klynt_common::domain::Email::new(user.email.as_str().to_string()),
         full_name: if user.name.is_empty() {
@@ -89,9 +89,9 @@ pub fn from_legacy_user(user: klynt_persistence::repositories::User) -> crate::d
     }
 }
 
-/// Convert user_service domain `User` to legacy `User`.
+/// Convert shared domain `User` to legacy `User`.
 pub fn to_legacy_user(
-    user: crate::domain::User,
+    user: klynt_common::domain::User,
 ) -> Result<klynt_persistence::repositories::User, UserError> {
     Ok(klynt_persistence::repositories::User {
         id: to_legacy_user_id(user.id),
@@ -252,7 +252,7 @@ mod tests {
 
     #[test]
     fn to_legacy_user_round_trips() {
-        let user = crate::domain::User {
+        let user = klynt_common::domain::User {
             id: UserId::new(),
             email: klynt_common::domain::Email::new("ada@example.com".to_string()),
             full_name: Some("Ada".to_string()),
