@@ -147,6 +147,11 @@ impl IntoResponse for AppError {
         };
 
         let mut response = status.into_response();
+        // Mark the response as JSON so mw_map_response will envelope it.
+        response.headers_mut().insert(
+            axum::http::header::CONTENT_TYPE,
+            "application/json".parse().unwrap(),
+        );
         // Insert the error into extensions so mw_map_response can read it.
         response.extensions_mut().insert(self);
         response
