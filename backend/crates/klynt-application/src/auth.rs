@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use chrono::Utc;
+use tracing::instrument;
 
 use klynt_domain::ctx::Ctx;
 use klynt_domain::errors::DomainError;
@@ -44,6 +45,7 @@ impl AuthService {
     /// session fixation attacks. Callers must replace any previously held token.
     ///
     /// Returns the bearer token and a DTO of the authenticated user.
+    #[instrument(skip(self, email, password))]
     pub async fn login(
         &self,
         ctx: &Ctx,
@@ -87,6 +89,7 @@ impl AuthService {
     }
 
     /// Register a new user and send a verification email.
+    #[instrument(skip(self, email, password))]
     pub async fn register(
         &self,
         ctx: &Ctx,
@@ -128,6 +131,7 @@ impl AuthService {
     }
 
     /// Verify email using token from email link.
+    #[instrument(skip(self, token))]
     pub async fn verify_email(&self, ctx: &Ctx, token: &str) -> Result<UserId, DomainError> {
         let token_hash = Token::sha256_hash(token);
 
@@ -152,6 +156,7 @@ impl AuthService {
     /// Request password reset (user initiates).
     ///
     /// Always returns Ok to prevent email enumeration.
+    #[instrument(skip(self, email))]
     pub async fn request_password_reset(
         &self,
         ctx: &Ctx,
@@ -196,6 +201,7 @@ impl AuthService {
     }
 
     /// Reset password using token from email.
+    #[instrument(skip(self, token, new_password))]
     pub async fn reset_password(
         &self,
         ctx: &Ctx,

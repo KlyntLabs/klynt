@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use chrono::Utc;
+use tracing::instrument;
 use uuid::Uuid;
 
 use klynt_domain::ctx::Ctx;
@@ -50,6 +51,7 @@ impl UserService {
         }
     }
 
+    #[instrument(skip(self, req), fields(idempotency_key = %idempotency_key))]
     pub async fn create_user(
         &self,
         ctx: &Ctx,
@@ -110,6 +112,7 @@ impl UserService {
     }
 
     /// Create a new user in pending verification state.
+    #[instrument(skip(self, password))]
     pub async fn create_pending_user(
         &self,
         ctx: &Ctx,
@@ -155,10 +158,12 @@ impl UserService {
     }
 
     /// Activate a user account (after email verification).
+    #[instrument(skip(self))]
     pub async fn activate_user(&self, ctx: &Ctx, user_id: UserId) -> Result<(), DomainError> {
         self.user_repo.set_email_verified(ctx, user_id).await
     }
 
+    #[instrument(skip(self, email, password))]
     pub async fn authenticate(
         &self,
         ctx: &Ctx,
@@ -185,6 +190,7 @@ impl UserService {
         Ok(user)
     }
 
+    #[instrument(skip(self))]
     pub async fn find_by_id(&self, ctx: &Ctx, id: UserId) -> Result<User, DomainError> {
         self.user_repo
             .find_by_id(ctx, id)
@@ -193,6 +199,7 @@ impl UserService {
     }
 
     /// Find a user by email.
+    #[instrument(skip(self))]
     pub async fn find_by_email(
         &self,
         ctx: &Ctx,
@@ -202,6 +209,7 @@ impl UserService {
     }
 
     /// Update user password.
+    #[instrument(skip(self, new_password))]
     pub async fn update_password(
         &self,
         ctx: &Ctx,
