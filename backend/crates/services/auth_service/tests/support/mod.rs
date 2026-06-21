@@ -6,15 +6,14 @@ use std::sync::{Arc, Mutex};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 
-use auth_service::application::ports::{
-    AuditLogger, Clock, EmailSender, PasswordHasher, UserRepository,
-};
+use auth_service::application::ports::{AuditLogger, EmailSender, UserRepository};
 use auth_service::domain::{Session, SessionToken, TokenKind};
 use auth_service::domain::{SessionStore, TokenStore};
 use auth_service::error::AuthError;
 use auth_service::models::User;
 use auth_service::{AuthConfig, AuthService, Dependencies};
 use klynt_base::ctx::{ExecutionContext, RequestContext};
+use klynt_base::ports::{Clock, PasswordHashError, PasswordHasher};
 use klynt_common::domain::{UserRole, UserStatus};
 use klynt_common::util::UserId;
 
@@ -42,11 +41,11 @@ pub struct FakePasswordHasher;
 
 #[async_trait]
 impl PasswordHasher for FakePasswordHasher {
-    async fn hash(&self, password: &str) -> Result<String, AuthError> {
+    async fn hash(&self, password: &str) -> Result<String, PasswordHashError> {
         Ok(format!("hash-{password}"))
     }
 
-    async fn verify(&self, password: &str, hash: &str) -> Result<bool, AuthError> {
+    async fn verify(&self, password: &str, hash: &str) -> Result<bool, PasswordHashError> {
         Ok(hash == format!("hash-{password}"))
     }
 }

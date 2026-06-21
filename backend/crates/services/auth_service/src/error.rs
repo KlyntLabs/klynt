@@ -1,5 +1,6 @@
 //! Auth service errors.
 
+use klynt_base::ports::PasswordHashError;
 use klynt_common::domain::DomainError;
 
 use crate::domain::PasswordPolicyError;
@@ -42,6 +43,14 @@ pub enum AuthError {
 impl From<PasswordPolicyError> for AuthError {
     fn from(err: PasswordPolicyError) -> Self {
         Self::PasswordPolicy(err.to_string())
+    }
+}
+
+impl From<PasswordHashError> for AuthError {
+    fn from(err: PasswordHashError) -> Self {
+        match err {
+            PasswordHashError::Internal(msg) => Self::Domain(DomainError::internal_msg(msg)),
+        }
     }
 }
 

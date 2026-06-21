@@ -20,6 +20,7 @@ use std::sync::Arc;
 
 use chrono::Duration;
 use klynt_base::ctx::ExecutionContext;
+use klynt_base::ports::{Clock, PasswordHasher};
 use klynt_common::contracts::auth::{
     LoginRequest, LoginResponse, RegistrationRequest, UserSessionInfo,
 };
@@ -29,7 +30,7 @@ use klynt_common::util::UserId;
 pub use domain::{PasswordPolicy, SessionToken};
 pub use error::{AuthError, AuthResult};
 
-use application::ports::{AuditLogger, Clock, EmailSender, PasswordHasher, UserRepository};
+use application::ports::{AuditLogger, EmailSender, UserRepository};
 use domain::{SessionStore, TokenStore};
 
 /// Authentication service — deep module with small interface.

@@ -6,10 +6,11 @@ use std::sync::Arc;
 
 use chrono::Utc;
 use klynt_base::ctx::{ExecutionContext, RequestContext};
+use klynt_base::ports::PasswordHasher;
 use klynt_common::domain::{PaginationRequest, UserStatus};
 use klynt_common::util::UserId;
 use user_service::{
-    application::ports::{AuditLogger, PasswordHasher, UserRepository},
+    application::ports::{AuditLogger, UserRepository},
     infrastructure::{
         repositories::UserRepositoryAdapter,
         services::{AuditLoggerAdapter, PasswordHasherAdapter},

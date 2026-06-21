@@ -1,7 +1,6 @@
 //! Application-layer ports (dependency interfaces).
 
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
 
 use klynt_base::ctx::ExecutionContext;
 use klynt_common::util::UserId;
@@ -39,16 +38,6 @@ pub trait UserRepository: Send + Sync {
         user_id: UserId,
         password_hash: &str,
     ) -> Result<(), AuthError>;
-}
-
-/// Port for password hashing operations.
-#[async_trait]
-pub trait PasswordHasher: Send + Sync {
-    /// Hash a plaintext password.
-    async fn hash(&self, password: &str) -> Result<String, AuthError>;
-
-    /// Verify a plaintext password against a stored hash.
-    async fn verify(&self, password: &str, hash: &str) -> Result<bool, AuthError>;
 }
 
 /// Port for audit logging.
@@ -98,19 +87,4 @@ pub trait EmailSender: Send + Sync {
         token: &str,
         base_url: &str,
     ) -> Result<(), AuthError>;
-}
-
-/// Port for generating timestamps (injected for testability).
-pub trait Clock: Send + Sync {
-    fn now(&self) -> DateTime<Utc>;
-}
-
-/// Default system clock.
-#[derive(Debug, Clone, Default)]
-pub struct SystemClock;
-
-impl Clock for SystemClock {
-    fn now(&self) -> DateTime<Utc> {
-        Utc::now()
-    }
 }

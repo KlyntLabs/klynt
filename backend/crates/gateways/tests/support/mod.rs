@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
 use auth_service::{
-    application::ports::{AuditLogger, Clock, EmailSender, PasswordHasher, UserRepository},
+    application::ports::{AuditLogger, EmailSender, UserRepository},
     domain::{Session, SessionStore, SessionToken, TokenKind, TokenStore},
     error::AuthError,
     models::User,
@@ -13,13 +13,11 @@ use auth_service::{
 };
 use chrono::{DateTime, Utc};
 use klynt_base::ctx::ExecutionContext;
+use klynt_base::ports::{Clock, PasswordHashError, PasswordHasher};
 use klynt_common::domain::{UserRole, UserStatus};
 use klynt_common::util::UserId;
 use user_service::{
-    application::ports::{
-        AuditLogger as UserAuditLogger, Clock as UserClock, PasswordHasher as UserPasswordHasher,
-        UserRepository as UserRepoPort,
-    },
+    application::ports::{AuditLogger as UserAuditLogger, UserRepository as UserRepoPort},
     domain::User as UserServiceUser,
     error::UserError,
     Dependencies as UserDependencies, UserConfig, UserService,
@@ -49,11 +47,11 @@ pub struct FakePasswordHasher;
 
 #[async_trait]
 impl PasswordHasher for FakePasswordHasher {
-    async fn hash(&self, password: &str) -> Result<String, AuthError> {
+    async fn hash(&self, password: &str) -> Result<String, PasswordHashError> {
         Ok(format!("hash-{password}"))
     }
 
-    async fn verify(&self, password: &str, hash: &str) -> Result<bool, AuthError> {
+    async fn verify(&self, password: &str, hash: &str) -> Result<bool, PasswordHashError> {
         Ok(hash == format!("hash-{password}"))
     }
 }
@@ -444,12 +442,12 @@ impl UserAuditLogger for StubUserAuditLogger {
 pub struct FakeUserPasswordHasher;
 
 #[async_trait]
-impl UserPasswordHasher for FakeUserPasswordHasher {
-    async fn verify(&self, password: &str, hash: &str) -> Result<bool, UserError> {
+impl PasswordHasher for FakeUserPasswordHasher {
+    async fn verify(&self, password: &str, hash: &str) -> Result<bool, PasswordHashError> {
         Ok(password == hash)
     }
 
-    async fn hash(&self, password: &str) -> Result<String, UserError> {
+    async fn hash(&self, password: &str) -> Result<String, PasswordHashError> {
         Ok(password.to_string())
     }
 }
@@ -460,7 +458,7 @@ pub struct FixedUserClock {
     pub now: DateTime<Utc>,
 }
 
-impl UserClock for FixedUserClock {
+impl Clock for FixedUserClock {
     fn now(&self) -> DateTime<Utc> {
         self.now
     }

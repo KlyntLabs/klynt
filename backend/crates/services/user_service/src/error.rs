@@ -1,5 +1,6 @@
 //! User service errors.
 
+use klynt_base::ports::PasswordHashError;
 use klynt_common::domain::DomainError;
 
 /// User service-specific error type.
@@ -28,6 +29,14 @@ pub enum UserError {
 
     #[error("Domain error: {0}")]
     Domain(#[from] DomainError),
+}
+
+impl From<PasswordHashError> for UserError {
+    fn from(err: PasswordHashError) -> Self {
+        match err {
+            PasswordHashError::Internal(msg) => Self::Domain(DomainError::internal_msg(msg)),
+        }
+    }
 }
 
 impl UserError {

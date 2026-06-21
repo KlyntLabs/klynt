@@ -1150,8 +1150,10 @@ dependencies = [
 name = "klynt_base"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "chrono",
  "klynt_common",
+ "thiserror",
  "uuid",
 ]
 

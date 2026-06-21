@@ -10,5 +10,11 @@ chrono = { workspace = true }
 # IDs
 uuid = { workspace = true }
 
+# Async traits
+async-trait = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+
 # Internal crates
 klynt_common = { path = "../shared/klynt_common" }

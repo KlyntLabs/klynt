@@ -7,9 +7,10 @@ use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 
 use klynt_base::ctx::{ExecutionContext, RequestContext};
+use klynt_base::ports::{Clock, PasswordHashError, PasswordHasher};
 use klynt_common::domain::{Email, PaginationRequest, UserRole, UserStatus};
 use klynt_common::util::UserId;
-use user_service::application::ports::{AuditLogger, Clock, PasswordHasher, UserRepository};
+use user_service::application::ports::{AuditLogger, UserRepository};
 use user_service::domain::User;
 use user_service::error::UserError;
 use user_service::{Dependencies, UserConfig, UserService};
@@ -136,11 +137,11 @@ pub struct TestPasswordHasher;
 
 #[async_trait]
 impl PasswordHasher for TestPasswordHasher {
-    async fn verify(&self, password: &str, hash: &str) -> Result<bool, UserError> {
+    async fn verify(&self, password: &str, hash: &str) -> Result<bool, PasswordHashError> {
         Ok(password == hash)
     }
 
-    async fn hash(&self, password: &str) -> Result<String, UserError> {
+    async fn hash(&self, password: &str) -> Result<String, PasswordHashError> {
         Ok(password.to_string())
     }
 }

@@ -15,6 +15,7 @@ use auth_service::{
     },
     AuthConfig, AuthService, Dependencies as AuthDependencies,
 };
+use klynt_base::ports::{Clock, PasswordHasher, SystemClock};
 use klynt_persistence::{
     email::MockEmailService,
     password_hasher::Argon2PasswordHasher,
@@ -106,11 +107,10 @@ impl Services {
             Arc::new(MockEmailService::new());
         let email_sender = Arc::new(EmailSenderAdapter::new(email_service));
 
-        let password_hasher: Arc<dyn auth_service::application::ports::PasswordHasher> =
+        let password_hasher: Arc<dyn PasswordHasher> =
             Arc::new(AuthPasswordHasherAdapter::new(Argon2PasswordHasher::new()));
 
-        let clock: Arc<dyn auth_service::application::ports::Clock> =
-            Arc::new(auth_service::application::ports::SystemClock);
+        let clock: Arc<dyn Clock> = Arc::new(SystemClock);
 
         let auth_service = AuthService::new(
             AuthConfig {
@@ -144,11 +144,10 @@ impl Services {
         let audit_service = Arc::new(klynt_telemetry::audit::AuditService::new(audit_repo));
         let audit_logger = Arc::new(UserAuditLoggerAdapter::new(audit_service));
 
-        let password_hasher: Arc<dyn user_service::application::ports::PasswordHasher> =
+        let password_hasher: Arc<dyn PasswordHasher> =
             Arc::new(UserPasswordHasherAdapter::new(Argon2PasswordHasher::new()));
 
-        let clock: Arc<dyn user_service::application::ports::Clock> =
-            Arc::new(user_service::application::ports::SystemClock);
+        let clock: Arc<dyn Clock> = Arc::new(SystemClock);
 
         UserService::new(
             UserConfig::default(),

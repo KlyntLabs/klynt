@@ -19,13 +19,14 @@ pub mod models;
 use std::sync::Arc;
 
 use klynt_base::ctx::ExecutionContext;
+use klynt_base::ports::{Clock, PasswordHasher};
 use klynt_common::domain::PaginationRequest;
 use klynt_common::util::UserId;
 
 pub use error::{UserError, UserResult};
 pub use models::{ProfileUpdate, UserProfile};
 
-use application::ports::{AuditLogger, Clock, PasswordHasher, UserRepository};
+use application::ports::{AuditLogger, UserRepository};
 
 /// User service — deep module with small interface.
 ///
