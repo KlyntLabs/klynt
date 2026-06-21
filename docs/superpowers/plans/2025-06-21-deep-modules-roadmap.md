@@ -1124,6 +1124,18 @@ Overall success criteria across all candidates:
 - Deleted per-service `conversion.rs` files and identity conversion helpers (`to_legacy_ctx`, `to_legacy_user_id`, `from_legacy_user_id`).
 - Updated in-memory test fakes to implement the new context signatures.
 
+### Post-Candidate Legacy Cleanup
+
+- Renamed `legacy_email` → `parsed_email`, `FakeLegacyTokenStore` →
+  `FakePersistenceTokenStore`, `LegacyTokenKey`/`LegacyTokenEntry` →
+  `PersistenceTokenKey`/`PersistenceTokenEntry`, and `FakeLegacySessionStore`
+  → `FakePersistenceSessionStore`.
+- Removed the legacy `DomainError::AlreadyExists` variant (replaced by
+  `DomainError::Conflict`).
+- Unified the duplicate `klynt_common::domain::Email` and
+  `klynt_common::util::Email` types; `domain::Email` is now a re-export of the
+  validated `util::Email`.
+
 ### Candidate 5 — Extract Error Mapping Adapter
 
 - Added `klynt_base::ports::HttpError` trait with default `INTERNAL_SERVER_ERROR` mappings.
