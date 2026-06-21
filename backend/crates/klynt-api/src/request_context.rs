@@ -10,6 +10,7 @@
 //! explicitly capture the `RequestContext` value before spawning.
 
 use std::net::{IpAddr, SocketAddr};
+use std::sync::Arc;
 use std::time::Instant;
 
 use axum::{
@@ -138,6 +139,9 @@ fn ip_matches_cidr(ip: IpAddr, cidr: &str) -> bool {
             net_str.parse::<std::net::Ipv4Addr>(),
             prefix_str.parse::<u32>(),
         ) {
+            if prefix > 32 {
+                return false;
+            }
             let mask = if prefix == 0 {
                 0
             } else {
@@ -202,7 +206,7 @@ pub async fn request_context(
     let mut response = ctx.clone().scope(next.run(req)).await;
 
     // Echo request_id on the response.
-    if let Ok(value) = ctx.request_id.to_string().parse() {
+    if let Ok(value) = axum::http::HeaderValue::from_str(&ctx.request_id.to_string()) {
         response.headers_mut().insert(REQUEST_ID_HEADER, value);
     }
 
@@ -220,9 +224,6 @@ impl<S: Send + Sync> axum::extract::FromRequestParts<S> for RequestContext {
             .ok_or(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
     }
 }
-
-// `use std::sync::Arc` re-imported here to keep the module self-contained.
-use std::sync::Arc;
 
 #[cfg(test)]
 mod tests {
