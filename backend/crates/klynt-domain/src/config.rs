@@ -5,6 +5,8 @@ pub struct ApiConfig {
     pub host: String,
     pub port: u16,
     pub allowed_origins: Vec<String>,
+    #[serde(default)]
+    pub trusted_proxies: Vec<String>,
 }
 
 impl Default for ApiConfig {
@@ -13,6 +15,7 @@ impl Default for ApiConfig {
             host: "127.0.0.1".to_string(),
             port: 3001,
             allowed_origins: vec!["http://localhost:5174".to_string()],
+            trusted_proxies: vec![],
         }
     }
 }

@@ -20,6 +20,7 @@ pub fn load_config() -> Result<AppConfig, ConfigError> {
         .set_default("api.host", api_default.host)?
         .set_default("api.port", api_default.port)?
         .set_default("api.allowed_origins", api_default.allowed_origins)?
+        .set_default("api.trusted_proxies", Vec::<String>::new())?
         .set_default("rate_limiter.enabled", rl_default.enabled)?
         .set_default("rate_limiter.max_requests", rl_default.max_requests as u64)?
         .set_default("rate_limiter.window_seconds", rl_default.window_seconds)?
