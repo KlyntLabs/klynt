@@ -22,6 +22,7 @@ fn production_config() -> AppConfig {
             host: "127.0.0.1".to_string(),
             port: 0,
             allowed_origins: vec!["http://localhost:5173".to_string()],
+            trusted_proxies: vec![],
         },
         rate_limiter: RateLimiterConfig {
             enabled: true,
