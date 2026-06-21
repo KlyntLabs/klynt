@@ -14,7 +14,7 @@ mod tests {
     }
 
     #[test]
-    fn test_user_repository_has_required_methods() {
+    fn test_repository_error_display_messages() {
         // Validate the canonical error variants used by every repository method.
         // This mirrors the expected method outcomes without requiring an async
         // runtime; the async fake exercise below covers the actual signatures.
@@ -29,6 +29,103 @@ mod tests {
         assert_eq!(validation, "Validation error: fk");
         assert_eq!(database, "Database error: connection lost");
         assert_eq!(internal, "Internal error: oops");
+    }
+
+    #[test]
+    fn test_sqlx_error_conversion() {
+        // RowNotFound maps to NotFound.
+        let err: RepositoryError = sqlx::Error::RowNotFound.into();
+        assert!(matches!(err, RepositoryError::NotFound));
+
+        // Unique violation maps to Conflict with the constraint name.
+        let unique_err = sqlx::Error::Database(Box::new(FakeDbError {
+            unique: true,
+            foreign_key: false,
+            constraint: Some("users_email_key"),
+            message: "duplicate key value violates unique constraint",
+        }));
+        let err: RepositoryError = unique_err.into();
+        assert!(matches!(
+            err,
+            RepositoryError::Conflict(ref c) if c == "users_email_key"
+        ));
+
+        // Foreign-key violation maps to Validation with the constraint name.
+        let fk_err = sqlx::Error::Database(Box::new(FakeDbError {
+            unique: false,
+            foreign_key: true,
+            constraint: Some("users_role_id_fkey"),
+            message: "insert or update on table users violates foreign key constraint",
+        }));
+        let err: RepositoryError = fk_err.into();
+        assert!(matches!(
+            err,
+            RepositoryError::Validation(ref c) if c == "users_role_id_fkey"
+        ));
+
+        // Other database errors fall back to Database.
+        let other_err = sqlx::Error::Database(Box::new(FakeDbError {
+            unique: false,
+            foreign_key: false,
+            constraint: None,
+            message: "connection lost",
+        }));
+        let err: RepositoryError = other_err.into();
+        assert!(matches!(
+            err,
+            RepositoryError::Database(ref m) if m.contains("connection lost")
+        ));
+    }
+
+    /// Fake database error for exercising `From<sqlx::Error>` without a real DB.
+    #[derive(Debug)]
+    struct FakeDbError {
+        unique: bool,
+        foreign_key: bool,
+        constraint: Option<&'static str>,
+        message: &'static str,
+    }
+
+    impl std::fmt::Display for FakeDbError {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(f, "{}", self.message)
+        }
+    }
+
+    impl std::error::Error for FakeDbError {}
+
+    impl sqlx::error::DatabaseError for FakeDbError {
+        fn message(&self) -> &str {
+            self.message
+        }
+
+        fn as_error(&self) -> &(dyn std::error::Error + Send + Sync + 'static) {
+            self
+        }
+
+        fn as_error_mut(&mut self) -> &mut (dyn std::error::Error + Send + Sync + 'static) {
+            self
+        }
+
+        fn into_error(self: Box<Self>) -> Box<dyn std::error::Error + Send + Sync + 'static> {
+            self
+        }
+
+        fn kind(&self) -> sqlx::error::ErrorKind {
+            sqlx::error::ErrorKind::Other
+        }
+
+        fn is_unique_violation(&self) -> bool {
+            self.unique
+        }
+
+        fn is_foreign_key_violation(&self) -> bool {
+            self.foreign_key
+        }
+
+        fn constraint(&self) -> Option<&str> {
+            self.constraint
+        }
     }
 
     /// A fake implementation for testing the trait itself.
