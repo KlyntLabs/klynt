@@ -19,13 +19,13 @@ mod tests {
         // This mirrors the expected method outcomes without requiring an async
         // runtime; the async fake exercise below covers the actual signatures.
         let not_found = RepositoryError::NotFound.to_string();
-        let conflict = RepositoryError::Conflict("ada@example.com".to_string()).to_string();
+        let conflict = RepositoryError::Conflict("users_email_key".to_string()).to_string();
         let validation = RepositoryError::Validation("fk".to_string()).to_string();
         let database = RepositoryError::Database("connection lost".to_string()).to_string();
         let internal = RepositoryError::Internal("oops".to_string()).to_string();
 
         assert_eq!(not_found, "User not found");
-        assert_eq!(conflict, "User already exists with email: ada@example.com");
+        assert_eq!(conflict, "User already exists (users_email_key)");
         assert_eq!(validation, "Validation error: fk");
         assert_eq!(database, "Database error: connection lost");
         assert_eq!(internal, "Internal error: oops");

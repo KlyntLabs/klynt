@@ -22,7 +22,7 @@ use klynt_common::util::UserId;
 /// - **User management methods** (`find_by_id`, `update`, `delete`, `list`) are
 ///   needed for profile management.
 /// - **Single adapter:** One implementation serves both services.
-/// - **Test locality:** Tests use canonical fakes from `klynt_base::testkit`.
+/// - **Test locality:** Tests use local fakes; canonical test doubles will live in `klynt_base::testkit`.
 #[async_trait]
 pub trait UserRepository: Send + Sync {
     /// Find user by email address (auth flow).
@@ -90,7 +90,7 @@ pub enum RepositoryError {
     NotFound,
 
     /// User already exists with a conflicting identifier.
-    #[error("User already exists with email: {0}")]
+    #[error("User already exists ({0})")]
     Conflict(String),
 
     /// Input validation failed.
