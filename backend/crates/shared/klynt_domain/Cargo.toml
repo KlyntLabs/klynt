@@ -1,0 +1,14 @@
+[package]
+name = "klynt_shared_domain"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Error handling
+thiserror = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+
+# Time
+chrono = { workspace = true }

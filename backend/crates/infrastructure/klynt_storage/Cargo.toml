@@ -1,0 +1,17 @@
+[package]
+name = "klynt_storage"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Database
+sqlx = { workspace = true }
+
+# Async
+async-trait = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+
+# Tracing
+tracing = { workspace = true }

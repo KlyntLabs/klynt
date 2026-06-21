@@ -16,6 +16,8 @@ Adapters are production-backed: PostgreSQL/SQLx repositories for users, sessions
 
 ## Crate Layout
 
+### Existing Crates
+
 | Crate | Responsibility |
 |-------|----------------|
 | `klynt-domain` | Entities, errors, ports/traits, config types. No framework dependencies. |
@@ -23,6 +25,38 @@ Adapters are production-backed: PostgreSQL/SQLx repositories for users, sessions
 | `klynt-infrastructure` | Concrete adapters (Postgres/SQLx repos, Redis rate limiter/idempotency, Argon2 hasher, mock email). |
 | `klynt-api` | HTTP handlers, DTOs, routing, middleware, error mapping, OpenAPI spec. |
 | `klynt-server` | Binary entrypoint, telemetry, and the single composition root. |
+
+### Phase 1 Foundation Crates
+
+These crates are introduced alongside the existing ones and are not yet wired
+into the application layer. They provide the shared abstractions future
+services will depend on.
+
+```
+crates/
+├── core/
+│   └── klynt_core          # Base types, traits, request/execution context
+├── shared/
+│   ├── klynt_contracts     # DTOs for service boundaries
+│   ├── klynt_domain        # Shared domain types and errors
+│   ├── klynt_utils         # ID generation, crypto, time utilities
+│   └── klynt_typedenum     # Shared enums (roles, statuses)
+└── infrastructure/
+    ├── klynt_messaging     # Event messaging / pub-sub abstractions
+    ├── klynt_storage       # Database and repository abstractions
+    └── klynt_tracing       # Tracing subscriber and field constants
+```
+
+| Crate | Responsibility |
+|-------|----------------|
+| `klynt_core` | Base types, constants, core traits, request and execution context. |
+| `klynt_utils` | ID generation, cryptographic helpers, and time utilities. |
+| `klynt_shared_domain` | Shared domain errors and types (`Email`, `Timestamp`, pagination). |
+| `klynt_contracts` | Request/response DTOs for auth, users, and common envelopes. |
+| `klynt_typedenum` | Shared enums such as `UserRole` and `UserStatus`. |
+| `klynt_storage` | SQLx/Postgres pool helpers and repository traits. |
+| `klynt_messaging` | Domain event envelope and message bus abstraction. |
+| `klynt_tracing` | Tracing initialization and standard field names. |
 
 ## Local Development
 

@@ -1,11 +1,24 @@
 [workspace]
 resolver = "2"
 members = [
+    # === Existing (keep for Phase 1) ===
     "crates/klynt-domain",
     "crates/klynt-application",
     "crates/klynt-infrastructure",
     "crates/klynt-api",
     "crates/klynt-server",
+
+    # === NEW - Phase 1 Foundation ===
+    "crates/core/klynt_core",
+
+    "crates/shared/klynt_contracts",
+    "crates/shared/klynt_domain",
+    "crates/shared/klynt_utils",
+    "crates/shared/klynt_typedenum",
+
+    "crates/infrastructure/klynt_messaging",
+    "crates/infrastructure/klynt_storage",
+    "crates/infrastructure/klynt_tracing",
 ]
 
 [workspace.package]
@@ -29,13 +42,16 @@ serde_with = "3"
 
 # Time
 chrono = { version = "0.4", features = ["serde"] }
+time = "0.3"
 
 # IDs
 uuid = { version = "1", features = ["v4", "serde"] }
+ulid = "1"
 
 # Error handling
 thiserror = "2"
 anyhow = "1"
+color-eyre = "0.6"
 
 # Tracing
 tracing = "0.1"
@@ -55,6 +71,9 @@ rand = "0.8"
 sha2 = "0.10"
 base64 = "0.22"
 
+# Validation
+validator = { version = "0.19", features = ["derive"] }
+
 # Database
 sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "postgres", "uuid", "chrono", "migrate", "json"] }
 
@@ -69,6 +88,16 @@ klynt-domain = { path = "crates/klynt-domain" }
 klynt-application = { path = "crates/klynt-application" }
 klynt-infrastructure = { path = "crates/klynt-infrastructure" }
 klynt-api = { path = "crates/klynt-api" }
+
+# === NEW - Internal crates ===
+klynt_core = { path = "crates/core/klynt_core" }
+klynt_contracts = { path = "crates/shared/klynt_contracts" }
+klynt_shared_domain = { path = "crates/shared/klynt_domain" }
+klynt_utils = { path = "crates/shared/klynt_utils" }
+klynt_typedenum = { path = "crates/shared/klynt_typedenum" }
+klynt_messaging = { path = "crates/infrastructure/klynt_messaging" }
+klynt_storage = { path = "crates/infrastructure/klynt_storage" }
+klynt_tracing = { path = "crates/infrastructure/klynt_tracing" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

@@ -1,0 +1,18 @@
+[package]
+name = "klynt_messaging"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Time
+chrono = { workspace = true }
+
+# Async
+async-trait = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
