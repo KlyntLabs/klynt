@@ -1,4 +1,5 @@
 pub mod error;
+pub mod logging;
 pub mod middleware;
 pub mod openapi;
 pub mod rate_limit;
