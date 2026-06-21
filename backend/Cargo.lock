@@ -1156,6 +1156,7 @@ dependencies = [
  "axum",
  "chrono",
  "klynt_common",
+ "sqlx",
  "thiserror",
  "tokio",
  "uuid",

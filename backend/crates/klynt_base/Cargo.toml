@@ -19,6 +19,9 @@ thiserror = { workspace = true }
 # Web framework (used only for the HTTP-agnostic status code abstraction)
 axum = { workspace = true }
 
+# Database
+sqlx = { workspace = true }
+
 # Internal crates
 klynt_common = { path = "../shared/klynt_common" }
 
