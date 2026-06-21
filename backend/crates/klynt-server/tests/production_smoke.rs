@@ -2,10 +2,12 @@
 //! and Redis. These tests run against real infrastructure and therefore require
 //! `DATABASE_URL` and `REDIS_URL` to point at running services.
 
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::sync::Arc;
 
 use axum::{
     body::Body,
+    extract::ConnectInfo,
     http::{Request, StatusCode},
 };
 use http_body_util::BodyExt;
@@ -44,7 +46,12 @@ async fn app_with_email() -> (axum::Router, Arc<MockEmailService>) {
     let config = production_config();
     let mock_email: Arc<MockEmailService> = Arc::new(MockEmailService::new());
     let email_service: SharedEmailService = Arc::clone(&mock_email) as SharedEmailService;
-    let app = build_app_with_email_service(config, email_service).await;
+    let app = build_app_with_email_service(config, email_service)
+        .await
+        .layer(axum::Extension(ConnectInfo(SocketAddr::new(
+            IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
+            0,
+        ))));
     (app, mock_email)
 }
 
@@ -143,7 +150,7 @@ async fn register_verify_login_and_get_me_round_trip_with_postgres() {
         .unwrap()
         .to_bytes();
     let login_json: serde_json::Value = serde_json::from_slice(&login_body).unwrap();
-    let session_token = login_json["token"]
+    let session_token = login_json["data"]["token"]
         .as_str()
         .expect("login did not return a token");
 
@@ -162,5 +169,5 @@ async fn register_verify_login_and_get_me_round_trip_with_postgres() {
 
     let body = me_response.into_body().collect().await.unwrap().to_bytes();
     let profile: serde_json::Value = serde_json::from_slice(&body).unwrap();
-    assert_eq!(profile["email"], email);
+    assert_eq!(profile["data"]["email"], email);
 }
