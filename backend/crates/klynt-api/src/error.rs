@@ -47,6 +47,70 @@ pub enum AppErrorKind {
     Internal(Box<dyn std::error::Error + Send + Sync>),
 }
 
+/// Severity used to drive log levels for errors.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ErrorSeverity {
+    /// Expected errors — auth failures, validation, not-found.
+    Low,
+    /// Business logic errors — rate limiting.
+    Medium,
+    /// Infrastructure problems — internal server errors.
+    High,
+    /// Gateway/data-corruption failures (reserved for future use).
+    Critical,
+}
+
+/// Category used to classify errors for observability.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ErrorCategory {
+    Authentication,
+    Authorization,
+    Validation,
+    Infrastructure,
+}
+
+impl AppErrorKind {
+    /// HTTP-facing uppercase error code string (e.g. `"NOT_FOUND"`).
+    pub fn error_code(&self) -> &'static str {
+        match self {
+            AppErrorKind::NotFound => "NOT_FOUND",
+            AppErrorKind::BadRequest(_) => "BAD_REQUEST",
+            AppErrorKind::Conflict(_) => "CONFLICT",
+            AppErrorKind::Unauthorized => "AUTHENTICATION_REQUIRED",
+            AppErrorKind::RateLimited => "RATE_LIMITED",
+            AppErrorKind::Internal(_) => "INTERNAL_ERROR",
+        }
+    }
+
+    pub fn severity(&self) -> ErrorSeverity {
+        match self {
+            AppErrorKind::NotFound
+            | AppErrorKind::BadRequest(_)
+            | AppErrorKind::Conflict(_)
+            | AppErrorKind::Unauthorized => ErrorSeverity::Low,
+            AppErrorKind::RateLimited => ErrorSeverity::Medium,
+            AppErrorKind::Internal(_) => ErrorSeverity::High,
+        }
+    }
+
+    pub fn category(&self) -> ErrorCategory {
+        match self {
+            AppErrorKind::Unauthorized => ErrorCategory::Authentication,
+            AppErrorKind::RateLimited => ErrorCategory::Authorization,
+            AppErrorKind::NotFound | AppErrorKind::BadRequest(_) | AppErrorKind::Conflict(_) => {
+                ErrorCategory::Validation
+            }
+            AppErrorKind::Internal(_) => ErrorCategory::Infrastructure,
+        }
+    }
+
+    /// Hook for future `Retry-After` header emission. `None` for all current variants.
+    pub fn retry_after_seconds(&self) -> Option<u32> {
+        let _ = self;
+        None
+    }
+}
+
 impl From<DomainError> for AppErrorKind {
     fn from(err: DomainError) -> Self {
         match err {
@@ -226,5 +290,65 @@ mod conversion_tests {
         let app_err = AppError::new(AppErrorKind::BadRequest("boom".to_string()), request_id);
         let response = app_err.into_response();
         assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    }
+}
+
+#[cfg(test)]
+mod classification_tests {
+    use super::*;
+
+    #[test]
+    fn not_found_classification() {
+        assert_eq!(AppErrorKind::NotFound.severity(), ErrorSeverity::Low);
+        assert_eq!(AppErrorKind::NotFound.category(), ErrorCategory::Validation);
+        assert_eq!(AppErrorKind::NotFound.error_code(), "NOT_FOUND");
+        assert_eq!(AppErrorKind::NotFound.retry_after_seconds(), None);
+    }
+
+    #[test]
+    fn bad_request_classification() {
+        let kind = AppErrorKind::BadRequest("msg".to_string());
+        assert_eq!(kind.severity(), ErrorSeverity::Low);
+        assert_eq!(kind.category(), ErrorCategory::Validation);
+        assert_eq!(kind.error_code(), "BAD_REQUEST");
+    }
+
+    #[test]
+    fn conflict_classification() {
+        let kind = AppErrorKind::Conflict("msg".to_string());
+        assert_eq!(kind.severity(), ErrorSeverity::Low);
+        assert_eq!(kind.category(), ErrorCategory::Validation);
+        assert_eq!(kind.error_code(), "CONFLICT");
+    }
+
+    #[test]
+    fn unauthorized_classification() {
+        assert_eq!(AppErrorKind::Unauthorized.severity(), ErrorSeverity::Low);
+        assert_eq!(
+            AppErrorKind::Unauthorized.category(),
+            ErrorCategory::Authentication
+        );
+        assert_eq!(
+            AppErrorKind::Unauthorized.error_code(),
+            "AUTHENTICATION_REQUIRED"
+        );
+    }
+
+    #[test]
+    fn rate_limited_classification() {
+        assert_eq!(AppErrorKind::RateLimited.severity(), ErrorSeverity::Medium);
+        assert_eq!(
+            AppErrorKind::RateLimited.category(),
+            ErrorCategory::Authorization
+        );
+        assert_eq!(AppErrorKind::RateLimited.error_code(), "RATE_LIMITED");
+    }
+
+    #[test]
+    fn internal_classification() {
+        let kind = AppErrorKind::Internal(Box::new(std::io::Error::other("boom")));
+        assert_eq!(kind.severity(), ErrorSeverity::High);
+        assert_eq!(kind.category(), ErrorCategory::Infrastructure);
+        assert_eq!(kind.error_code(), "INTERNAL_ERROR");
     }
 }
