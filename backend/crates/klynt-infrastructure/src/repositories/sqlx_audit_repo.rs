@@ -1,10 +1,10 @@
 use async_trait::async_trait;
 use sqlx::PgPool;
 
-use klynt_domain::audit::AuditEvent;
-use klynt_domain::ctx::Ctx;
-use klynt_domain::errors::DomainError;
-use klynt_domain::repositories::AuditEventRepository;
+use crate::repositories::AuditEventRepository;
+use klynt_audit::types::AuditEvent;
+use klynt_core::ctx::Ctx;
+use klynt_shared_domain::DomainError;
 
 /// PostgreSQL implementation of audit event repository.
 pub struct PgAuditEventRepository {

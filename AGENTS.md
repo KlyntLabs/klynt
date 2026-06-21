@@ -16,7 +16,7 @@ Klynt is a foundation-phase education platform:
 - **Backend**: Rust HTTP API with Axum/Tokio (`backend/`)
 - **Frontend**: React SPA with Vite/TypeScript/Tailwind (`frontend/`)
 
-It's intentionally minimal right now: health endpoints, a basic React Router UI, and structure for future features. No real database or authentication exists yet.
+The backend has real Postgres repositories (users, sessions, tokens, audit), Redis (rate limiter + idempotency), email-verification/password-reset flows, bearer-token session auth, and a middleware/observability stack. The frontend is a React SPA shell.
 
 ## Technology Stack
 
@@ -124,7 +124,16 @@ Cargo workspace with dependency direction enforced by the compiler:
 
 `klynt-server::composition` is the single composition root. Keep wiring there.
 
-### Frontend (Feature-Based)
+### Observability
+
+- **Tracing**: `tracing` + `tracing-subscriber` with JSON output, `tracing-error::ErrorLayer` for spanbacktrace correlation, and a curated `EnvFilter` that suppresses noisy crates. `TraceLayer` uses `make_span_with` to embed `request_id` in span roots, and application services are `#[instrument]`-decorated for span trees.
+- **Metrics**: Prometheus `/metrics` endpoint with `http_requests_total`, `http_request_duration_seconds`, and `active_requests`. Path normalization prevents cardinality explosion.
+- **Logging**: Structured JSON request logs with PII sanitization, emitted from `mw_map_response`.
+- **Health**: `/api/v1/health/live` (liveness) and `/api/v1/health/ready` (readiness with per-component latency).
+- **Security headers**: `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, and optional HSTS via `KLYNT_HSTS_ENABLED`.
+- **Rate limiting**: IP-based fixed-window rate limiter with Redis TTL; `429` responses include `Retry-After`.
+
+### Frontend (Feature-Based
 
 - `routes/` — React Router route tree
 - `app/` — providers, layout, error boundary
@@ -137,7 +146,7 @@ Cargo workspace with dependency direction enforced by the compiler:
 - Backend: unit tests next to source; integration tests in `crates/klynt-server/tests/` and `crates/klynt-infrastructure/tests/`.
 - Frontend: Vitest + jsdom + Testing Library. Custom render in `frontend/src/test/render.tsx`.
 - Follow a test-driven discipline: write/update tests for new logic and bug fixes. For bugs, write a failing regression test first.
-- Current integration tests cover health endpoints and `POST /api/v1/users`.
+- Current integration tests cover health endpoints (including per-component readiness), `POST /api/v1/users`, auth flows, metrics path normalization, security headers, and rate-limit `Retry-After`.
 
 ## Git Workflow & Quality Gates
 
@@ -192,9 +201,7 @@ Before claiming complete:
 
 ## Important Notes for Agents
 
-- Foundation scaffold: minimal real logic, in-memory adapters, no real DB/auth.
-- Postgres/Redis in Docker Compose are for future wiring.
-- Authentication is currently a placeholder in `features/auth/api/types.ts`.
+- Foundation scaffold now uses real Postgres/Redis adapters, bearer-token session auth, and the observability stack described above.
 - Deployment workflows are placeholders.
 - Prefer adding tools via `Cargo.toml` or `package.json` instead of global installs.
 - When modifying Docker files, validate with `docker compose config` and test `docker compose up --build` when possible.

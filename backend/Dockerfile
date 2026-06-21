@@ -33,9 +33,10 @@ RUN mkdir -p crates/klynt-domain/src crates/klynt-application/src \
 # Build dependencies (this layer is cached unless Cargo manifests change)
 RUN cargo build --release --bin klynt-server
 
-# Now copy the real source code and config
+# Now copy the real source code, config, and migrations
 COPY crates ./crates
 COPY config ./config
+COPY migrations ./migrations
 
 # Force Cargo to re-evaluate all local source files (Docker COPY preserves
 # original mtimes, so without this the stub library crates may stay cached).

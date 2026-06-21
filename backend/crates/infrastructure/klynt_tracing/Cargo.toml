@@ -1,0 +1,13 @@
+[package]
+name = "klynt_tracing"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Core
+klynt_core = { path = "../../core/klynt_core" }
+
+# Tracing
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+tracing-error = { workspace = true }

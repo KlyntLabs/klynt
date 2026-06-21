@@ -1,0 +1,19 @@
+[package]
+name = "klynt_contracts"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Core
+klynt_utils = { path = "../klynt_utils" }
+klynt_shared_domain = { path = "../klynt_domain" }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Validation
+validator = { workspace = true }
+
+# Time
+chrono = { workspace = true }

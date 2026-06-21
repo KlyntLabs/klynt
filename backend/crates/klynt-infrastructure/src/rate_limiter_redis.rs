@@ -4,9 +4,9 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use redis::aio::MultiplexedConnection;
 
-use klynt_domain::config::RateLimiterConfig;
-use klynt_domain::errors::DomainError;
-use klynt_domain::ports::RateLimiter as RateLimiterPort;
+use crate::config::RateLimiterConfig;
+use klynt_shared_domain::DomainError;
+use klynt_storage::ports::{RateLimitDecision, RateLimiter as RateLimiterPort};
 
 /// Redis-backed fixed-window rate limiter.
 ///
@@ -42,9 +42,10 @@ impl RedisRateLimiter {
                 redis.call('EXPIRE', key, window)
             end
             if current > limit then
-                return 0
+                local ttl = redis.call('TTL', key)
+                return {0, ttl}
             end
-            return 1
+            return {1, 0}
             "#,
         );
 
@@ -62,13 +63,13 @@ impl RedisRateLimiter {
 
 #[async_trait]
 impl RateLimiterPort for RedisRateLimiter {
-    async fn is_allowed(&self, ip: IpAddr) -> bool {
+    async fn check(&self, ip: IpAddr) -> RateLimitDecision {
         if !self.config.enabled {
-            return true;
+            return RateLimitDecision::allowed();
         }
 
         let mut conn = self.conn.lock().await;
-        let result: Result<i64, redis::RedisError> = self
+        let result: Result<(i64, i64), redis::RedisError> = self
             .script
             .key(self.key(ip))
             .arg(self.config.max_requests as i64)
@@ -76,6 +77,26 @@ impl RateLimiterPort for RedisRateLimiter {
             .invoke_async(&mut *conn)
             .await;
 
-        matches!(result, Ok(1))
+        match result {
+            Ok((1, _)) => RateLimitDecision::allowed(),
+            Ok((0, ttl)) => {
+                let retry_after = if ttl > 0 {
+                    ttl as u32
+                } else {
+                    self.config.window_seconds as u32
+                };
+                RateLimitDecision::denied(retry_after)
+            }
+            Ok((_, _)) => {
+                // Unexpected script result; fail open.
+                tracing::warn!("redis rate limiter returned unexpected result, failing open");
+                RateLimitDecision::allowed()
+            }
+            Err(_) => {
+                // On Redis errors, allow the request (fail-open).
+                tracing::warn!("redis rate limiter error, failing open");
+                RateLimitDecision::allowed()
+            }
+        }
     }
 }

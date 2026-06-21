@@ -2,11 +2,11 @@ use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 
-use klynt_domain::ctx::Ctx;
-use klynt_domain::errors::{DomainError, TokenError};
-use klynt_domain::models::UserId;
-use klynt_domain::repositories::TokenStore;
-use klynt_domain::tokens::TokenKind;
+use crate::repositories::TokenStore;
+use klynt_core::ctx::Ctx;
+use klynt_shared_domain::error::{DomainError, TokenError};
+use klynt_storage::tokens::TokenKind;
+use klynt_utils::UserId;
 
 /// PostgreSQL implementation of [`TokenStore`].
 ///

@@ -7,7 +7,11 @@ edition.workspace = true
 workspace = true
 
 [dependencies]
-klynt-domain = { workspace = true }
+klynt_core = { path = "../core/klynt_core" }
+klynt_utils = { path = "../shared/klynt_utils" }
+klynt_shared_domain = { workspace = true }
+klynt_storage = { path = "../infrastructure/klynt_storage" }
+klynt_audit = { path = "../infrastructure/klynt_audit" }
 
 chrono = { workspace = true }
 uuid = { workspace = true }
@@ -22,6 +26,8 @@ rand_core = { workspace = true }
 sqlx = { workspace = true }
 redis = { workspace = true }
 tokio = { workspace = true }
+tracing = { workspace = true }
+thiserror = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true }

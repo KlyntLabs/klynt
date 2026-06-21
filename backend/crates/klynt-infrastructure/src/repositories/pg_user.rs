@@ -3,11 +3,12 @@ use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use klynt_domain::ctx::Ctx;
-use klynt_domain::errors::DomainError;
-use klynt_domain::models::{Email, GlobalRole, Role, User, UserId, UserStatus};
-use klynt_domain::ports::HashedPassword;
-use klynt_domain::repositories::{CreateResult, UserRepository};
+use crate::repositories::User;
+use crate::repositories::{CreateResult, UserRepository};
+use klynt_core::ctx::Ctx;
+use klynt_shared_domain::DomainError;
+use klynt_storage::ports::HashedPassword;
+use klynt_utils::{Email, GlobalRole, Role, UserId, UserStatus};
 
 /// PostgreSQL implementation of the user repository.
 pub struct PgUserRepository {
@@ -38,6 +39,14 @@ struct UserRow {
     terms_version: String,
     role: String,
     institution_id: Option<Uuid>,
+    #[sqlx(default)]
+    deleted_at: Option<DateTime<Utc>>,
+}
+
+impl UserRow {
+    pub fn deleted_at(&self) -> Option<DateTime<Utc>> {
+        self.deleted_at
+    }
 }
 
 impl UserRow {
@@ -175,7 +184,7 @@ impl UserRepository for PgUserRepository {
         .map_err(DomainError::internal)?;
 
         if result.rows_affected() == 0 {
-            return Err(DomainError::NotFound);
+            return Err(DomainError::NotFound("not found".to_string()));
         }
         Ok(())
     }
@@ -200,7 +209,142 @@ impl UserRepository for PgUserRepository {
         .map_err(DomainError::internal)?;
 
         if result.rows_affected() == 0 {
-            return Err(DomainError::NotFound);
+            return Err(DomainError::NotFound("not found".to_string()));
+        }
+        Ok(())
+    }
+}
+
+/// Extended user repository operations used by the user_service.
+impl PgUserRepository {
+    /// Find a user by ID, returning the user together with the optional
+    /// soft-delete timestamp.
+    pub async fn find_by_id_full(
+        &self,
+        _ctx: &Ctx,
+        id: UserId,
+    ) -> Result<Option<(User, Option<DateTime<Utc>>)>, DomainError> {
+        let row: Option<UserRow> = sqlx::query_as(
+            r#"
+            SELECT
+                id, email, name, password_hash,
+                status, email_verified_at, global_role,
+                created_at, terms_accepted_at, terms_version,
+                role, institution_id,
+                deleted_at
+            FROM users
+            WHERE id = $1
+            "#,
+        )
+        .bind(id.0)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(DomainError::internal)?;
+
+        row.map(|r| {
+            let deleted_at = r.deleted_at();
+            r.into_user().map(|u| (u, deleted_at))
+        })
+        .transpose()
+    }
+
+    /// List non-deleted users with pagination, returning each user together
+    /// with its soft-delete timestamp (`None` for active users).
+    pub async fn list_full(
+        &self,
+        _ctx: &Ctx,
+        pagination: klynt_shared_domain::PaginationRequest,
+    ) -> Result<(Vec<(User, Option<DateTime<Utc>>)>, u64), DomainError> {
+        let rows: Vec<UserRow> = sqlx::query_as(
+            r#"
+            SELECT
+                id, email, name, password_hash,
+                status, email_verified_at, global_role,
+                created_at, terms_accepted_at, terms_version,
+                role, institution_id,
+                deleted_at
+            FROM users
+            WHERE deleted_at IS NULL
+            ORDER BY created_at DESC
+            LIMIT $1 OFFSET $2
+            "#,
+        )
+        .bind(pagination.page_size as i64)
+        .bind(pagination.offset() as i64)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(DomainError::internal)?;
+
+        let total: i64 = sqlx::query_scalar(
+            r#"
+            SELECT COUNT(*)
+            FROM users
+            WHERE deleted_at IS NULL
+            "#,
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(DomainError::internal)?;
+
+        let users = rows
+            .into_iter()
+            .map(|r| {
+                let deleted_at = r.deleted_at();
+                r.into_user().map(|u| (u, deleted_at))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok((users, total as u64))
+    }
+
+    /// Update a user's mutable fields.
+    pub async fn update_full(&self, _ctx: &Ctx, user: &User) -> Result<(), DomainError> {
+        let result = sqlx::query(
+            r#"
+            UPDATE users
+            SET
+                name = $1,
+                status = $2,
+                role = $3,
+                institution_id = $4,
+                global_role = $5,
+                password_hash = $6
+            WHERE id = $7
+            "#,
+        )
+        .bind(&user.name)
+        .bind(user.status.as_str())
+        .bind(user.role.as_str())
+        .bind(user.institution_id)
+        .bind(user.global_role.map(|r| r.as_str().to_string()))
+        .bind(&user.password_hash)
+        .bind(user.id.0)
+        .execute(&self.pool)
+        .await
+        .map_err(DomainError::internal)?;
+
+        if result.rows_affected() == 0 {
+            return Err(DomainError::NotFound("not found".to_string()));
+        }
+        Ok(())
+    }
+
+    /// Soft delete a user by setting `deleted_at` to the current timestamp.
+    pub async fn soft_delete(&self, _ctx: &Ctx, user_id: UserId) -> Result<(), DomainError> {
+        let result = sqlx::query(
+            r#"
+            UPDATE users
+            SET deleted_at = NOW()
+            WHERE id = $1 AND deleted_at IS NULL
+            "#,
+        )
+        .bind(user_id.0)
+        .execute(&self.pool)
+        .await
+        .map_err(DomainError::internal)?;
+
+        if result.rows_affected() == 0 {
+            return Err(DomainError::NotFound("not found".to_string()));
         }
         Ok(())
     }

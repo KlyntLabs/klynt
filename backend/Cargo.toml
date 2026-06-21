@@ -1,11 +1,30 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/klynt-domain",
-    "crates/klynt-application",
+    # === Existing ===
     "crates/klynt-infrastructure",
-    "crates/klynt-api",
     "crates/klynt-server",
+
+    # === NEW - Phase 1 Foundation ===
+    "crates/core/klynt_core",
+
+    "crates/shared/klynt_contracts",
+    "crates/shared/klynt_domain",
+    "crates/shared/klynt_utils",
+
+    "crates/infrastructure/klynt_messaging",
+    "crates/infrastructure/klynt_storage",
+    "crates/infrastructure/klynt_tracing",
+    "crates/infrastructure/klynt_audit",
+
+    # === NEW - Phase 2 ===
+    "crates/services/auth_service",
+
+    # === NEW - Phase 4 ===
+    "crates/services/user_service",
+
+    # === NEW - Phase 3 ===
+    "crates/gateways",
 ]
 
 [workspace.package]
@@ -29,17 +48,21 @@ serde_with = "3"
 
 # Time
 chrono = { version = "0.4", features = ["serde"] }
+time = "0.3"
 
 # IDs
 uuid = { version = "1", features = ["v4", "serde"] }
+ulid = "1"
 
 # Error handling
 thiserror = "2"
 anyhow = "1"
+color-eyre = "0.6"
 
 # Tracing
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+tracing-error = "0.2"
 
 # Configuration
 config = "0.15"
@@ -54,17 +77,39 @@ rand = "0.8"
 sha2 = "0.10"
 base64 = "0.22"
 
+# Validation
+validator = { version = "0.19", features = ["derive"] }
+
 # Database
 sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "postgres", "uuid", "chrono", "migrate", "json"] }
 
 # Cache / rate limiter
 redis = { version = "0.27", features = ["tokio-comp"] }
 
+# Metrics
+prometheus = { version = "0.13", default-features = false }
+
 # Internal crates
-klynt-domain = { path = "crates/klynt-domain" }
-klynt-application = { path = "crates/klynt-application" }
 klynt-infrastructure = { path = "crates/klynt-infrastructure" }
-klynt-api = { path = "crates/klynt-api" }
+
+# === NEW - Internal crates ===
+klynt_core = { path = "crates/core/klynt_core" }
+klynt_contracts = { path = "crates/shared/klynt_contracts" }
+klynt_shared_domain = { path = "crates/shared/klynt_domain" }
+klynt_utils = { path = "crates/shared/klynt_utils" }
+klynt_messaging = { path = "crates/infrastructure/klynt_messaging" }
+klynt_storage = { path = "crates/infrastructure/klynt_storage" }
+klynt_tracing = { path = "crates/infrastructure/klynt_tracing" }
+klynt_audit = { path = "crates/infrastructure/klynt_audit" }
+
+# === NEW - Phase 2 ===
+auth_service = { path = "crates/services/auth_service" }
+
+# === NEW - Phase 4 ===
+user_service = { path = "crates/services/user_service" }
+
+# === NEW - Phase 3 ===
+gateways = { path = "crates/gateways" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

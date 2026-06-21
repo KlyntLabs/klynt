@@ -1,34 +1,13 @@
-use std::net::SocketAddr;
-
-use axum::serve;
-use klynt_infrastructure::config::load_config;
-use klynt_server::composition::build_app;
-use tokio::net::TcpListener;
-use tracing::info;
+use gateways::{run, Config, GatewayError, Services};
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
+async fn main() -> Result<(), anyhow::Error> {
     dotenvy::dotenv().ok();
 
-    let config = load_config()?;
-    klynt_server::telemetry::init_telemetry(&config.log_level);
+    let config = Config::from_env().map_err(|e| GatewayError::configuration(e.to_string()))?;
+    let services = Services::from_config(&config).await?;
 
-    let app = build_app(config.clone()).await;
-
-    let addr = format!("{}:{}", config.api.host, config.api.port);
-    let listener = TcpListener::bind(&addr).await?;
-
-    info!("server listening on http://{}", addr);
-
-    let make_service = app.into_make_service_with_connect_info::<SocketAddr>();
-    let server = serve(listener, make_service);
-
-    tokio::select! {
-        result = server => result?,
-        _ = tokio::signal::ctrl_c() => {
-            info!("received shutdown signal, stopping server");
-        }
-    }
+    run(config, services).await?;
 
     Ok(())
 }
