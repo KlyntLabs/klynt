@@ -10,7 +10,7 @@ use crate::domain::{Session, SessionStore as AuthSessionStore, SessionToken};
 use crate::error::AuthError;
 use crate::infrastructure::conversion::{to_legacy_ctx, to_legacy_user_id};
 
-/// Adapter wrapping a legacy [`klynt_domain::session::SessionStore`].
+/// Adapter wrapping a legacy [`klynt_storage::session::SessionStore`].
 pub struct SessionRepositoryAdapter<T> {
     inner: T,
 }
@@ -24,7 +24,7 @@ impl<T> SessionRepositoryAdapter<T> {
 #[async_trait]
 impl<T> AuthSessionStore for SessionRepositoryAdapter<T>
 where
-    T: klynt_domain::session::SessionStore,
+    T: klynt_storage::session::SessionStore,
 {
     async fn create(
         &self,
@@ -48,7 +48,7 @@ where
         token: &SessionToken,
     ) -> Result<Option<Session>, AuthError> {
         let legacy_ctx = to_legacy_ctx(ctx);
-        let legacy_token = klynt_domain::session::SessionToken(token.0);
+        let legacy_token = klynt_storage::session::SessionToken(token.0);
 
         self.inner
             .find_valid(&legacy_ctx, &legacy_token)
@@ -59,7 +59,7 @@ where
 
     async fn revoke(&self, ctx: &ExecutionContext, token: &SessionToken) -> Result<(), AuthError> {
         let legacy_ctx = to_legacy_ctx(ctx);
-        let legacy_token = klynt_domain::session::SessionToken(token.0);
+        let legacy_token = klynt_storage::session::SessionToken(token.0);
 
         self.inner
             .revoke(&legacy_ctx, &legacy_token)
@@ -68,7 +68,7 @@ where
     }
 }
 
-fn map_session(session: klynt_domain::session::Session) -> Session {
+fn map_session(session: klynt_storage::session::Session) -> Session {
     Session {
         token: SessionToken(session.token.0),
         user_id: klynt_utils::UserId::from_uuid(session.user_id.0),
@@ -76,7 +76,7 @@ fn map_session(session: klynt_domain::session::Session) -> Session {
     }
 }
 
-fn map_legacy_error(err: klynt_domain::errors::DomainError) -> AuthError {
+fn map_legacy_error(err: klynt_shared_domain::DomainError) -> AuthError {
     AuthError::Domain(klynt_shared_domain::DomainError::Internal(err.to_string()))
 }
 
@@ -89,7 +89,7 @@ mod tests {
 
     struct FakeLegacySessionStore {
         sessions:
-            Mutex<HashMap<klynt_domain::session::SessionToken, klynt_domain::session::Session>>,
+            Mutex<HashMap<klynt_storage::session::SessionToken, klynt_storage::session::Session>>,
     }
 
     impl Default for FakeLegacySessionStore {
@@ -101,16 +101,16 @@ mod tests {
     }
 
     #[async_trait]
-    impl klynt_domain::session::SessionStore for FakeLegacySessionStore {
+    impl klynt_storage::session::SessionStore for FakeLegacySessionStore {
         async fn create(
             &self,
-            _ctx: &klynt_domain::ctx::Ctx,
-            user_id: klynt_domain::models::UserId,
+            _ctx: &klynt_core::ctx::Ctx,
+            user_id: klynt_utils::UserId,
             expires_at: DateTime<Utc>,
-        ) -> Result<klynt_domain::session::SessionToken, klynt_domain::errors::DomainError>
+        ) -> Result<klynt_storage::session::SessionToken, klynt_shared_domain::DomainError>
         {
-            let token = klynt_domain::session::SessionToken::new();
-            let session = klynt_domain::session::Session {
+            let token = klynt_storage::session::SessionToken::new();
+            let session = klynt_storage::session::Session {
                 token,
                 user_id,
                 expires_at,
@@ -121,9 +121,9 @@ mod tests {
 
         async fn find_valid(
             &self,
-            _ctx: &klynt_domain::ctx::Ctx,
-            token: &klynt_domain::session::SessionToken,
-        ) -> Result<Option<klynt_domain::session::Session>, klynt_domain::errors::DomainError>
+            _ctx: &klynt_core::ctx::Ctx,
+            token: &klynt_storage::session::SessionToken,
+        ) -> Result<Option<klynt_storage::session::Session>, klynt_shared_domain::DomainError>
         {
             Ok(self
                 .sessions
@@ -136,9 +136,9 @@ mod tests {
 
         async fn revoke(
             &self,
-            _ctx: &klynt_domain::ctx::Ctx,
-            token: &klynt_domain::session::SessionToken,
-        ) -> Result<(), klynt_domain::errors::DomainError> {
+            _ctx: &klynt_core::ctx::Ctx,
+            token: &klynt_storage::session::SessionToken,
+        ) -> Result<(), klynt_shared_domain::DomainError> {
             self.sessions.lock().unwrap().remove(token);
             Ok(())
         }

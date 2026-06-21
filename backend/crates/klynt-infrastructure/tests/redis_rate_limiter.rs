@@ -1,8 +1,8 @@
 //! Integration tests for the Redis-backed rate limiter.
 
-use klynt_domain::config::RateLimiterConfig;
-use klynt_domain::ports::RateLimiter;
+use klynt_infrastructure::config::RateLimiterConfig;
 use klynt_infrastructure::rate_limiter_redis::RedisRateLimiter;
+use klynt_storage::ports::RateLimiter;
 use std::net::{IpAddr, Ipv4Addr};
 use uuid::Uuid;
 

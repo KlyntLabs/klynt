@@ -1,8 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
-    # === Existing (keep for Phase 1) ===
-    "crates/klynt-domain",
+    # === Existing ===
     "crates/klynt-infrastructure",
     "crates/klynt-server",
 
@@ -25,7 +24,7 @@ members = [
     "crates/services/user_service",
 
     # === NEW - Phase 3 ===
-    "crates/gateways/api_gateway",
+    "crates/gateways",
 ]
 
 [workspace.package]
@@ -91,7 +90,6 @@ redis = { version = "0.27", features = ["tokio-comp"] }
 prometheus = { version = "0.13", default-features = false }
 
 # Internal crates
-klynt-domain = { path = "crates/klynt-domain" }
 klynt-infrastructure = { path = "crates/klynt-infrastructure" }
 
 # === NEW - Internal crates ===
@@ -111,7 +109,7 @@ auth_service = { path = "crates/services/auth_service" }
 user_service = { path = "crates/services/user_service" }
 
 # === NEW - Phase 3 ===
-api_gateway = { path = "crates/gateways/api_gateway" }
+gateways = { path = "crates/gateways" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

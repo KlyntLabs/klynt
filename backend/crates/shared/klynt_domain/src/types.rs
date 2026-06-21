@@ -140,3 +140,56 @@ pub enum UserStatus {
     #[default]
     Pending,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn email_stores_lower_case_value() {
+        let email = Email::new("Admin@Klynt.Dev".to_string());
+        assert_eq!(email.inner(), "admin@klynt.dev");
+        assert!(email.validate());
+        assert_eq!(email.to_string(), "admin@klynt.dev");
+    }
+
+    #[test]
+    fn timestamp_now_is_past_or_present() {
+        let ts = Timestamp::now();
+        let _past: bool = ts.is_past();
+        assert_eq!(ts, ts);
+    }
+
+    #[test]
+    fn pagination_request_clamps_values() {
+        let req = PaginationRequest::new(0, 200);
+        assert_eq!(req.page, 1);
+        assert_eq!(req.page_size, 100);
+        assert_eq!(req.offset(), 0);
+
+        let first = PaginationRequest::first();
+        assert_eq!(first.page, 1);
+        assert_eq!(first.page_size, 20);
+        assert_eq!(first.offset(), 0);
+    }
+
+    #[test]
+    fn paginated_response_calculates_total_pages() {
+        let resp: PaginatedResponse<i32> = PaginatedResponse::new(vec![1, 2, 3], 23, 1, 10);
+        assert_eq!(resp.total_count, 23);
+        assert_eq!(resp.total_pages, 3);
+
+        let empty = PaginatedResponse::<i32>::empty(1, 10);
+        assert!(empty.items.is_empty());
+        assert_eq!(empty.total_pages, 1);
+    }
+
+    #[test]
+    fn user_role_and_status_serialize() {
+        let role = UserRole::Instructor;
+        assert_eq!(serde_json::to_string(&role).unwrap(), "\"instructor\"");
+
+        let status = UserStatus::Pending;
+        assert_eq!(serde_json::to_string(&status).unwrap(), "\"pending\"");
+    }
+}

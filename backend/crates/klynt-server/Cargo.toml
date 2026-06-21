@@ -13,7 +13,7 @@ doctest = false
 workspace = true
 
 [dependencies]
-api_gateway = { workspace = true }
+gateways = { workspace = true }
 
 tokio = { workspace = true }
 dotenvy = { workspace = true }

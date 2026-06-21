@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use crate::application::ports::PasswordHasher;
 use crate::error::AuthError;
 
-/// Adapter wrapping a legacy [`klynt_domain::ports::PasswordHasher`].
+/// Adapter wrapping a legacy [`klynt_storage::ports::PasswordHasher`].
 pub struct PasswordHasherAdapter<T> {
     inner: T,
 }
@@ -19,7 +19,7 @@ impl<T> PasswordHasherAdapter<T> {
 #[async_trait]
 impl<T> PasswordHasher for PasswordHasherAdapter<T>
 where
-    T: klynt_domain::ports::PasswordHasher,
+    T: klynt_storage::ports::PasswordHasher,
 {
     async fn hash(&self, password: &str) -> Result<String, AuthError> {
         self.inner
@@ -32,7 +32,7 @@ where
     }
 
     async fn verify(&self, password: &str, hash: &str) -> Result<bool, AuthError> {
-        let hashed = klynt_domain::ports::HashedPassword::new(hash);
+        let hashed = klynt_storage::ports::HashedPassword::new(hash);
         self.inner.verify(password, &hashed).await.map_err(|e| {
             AuthError::Domain(klynt_shared_domain::DomainError::Internal(e.to_string()))
         })

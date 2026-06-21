@@ -7,8 +7,8 @@ use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
-use klynt_domain::errors::DomainError;
-use klynt_domain::ports::IdempotencyStore;
+use klynt_shared_domain::DomainError;
+use klynt_storage::ports::IdempotencyStore;
 
 /// Redis-backed idempotency store.
 ///

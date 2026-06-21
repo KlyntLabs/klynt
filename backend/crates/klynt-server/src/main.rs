@@ -1,4 +1,4 @@
-use api_gateway::{run, Config, GatewayError, Services};
+use gateways::{run, Config, GatewayError, Services};
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {

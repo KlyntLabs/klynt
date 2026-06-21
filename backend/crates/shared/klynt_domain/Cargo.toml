@@ -12,3 +12,9 @@ serde = { workspace = true }
 
 # Time
 chrono = { workspace = true }
+
+# Internal crates
+klynt_utils = { path = "../klynt_utils" }
+
+[dev-dependencies]
+serde_json = { workspace = true }

@@ -1,9 +1,9 @@
 use std::sync::Mutex;
 
 use async_trait::async_trait;
-use klynt_domain::email_content::EmailContent;
-use klynt_domain::errors::DomainError;
-use klynt_domain::ports::EmailService;
+use klynt_shared_domain::DomainError;
+use klynt_storage::email_content::EmailContent;
+use klynt_storage::ports::EmailService;
 
 /// A recorded email captured by the mock adapter.
 #[derive(Debug, Clone)]
@@ -102,8 +102,8 @@ impl EmailService for MockEmailService {
 
 #[cfg(test)]
 mod tests {
-    use klynt_domain::models::Email;
-    use klynt_domain::ports::EmailService;
+    use klynt_storage::ports::EmailService;
+    use klynt_utils::Email;
 
     use super::MockEmailService;
 
@@ -111,7 +111,7 @@ mod tests {
     async fn mock_email_service_sends_verification() {
         let service = MockEmailService::new();
         let email = Email::parse("test@example.com").unwrap();
-        let content = klynt_domain::email_content::VerificationEmail::new(
+        let content = klynt_storage::email_content::VerificationEmail::new(
             email,
             "test-token".to_string(),
             "https://klynt.edu".to_string(),
@@ -129,7 +129,7 @@ mod tests {
     async fn mock_email_service_sends_password_reset() {
         let service = MockEmailService::new();
         let email = Email::parse("test@example.com").unwrap();
-        let content = klynt_domain::email_content::PasswordResetEmail::new(
+        let content = klynt_storage::email_content::PasswordResetEmail::new(
             email,
             "reset-token".to_string(),
             "https://klynt.edu".to_string(),

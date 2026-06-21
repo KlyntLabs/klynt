@@ -9,8 +9,8 @@ klynt_core = { path = "../../../crates/core/klynt_core" }
 klynt_shared_domain = { path = "../../../crates/shared/klynt_domain" }
 klynt_utils = { path = "../../../crates/shared/klynt_utils" }
 
-# === Existing (will be removed after extraction) ===
-klynt-domain = { path = "../../../crates/klynt-domain" }
+# === Storage and infrastructure adapters ===
+klynt_storage = { path = "../../../crates/infrastructure/klynt_storage" }
 klynt_audit = { path = "../../../crates/infrastructure/klynt_audit" }
 klynt-infrastructure = { path = "../../../crates/klynt-infrastructure" }
 

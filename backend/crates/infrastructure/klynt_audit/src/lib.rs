@@ -1,11 +1,13 @@
+pub mod types;
+
 use std::sync::Arc;
 use uuid::Uuid;
 
-use klynt_domain::audit::{AuditAction, AuditEvent, ResourceType};
-use klynt_domain::ctx::Ctx;
-use klynt_domain::errors::DomainError;
-use klynt_domain::models::UserId;
-use klynt_domain::repositories::AuditEventRepository;
+use klynt_core::ctx::Ctx;
+use klynt_utils::UserId;
+
+use crate::types::{AuditAction, AuditEvent, AuditEventRepository, ResourceType};
+use klynt_shared_domain::DomainError;
 
 /// Audit logging service.
 ///
@@ -28,7 +30,7 @@ impl AuditService {
     ) -> Result<(), DomainError> {
         let event = AuditEvent::new(AuditAction::UserRegistered, ResourceType::User)
             .with_actor(user_id)
-            .with_resource(user_id.0)
+            .with_resource(user_id.inner())
             .with_request_id(ctx.request_id);
 
         let event = if let Some(ip) = ip {
@@ -44,7 +46,7 @@ impl AuditService {
     pub async fn log_email_verified(&self, ctx: &Ctx, user_id: UserId) -> Result<(), DomainError> {
         let event = AuditEvent::new(AuditAction::UserEmailVerified, ResourceType::User)
             .with_actor(user_id)
-            .with_resource(user_id.0)
+            .with_resource(user_id.inner())
             .with_request_id(ctx.request_id);
 
         self.repo.log(ctx, event).await
@@ -76,7 +78,7 @@ impl AuditService {
     pub async fn log_password_reset(&self, ctx: &Ctx, user_id: UserId) -> Result<(), DomainError> {
         let event = AuditEvent::new(AuditAction::UserPasswordReset, ResourceType::User)
             .with_actor(user_id)
-            .with_resource(user_id.0)
+            .with_resource(user_id.inner())
             .with_request_id(ctx.request_id);
 
         self.repo.log(ctx, event).await
@@ -86,7 +88,7 @@ impl AuditService {
     pub async fn log_profile_updated(&self, ctx: &Ctx, user_id: UserId) -> Result<(), DomainError> {
         let event = AuditEvent::new(AuditAction::UserProfileUpdated, ResourceType::User)
             .with_actor(user_id)
-            .with_resource(user_id.0)
+            .with_resource(user_id.inner())
             .with_request_id(ctx.request_id);
 
         self.repo.log(ctx, event).await
@@ -100,7 +102,7 @@ impl AuditService {
     ) -> Result<(), DomainError> {
         let event = AuditEvent::new(AuditAction::UserPasswordChanged, ResourceType::User)
             .with_actor(user_id)
-            .with_resource(user_id.0)
+            .with_resource(user_id.inner())
             .with_request_id(ctx.request_id);
 
         self.repo.log(ctx, event).await
@@ -110,7 +112,7 @@ impl AuditService {
     pub async fn log_user_deleted(&self, ctx: &Ctx, user_id: UserId) -> Result<(), DomainError> {
         let event = AuditEvent::new(AuditAction::UserDeleted, ResourceType::User)
             .with_actor(user_id)
-            .with_resource(user_id.0)
+            .with_resource(user_id.inner())
             .with_request_id(ctx.request_id);
 
         self.repo.log(ctx, event).await
@@ -195,9 +197,7 @@ mod tests {
     #[async_trait::async_trait]
     impl AuditEventRepository for ErrorRepo {
         async fn log(&self, _ctx: &Ctx, _event: AuditEvent) -> Result<(), DomainError> {
-            Err(DomainError::Internal(
-                "audit storage failed".to_string().into(),
-            ))
+            Err(DomainError::Internal("audit storage failed".to_string()))
         }
     }
 
@@ -225,7 +225,7 @@ mod tests {
         assert_eq!(event.action, AuditAction::UserRegistered);
         assert_eq!(event.resource_type, ResourceType::User);
         assert_eq!(event.actor_user_id, Some(user_id));
-        assert_eq!(event.resource_id, Some(user_id.0));
+        assert_eq!(event.resource_id, Some(user_id.inner()));
         assert_eq!(event.request_id, Some(ctx.request_id));
         assert_eq!(event.actor_ip_address, Some("127.0.0.1".to_string()));
         assert!(event.success);
@@ -262,7 +262,7 @@ mod tests {
         assert_eq!(event.action, AuditAction::UserEmailVerified);
         assert_eq!(event.resource_type, ResourceType::User);
         assert_eq!(event.actor_user_id, Some(user_id));
-        assert_eq!(event.resource_id, Some(user_id.0));
+        assert_eq!(event.resource_id, Some(user_id.inner()));
         assert_eq!(event.request_id, Some(ctx.request_id));
         assert!(event.success);
     }
@@ -307,7 +307,7 @@ mod tests {
         assert_eq!(event.action, AuditAction::UserPasswordReset);
         assert_eq!(event.resource_type, ResourceType::User);
         assert_eq!(event.actor_user_id, Some(user_id));
-        assert_eq!(event.resource_id, Some(user_id.0));
+        assert_eq!(event.resource_id, Some(user_id.inner()));
         assert_eq!(event.request_id, Some(ctx.request_id));
         assert!(event.success);
     }

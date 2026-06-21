@@ -9,3 +9,6 @@ chrono = { workspace = true }
 
 # IDs
 uuid = { workspace = true }
+
+# Internal crates
+klynt_utils = { path = "../../shared/klynt_utils" }

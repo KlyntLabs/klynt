@@ -3,10 +3,10 @@ use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use klynt_domain::ctx::Ctx;
-use klynt_domain::errors::DomainError;
-use klynt_domain::models::UserId;
-use klynt_domain::session::{Session, SessionStore, SessionToken};
+use klynt_core::ctx::Ctx;
+use klynt_shared_domain::DomainError;
+use klynt_storage::session::{Session, SessionStore, SessionToken};
+use klynt_utils::UserId;
 
 /// PostgreSQL implementation of the session store.
 pub struct PgSessionStore {

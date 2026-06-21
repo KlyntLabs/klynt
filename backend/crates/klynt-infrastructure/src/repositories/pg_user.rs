@@ -3,11 +3,12 @@ use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use klynt_domain::ctx::Ctx;
-use klynt_domain::errors::DomainError;
-use klynt_domain::models::{Email, GlobalRole, Role, User, UserId, UserStatus};
-use klynt_domain::ports::HashedPassword;
-use klynt_domain::repositories::{CreateResult, UserRepository};
+use crate::repositories::User;
+use crate::repositories::{CreateResult, UserRepository};
+use klynt_core::ctx::Ctx;
+use klynt_shared_domain::DomainError;
+use klynt_storage::ports::HashedPassword;
+use klynt_utils::{Email, GlobalRole, Role, UserId, UserStatus};
 
 /// PostgreSQL implementation of the user repository.
 pub struct PgUserRepository {
@@ -183,7 +184,7 @@ impl UserRepository for PgUserRepository {
         .map_err(DomainError::internal)?;
 
         if result.rows_affected() == 0 {
-            return Err(DomainError::NotFound);
+            return Err(DomainError::NotFound("not found".to_string()));
         }
         Ok(())
     }
@@ -208,7 +209,7 @@ impl UserRepository for PgUserRepository {
         .map_err(DomainError::internal)?;
 
         if result.rows_affected() == 0 {
-            return Err(DomainError::NotFound);
+            return Err(DomainError::NotFound("not found".to_string()));
         }
         Ok(())
     }
@@ -323,7 +324,7 @@ impl PgUserRepository {
         .map_err(DomainError::internal)?;
 
         if result.rows_affected() == 0 {
-            return Err(DomainError::NotFound);
+            return Err(DomainError::NotFound("not found".to_string()));
         }
         Ok(())
     }
@@ -343,7 +344,7 @@ impl PgUserRepository {
         .map_err(DomainError::internal)?;
 
         if result.rows_affected() == 0 {
-            return Err(DomainError::NotFound);
+            return Err(DomainError::NotFound("not found".to_string()));
         }
         Ok(())
     }

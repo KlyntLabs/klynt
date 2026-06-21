@@ -7,13 +7,13 @@ use klynt_core::ctx::ExecutionContext;
 use crate::application::ports::EmailSender;
 use crate::error::AuthError;
 
-/// Adapter wrapping a legacy [`klynt_domain::ports::SharedEmailService`].
+/// Adapter wrapping a legacy [`klynt_storage::ports::SharedEmailService`].
 pub struct EmailSenderAdapter {
-    inner: klynt_domain::ports::SharedEmailService,
+    inner: klynt_storage::ports::SharedEmailService,
 }
 
 impl EmailSenderAdapter {
-    pub fn new(inner: klynt_domain::ports::SharedEmailService) -> Self {
+    pub fn new(inner: klynt_storage::ports::SharedEmailService) -> Self {
         Self { inner }
     }
 }
@@ -27,13 +27,13 @@ impl EmailSender for EmailSenderAdapter {
         token: &str,
         base_url: &str,
     ) -> Result<(), AuthError> {
-        let legacy_email = klynt_domain::models::Email::parse(email).map_err(|e| {
+        let legacy_email = klynt_utils::Email::parse(email).map_err(|e| {
             AuthError::Domain(klynt_shared_domain::DomainError::InvalidInput(
                 e.to_string(),
             ))
         })?;
 
-        let content = klynt_domain::email_content::VerificationEmail::new(
+        let content = klynt_storage::email_content::VerificationEmail::new(
             legacy_email,
             token.to_string(),
             base_url.to_string(),
@@ -51,13 +51,13 @@ impl EmailSender for EmailSenderAdapter {
         token: &str,
         base_url: &str,
     ) -> Result<(), AuthError> {
-        let legacy_email = klynt_domain::models::Email::parse(email).map_err(|e| {
+        let legacy_email = klynt_utils::Email::parse(email).map_err(|e| {
             AuthError::Domain(klynt_shared_domain::DomainError::InvalidInput(
                 e.to_string(),
             ))
         })?;
 
-        let content = klynt_domain::email_content::PasswordResetEmail::new(
+        let content = klynt_storage::email_content::PasswordResetEmail::new(
             legacy_email,
             token.to_string(),
             base_url.to_string(),

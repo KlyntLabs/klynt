@@ -1,7 +1,7 @@
 //! Integration tests for the Redis-backed idempotency store.
 
-use klynt_domain::ports::IdempotencyStore;
 use klynt_infrastructure::repositories::redis_idempotency::RedisIdempotencyStore;
+use klynt_storage::ports::IdempotencyStore;
 use uuid::Uuid;
 
 fn redis_url() -> String {

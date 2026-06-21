@@ -39,36 +39,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 
 [[package]]
-name = "api_gateway"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "auth_service",
- "axum",
- "chrono",
- "config",
- "klynt-domain",
- "klynt-infrastructure",
- "klynt_audit",
- "klynt_contracts",
- "klynt_core",
- "klynt_shared_domain",
- "klynt_tracing",
- "klynt_utils",
- "serde",
- "serde_json",
- "sqlx",
- "thiserror",
- "tokio",
- "tower",
- "tower-http",
- "tracing",
- "user_service",
- "uuid",
-]
-
-[[package]]
 name = "arc-swap"
 version = "1.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -140,12 +110,12 @@ dependencies = [
  "async-trait",
  "base64",
  "chrono",
- "klynt-domain",
  "klynt-infrastructure",
  "klynt_audit",
  "klynt_contracts",
  "klynt_core",
  "klynt_shared_domain",
+ "klynt_storage",
  "klynt_utils",
  "rand 0.8.6",
  "serde",
@@ -750,6 +720,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "gateways"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "auth_service",
+ "axum",
+ "chrono",
+ "config",
+ "klynt-infrastructure",
+ "klynt_audit",
+ "klynt_contracts",
+ "klynt_core",
+ "klynt_shared_domain",
+ "klynt_storage",
+ "klynt_tracing",
+ "klynt_utils",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "thiserror",
+ "tokio",
+ "tower",
+ "tower-http",
+ "tracing",
+ "user_service",
+ "uuid",
+]
+
+[[package]]
 name = "generic-array"
 version = "0.14.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1143,23 +1143,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "klynt-domain"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "axum",
- "base64",
- "chrono",
- "rand 0.8.6",
- "serde",
- "serde_json",
- "sha2",
- "thiserror",
- "tokio",
- "uuid",
-]
-
-[[package]]
 name = "klynt-infrastructure"
 version = "0.1.0"
 dependencies = [
@@ -1168,14 +1151,18 @@ dependencies = [
  "base64",
  "chrono",
  "config",
- "klynt-domain",
+ "klynt_audit",
+ "klynt_core",
  "klynt_shared_domain",
+ "klynt_storage",
+ "klynt_utils",
  "rand 0.8.6",
  "rand_core 0.6.4",
  "redis",
  "serde",
  "serde_json",
  "sqlx",
+ "thiserror",
  "tokio",
  "tracing",
  "uuid",
@@ -1186,8 +1173,8 @@ name = "klynt-server"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "api_gateway",
  "dotenvy",
+ "gateways",
  "tokio",
 ]
 
@@ -1196,7 +1183,11 @@ name = "klynt_audit"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "klynt-domain",
+ "chrono",
+ "klynt_core",
+ "klynt_shared_domain",
+ "klynt_utils",
+ "serde",
  "serde_json",
  "tokio",
  "tracing",
@@ -1220,6 +1211,7 @@ name = "klynt_core"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "klynt_utils",
  "uuid",
 ]
 
@@ -1239,7 +1231,9 @@ name = "klynt_shared_domain"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "klynt_utils",
  "serde",
+ "serde_json",
  "thiserror",
 ]
 
@@ -1248,9 +1242,19 @@ name = "klynt_storage"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "base64",
+ "chrono",
+ "klynt_core",
+ "klynt_shared_domain",
+ "klynt_utils",
+ "rand 0.8.6",
+ "serde",
+ "sha2",
  "sqlx",
  "thiserror",
+ "tokio",
  "tracing",
+ "uuid",
 ]
 
 [[package]]
@@ -1272,6 +1276,7 @@ dependencies = [
  "rand 0.8.6",
  "serde",
  "sha2",
+ "thiserror",
  "time",
  "ulid",
  "uuid",
@@ -2793,11 +2798,11 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "chrono",
- "klynt-domain",
  "klynt-infrastructure",
  "klynt_audit",
  "klynt_core",
  "klynt_shared_domain",
+ "klynt_storage",
  "klynt_utils",
  "serde",
  "sqlx",

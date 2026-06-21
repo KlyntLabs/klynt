@@ -1,10 +1,10 @@
 //! Integration tests for the PostgreSQL session store.
 
 use chrono::{Duration, Utc};
-use klynt_domain::ctx::Ctx;
-use klynt_domain::models::{Email, UserId, UserStatus};
-use klynt_domain::session::SessionStore;
+use klynt_core::ctx::Ctx;
 use klynt_infrastructure::repositories::pg_session::PgSessionStore;
+use klynt_storage::session::SessionStore;
+use klynt_utils::{Email, UserId, UserStatus};
 use sqlx::PgPool;
 use uuid::Uuid;
 

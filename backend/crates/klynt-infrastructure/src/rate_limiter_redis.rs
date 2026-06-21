@@ -4,9 +4,9 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use redis::aio::MultiplexedConnection;
 
-use klynt_domain::config::RateLimiterConfig;
-use klynt_domain::errors::DomainError;
-use klynt_domain::ports::{RateLimitDecision, RateLimiter as RateLimiterPort};
+use crate::config::RateLimiterConfig;
+use klynt_shared_domain::DomainError;
+use klynt_storage::ports::{RateLimitDecision, RateLimiter as RateLimiterPort};
 
 /// Redis-backed fixed-window rate limiter.
 ///

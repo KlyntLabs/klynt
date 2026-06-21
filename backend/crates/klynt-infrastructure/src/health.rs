@@ -2,7 +2,7 @@ use std::time::Instant;
 
 use async_trait::async_trait;
 
-use klynt_domain::ports::{ComponentHealth, HealthCheck};
+use klynt_storage::ports::{ComponentHealth, HealthCheck};
 
 use crate::rate_limiter_redis::RedisRateLimiter;
 use crate::repositories::pg_session::PgSessionStore;

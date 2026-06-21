@@ -4,13 +4,17 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-klynt-domain = { workspace = true }
+klynt_core = { path = "../../core/klynt_core" }
+klynt_utils = { path = "../../shared/klynt_utils" }
+klynt_shared_domain = { path = "../../shared/klynt_domain" }
 
 tokio = { workspace = true }
 async-trait = { workspace = true }
 tracing = { workspace = true }
 serde_json = { workspace = true }
 uuid = { workspace = true }
+chrono = { workspace = true }
+serde = { workspace = true }
 
 [lints]
 workspace = true

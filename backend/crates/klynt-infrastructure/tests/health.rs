@@ -1,12 +1,12 @@
 //! Integration tests for infrastructure health checks.
 
-use klynt_domain::config::RateLimiterConfig;
-use klynt_domain::ports::HealthCheck;
+use klynt_infrastructure::config::RateLimiterConfig;
 use klynt_infrastructure::{
     password_hasher::Argon2PasswordHasher,
     rate_limiter_redis::RedisRateLimiter,
     repositories::{pg_session::PgSessionStore, pg_user::PgUserRepository},
 };
+use klynt_storage::ports::HealthCheck;
 use sqlx::PgPool;
 
 fn database_url() -> String {

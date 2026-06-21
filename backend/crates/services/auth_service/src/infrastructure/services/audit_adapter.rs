@@ -132,7 +132,7 @@ mod tests {
     use klynt_core::ctx::RequestContext;
 
     struct CapturingRepo {
-        events: Mutex<Vec<klynt_domain::audit::AuditEvent>>,
+        events: Mutex<Vec<klynt_audit::types::AuditEvent>>,
     }
 
     impl Default for CapturingRepo {
@@ -144,12 +144,12 @@ mod tests {
     }
 
     #[async_trait]
-    impl klynt_domain::repositories::AuditEventRepository for CapturingRepo {
+    impl klynt_infrastructure::repositories::AuditEventRepository for CapturingRepo {
         async fn log(
             &self,
-            _ctx: &klynt_domain::ctx::Ctx,
-            event: klynt_domain::audit::AuditEvent,
-        ) -> Result<(), klynt_domain::errors::DomainError> {
+            _ctx: &klynt_core::ctx::Ctx,
+            event: klynt_audit::types::AuditEvent,
+        ) -> Result<(), klynt_shared_domain::DomainError> {
             self.events.lock().unwrap().push(event);
             Ok(())
         }
@@ -173,7 +173,7 @@ mod tests {
         assert_eq!(events.len(), 1);
         assert_eq!(
             events[0].action,
-            klynt_domain::audit::AuditAction::UserRegistered
+            klynt_audit::types::AuditAction::UserRegistered
         );
     }
 
@@ -189,7 +189,7 @@ mod tests {
         assert_eq!(events.len(), 1);
         assert_eq!(
             events[0].action,
-            klynt_domain::audit::AuditAction::UserEmailVerified
+            klynt_audit::types::AuditAction::UserEmailVerified
         );
     }
 
@@ -205,7 +205,7 @@ mod tests {
         assert_eq!(events.len(), 1);
         assert_eq!(
             events[0].action,
-            klynt_domain::audit::AuditAction::UserPasswordReset
+            klynt_audit::types::AuditAction::UserPasswordReset
         );
     }
 }
