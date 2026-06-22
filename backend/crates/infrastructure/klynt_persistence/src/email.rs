@@ -3,7 +3,10 @@ use std::sync::Mutex;
 use crate::email_content::EmailContent;
 use crate::ports::EmailService;
 use async_trait::async_trait;
+use klynt_base::ctx::ExecutionContext;
+use klynt_base::ports::email::{EmailError, EmailSender};
 use klynt_common::domain::DomainError;
+use klynt_common::util::Email;
 
 /// A recorded email captured by the mock adapter.
 #[derive(Debug, Clone)]
@@ -100,9 +103,51 @@ impl EmailService for MockEmailService {
     }
 }
 
+#[async_trait]
+impl EmailSender for MockEmailService {
+    async fn send_verification(
+        &self,
+        _ctx: &ExecutionContext,
+        email: &Email,
+        token: &str,
+        base_url: &str,
+    ) -> Result<(), EmailError> {
+        let content = crate::email_content::VerificationEmail::new(
+            email.clone(),
+            token.to_string(),
+            base_url.to_string(),
+        );
+        self.send(Box::new(content))
+            .await
+            .map_err(|e| EmailError::SendFailed(e.to_string()))
+    }
+
+    async fn send_password_reset(
+        &self,
+        _ctx: &ExecutionContext,
+        email: &str,
+        token: &str,
+        base_url: &str,
+    ) -> Result<(), EmailError> {
+        let parsed_email =
+            Email::parse(email).map_err(|e| EmailError::SendFailed(e.to_string()))?;
+
+        let content = crate::email_content::PasswordResetEmail::new(
+            parsed_email,
+            token.to_string(),
+            base_url.to_string(),
+        );
+        self.send(Box::new(content))
+            .await
+            .map_err(|e| EmailError::SendFailed(e.to_string()))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::ports::EmailService;
+    use klynt_base::ctx::{ExecutionContext, RequestContext};
+    use klynt_base::ports::email::EmailSender;
     use klynt_common::util::Email;
 
     use super::MockEmailService;
@@ -137,6 +182,49 @@ mod tests {
         let result = service.send(Box::new(content)).await;
         assert!(result.is_ok());
 
+        let sent = service.sent_emails();
+        assert_eq!(sent.len(), 1);
+        assert_eq!(sent[0].subject, "Reset your Klynt password");
+        assert!(sent[0].body_text.contains("reset-token"));
+    }
+
+    #[tokio::test]
+    async fn email_sender_trait_sends_verification() {
+        let service = MockEmailService::new();
+        let email = Email::parse("test@example.com").unwrap();
+        let ctx = ExecutionContext::new(RequestContext::new());
+
+        let result = EmailSender::send_verification(
+            &service,
+            &ctx,
+            &email,
+            "verify-token",
+            "https://klynt.edu",
+        )
+        .await;
+
+        assert!(result.is_ok());
+        let sent = service.sent_emails();
+        assert_eq!(sent.len(), 1);
+        assert_eq!(sent[0].subject, "Verify your Klynt account");
+        assert!(sent[0].body_text.contains("verify-token"));
+    }
+
+    #[tokio::test]
+    async fn email_sender_trait_sends_password_reset() {
+        let service = MockEmailService::new();
+        let ctx = ExecutionContext::new(RequestContext::new());
+
+        let result = EmailSender::send_password_reset(
+            &service,
+            &ctx,
+            "test@example.com",
+            "reset-token",
+            "https://klynt.edu",
+        )
+        .await;
+
+        assert!(result.is_ok());
         let sent = service.sent_emails();
         assert_eq!(sent.len(), 1);
         assert_eq!(sent[0].subject, "Reset your Klynt password");

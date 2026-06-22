@@ -32,7 +32,7 @@ pub(crate) async fn execute(
             service
                 .internal()
                 .audit_logger
-                .log_login_failed(ctx, &request.email, "invalid credentials".to_string())
+                .log_login_failed(ctx, &request.email, "invalid credentials")
                 .await;
             return Err(AuthError::invalid_credentials());
         }
@@ -48,7 +48,7 @@ pub(crate) async fn execute(
         service
             .internal()
             .audit_logger
-            .log_login_failed(ctx, &request.email, "invalid credentials".to_string())
+            .log_login_failed(ctx, &request.email, "invalid credentials")
             .await;
         return Err(AuthError::invalid_credentials());
     }
@@ -57,7 +57,7 @@ pub(crate) async fn execute(
         service
             .internal()
             .audit_logger
-            .log_login_failed(ctx, &request.email, "account inactive".to_string())
+            .log_login_failed(ctx, &request.email, "account inactive")
             .await;
         return Err(AuthError::account_inactive());
     }
@@ -72,7 +72,7 @@ pub(crate) async fn execute(
     service
         .internal()
         .audit_logger
-        .log_session_created(ctx, user.id, session_token.0)
+        .log_session_created(ctx, user.id, session_token.to_string())
         .await;
 
     let token_string = session_token.to_string();

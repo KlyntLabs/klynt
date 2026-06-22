@@ -2,15 +2,12 @@
 
 use std::sync::Arc;
 
-use klynt_base::ports::{Clock, PasswordHasher, SystemClock};
+use klynt_base::ports::{AuditLogger, Clock, EmailSender, PasswordHasher, SystemClock};
 
-use crate::application::ports::{AuditLogger, EmailSender, UserRepository};
+use crate::application::ports::UserRepository;
 use crate::domain::{SessionStore, TokenStore};
 use crate::error::AuthError;
-use crate::infrastructure::services::{
-    AuditLoggerAdapter as AuthAuditLoggerAdapter, EmailSenderAdapter,
-    PasswordHasherAdapter as AuthPasswordHasherAdapter,
-};
+use crate::infrastructure::services::PasswordHasherAdapter as AuthPasswordHasherAdapter;
 use crate::AuthConfig;
 use crate::AuthService;
 use crate::Dependencies;
@@ -121,9 +118,7 @@ impl AuthBuilder {
         });
 
         let email_sender = self.email_sender.unwrap_or_else(|| {
-            let email_service: klynt_persistence::ports::SharedEmailService =
-                Arc::new(klynt_persistence::email::MockEmailService::new());
-            Arc::new(EmailSenderAdapter::new(email_service))
+            Arc::new(klynt_persistence::email::MockEmailService::new()) as Arc<dyn EmailSender>
         });
 
         let audit_logger = self.audit_logger.unwrap_or_else(|| {
@@ -132,8 +127,7 @@ impl AuthBuilder {
                     pool.clone(),
                 ),
             );
-            let audit_service = Arc::new(klynt_telemetry::audit::AuditService::new(audit_repo));
-            Arc::new(AuthAuditLoggerAdapter::new(audit_service))
+            Arc::new(klynt_telemetry::audit::AuditService::new(audit_repo)) as Arc<dyn AuditLogger>
         });
 
         let password_hasher = self.password_hasher.unwrap_or_else(|| {

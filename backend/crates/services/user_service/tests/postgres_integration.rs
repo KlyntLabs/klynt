@@ -10,8 +10,7 @@ use klynt_base::ports::PasswordHasher;
 use klynt_common::domain::{PaginationRequest, UserStatus};
 use klynt_common::util::UserId;
 use user_service::{
-    application::ports::{AuditLogger, UserRepository},
-    infrastructure::services::{AuditLoggerAdapter, PasswordHasherAdapter},
+    application::ports::UserRepository, infrastructure::services::PasswordHasherAdapter,
 };
 
 fn database_url() -> Option<String> {
@@ -104,7 +103,7 @@ async fn password_hasher_adapter_hashes_and_verifies_with_argon2() {
 }
 
 #[tokio::test]
-async fn audit_logger_adapter_creates_profile_updated_event() {
+async fn audit_service_creates_profile_updated_event() {
     let Some(pool) = setup_pool().await else {
         return;
     };
@@ -113,9 +112,8 @@ async fn audit_logger_adapter_creates_profile_updated_event() {
         klynt_persistence::repositories::sqlx_audit_repo::PgAuditEventRepository::new(pool),
     );
     let audit_service = Arc::new(klynt_telemetry::audit::AuditService::new(audit_repo));
-    let adapter = AuditLoggerAdapter::new(audit_service);
     let ctx = test_ctx();
     let user_id = UserId::new();
 
-    adapter.log_profile_updated(&ctx, user_id).await;
+    let _ = audit_service.log_profile_updated(&ctx, user_id).await;
 }

@@ -173,6 +173,24 @@ impl Default for TestAuditLogger {
 
 #[async_trait]
 impl AuditLogger for TestAuditLogger {
+    async fn log_login_success(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
+
+    async fn log_login_failed(&self, _ctx: &ExecutionContext, _email: &str, _error: &str) {}
+
+    async fn log_user_registered(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
+
+    async fn log_email_verified(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
+
+    async fn log_password_reset(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
+
+    async fn log_session_created(
+        &self,
+        _ctx: &ExecutionContext,
+        _user_id: UserId,
+        _session_id: String,
+    ) {
+    }
+
     async fn log_profile_updated(&self, _ctx: &ExecutionContext, _user_id: UserId) {
         self.events
             .lock()

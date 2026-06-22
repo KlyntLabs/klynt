@@ -36,7 +36,7 @@ pub(crate) async fn execute(
         .create_pending_user(
             ctx,
             request.full_name.unwrap_or_default(),
-            email,
+            email.clone(),
             password_hash,
         )
         .await?;
@@ -63,12 +63,7 @@ pub(crate) async fn execute(
     service
         .internal()
         .email_sender
-        .send_verification(
-            ctx,
-            &request.email,
-            &token.plaintext,
-            &service.config().base_url,
-        )
+        .send_verification(ctx, &email, &token.plaintext, &service.config().base_url)
         .await?;
 
     Ok(user_id)

@@ -126,8 +126,28 @@ pub struct StubUserAuditLogger;
 
 #[async_trait]
 impl UserAuditLogger for StubUserAuditLogger {
+    async fn log_login_success(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
+
+    async fn log_login_failed(&self, _ctx: &ExecutionContext, _email: &str, _error: &str) {}
+
+    async fn log_user_registered(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
+
+    async fn log_email_verified(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
+
+    async fn log_password_reset(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
+
+    async fn log_session_created(
+        &self,
+        _ctx: &ExecutionContext,
+        _user_id: UserId,
+        _session_id: String,
+    ) {
+    }
+
     async fn log_profile_updated(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
+
     async fn log_password_changed(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
+
     async fn log_user_deleted(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
 }
 

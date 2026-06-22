@@ -2,7 +2,9 @@
 
 use axum::http::StatusCode;
 
-use klynt_base::ports::{HttpError, PasswordHashError, RepositoryError, SessionError, TokenError};
+use klynt_base::ports::{
+    EmailError, HttpError, PasswordHashError, RepositoryError, SessionError, TokenError,
+};
 use klynt_common::domain::DomainError;
 
 use crate::domain::PasswordPolicyError;
@@ -82,6 +84,12 @@ impl From<TokenError> for AuthError {
             TokenError::Invalid | TokenError::AlreadyUsed => Self::InvalidToken,
             TokenError::Database(msg) | TokenError::Internal(msg) => Self::Internal(msg),
         }
+    }
+}
+
+impl From<EmailError> for AuthError {
+    fn from(err: EmailError) -> Self {
+        Self::Domain(DomainError::internal_msg(err.to_string()))
     }
 }
 

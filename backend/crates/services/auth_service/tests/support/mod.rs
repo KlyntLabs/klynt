@@ -12,9 +12,9 @@ use chrono::{DateTime, Utc};
 use auth_service::application::ports::{AuditLogger, EmailSender, UserRepository};
 use auth_service::domain::{Session, SessionError, SessionStore, SessionToken, TokenKind};
 use auth_service::domain::{TokenError, TokenStore};
-use auth_service::error::AuthError;
 use auth_service::{AuthConfig, AuthService, Dependencies};
 use klynt_base::ctx::ExecutionContext;
+use klynt_base::ports::email::EmailError;
 use klynt_base::ports::repository::RepositoryError;
 use klynt_base::testkit::sample_user;
 use klynt_common::domain::{Email, PaginationRequest, User, UserRole, UserStatus};
@@ -279,13 +279,13 @@ impl EmailSender for FakeEmailSender {
     async fn send_verification(
         &self,
         _ctx: &ExecutionContext,
-        email: &str,
+        email: &Email,
         token: &str,
         base_url: &str,
-    ) -> Result<(), AuthError> {
+    ) -> Result<(), EmailError> {
         self.sent.lock().unwrap().push((
             "verification".to_string(),
-            email.to_string(),
+            email.as_str().to_string(),
             format!("{base_url}/verify/{token}"),
         ));
         Ok(())
@@ -297,7 +297,7 @@ impl EmailSender for FakeEmailSender {
         email: &str,
         token: &str,
         base_url: &str,
-    ) -> Result<(), AuthError> {
+    ) -> Result<(), EmailError> {
         self.sent.lock().unwrap().push((
             "password_reset".to_string(),
             email.to_string(),
@@ -314,17 +314,28 @@ pub struct StubAuditLogger;
 #[async_trait]
 impl AuditLogger for StubAuditLogger {
     async fn log_login_success(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
-    async fn log_login_failed(&self, _ctx: &ExecutionContext, _email: &str, _error: String) {}
+
+    async fn log_login_failed(&self, _ctx: &ExecutionContext, _email: &str, _error: &str) {}
+
     async fn log_user_registered(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
+
     async fn log_email_verified(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
+
     async fn log_password_reset(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
+
     async fn log_session_created(
         &self,
         _ctx: &ExecutionContext,
         _user_id: UserId,
-        _session_id: uuid::Uuid,
+        _session_id: String,
     ) {
     }
+
+    async fn log_profile_updated(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
+
+    async fn log_password_changed(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
+
+    async fn log_user_deleted(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
 }
 
 /// Build a test auth service with default fake dependencies.

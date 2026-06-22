@@ -2,6 +2,7 @@ use std::sync::Mutex;
 
 use super::*;
 use klynt_base::ctx::RequestContext;
+use klynt_base::ports::audit::AuditLogger;
 
 struct CapturingRepo {
     events: Mutex<Vec<AuditEvent>>,
@@ -220,4 +221,36 @@ async fn try_log_swallows_repo_error() {
             service.log_user_registered(&ctx, user_id, None),
         )
         .await;
+}
+
+#[tokio::test]
+async fn audit_logger_trait_logs_profile_updated_event() {
+    let (service, repo) = capturing_service();
+    let ctx = ExecutionContext::new(RequestContext::new());
+    let user_id = UserId::new();
+
+    AuditLogger::log_profile_updated(&service, &ctx, user_id).await;
+
+    let events = repo.events();
+    assert_eq!(events.len(), 1);
+    assert_eq!(events[0].action, AuditAction::UserProfileUpdated);
+    assert_eq!(events[0].actor_user_id, Some(user_id));
+}
+
+#[tokio::test]
+async fn audit_logger_trait_logs_session_created_event() {
+    let (service, repo) = capturing_service();
+    let ctx = ExecutionContext::new(RequestContext::new());
+    let user_id = UserId::new();
+    let session_id = Uuid::new_v4().to_string();
+
+    AuditLogger::log_session_created(&service, &ctx, user_id, session_id.clone()).await;
+
+    let events = repo.events();
+    assert_eq!(events.len(), 1);
+    assert_eq!(events[0].action, AuditAction::SessionCreated);
+    assert_eq!(
+        events[0].resource_id,
+        Some(Uuid::parse_str(&session_id).unwrap())
+    );
 }

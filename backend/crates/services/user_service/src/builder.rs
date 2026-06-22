@@ -2,14 +2,11 @@
 
 use std::sync::Arc;
 
-use klynt_base::ports::{Clock, PasswordHasher, SystemClock};
+use klynt_base::ports::{AuditLogger, Clock, PasswordHasher, SystemClock};
 
-use crate::application::ports::{AuditLogger, UserRepository};
+use crate::application::ports::UserRepository;
 use crate::error::UserError;
-use crate::infrastructure::services::{
-    AuditLoggerAdapter as UserAuditLoggerAdapter,
-    PasswordHasherAdapter as UserPasswordHasherAdapter,
-};
+use crate::infrastructure::services::PasswordHasherAdapter as UserPasswordHasherAdapter;
 use crate::Dependencies;
 use crate::UserConfig;
 use crate::UserService;
@@ -93,8 +90,7 @@ impl UserBuilder {
                     pool.clone(),
                 ),
             );
-            let audit_service = Arc::new(klynt_telemetry::audit::AuditService::new(audit_repo));
-            Arc::new(UserAuditLoggerAdapter::new(audit_service))
+            Arc::new(klynt_telemetry::audit::AuditService::new(audit_repo)) as Arc<dyn AuditLogger>
         });
 
         let password_hasher = self.password_hasher.unwrap_or_else(|| {
