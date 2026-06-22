@@ -58,10 +58,10 @@ impl Services {
             .map_err(|e| crate::GatewayError::configuration(format!("Migrations: {e}")))?;
 
         let session_store = Self::create_session_store(config, pool.clone()).await;
+        let session_service = Arc::new(Self::create_session_service(config, session_store));
 
         let auth_service =
-            Self::create_auth_service(config, pool.clone(), session_store.clone()).await?;
-        let session_service = Self::create_session_service(session_store);
+            Self::create_auth_service(config, pool.clone(), session_service.clone()).await?;
         let user_service = Self::create_user_service(config, pool.clone()).await?;
         let rate_limiter = Self::create_rate_limiter(config).await?;
         let trusted_proxies = Arc::new(
@@ -74,7 +74,7 @@ impl Services {
         Ok(Self {
             auth: Arc::new(auth_service),
             user: Arc::new(user_service),
-            session: Arc::new(session_service),
+            session: session_service,
             rate_limiter,
             trusted_proxies,
             health_reporter,
@@ -99,34 +99,31 @@ impl Services {
     async fn create_auth_service(
         config: &Config,
         pool: sqlx::PgPool,
-        session_store: Arc<dyn base::ports::session::SessionStore>,
+        session_service: Arc<session_service::SessionService>,
     ) -> Result<AuthService, crate::GatewayError> {
         AuthService::builder()
             .with_config(AuthConfig {
                 base_url: config.base_url.clone(),
-                session_duration_secs: 86400,
-                long_session_duration_secs: 30 * 24 * 3600,
-                refresh_duration_secs: 30 * 24 * 3600,
                 token_duration_secs: 3600,
                 password_policy: None,
             })
             .with_pool(pool)
-            .with_session_store(session_store)
+            .with_session_service(session_service)
             .build()
             .await
             .map_err(|e| crate::GatewayError::configuration(format!("Auth service: {e}")))
     }
 
     fn create_session_service(
+        config: &Config,
         session_store: Arc<dyn base::ports::session::SessionStore>,
     ) -> session_service::SessionService {
-        session_service::SessionService::new(
-            session_service::SessionConfig {
-                session_duration_secs: 86400,
-                long_session_duration_secs: 30 * 24 * 3600,
-            },
-            session_store,
-        )
+        let session_config = session_service::SessionConfig {
+            session_duration_secs: config.session.session_duration_secs,
+            long_session_duration_secs: config.session.long_session_duration_secs,
+            refresh_duration_secs: config.session.refresh_duration_secs,
+        };
+        session_service::SessionService::new(session_config, session_store)
     }
 
     async fn create_user_service(

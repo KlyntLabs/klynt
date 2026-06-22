@@ -251,7 +251,7 @@ async fn cookie_authenticated_app() -> (axum::Router, String) {
 
     (
         gateways::create_router(config, services),
-        token.0.to_string(),
+        token.token.0.to_string(),
     )
 }
 

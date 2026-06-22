@@ -4,6 +4,7 @@ use base::ports::repository::UserRepository;
 use chrono::{Duration, Utc};
 use domain::contracts::auth::{LoginRequest, RegistrationRequest};
 use domain::{UserId, UserRole, UserStatus};
+use std::sync::Arc;
 
 mod support;
 
@@ -307,4 +308,31 @@ async fn login_remember_me_extends_access_session_lifetime() {
 
     assert_eq!(short_lived.expires_at, expected_short);
     assert_eq!(long_lived.expires_at, expected_long);
+}
+
+#[tokio::test]
+async fn login_revokes_access_token_when_refresh_creation_fails() {
+    let failing_store = Arc::new(support::FailingSessionStore::new(1));
+    let (service, user_repo, _, _) =
+        support::build_test_service_with_session_store(failing_store.clone());
+    let ctx = support::test_ctx();
+
+    let user = support::test_user("ada@example.com", "Str0ng!Pass#123", UserStatus::Active);
+    user_repo.insert(user);
+
+    let result = service
+        .login(
+            &ctx,
+            LoginRequest {
+                email: "ada@example.com".to_string(),
+                password: "Str0ng!Pass#123".to_string(),
+                remember_me: Some(false),
+            },
+        )
+        .await;
+
+    assert!(result.is_err());
+    // The access token created before the refresh failure should have been
+    // revoked, so no sessions remain in the store.
+    assert_eq!(failing_store.session_count(), 0);
 }

@@ -7,6 +7,7 @@ edition = "2021"
 # === Phase 1 Foundation ===
 base = { path = "../../../crates/base" }
 domain = { path = "../../shared/domain" }
+session_service = { path = "../session_service" }
 
 # === Storage and infrastructure adapters ===
 persistence = { path = "../../../crates/infra/persistence" }

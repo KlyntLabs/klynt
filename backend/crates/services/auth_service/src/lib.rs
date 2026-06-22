@@ -21,7 +21,6 @@ use std::sync::Arc;
 
 use base::ctx::ExecutionContext;
 use base::ports::{Clock, PasswordHasher};
-use chrono::Duration;
 use domain::contracts::auth::{LoginRequest, LoginResponse, RegistrationRequest};
 use domain::UserId;
 
@@ -31,7 +30,7 @@ pub use core::{PasswordPolicy, SessionToken};
 pub use error::{AuthError, AuthResult};
 
 use application::ports::{AuditLogger, EmailSender, UserRepository};
-use core::{SessionStore, TokenStore};
+use core::TokenStore;
 
 /// Authentication service — deep module with small interface.
 ///
@@ -81,7 +80,7 @@ impl AuthService {
             password_policy,
             internal_state: InternalState {
                 user_repository: dependencies.user_repository,
-                session_store: dependencies.session_store,
+                session_service: dependencies.session_service,
                 token_store: dependencies.token_store,
                 email_sender: dependencies.email_sender,
                 audit_logger: dependencies.audit_logger,
@@ -169,15 +168,6 @@ pub struct AuthConfig {
     /// Base URL for email links.
     pub base_url: String,
 
-    /// Standard session duration in seconds.
-    pub session_duration_secs: u64,
-
-    /// Extended session duration in seconds for "remember me" sessions.
-    pub long_session_duration_secs: u64,
-
-    /// Refresh token duration in seconds.
-    pub refresh_duration_secs: u64,
-
     /// Token duration in seconds (for future access tokens).
     pub token_duration_secs: u64,
 
@@ -185,31 +175,11 @@ pub struct AuthConfig {
     pub password_policy: Option<PasswordPolicy>,
 }
 
-impl AuthConfig {
-    /// Standard session duration.
-    pub fn session_duration(&self) -> Duration {
-        Duration::seconds(self.session_duration_secs as i64)
-    }
-
-    /// Extended "remember me" session duration.
-    pub fn long_session_duration(&self) -> Duration {
-        Duration::seconds(self.long_session_duration_secs as i64)
-    }
-
-    /// Refresh token lifetime.
-    pub fn refresh_duration(&self) -> Duration {
-        Duration::seconds(self.refresh_duration_secs as i64)
-    }
-}
-
 impl Default for AuthConfig {
     fn default() -> Self {
         Self {
             base_url: "https://klynt.edu".to_string(),
-            session_duration_secs: 24 * 3600,           // 24 hours
-            long_session_duration_secs: 30 * 24 * 3600, // 30 days
-            refresh_duration_secs: 30 * 24 * 3600,      // 30 days
-            token_duration_secs: 3600,                  // 1 hour
+            token_duration_secs: 3600, // 1 hour
             password_policy: None,
         }
     }
@@ -222,7 +192,7 @@ impl Default for AuthConfig {
 #[derive(Clone)]
 pub struct Dependencies {
     pub user_repository: Arc<dyn UserRepository>,
-    pub session_store: Arc<dyn SessionStore>,
+    pub session_service: Arc<session_service::SessionService>,
     pub token_store: Arc<dyn TokenStore>,
     pub email_sender: Arc<dyn EmailSender>,
     pub audit_logger: Arc<dyn AuditLogger>,
@@ -233,10 +203,13 @@ pub struct Dependencies {
 /// Internal state — not part of the public interface.
 pub(crate) struct InternalState {
     pub user_repository: Arc<dyn UserRepository>,
-    pub session_store: Arc<dyn SessionStore>,
+    pub session_service: Arc<session_service::SessionService>,
     pub token_store: Arc<dyn TokenStore>,
     pub email_sender: Arc<dyn EmailSender>,
     pub audit_logger: Arc<dyn AuditLogger>,
     pub password_hasher: Arc<dyn PasswordHasher>,
+    /// Retained for dependency injection and future token/time-sensitive logic.
+    /// The session service owns the clock used for session expiry.
+    #[allow(dead_code)]
     pub clock: Arc<dyn Clock>,
 }

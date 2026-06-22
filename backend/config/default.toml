@@ -10,6 +10,11 @@ enabled = false
 max_requests = 100
 window_seconds = 60
 
+[session]
+session_duration_secs = 86400
+long_session_duration_secs = 2592000
+refresh_duration_secs = 2592000
+
 log_level = "debug"
 hsts_enabled = false
 cookie_domain = ".klynt.edu"

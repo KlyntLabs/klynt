@@ -43,6 +43,8 @@ impl std::fmt::Display for SessionToken {
 pub enum SessionKind {
     /// Short-lived token used to authorize API requests.
     Access,
+    /// Extended access token used when "remember me" is requested.
+    LongLived,
     /// Long-lived token used to obtain new access tokens.
     Refresh,
 }

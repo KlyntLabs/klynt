@@ -1,11 +1,12 @@
 use serde::Deserialize;
 
-use super::{ApiConfig, ConfigError, RateLimiterConfig, Validated};
+use super::{ApiConfig, ConfigError, RateLimiterConfig, SessionConfig, Validated};
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct AppConfig {
     pub api: ApiConfig,
     pub rate_limiter: RateLimiterConfig,
+    pub session: SessionConfig,
     pub log_level: String,
     #[serde(default)]
     pub hsts_enabled: bool,
@@ -25,6 +26,7 @@ impl Validated for AppConfig {
     fn validated(&self) -> Result<(), ConfigError> {
         self.api.validated()?;
         self.rate_limiter.validated()?;
+        self.session.validated()?;
         Ok(())
     }
 }
@@ -37,9 +39,11 @@ mod tests {
     fn full_config_validates_all_parts() {
         let api = ApiConfig::default();
         let rate_limiter = RateLimiterConfig::default();
+        let session = SessionConfig::default();
         let config = AppConfig {
             api,
             rate_limiter,
+            session,
             log_level: "info".to_string(),
             hsts_enabled: false,
             database_url: Some("postgresql://localhost/db".to_string()),
@@ -57,9 +61,11 @@ mod tests {
             ..Default::default()
         };
         let rate_limiter = RateLimiterConfig::default();
+        let session = SessionConfig::default();
         let config = AppConfig {
             api,
             rate_limiter,
+            session,
             log_level: "info".to_string(),
             hsts_enabled: false,
             database_url: None,

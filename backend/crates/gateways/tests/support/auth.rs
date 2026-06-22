@@ -356,11 +356,15 @@ pub fn build_test_auth_service_with_session_store(
 ) -> (AuthService, Arc<FakeUserRepository>, Arc<FakeEmailSender>) {
     let email_sender = Arc::new(FakeEmailSender::default());
     let user_repository = Arc::new(FakeUserRepository::default());
+    let session_service = Arc::new(session_service::SessionService::new(
+        session_service::SessionConfig::default(),
+        session_store,
+    ));
     let service = AuthService::new(
         AuthConfig::default(),
         AuthDependencies {
             user_repository: user_repository.clone(),
-            session_store,
+            session_service,
             token_store: Arc::new(FakeTokenStore::default()),
             email_sender: email_sender.clone(),
             audit_logger: Arc::new(StubAuditLogger),

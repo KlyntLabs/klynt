@@ -16,9 +16,20 @@ use std::sync::Arc;
 use base::ctx::ExecutionContext;
 use base::ports::session::{Session, SessionKind, SessionStore, SessionToken};
 use base::ports::{Clock, SystemClock};
+use chrono::{DateTime, Utc};
 use domain::UserId;
 
+/// A newly created session token together with its expiry.
+#[derive(Clone, Debug)]
+pub struct CreatedSession {
+    /// Bearer token for the session.
+    pub token: SessionToken,
+    /// Instant at which the session expires.
+    pub expires_at: DateTime<Utc>,
+}
+
 /// Session service — small interface, deep implementation.
+#[derive(Clone)]
 pub struct SessionService {
     config: SessionConfig,
     session_store: Arc<dyn SessionStore>,
@@ -61,8 +72,32 @@ impl SessionService {
         &self,
         ctx: &ExecutionContext,
         user_id: UserId,
-    ) -> SessionResult<SessionToken> {
-        self.create_with_kind(ctx, user_id, SessionKind::Access)
+    ) -> SessionResult<CreatedSession> {
+        self.create_access(ctx, user_id, false).await
+    }
+
+    /// Create a new access session, optionally extended for "remember me".
+    pub async fn create_access(
+        &self,
+        ctx: &ExecutionContext,
+        user_id: UserId,
+        remember_me: bool,
+    ) -> SessionResult<CreatedSession> {
+        let kind = if remember_me {
+            SessionKind::LongLived
+        } else {
+            SessionKind::Access
+        };
+        self.create_with_kind(ctx, user_id, kind).await
+    }
+
+    /// Create a new refresh session for a user.
+    pub async fn create_refresh(
+        &self,
+        ctx: &ExecutionContext,
+        user_id: UserId,
+    ) -> SessionResult<CreatedSession> {
+        self.create_with_kind(ctx, user_id, SessionKind::Refresh)
             .await
     }
 
@@ -72,16 +107,19 @@ impl SessionService {
         ctx: &ExecutionContext,
         user_id: UserId,
         kind: SessionKind,
-    ) -> SessionResult<SessionToken> {
+    ) -> SessionResult<CreatedSession> {
         let duration = match kind {
             SessionKind::Access => self.config.session_duration(),
+            SessionKind::LongLived => self.config.long_session_duration(),
             SessionKind::Refresh => self.config.refresh_duration(),
         };
         let expires_at = self.clock.now() + duration;
-        self.session_store
+        let token = self
+            .session_store
             .create(ctx, user_id, expires_at)
             .await
-            .map_err(Into::into)
+            .map_err(SessionError::from)?;
+        Ok(CreatedSession { token, expires_at })
     }
 
     /// Invalidate a session.

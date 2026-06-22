@@ -78,6 +78,15 @@ impl From<SessionError> for AuthError {
     }
 }
 
+impl From<session_service::SessionError> for AuthError {
+    fn from(err: session_service::SessionError) -> Self {
+        match err {
+            session_service::SessionError::InvalidToken => Self::InvalidToken,
+            session_service::SessionError::StoreError(msg) => Self::Internal(msg),
+        }
+    }
+}
+
 impl From<TokenError> for AuthError {
     fn from(err: TokenError) -> Self {
         match err {

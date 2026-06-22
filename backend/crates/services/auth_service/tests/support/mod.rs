@@ -3,6 +3,7 @@
 //! Cross-cutting test doubles come from [`base::testkit`]; this module
 //! keeps only the auth-service-specific fakes.
 
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
@@ -11,8 +12,12 @@ use auth_service::application::ports::{AuditLogger, EmailSender};
 use auth_service::{AuthConfig, AuthService, Dependencies};
 use base::ctx::ExecutionContext;
 use base::ports::email::EmailError;
+use base::ports::session::{Session, SessionError as BaseSessionError, SessionStore, SessionToken};
 use base::testkit::{sample_user, FakeSessionStore, FakeTokenStore, FakeUserRepository};
+use chrono::{DateTime, Utc};
 use domain::{Email, User, UserId, UserStatus};
+
+pub use session_service::SessionConfig as TestSessionConfig;
 
 pub use base::testkit::{test_ctx, TestClock, TestPasswordHasher};
 
@@ -102,11 +107,16 @@ pub fn build_test_service_with_clock() -> (
     let email_sender = Arc::new(FakeEmailSender::default());
     let user_repository = Arc::new(FakeUserRepository::new());
     let clock = Arc::new(TestClock::new());
+    let session_service = Arc::new(session_service::SessionService::with_clock(
+        TestSessionConfig::default(),
+        Arc::new(FakeSessionStore::new()),
+        clock.clone(),
+    ));
     let service = AuthService::new(
         AuthConfig::default(),
         Dependencies {
             user_repository: user_repository.clone(),
-            session_store: Arc::new(FakeSessionStore::new()),
+            session_service,
             token_store: Arc::new(FakeTokenStore::new()),
             email_sender: email_sender.clone(),
             audit_logger: Arc::new(StubAuditLogger),
@@ -117,6 +127,117 @@ pub fn build_test_service_with_clock() -> (
     .expect("valid test dependencies");
 
     (service, user_repository, email_sender, clock)
+}
+
+/// Build a test auth service with a custom session store.
+pub fn build_test_service_with_session_store(
+    session_store: Arc<dyn SessionStore>,
+) -> (
+    AuthService,
+    Arc<FakeUserRepository>,
+    Arc<FakeEmailSender>,
+    Arc<TestClock>,
+) {
+    let email_sender = Arc::new(FakeEmailSender::default());
+    let user_repository = Arc::new(FakeUserRepository::new());
+    let clock = Arc::new(TestClock::new());
+    let session_service = Arc::new(session_service::SessionService::with_clock(
+        TestSessionConfig::default(),
+        session_store,
+        clock.clone(),
+    ));
+    let service = AuthService::new(
+        AuthConfig::default(),
+        Dependencies {
+            user_repository: user_repository.clone(),
+            session_service,
+            token_store: Arc::new(FakeTokenStore::new()),
+            email_sender: email_sender.clone(),
+            audit_logger: Arc::new(StubAuditLogger),
+            password_hasher: Arc::new(TestPasswordHasher::new()),
+            clock: clock.clone(),
+        },
+    )
+    .expect("valid test dependencies");
+
+    (service, user_repository, email_sender, clock)
+}
+
+/// Session store that fails every `create` after `successes_before_failure`.
+#[derive(Default, Clone)]
+pub struct FailingSessionStore {
+    inner: Arc<Mutex<FailingSessionStoreInner>>,
+}
+
+#[derive(Default)]
+struct FailingSessionStoreInner {
+    sessions: HashMap<SessionToken, Session>,
+    remaining_successes: usize,
+}
+
+impl FailingSessionStore {
+    pub fn new(successes_before_failure: usize) -> Self {
+        Self {
+            inner: Arc::new(Mutex::new(FailingSessionStoreInner {
+                sessions: HashMap::new(),
+                remaining_successes: successes_before_failure,
+            })),
+        }
+    }
+
+    pub fn session_count(&self) -> usize {
+        self.inner.lock().unwrap().sessions.len()
+    }
+}
+
+#[async_trait]
+impl SessionStore for FailingSessionStore {
+    async fn create(
+        &self,
+        _ctx: &ExecutionContext,
+        user_id: UserId,
+        expires_at: DateTime<Utc>,
+    ) -> Result<SessionToken, BaseSessionError> {
+        let mut inner = self.inner.lock().unwrap();
+        if inner.remaining_successes == 0 {
+            return Err(BaseSessionError::Internal(
+                "refresh create failed".to_string(),
+            ));
+        }
+        inner.remaining_successes -= 1;
+        let token = SessionToken::new();
+        inner.sessions.insert(
+            token,
+            Session {
+                user_id,
+                expires_at,
+            },
+        );
+        Ok(token)
+    }
+
+    async fn find_valid(
+        &self,
+        _ctx: &ExecutionContext,
+        token: &SessionToken,
+    ) -> Result<Option<Session>, BaseSessionError> {
+        let inner = self.inner.lock().unwrap();
+        Ok(inner
+            .sessions
+            .get(token)
+            .filter(|s| !s.is_expired())
+            .cloned())
+    }
+
+    async fn revoke(
+        &self,
+        _ctx: &ExecutionContext,
+        token: &SessionToken,
+    ) -> Result<(), BaseSessionError> {
+        let mut inner = self.inner.lock().unwrap();
+        inner.sessions.remove(token);
+        Ok(())
+    }
 }
 
 /// Create a test user model pre-hashed for the default [`TestPasswordHasher`].

@@ -5,7 +5,7 @@ use std::sync::Arc;
 use base::ports::{AuditLogger, Clock, EmailSender, PasswordHasher, SystemClock};
 
 use crate::application::ports::UserRepository;
-use crate::core::{SessionStore, TokenStore};
+use crate::core::TokenStore;
 use crate::error::AuthError;
 use crate::infrastructure::services::PasswordHasherAdapter as AuthPasswordHasherAdapter;
 use crate::AuthConfig;
@@ -21,7 +21,7 @@ pub struct AuthBuilder {
     config: Option<AuthConfig>,
     pool: Option<sqlx::PgPool>,
     user_repository: Option<Arc<dyn UserRepository>>,
-    session_store: Option<Arc<dyn SessionStore>>,
+    session_service: Option<Arc<session_service::SessionService>>,
     token_store: Option<Arc<dyn TokenStore>>,
     email_sender: Option<Arc<dyn EmailSender>>,
     audit_logger: Option<Arc<dyn AuditLogger>>,
@@ -53,9 +53,9 @@ impl AuthBuilder {
         self
     }
 
-    /// Override the session store.
-    pub fn with_session_store(mut self, store: Arc<dyn SessionStore>) -> Self {
-        self.session_store = Some(store);
+    /// Override the session service.
+    pub fn with_session_service(mut self, service: Arc<session_service::SessionService>) -> Self {
+        self.session_service = Some(service);
         self
     }
 
@@ -107,10 +107,14 @@ impl AuthBuilder {
             )) as Arc<dyn UserRepository>
         });
 
-        let session_store = self.session_store.unwrap_or_else(|| {
-            Arc::new(persistence::repositories::session::PgSessionStore::new(
+        let session_service = self.session_service.unwrap_or_else(|| {
+            let session_store = Arc::new(persistence::repositories::session::PgSessionStore::new(
                 pool.clone(),
-            )) as Arc<dyn SessionStore>
+            )) as Arc<dyn base::ports::session::SessionStore>;
+            Arc::new(session_service::SessionService::new(
+                session_service::SessionConfig::default(),
+                session_store,
+            ))
         });
 
         let token_store = self.token_store.unwrap_or_else(|| {
@@ -142,7 +146,7 @@ impl AuthBuilder {
             config,
             Dependencies {
                 user_repository,
-                session_store,
+                session_service,
                 token_store,
                 email_sender,
                 audit_logger,

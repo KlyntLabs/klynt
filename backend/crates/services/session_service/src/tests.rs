@@ -67,8 +67,8 @@ async fn validate_returns_session_for_valid_token() {
     let ctx = test_ctx();
     let user_id = UserId::new();
 
-    let token = service.create(&ctx, user_id).await.unwrap();
-    let session = service.validate(&ctx, &token).await.unwrap();
+    let created = service.create(&ctx, user_id).await.unwrap();
+    let session = service.validate(&ctx, &created.token).await.unwrap();
 
     assert_eq!(session.user_id, user_id);
 }
@@ -95,6 +95,7 @@ async fn create_uses_configured_duration() {
         SessionConfig {
             session_duration_secs: 7200,
             long_session_duration_secs: 86400,
+            refresh_duration_secs: 604800,
         },
         store.clone(),
         Arc::new(clock),
@@ -102,8 +103,12 @@ async fn create_uses_configured_duration() {
     let ctx = test_ctx();
     let user_id = UserId::new();
 
-    let token = service.create(&ctx, user_id).await.unwrap();
-    let session = store.find_valid(&ctx, &token).await.unwrap().unwrap();
+    let created = service.create(&ctx, user_id).await.unwrap();
+    let session = store
+        .find_valid(&ctx, &created.token)
+        .await
+        .unwrap()
+        .unwrap();
 
     assert_eq!(session.expires_at, now + Duration::seconds(7200));
 }
@@ -115,10 +120,10 @@ async fn invalidate_removes_session() {
     let ctx = test_ctx();
     let user_id = UserId::new();
 
-    let token = service.create(&ctx, user_id).await.unwrap();
-    service.invalidate(&ctx, &token).await.unwrap();
+    let created = service.create(&ctx, user_id).await.unwrap();
+    service.invalidate(&ctx, &created.token).await.unwrap();
 
-    let session = store.find_valid(&ctx, &token).await.unwrap();
+    let session = store.find_valid(&ctx, &created.token).await.unwrap();
     assert!(session.is_none());
 }
 

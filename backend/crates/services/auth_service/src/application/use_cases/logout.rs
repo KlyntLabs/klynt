@@ -16,6 +16,10 @@ pub(crate) async fn execute(
     let token = Uuid::parse_str(session_token)
         .map(SessionToken)
         .map_err(|_| AuthError::InvalidToken)?;
-    service.internal().session_store.revoke(ctx, &token).await?;
+    service
+        .internal()
+        .session_service
+        .invalidate(ctx, &token)
+        .await?;
     Ok(())
 }

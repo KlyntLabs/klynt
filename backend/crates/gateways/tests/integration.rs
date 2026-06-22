@@ -196,7 +196,7 @@ async fn authenticated_app() -> (axum::Router, UserId, String) {
     (
         gateways::create_router(config, services),
         user_id,
-        token.0.to_string(),
+        token.token.0.to_string(),
     )
 }
 

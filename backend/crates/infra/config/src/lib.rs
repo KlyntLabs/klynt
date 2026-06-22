@@ -3,10 +3,12 @@
 pub mod api;
 pub mod app;
 pub mod rate_limiter;
+pub mod session;
 
 pub use api::ApiConfig;
 pub use app::AppConfig;
 pub use rate_limiter::RateLimiterConfig;
+pub use session::SessionConfig;
 
 use config_crate::{Config, ConfigError as LoaderConfigError, Environment, File};
 use thiserror::Error;
@@ -30,6 +32,9 @@ pub enum ConfigError {
 
     #[error("rate limiter window must be at least 1 second")]
     InvalidWindow,
+
+    #[error("invalid session duration: {0}")]
+    InvalidSessionDuration(String),
 }
 
 /// Trait for validated configuration.
@@ -66,6 +71,7 @@ pub fn load_config() -> Result<AppConfig, LoaderConfigError> {
 
     let api_default = ApiConfig::default();
     let rl_default = RateLimiterConfig::default();
+    let session_default = SessionConfig::default();
 
     let config = Config::builder()
         .add_source(File::from(config_dir.join("default.toml")).required(false))
@@ -83,6 +89,18 @@ pub fn load_config() -> Result<AppConfig, LoaderConfigError> {
         .set_default("rate_limiter.enabled", rl_default.enabled)?
         .set_default("rate_limiter.max_requests", rl_default.max_requests as u64)?
         .set_default("rate_limiter.window_seconds", rl_default.window_seconds)?
+        .set_default(
+            "session.session_duration_secs",
+            session_default.session_duration_secs,
+        )?
+        .set_default(
+            "session.long_session_duration_secs",
+            session_default.long_session_duration_secs,
+        )?
+        .set_default(
+            "session.refresh_duration_secs",
+            session_default.refresh_duration_secs,
+        )?
         .set_default("log_level", "info")?
         .set_default("hsts_enabled", false)?
         .set_default("database_url", None::<String>)?

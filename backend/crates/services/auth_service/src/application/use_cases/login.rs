@@ -63,36 +63,42 @@ pub(crate) async fn execute(
     }
 
     let remember_me = request.remember_me.unwrap_or(false);
-    let access_duration = if remember_me {
-        service.config().long_session_duration()
-    } else {
-        service.config().session_duration()
+
+    let access = service
+        .internal()
+        .session_service
+        .create_access(ctx, user.id, remember_me)
+        .await?;
+
+    let refresh = match service
+        .internal()
+        .session_service
+        .create_refresh(ctx, user.id)
+        .await
+    {
+        Ok(session) => session,
+        Err(err) => {
+            // Best-effort rollback: don't leave a valid access token behind
+            // if we cannot complete the token pair.
+            let _ = service
+                .internal()
+                .session_service
+                .invalidate(ctx, &access.token)
+                .await;
+            return Err(err.into());
+        }
     };
-    let expires_at = service.internal().clock.now() + access_duration;
-
-    let access_token = service
-        .internal()
-        .session_store
-        .create(ctx, user.id, expires_at)
-        .await?;
-
-    let refresh_expires_at = service.internal().clock.now() + service.config().refresh_duration();
-    let refresh_token = service
-        .internal()
-        .session_store
-        .create(ctx, user.id, refresh_expires_at)
-        .await?;
 
     service
         .internal()
         .audit_logger
-        .log_session_created(ctx, user.id, access_token.to_string())
+        .log_session_created(ctx, user.id, access.token.to_string())
         .await;
 
     Ok(LoginResponse {
-        access_token: access_token.to_string(),
-        refresh_token: refresh_token.to_string(),
-        expires_at,
+        access_token: access.token.to_string(),
+        refresh_token: refresh.token.to_string(),
+        expires_at: access.expires_at,
         user: user.into(),
     })
 }

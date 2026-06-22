@@ -27,6 +27,9 @@ pub struct Config {
     /// Rate limiter configuration.
     pub rate_limiter: config::RateLimiterConfig,
 
+    /// Session lifetime configuration.
+    pub session: config::SessionConfig,
+
     /// Whether to emit the HSTS security header.
     #[serde(default)]
     pub hsts_enabled: bool,
@@ -66,6 +69,7 @@ impl Default for Config {
             database_url: String::new(),
             redis_url: None,
             rate_limiter: config::RateLimiterConfig::default(),
+            session: config::SessionConfig::default(),
             hsts_enabled: false,
             allowed_origins: Vec::new(),
             trusted_proxies: Vec::new(),
@@ -109,6 +113,7 @@ impl From<config::AppConfig> for Config {
             database_url: config.database_url.unwrap_or_default(),
             redis_url: config.redis_url,
             rate_limiter: config.rate_limiter,
+            session: config.session,
             hsts_enabled: config.hsts_enabled,
             allowed_origins: config.api.allowed_origins,
             trusted_proxies: config.api.trusted_proxies,

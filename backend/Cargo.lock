@@ -116,6 +116,7 @@ dependencies = [
  "observability",
  "persistence",
  "rand 0.8.6",
+ "session_service",
  "sha2",
  "sqlx",
  "thiserror 2.0.18",
