@@ -36,10 +36,12 @@ impl<S: Send + Sync> FromRequestParts<S> for AuthContext {
     }
 }
 
-/// Middleware that requires a valid bearer session token.
+/// Middleware that requires a valid session token.
 ///
-/// On success, the resolved [`ExecutionContext`] is inserted into request
-/// extensions for handlers to extract. On failure, a 401 response is returned.
+/// The token is read from the `Authorization: Bearer <token>` header if present,
+/// otherwise from the `session_token` cookie. On success, the resolved
+/// [`ExecutionContext`] is inserted into request extensions for handlers to
+/// extract. On failure, a 401 response is returned.
 pub async fn require_auth(
     axum::extract::State(services): axum::extract::State<Services>,
     cookies: Cookies,

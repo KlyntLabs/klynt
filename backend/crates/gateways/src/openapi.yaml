@@ -111,6 +111,10 @@ paths:
   /auth/login:
     post:
       summary: Create session (login)
+      description: |
+        Authenticate a user and create a session. On success, the response
+        contains the session token in the JSON body and also sets an
+        `HttpOnly` `session_token` cookie scoped to the configured SSO domain.
       tags:
         - Authentication
       requestBody:
@@ -122,6 +126,13 @@ paths:
       responses:
         '200':
           description: Login successful
+          headers:
+            Set-Cookie:
+              description: |
+                HttpOnly `session_token` cookie for cross-subdomain SSO.
+                Clients may also read `access_token` from the response body.
+              schema:
+                type: string
         '401':
           description: Invalid credentials
         '429':
@@ -130,10 +141,17 @@ paths:
   /auth/logout:
     post:
       summary: End session (logout)
+      description: |
+        Invalidate the current session. The token is read from the JSON body
+        when provided; otherwise the `session_token` cookie is used. On success
+        the `session_token` cookie is cleared.
       tags:
         - Authentication
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
       requestBody:
-        required: true
+        required: false
         content:
           application/json:
             schema:
@@ -141,6 +159,13 @@ paths:
       responses:
         '200':
           description: Logged out successfully
+          headers:
+            Set-Cookie:
+              description: Clears the `session_token` cookie.
+              schema:
+                type: string
+        '400':
+          description: Missing session token
 
 components:
   schemas:
@@ -248,11 +273,12 @@ components:
 
     LogoutRequest:
       type: object
-      required:
-        - session_token
       properties:
         session_token:
           type: string
+          description: |
+            Optional session token. If omitted, the `session_token` cookie is
+            used instead.
 
     RateLimitError:
       type: object
@@ -287,6 +313,18 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/RateLimitError'
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Session token provided in the `Authorization` header.
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: session_token
+      description: |
+        Session token provided as an `HttpOnly` cookie for cross-subdomain SSO.
 
 tags:
   - name: Health

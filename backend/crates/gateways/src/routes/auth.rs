@@ -1,6 +1,6 @@
 //! Authentication HTTP handlers.
 
-use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
+use axum::{body::Bytes, extract::State, http::StatusCode, response::IntoResponse, Json};
 use tower_cookies::{Cookie, Cookies};
 
 use base::ctx::{ExecutionContext, RequestContext};
@@ -130,21 +130,43 @@ pub(crate) struct ResetPasswordRequest {
 
 /// POST /api/v1/auth/logout
 ///
-/// Logout and invalidate session.
+/// Logout and invalidate session. Uses the session token from the JSON body if
+/// provided, otherwise falls back to the `session_token` cookie. The cookie is
+/// cleared on success.
 pub(crate) async fn logout(
     State(services): State<Services>,
-    Json(request): Json<LogoutRequest>,
+    cookies: Cookies,
+    body: Bytes,
 ) -> Result<impl IntoResponse, crate::GatewayError> {
+    let request: Option<LogoutRequest> = if body.is_empty() {
+        None
+    } else {
+        Some(
+            serde_json::from_slice(&body)
+                .map_err(|_| crate::GatewayError::BadRequest("Invalid JSON body".to_string()))?,
+        )
+    };
+
+    let token = request
+        .and_then(|r| r.session_token)
+        .or_else(|| cookies.get("session_token").map(|c| c.value().to_string()))
+        .ok_or_else(|| crate::GatewayError::BadRequest("Missing session token".to_string()))?;
+
     services
         .auth
-        .logout(&execution_context(), &request.session_token)
+        .logout(&execution_context(), &token)
         .await
         .map_err(crate::GatewayError::from)?;
+
+    let mut removal = Cookie::new("session_token", "");
+    removal.set_domain(services.config.cookie_domain.clone());
+    removal.set_path("/");
+    cookies.remove(removal);
 
     Ok(Json(SuccessResponse::message("Logged out successfully")))
 }
 
 #[derive(serde::Deserialize)]
 pub(crate) struct LogoutRequest {
-    session_token: String,
+    session_token: Option<String>,
 }
