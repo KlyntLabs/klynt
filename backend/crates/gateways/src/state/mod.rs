@@ -43,6 +43,14 @@ pub struct Config {
     /// Log level for tracing.
     #[serde(default = "default_log_level")]
     pub log_level: String,
+
+    /// Domain attribute for session cookies. Leading dot enables cross-subdomain SSO.
+    #[serde(default = "default_cookie_domain")]
+    pub cookie_domain: String,
+
+    /// Whether session cookies require HTTPS.
+    #[serde(default)]
+    pub cookie_secure: bool,
 }
 
 fn default_log_level() -> String {
@@ -62,8 +70,14 @@ impl Default for Config {
             allowed_origins: Vec::new(),
             trusted_proxies: Vec::new(),
             log_level: default_log_level(),
+            cookie_domain: default_cookie_domain(),
+            cookie_secure: false,
         }
     }
+}
+
+fn default_cookie_domain() -> String {
+    ".klynt.edu".to_string()
 }
 
 impl Config {
@@ -99,6 +113,8 @@ impl From<config::AppConfig> for Config {
             allowed_origins: config.api.allowed_origins,
             trusted_proxies: config.api.trusted_proxies,
             log_level: config.log_level,
+            cookie_domain: config.cookie_domain,
+            cookie_secure: config.cookie_secure,
         }
     }
 }

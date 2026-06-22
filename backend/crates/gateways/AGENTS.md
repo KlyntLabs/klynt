@@ -58,6 +58,9 @@ pub struct Services {
     pub session: Arc<SessionService>,
     pub rate_limiter: Arc<dyn RateLimiter>,
     pub trusted_proxies: Arc<Vec<IpNet>>,
+    pub health_reporter: Arc<dyn HealthReporter>,
+    pub metrics_handle: PrometheusHandle,
+    pub config: Config,
 }
 
 pub async fn from_config(config: &Config) -> Result<Services, GatewayError> {
@@ -74,6 +77,9 @@ pub async fn from_config(config: &Config) -> Result<Services, GatewayError> {
         session: Arc::new(session_service),
         rate_limiter,
         trusted_proxies,
+        health_reporter,
+        metrics_handle,
+        config: config.clone(),
     })
 }
 ```

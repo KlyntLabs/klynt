@@ -1,6 +1,7 @@
 //! Authentication HTTP handlers.
 
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
+use tower_cookies::{Cookie, Cookies};
 
 use base::ctx::{ExecutionContext, RequestContext};
 use domain::contracts::auth::{LoginRequest, RegistrationRequest};
@@ -17,6 +18,7 @@ fn execution_context() -> ExecutionContext {
 /// Authenticate a user and return a session token.
 pub(crate) async fn login(
     State(services): State<Services>,
+    cookies: Cookies,
     Json(request): Json<LoginRequest>,
 ) -> Result<impl IntoResponse, crate::GatewayError> {
     let response = services
@@ -24,6 +26,14 @@ pub(crate) async fn login(
         .login(&execution_context(), request)
         .await
         .map_err(crate::GatewayError::from)?;
+
+    let mut cookie = Cookie::new("session_token", response.access_token.clone());
+    cookie.set_domain(services.config.cookie_domain.clone());
+    cookie.set_path("/");
+    cookie.set_http_only(true);
+    cookie.set_secure(services.config.cookie_secure);
+    cookie.set_same_site(tower_cookies::cookie::SameSite::Lax);
+    cookies.add(cookie);
 
     Ok((StatusCode::OK, Json(SuccessResponse::ok(response))))
 }

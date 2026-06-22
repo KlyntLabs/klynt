@@ -11,6 +11,14 @@ pub struct AppConfig {
     pub hsts_enabled: bool,
     pub database_url: Option<String>,
     pub redis_url: Option<String>,
+    #[serde(default = "default_cookie_domain")]
+    pub cookie_domain: String,
+    #[serde(default)]
+    pub cookie_secure: bool,
+}
+
+fn default_cookie_domain() -> String {
+    ".klynt.edu".to_string()
 }
 
 impl Validated for AppConfig {
@@ -36,6 +44,8 @@ mod tests {
             hsts_enabled: false,
             database_url: Some("postgresql://localhost/db".to_string()),
             redis_url: Some("redis://localhost".to_string()),
+            cookie_domain: ".klynt.edu".to_string(),
+            cookie_secure: false,
         };
         assert!(config.validated().is_ok());
     }
@@ -54,6 +64,8 @@ mod tests {
             hsts_enabled: false,
             database_url: None,
             redis_url: None,
+            cookie_domain: ".klynt.edu".to_string(),
+            cookie_secure: false,
         };
         assert!(config.validated().is_err());
     }

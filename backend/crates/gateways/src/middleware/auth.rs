@@ -6,9 +6,9 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Response},
 };
-
 use base::ctx::{ActorType, ExecutionContext, RequestContext, RequestId};
 use base::ports::session::SessionToken;
+use tower_cookies::Cookies;
 use uuid::Uuid;
 
 use crate::state::Services;
@@ -42,6 +42,7 @@ impl<S: Send + Sync> FromRequestParts<S> for AuthContext {
 /// extensions for handlers to extract. On failure, a 401 response is returned.
 pub async fn require_auth(
     axum::extract::State(services): axum::extract::State<Services>,
+    cookies: Cookies,
     mut request: Request,
     next: Next,
 ) -> Result<Response, crate::GatewayError> {
@@ -51,8 +52,8 @@ pub async fn require_auth(
         .copied()
         .unwrap_or_default();
 
-    let token = extract_bearer_token(request.headers())
-        .ok_or_else(|| crate::GatewayError::Unauthorized("Missing bearer token".to_string()))?;
+    let token = extract_session_token(request.headers(), &cookies)
+        .ok_or_else(|| crate::GatewayError::Unauthorized("Missing session token".to_string()))?;
 
     let ctx = ExecutionContext::new(RequestContext::with_request_id(RequestId(request_id.0)));
 
@@ -73,6 +74,19 @@ pub async fn require_auth(
 
     request.extensions_mut().insert(ctx);
     Ok(next.run(request).await)
+}
+
+fn extract_session_token(
+    headers: &axum::http::HeaderMap,
+    cookies: &Cookies,
+) -> Option<SessionToken> {
+    if let Some(token) = extract_bearer_token(headers) {
+        return Some(token);
+    }
+    cookies
+        .get("session_token")
+        .and_then(|c| Uuid::parse_str(c.value()).ok())
+        .map(SessionToken)
 }
 
 fn extract_bearer_token(headers: &axum::http::HeaderMap) -> Option<SessionToken> {

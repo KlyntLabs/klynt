@@ -449,3 +449,97 @@ async fn list_users_returns_paginated_response() {
     assert_eq!(json["data"]["page"], 1);
     assert_eq!(json["data"]["page_size"], 10);
 }
+
+#[tokio::test]
+async fn sso_cookie_authenticates_across_subdomains() {
+    let (services, _, auth_user_repo, user_service_repo) =
+        support::build_test_services_with_auth_fakes();
+    let config = support::test_config();
+    let app = gateways::create_router(config, services);
+
+    let user_id = UserId::new();
+    let now = Utc::now();
+    let user = User {
+        id: user_id,
+        email: Email::new("ada@example.com".to_string()),
+        full_name: Some("Ada Lovelace".to_string()),
+        password_hash: "hash-password".to_string(),
+        status: UserStatus::Active,
+        role: UserRole::Student,
+        global_role: None,
+        email_verified_at: None,
+        institution_id: None,
+        terms_accepted_at: now,
+        terms_version: "1.0".to_string(),
+        created_at: now,
+        updated_at: now,
+        deleted_at: None,
+    };
+    auth_user_repo.insert(user.clone());
+    user_service_repo.insert(user);
+
+    let login_request = serde_json::json!({
+        "email": "ada@example.com",
+        "password": "password"
+    });
+    let addr = SocketAddr::from(([127, 0, 0, 1], 1234));
+
+    let response = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/api/v1/auth/login")
+                .header("content-type", "application/json")
+                .header("host", "tenant.klynt.edu")
+                .extension(ConnectInfo(addr))
+                .body(Body::from(serde_json::to_vec(&login_request).unwrap()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let set_cookie = response
+        .headers()
+        .get("set-cookie")
+        .expect("login should set a session cookie")
+        .to_str()
+        .unwrap();
+    assert!(
+        set_cookie.contains("session_token="),
+        "set-cookie should contain session_token: {set_cookie}"
+    );
+    // The cookie crate normalizes RFC 6265 domain attributes by stripping the
+    // legacy leading dot; both forms are functionally equivalent for SSO.
+    assert!(
+        set_cookie.contains("Domain=.klynt.edu") || set_cookie.contains("Domain=klynt.edu"),
+        "set-cookie should set cross-subdomain domain: {set_cookie}"
+    );
+    assert!(
+        set_cookie.contains("HttpOnly"),
+        "set-cookie should be HttpOnly: {set_cookie}"
+    );
+    assert!(
+        set_cookie.contains("Path=/"),
+        "set-cookie should have path /: {set_cookie}"
+    );
+
+    let cookie_value = set_cookie.split(';').next().unwrap().trim();
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/api/v1/users/me")
+                .header("host", "other.klynt.edu")
+                .header("cookie", cookie_value)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+}

@@ -12,3 +12,5 @@ window_seconds = 60
 
 log_level = "debug"
 hsts_enabled = false
+cookie_domain = ".klynt.edu"
+cookie_secure = false

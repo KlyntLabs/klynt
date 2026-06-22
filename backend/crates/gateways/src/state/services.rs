@@ -33,6 +33,8 @@ pub struct Services {
     pub health_reporter: Arc<dyn HealthReporter>,
     /// Prometheus metrics handle used to render the `/metrics` endpoint.
     pub metrics_handle: PrometheusHandle,
+    /// Gateway configuration used by handlers and middleware.
+    pub config: Config,
 }
 
 impl Services {
@@ -77,6 +79,7 @@ impl Services {
             trusted_proxies,
             health_reporter,
             metrics_handle,
+            config: config.clone(),
         })
     }
 

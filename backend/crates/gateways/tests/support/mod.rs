@@ -16,7 +16,10 @@ pub mod rate_limiter;
 pub mod session;
 pub mod user;
 
-pub use auth::build_test_auth_service;
+pub use auth::{
+    build_test_auth_service, build_test_auth_service_with_session_store, FakeSessionStore,
+    FakeUserRepository as FakeAuthUserRepository,
+};
 pub use rate_limiter::FakeRateLimiter;
 pub use session::FakePersistenceSessionStore;
 pub use user::{build_test_user_service, FakeUserServiceRepository};
@@ -76,6 +79,7 @@ pub fn build_test_services_with_fakes() -> (
         trusted_proxies: Arc::new(Vec::new()),
         health_reporter: Arc::new(observability::health::AlwaysReadyHealthReporter),
         metrics_handle: observability::metrics::install_recorder(),
+        config: test_config(),
     };
 
     (services, session_service, user_repo)
@@ -114,6 +118,41 @@ pub fn build_test_services_with_health_reporter(
     let (mut services, _, _) = build_test_services_with_fakes();
     services.health_reporter = health_reporter;
     services
+}
+
+/// Build test gateway services with both fake user repositories exposed.
+pub fn build_test_services_with_auth_fakes() -> (
+    gateways::state::Services,
+    Arc<session_service::SessionService>,
+    Arc<FakeAuthUserRepository>,
+    Arc<FakeUserServiceRepository>,
+) {
+    let session_store = Arc::new(FakeSessionStore::default());
+    let (auth_service, auth_user_repository, _) =
+        build_test_auth_service_with_session_store(session_store.clone());
+    let session_service = Arc::new(session_service::SessionService::new(
+        session_service::SessionConfig::default(),
+        session_store,
+    ));
+    let (user_service, user_service_repository) = build_test_user_service();
+
+    let services = gateways::state::Services {
+        auth: Arc::new(auth_service),
+        user: Arc::new(user_service),
+        session: session_service.clone(),
+        rate_limiter: Arc::new(NoOpRateLimiter),
+        trusted_proxies: Arc::new(Vec::new()),
+        health_reporter: Arc::new(observability::health::AlwaysReadyHealthReporter),
+        metrics_handle: observability::metrics::install_recorder(),
+        config: test_config(),
+    };
+
+    (
+        services,
+        session_service,
+        auth_user_repository,
+        user_service_repository,
+    )
 }
 
 /// Default test configuration.

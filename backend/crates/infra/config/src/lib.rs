@@ -87,6 +87,8 @@ pub fn load_config() -> Result<AppConfig, LoaderConfigError> {
         .set_default("hsts_enabled", false)?
         .set_default("database_url", None::<String>)?
         .set_default("redis_url", None::<String>)?
+        .set_default("cookie_domain", ".klynt.edu")?
+        .set_default("cookie_secure", false)?
         .build()?;
 
     let app_config: AppConfig = config.try_deserialize()?;

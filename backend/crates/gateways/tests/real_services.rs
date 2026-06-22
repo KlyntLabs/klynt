@@ -26,6 +26,8 @@ fn test_config() -> Config {
         allowed_origins: vec!["http://localhost:5173".to_string()],
         trusted_proxies: Vec::new(),
         log_level: "warn".to_string(),
+        cookie_domain: ".klynt.edu".to_string(),
+        cookie_secure: false,
     }
 }
 

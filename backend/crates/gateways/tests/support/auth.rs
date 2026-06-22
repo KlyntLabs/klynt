@@ -31,6 +31,16 @@ impl Default for FakeUserRepository {
     }
 }
 
+impl FakeUserRepository {
+    /// Insert a user into the fake repository.
+    pub fn insert(&self, user: User) {
+        self.users
+            .lock()
+            .unwrap()
+            .insert(user.email.as_str().to_string(), user);
+    }
+}
+
 #[async_trait]
 impl UserRepository for FakeUserRepository {
     async fn find_by_email(
@@ -337,13 +347,20 @@ impl AuditLogger for StubAuditLogger {
 
 /// Build a fake auth service for tests.
 pub fn build_test_auth_service() -> (AuthService, Arc<FakeUserRepository>, Arc<FakeEmailSender>) {
+    build_test_auth_service_with_session_store(Arc::new(FakeSessionStore::default()))
+}
+
+/// Build a fake auth service with a shared session store.
+pub fn build_test_auth_service_with_session_store(
+    session_store: Arc<dyn SessionStore>,
+) -> (AuthService, Arc<FakeUserRepository>, Arc<FakeEmailSender>) {
     let email_sender = Arc::new(FakeEmailSender::default());
     let user_repository = Arc::new(FakeUserRepository::default());
     let service = AuthService::new(
         AuthConfig::default(),
         AuthDependencies {
             user_repository: user_repository.clone(),
-            session_store: Arc::new(FakeSessionStore::default()),
+            session_store,
             token_store: Arc::new(FakeTokenStore::default()),
             email_sender: email_sender.clone(),
             audit_logger: Arc::new(StubAuditLogger),

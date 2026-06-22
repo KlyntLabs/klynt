@@ -7,6 +7,7 @@ pub mod openapi;
 pub mod users;
 
 use axum::{middleware, Router};
+use tower_cookies::CookieManagerLayer;
 
 use crate::state::{Config, Services};
 
@@ -59,6 +60,7 @@ fn api_v1_routes(services: Services) -> Router<Services> {
         .nest("/auth", auth_routes)
         // Protected routes (require authentication)
         .nest("/users", protected_user_routes)
+        .layer(CookieManagerLayer::new())
 }
 
 /// Auth routes with per-route rate limiting.
