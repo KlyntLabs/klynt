@@ -138,6 +138,15 @@ async fn security_headers_are_present() {
         response.headers().get("Referrer-Policy").unwrap(),
         "strict-origin-when-cross-origin"
     );
+    assert_eq!(
+        response
+            .headers()
+            .get("Content-Security-Policy")
+            .unwrap()
+            .to_str()
+            .unwrap(),
+        "default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
+    );
 }
 
 #[tokio::test]
