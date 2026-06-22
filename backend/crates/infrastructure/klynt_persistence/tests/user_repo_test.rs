@@ -9,6 +9,7 @@ use klynt_base::ports::repository::{RepositoryError, UserRepository};
 use klynt_common::domain::{Email, PaginationRequest, User, UserRole, UserStatus};
 use klynt_common::util::UserId;
 use klynt_persistence::repositories::pg_user::PgUserRepository;
+use std::time::Duration;
 
 fn database_url() -> Option<String> {
     std::env::var("DATABASE_URL").ok()
@@ -277,6 +278,8 @@ async fn list_returns_paginated_users_with_total() {
     )
     .await
     .unwrap();
+
+    tokio::time::sleep(Duration::from_millis(50)).await;
 
     repo.create_pending_user(
         &ctx,
