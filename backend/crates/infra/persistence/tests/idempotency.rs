@@ -1,7 +1,7 @@
 //! Integration tests for the Redis-backed idempotency store.
 
 use persistence::ports::IdempotencyStore;
-use persistence::repositories::redis_idempotency::RedisIdempotencyStore;
+use persistence::repositories::idempotency::RedisIdempotencyStore;
 use uuid::Uuid;
 
 fn redis_url() -> String {

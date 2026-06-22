@@ -7,7 +7,7 @@ use base::ctx::{ExecutionContext, RequestContext};
 use base::ports::repository::{RepositoryError, UserRepository};
 use chrono::Utc;
 use domain::{Email, PaginationRequest, User, UserId, UserRole, UserStatus};
-use persistence::repositories::pg_user::PgUserRepository;
+use persistence::repositories::user::PgUserRepository;
 
 fn database_url() -> Option<String> {
     std::env::var("DATABASE_URL").ok()

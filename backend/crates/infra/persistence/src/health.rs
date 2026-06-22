@@ -5,8 +5,8 @@ use async_trait::async_trait;
 use observability::ports::{ComponentHealth, HealthCheck};
 
 use crate::rate_limiter::RedisRateLimiter;
-use crate::repositories::pg_session::PgSessionStore;
-use crate::repositories::pg_user::PgUserRepository;
+use crate::repositories::session::PgSessionStore;
+use crate::repositories::user::PgUserRepository;
 
 #[async_trait]
 impl HealthCheck for PgUserRepository {

@@ -80,16 +80,14 @@ impl UserBuilder {
         let config = self.config.unwrap_or_default();
 
         let user_repository = self.user_repository.unwrap_or_else(|| {
-            Arc::new(persistence::repositories::pg_user::PgUserRepository::new(
+            Arc::new(persistence::repositories::user::PgUserRepository::new(
                 pool.clone(),
             )) as Arc<dyn UserRepository>
         });
 
         let audit_logger = self.audit_logger.unwrap_or_else(|| {
             let audit_repo = Arc::new(
-                persistence::repositories::sqlx_audit_repo::PgAuditEventRepository::new(
-                    pool.clone(),
-                ),
+                persistence::repositories::audit_event::PgAuditEventRepository::new(pool.clone()),
             );
             Arc::new(observability::audit::AuditService::new(audit_repo)) as Arc<dyn AuditLogger>
         });

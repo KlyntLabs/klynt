@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use auth_service::{AuthConfig, AuthService};
-use persistence::repositories::pg_session::PgSessionStore;
+use persistence::repositories::session::PgSessionStore;
 use session_service::{SessionConfig, SessionService};
 use user_service::{UserConfig, UserService};
 

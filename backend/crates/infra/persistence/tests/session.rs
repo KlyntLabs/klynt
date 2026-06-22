@@ -4,7 +4,7 @@ use base::ctx::{ExecutionContext, RequestContext};
 use base::ports::session::SessionStore;
 use chrono::{Duration, Utc};
 use domain::{Email, UserId, UserStatus};
-use persistence::repositories::pg_session::PgSessionStore;
+use persistence::repositories::session::PgSessionStore;
 use sqlx::PgPool;
 use uuid::Uuid;
 

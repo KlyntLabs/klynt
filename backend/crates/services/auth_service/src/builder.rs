@@ -102,20 +102,21 @@ impl AuthBuilder {
         let config = self.config.unwrap_or_default();
 
         let user_repository = self.user_repository.unwrap_or_else(|| {
-            Arc::new(persistence::repositories::pg_user::PgUserRepository::new(
+            Arc::new(persistence::repositories::user::PgUserRepository::new(
                 pool.clone(),
             )) as Arc<dyn UserRepository>
         });
 
         let session_store = self.session_store.unwrap_or_else(|| {
-            Arc::new(persistence::repositories::pg_session::PgSessionStore::new(
+            Arc::new(persistence::repositories::session::PgSessionStore::new(
                 pool.clone(),
             )) as Arc<dyn SessionStore>
         });
 
         let token_store = self.token_store.unwrap_or_else(|| {
-            Arc::new(persistence::repositories::sqlx_token_repo::PgTokenStore::new(pool.clone()))
-                as Arc<dyn TokenStore>
+            Arc::new(persistence::repositories::token::PgTokenStore::new(
+                pool.clone(),
+            )) as Arc<dyn TokenStore>
         });
 
         let email_sender = self.email_sender.unwrap_or_else(|| {
@@ -124,9 +125,7 @@ impl AuthBuilder {
 
         let audit_logger = self.audit_logger.unwrap_or_else(|| {
             let audit_repo = Arc::new(
-                persistence::repositories::sqlx_audit_repo::PgAuditEventRepository::new(
-                    pool.clone(),
-                ),
+                persistence::repositories::audit_event::PgAuditEventRepository::new(pool.clone()),
             );
             Arc::new(observability::audit::AuditService::new(audit_repo)) as Arc<dyn AuditLogger>
         });

@@ -5,7 +5,7 @@ use persistence::ports::HealthCheck;
 use persistence::{
     password_hasher::Argon2PasswordHasher,
     rate_limiter::RedisRateLimiter,
-    repositories::{pg_session::PgSessionStore, pg_user::PgUserRepository},
+    repositories::{session::PgSessionStore, user::PgUserRepository},
 };
 use sqlx::PgPool;
 

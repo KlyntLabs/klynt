@@ -36,7 +36,7 @@ async fn user_repository_round_trips_with_postgres() {
         return;
     };
 
-    let repo = persistence::repositories::pg_user::PgUserRepository::new(pool.clone());
+    let repo = persistence::repositories::user::PgUserRepository::new(pool.clone());
     let ctx = test_ctx();
 
     let user_id = UserId::new();
@@ -108,7 +108,7 @@ async fn audit_service_creates_profile_updated_event() {
     };
 
     let audit_repo =
-        Arc::new(persistence::repositories::sqlx_audit_repo::PgAuditEventRepository::new(pool));
+        Arc::new(persistence::repositories::audit_event::PgAuditEventRepository::new(pool));
     let audit_service = Arc::new(observability::audit::AuditService::new(audit_repo));
     let ctx = test_ctx();
     let user_id = UserId::new();

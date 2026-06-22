@@ -3,8 +3,8 @@
 pub use base::ports::token::TokenStore;
 pub use observability::audit::types::AuditEventRepository;
 
-pub mod pg_session;
-pub mod pg_user;
-pub mod redis_idempotency;
-pub mod sqlx_audit_repo;
-pub mod sqlx_token_repo;
+pub mod audit_event;
+pub mod idempotency;
+pub mod session;
+pub mod token;
+pub mod user;
