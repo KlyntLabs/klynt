@@ -57,12 +57,16 @@ pub async fn require_auth(
     let ctx = ExecutionContext::new(RequestContext::with_request_id(RequestId(request_id.0)));
 
     let session = services
-        .session_store
-        .find_valid(&ctx, &token)
+        .session
+        .validate(&ctx, &token.0.to_string())
         .await
-        .map_err(|e| crate::GatewayError::Internal(format!("Session lookup failed: {e}")))?
-        .ok_or_else(|| {
-            crate::GatewayError::Unauthorized("Invalid or expired session".to_string())
+        .map_err(|e| match e {
+            session_service::SessionError::InvalidToken => {
+                crate::GatewayError::Unauthorized("Invalid or expired session".to_string())
+            }
+            session_service::SessionError::StoreError(msg) => {
+                crate::GatewayError::Internal(format!("Session lookup failed: {msg}"))
+            }
         })?;
 
     let ctx = ctx.with_actor(session.user_id.0, ActorType::User);

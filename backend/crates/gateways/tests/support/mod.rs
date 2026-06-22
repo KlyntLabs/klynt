@@ -49,20 +49,24 @@ impl PasswordHasher for FakePasswordHasher {
 /// Build test gateway services with exposed fakes for protected route tests.
 pub fn build_test_services_with_fakes() -> (
     gateways::state::Services,
-    Arc<FakePersistenceSessionStore>,
+    Arc<session_service::SessionService>,
     Arc<FakeUserServiceRepository>,
 ) {
     let (auth_service, _, _) = build_test_auth_service();
     let session_store = Arc::new(FakePersistenceSessionStore::default());
+    let session_service = Arc::new(session_service::SessionService::new(
+        session_service::SessionConfig::default(),
+        session_store,
+    ));
     let (user_service, user_repo) = build_test_user_service();
 
     let services = gateways::state::Services {
         auth: Arc::new(auth_service),
         user: Arc::new(user_service),
-        session_store: session_store.clone(),
+        session: session_service.clone(),
     };
 
-    (services, session_store, user_repo)
+    (services, session_service, user_repo)
 }
 
 /// Build test gateway services.

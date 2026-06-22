@@ -7,6 +7,7 @@ edition = "2021"
 # === Services ===
 auth_service = { path = "../services/auth_service" }
 user_service = { path = "../services/user_service" }
+session_service = { path = "../services/session_service" }
 
 # === Phase 1 Foundation ===
 klynt_base = { path = "../klynt_base" }

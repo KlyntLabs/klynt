@@ -3,8 +3,8 @@
 use std::sync::Arc;
 
 use auth_service::{AuthConfig, AuthService};
-use klynt_base::ports::session::SessionStore;
 use klynt_persistence::repositories::pg_session::PgSessionStore;
+use session_service::{SessionConfig, SessionService};
 use user_service::{UserConfig, UserService};
 
 use super::Config;
@@ -14,8 +14,8 @@ use super::Config;
 pub struct Services {
     pub auth: Arc<AuthService>,
     pub user: Arc<UserService>,
-    /// Session store exposed for HTTP authentication middleware.
-    pub session_store: Arc<dyn SessionStore>,
+    /// Session service exposed for HTTP authentication middleware.
+    pub session: Arc<SessionService>,
 }
 
 impl Services {
@@ -38,26 +38,22 @@ impl Services {
             .await
             .map_err(|e| crate::GatewayError::configuration(format!("Migrations: {e}")))?;
 
-        let (auth_service, session_store) = Self::create_auth_service(config, pool.clone()).await?;
+        let auth_service = Self::create_auth_service(config, pool.clone()).await?;
+        let session_service = Self::create_session_service(config, pool.clone()).await?;
         let user_service = Self::create_user_service(config, pool).await?;
 
         Ok(Self {
             auth: Arc::new(auth_service),
             user: Arc::new(user_service),
-            session_store,
+            session: Arc::new(session_service),
         })
     }
 
     async fn create_auth_service(
         config: &Config,
         pool: sqlx::PgPool,
-    ) -> Result<(AuthService, Arc<dyn SessionStore>), crate::GatewayError> {
-        // The gateway middleware needs direct access to the persistence session store.
-        // The auth service uses its own session-store port backed by the same pool,
-        // so both observe the same data.
-        let session_store: Arc<dyn SessionStore> = Arc::new(PgSessionStore::new(pool.clone()));
-
-        let auth_service = AuthService::builder()
+    ) -> Result<AuthService, crate::GatewayError> {
+        AuthService::builder()
             .with_config(AuthConfig {
                 base_url: config.base_url.clone(),
                 session_duration_secs: 86400,
@@ -67,9 +63,22 @@ impl Services {
             .with_pool(pool)
             .build()
             .await
-            .map_err(|e| crate::GatewayError::configuration(format!("Auth service: {e}")))?;
+            .map_err(|e| crate::GatewayError::configuration(format!("Auth service: {e}")))
+    }
 
-        Ok((auth_service, session_store))
+    async fn create_session_service(
+        _config: &Config,
+        pool: sqlx::PgPool,
+    ) -> Result<SessionService, crate::GatewayError> {
+        let session_store: Arc<dyn klynt_base::ports::session::SessionStore> =
+            Arc::new(PgSessionStore::new(pool));
+
+        Ok(SessionService::new(
+            SessionConfig {
+                session_duration_secs: 86400,
+            },
+            session_store,
+        ))
     }
 
     async fn create_user_service(

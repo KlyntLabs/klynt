@@ -6,9 +6,8 @@ use axum::{
     body::Body,
     http::{Method, Request, StatusCode},
 };
-use chrono::{Duration, Utc};
+use chrono::Utc;
 use klynt_base::ctx::{ExecutionContext, RequestContext};
-use klynt_base::ports::session::SessionStore;
 use klynt_common::domain::{Email, UserRole, UserStatus};
 use klynt_common::util::UserId;
 use tower::ServiceExt;
@@ -276,17 +275,15 @@ async fn malformed_json_returns_bad_request() {
 }
 
 async fn authenticated_app() -> (axum::Router, UserId, String) {
-    let (services, session_store, user_repo) = support::build_test_services_with_fakes();
+    let (services, session_service, user_repo) = support::build_test_services_with_fakes();
     let config = support::test_config();
 
     let user_id = UserId::new();
-    let expires_at = Utc::now() + Duration::hours(1);
 
-    let token = session_store
+    let token = session_service
         .create(
             &ExecutionContext::new(RequestContext::new()),
             klynt_common::util::UserId(user_id.inner()),
-            expires_at,
         )
         .await
         .unwrap();

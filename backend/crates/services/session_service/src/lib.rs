@@ -5,10 +5,11 @@
 pub mod config;
 pub mod error;
 
+pub use config::SessionConfig;
+pub use error::{SessionError, SessionResult};
+
 use std::sync::Arc;
 
-use crate::config::SessionConfig;
-use crate::error::{SessionError, SessionResult};
 use klynt_base::ctx::ExecutionContext;
 use klynt_base::ports::session::{Session, SessionStore, SessionToken};
 use klynt_common::util::UserId;
