@@ -1,6 +1,7 @@
 use super::*;
 
 fn sample_user() -> User {
+    let now = Utc::now();
     User {
         id: UserId::new(),
         email: Email::new("ada@example.com".to_string()),
@@ -8,8 +9,13 @@ fn sample_user() -> User {
         password_hash: "hash".to_string(),
         status: UserStatus::Active,
         role: UserRole::Student,
-        created_at: Utc::now(),
-        updated_at: None,
+        global_role: None,
+        email_verified_at: None,
+        institution_id: None,
+        terms_accepted_at: now,
+        terms_version: "1.0".to_string(),
+        created_at: now,
+        updated_at: now,
         deleted_at: None,
     }
 }
@@ -167,4 +173,40 @@ fn user_role_and_status_serialize() {
 
     let status = UserStatus::Pending;
     assert_eq!(serde_json::to_string(&status).unwrap(), "\"pending\"");
+}
+
+#[test]
+fn new_user_includes_schema_aligned_fields() {
+    let email = Email::new("new@example.com".to_string());
+    let user = User::new(email, "hash".to_string(), None, UserRole::Student);
+
+    assert_eq!(user.status, UserStatus::Pending);
+    assert_eq!(user.role, UserRole::Student);
+    assert!(user.global_role.is_none());
+    assert!(user.email_verified_at.is_none());
+    assert!(user.institution_id.is_none());
+    assert_eq!(user.terms_version, "1.0");
+    assert!(!user.is_active());
+}
+
+#[test]
+fn user_role_requires_institution_for_instructor_and_admin() {
+    assert!(!UserRole::Student.requires_institution());
+    assert!(UserRole::Instructor.requires_institution());
+    assert!(UserRole::Admin.requires_institution());
+}
+
+#[test]
+fn user_role_parses_known_values() {
+    assert_eq!(UserRole::parse("student").unwrap(), UserRole::Student);
+    assert_eq!(UserRole::parse("teacher").unwrap(), UserRole::Instructor);
+    assert_eq!(UserRole::parse("instructor").unwrap(), UserRole::Instructor);
+    assert_eq!(UserRole::parse("admin").unwrap(), UserRole::Admin);
+    assert_eq!(UserRole::parse("parent").unwrap(), UserRole::Student);
+}
+
+#[test]
+fn user_role_default_is_student() {
+    let role: UserRole = Default::default();
+    assert_eq!(role, UserRole::Student);
 }

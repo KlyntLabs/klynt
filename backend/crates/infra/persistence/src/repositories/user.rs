@@ -26,22 +26,30 @@ pub(crate) struct UserRow {
     name: String,
     password_hash: String,
     status: String,
+    email_verified_at: Option<DateTime<Utc>>,
+    global_role: Option<String>,
     created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
+    terms_accepted_at: DateTime<Utc>,
+    terms_version: String,
     role: String,
+    institution_id: Option<Uuid>,
     #[sqlx(default)]
     deleted_at: Option<DateTime<Utc>>,
 }
 
 impl UserRow {
     pub(crate) fn into_user(self) -> Result<User, DomainError> {
-        let role = DbRole::parse(&self.role)
+        let role: UserRole = self
+            .role
+            .parse()
             .map_err(|e| DomainError::internal_msg(format!("invalid role in database: {e:?}")))?;
         let status = DbUserStatus::parse(&self.status)
             .map_err(|e| DomainError::internal_msg(format!("invalid status in database: {e:?}")))?;
 
         Ok(User {
             id: UserId(self.id),
-            email: Email::new(self.email),
+            email: Email::parse(&self.email)?,
             full_name: if self.name.is_empty() {
                 None
             } else {
@@ -49,9 +57,14 @@ impl UserRow {
             },
             password_hash: self.password_hash,
             status: status_from_db(status),
-            role: role_from_db(role),
+            role,
+            global_role: self.global_role.and_then(|r| r.parse().ok()),
+            email_verified_at: self.email_verified_at,
+            institution_id: self.institution_id,
+            terms_accepted_at: self.terms_accepted_at,
+            terms_version: self.terms_version,
             created_at: self.created_at,
-            updated_at: None,
+            updated_at: self.updated_at,
             deleted_at: self.deleted_at,
         })
     }
@@ -63,26 +76,14 @@ pub(crate) enum DbRole {
     Student,
     Teacher,
     Admin,
-    Parent,
 }
 
 impl DbRole {
-    pub(crate) fn parse(raw: &str) -> Result<Self, &'static str> {
-        match raw.to_lowercase().as_str() {
-            "student" => Ok(Self::Student),
-            "teacher" => Ok(Self::Teacher),
-            "admin" => Ok(Self::Admin),
-            "parent" => Ok(Self::Parent),
-            _ => Err("unknown role"),
-        }
-    }
-
     pub(crate) fn as_str(&self) -> &'static str {
         match self {
             DbRole::Student => "student",
             DbRole::Teacher => "teacher",
             DbRole::Admin => "admin",
-            DbRole::Parent => "parent",
         }
     }
 }
@@ -119,16 +120,6 @@ pub(crate) fn role_to_db(role: UserRole) -> DbRole {
         UserRole::Student => DbRole::Student,
         UserRole::Instructor => DbRole::Teacher,
         UserRole::Admin => DbRole::Admin,
-    }
-}
-
-fn role_from_db(role: DbRole) -> UserRole {
-    match role {
-        DbRole::Student => UserRole::Student,
-        DbRole::Teacher => UserRole::Instructor,
-        DbRole::Admin => UserRole::Admin,
-        // Parent is not represented in the shared domain; map to Student as least privilege.
-        DbRole::Parent => UserRole::Student,
     }
 }
 

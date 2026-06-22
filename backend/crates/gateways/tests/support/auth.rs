@@ -14,6 +14,7 @@ use base::ports::email::EmailError;
 use base::ports::repository::{RepositoryError, UserRepository};
 use chrono::{DateTime, Utc};
 use domain::{Email, PaginationRequest, User, UserId, UserRole, UserStatus};
+use uuid::Uuid;
 
 use super::{FakePasswordHasher, FixedClock};
 
@@ -60,6 +61,8 @@ impl UserRepository for FakeUserRepository {
         full_name: String,
         email: Email,
         password_hash: String,
+        role: UserRole,
+        institution_id: Option<Uuid>,
     ) -> Result<UserId, RepositoryError> {
         if self.users.lock().unwrap().contains_key(email.as_str()) {
             return Err(RepositoryError::Conflict(format!(
@@ -67,6 +70,7 @@ impl UserRepository for FakeUserRepository {
             )));
         }
 
+        let now = Utc::now();
         let user_id = UserId::new();
         let user = User {
             id: user_id,
@@ -74,9 +78,14 @@ impl UserRepository for FakeUserRepository {
             password_hash,
             full_name: Some(full_name).filter(|n| !n.is_empty()),
             status: UserStatus::Pending,
-            role: UserRole::Student,
-            created_at: Utc::now(),
-            updated_at: None,
+            role,
+            global_role: None,
+            email_verified_at: None,
+            institution_id,
+            terms_accepted_at: now,
+            terms_version: "1.0".to_string(),
+            created_at: now,
+            updated_at: now,
             deleted_at: None,
         };
         self.users

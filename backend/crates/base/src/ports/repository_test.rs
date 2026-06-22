@@ -5,6 +5,7 @@ mod tests {
     use async_trait::async_trait;
     use chrono::Utc;
     use domain::{Email, PaginationRequest, User, UserId, UserRole, UserStatus};
+    use uuid::Uuid;
 
     #[test]
     fn test_user_repository_trait_exists() {
@@ -154,6 +155,8 @@ mod tests {
             _full_name: String,
             _email: Email,
             _password_hash: String,
+            _role: UserRole,
+            _institution_id: Option<Uuid>,
         ) -> Result<UserId, RepositoryError> {
             Ok(UserId::new())
         }
@@ -219,7 +222,14 @@ mod tests {
         assert!(found.is_none());
 
         let user_id = repo
-            .create_pending_user(&ctx, "Ada".to_string(), email.clone(), "hash".to_string())
+            .create_pending_user(
+                &ctx,
+                "Ada".to_string(),
+                email.clone(),
+                "hash".to_string(),
+                UserRole::Student,
+                None,
+            )
             .await
             .expect("create_pending_user");
         assert!(!user_id.to_string().is_empty());
@@ -234,6 +244,7 @@ mod tests {
         let found_by_id = repo.find_by_id(&ctx, user_id).await.expect("find_by_id");
         assert!(found_by_id.is_none());
 
+        let now = Utc::now();
         let user = User {
             id: user_id,
             email,
@@ -241,8 +252,13 @@ mod tests {
             password_hash: "hash".to_string(),
             status: UserStatus::Active,
             role: UserRole::Student,
-            created_at: Utc::now(),
-            updated_at: None,
+            global_role: None,
+            email_verified_at: None,
+            institution_id: None,
+            terms_accepted_at: now,
+            terms_version: "1.0".to_string(),
+            created_at: now,
+            updated_at: now,
             deleted_at: None,
         };
         let updated = repo.update(&ctx, user.clone()).await.expect("update");

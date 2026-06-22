@@ -28,7 +28,7 @@ impl UserExt for User {
             return Err(UserError::UserDeleted);
         }
         self.full_name = full_name;
-        self.updated_at = Some(Utc::now());
+        self.updated_at = Utc::now();
         Ok(())
     }
 }
@@ -39,6 +39,7 @@ mod tests {
     use domain::{Email, UserId, UserRole, UserStatus};
 
     fn sample_user() -> User {
+        let now = Utc::now();
         User {
             id: UserId::new(),
             email: Email::new("ada@example.com".to_string()),
@@ -46,8 +47,13 @@ mod tests {
             password_hash: "hash".to_string(),
             status: UserStatus::Active,
             role: UserRole::Student,
-            created_at: Utc::now(),
-            updated_at: None,
+            global_role: None,
+            email_verified_at: None,
+            institution_id: None,
+            terms_accepted_at: now,
+            terms_version: "1.0".to_string(),
+            created_at: now,
+            updated_at: now,
             deleted_at: None,
         }
     }
@@ -72,10 +78,11 @@ mod tests {
 
     #[test]
     fn update_profile_changes_full_name() {
+        let before = Utc::now();
         let mut user = sample_user();
         user.update_profile(Some("New Name".to_string())).unwrap();
         assert_eq!(user.full_name, Some("New Name".to_string()));
-        assert!(user.updated_at.is_some());
+        assert!(user.updated_at >= before);
     }
 
     #[test]

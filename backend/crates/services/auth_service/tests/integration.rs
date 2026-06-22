@@ -1,7 +1,7 @@
 //! Integration tests for auth service public interface.
 
 use domain::contracts::auth::{LoginRequest, RegistrationRequest};
-use domain::UserStatus;
+use domain::{UserRole, UserStatus};
 
 mod support;
 
@@ -18,6 +18,8 @@ async fn full_registration_flow() {
                 email: "ada@example.com".to_string(),
                 password: "Str0ng!Pass#123".to_string(),
                 full_name: Some("Ada Lovelace".to_string()),
+                role: UserRole::Student,
+                institution_id: None,
             },
         )
         .await

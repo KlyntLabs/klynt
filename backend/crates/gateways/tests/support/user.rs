@@ -8,11 +8,12 @@ use base::ctx::ExecutionContext;
 use base::ports::repository::{RepositoryError, UserRepository};
 use base::ports::{Clock, PasswordHashError, PasswordHasher};
 use chrono::{DateTime, Utc};
-use domain::{Email, PaginationRequest, User, UserId};
+use domain::{Email, PaginationRequest, User, UserId, UserRole};
 use user_service::{
     application::ports::AuditLogger as UserAuditLogger, Dependencies as UserDependencies,
     UserConfig, UserService,
 };
+use uuid::Uuid;
 
 /// Fake user repository for user_service tests.
 #[derive(Default)]
@@ -57,6 +58,8 @@ impl UserRepository for FakeUserServiceRepository {
         _full_name: String,
         _email: Email,
         _password_hash: String,
+        _role: UserRole,
+        _institution_id: Option<Uuid>,
     ) -> Result<UserId, RepositoryError> {
         unimplemented!("create_pending_user not used by gateway user tests")
     }

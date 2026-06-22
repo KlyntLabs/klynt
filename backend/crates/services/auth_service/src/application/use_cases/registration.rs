@@ -30,6 +30,12 @@ pub(crate) async fn execute(
     let email = Email::parse(&request.email)
         .map_err(|e| AuthError::Domain(DomainError::InvalidInput(e.to_string())))?;
 
+    let institution_id = if request.role.requires_institution() {
+        request.institution_id
+    } else {
+        None
+    };
+
     let user_id = service
         .internal()
         .user_repository
@@ -38,6 +44,8 @@ pub(crate) async fn execute(
             request.full_name.unwrap_or_default(),
             email.clone(),
             password_hash,
+            request.role,
+            institution_id,
         )
         .await?;
 

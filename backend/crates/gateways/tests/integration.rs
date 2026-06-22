@@ -287,6 +287,7 @@ async fn authenticated_app() -> (axum::Router, UserId, String) {
         .await
         .unwrap();
 
+    let now = Utc::now();
     user_repo.insert(User {
         id: user_id,
         email: Email::new("ada@example.com".to_string()),
@@ -294,8 +295,13 @@ async fn authenticated_app() -> (axum::Router, UserId, String) {
         password_hash: "old-password".to_string(),
         status: UserStatus::Active,
         role: UserRole::Student,
-        created_at: Utc::now(),
-        updated_at: None,
+        global_role: None,
+        email_verified_at: None,
+        institution_id: None,
+        terms_accepted_at: now,
+        terms_version: "1.0".to_string(),
+        created_at: now,
+        updated_at: now,
         deleted_at: None,
     });
 

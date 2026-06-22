@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::error::EmailError;
+use crate::role::{GlobalRole, RoleError};
 
 /// User ID wrapper — stable, globally unique identifier.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -107,12 +108,54 @@ impl std::fmt::Display for Email {
 ///
 /// This is the role persisted on the user aggregate. It maps to and from the
 /// platform-wide [`Role`](crate::role::Role) at the persistence boundary.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum UserRole {
     Admin,
     Instructor,
+    #[default]
     Student,
+}
+
+impl UserRole {
+    /// Parse a user role from its string representation.
+    pub fn parse(raw: &str) -> Result<Self, RoleError> {
+        match raw.to_lowercase().as_str() {
+            "student" => Ok(Self::Student),
+            "teacher" | "instructor" => Ok(Self::Instructor),
+            "admin" => Ok(Self::Admin),
+            "parent" => Ok(Self::Student),
+            _ => Err(RoleError::Unknown),
+        }
+    }
+
+    /// Whether this role requires an institution association.
+    pub fn requires_institution(self) -> bool {
+        matches!(self, UserRole::Instructor | UserRole::Admin)
+    }
+
+    /// Return the canonical string representation.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            UserRole::Student => "student",
+            UserRole::Instructor => "instructor",
+            UserRole::Admin => "admin",
+        }
+    }
+}
+
+impl std::fmt::Display for UserRole {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl std::str::FromStr for UserRole {
+    type Err = RoleError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::parse(s)
+    }
 }
 
 /// User account status.
@@ -153,8 +196,13 @@ pub struct User {
     pub password_hash: String,
     pub status: UserStatus,
     pub role: UserRole,
+    pub global_role: Option<GlobalRole>,
+    pub email_verified_at: Option<DateTime<Utc>>,
+    pub institution_id: Option<Uuid>,
+    pub terms_accepted_at: DateTime<Utc>,
+    pub terms_version: String,
     pub created_at: DateTime<Utc>,
-    pub updated_at: Option<DateTime<Utc>>,
+    pub updated_at: DateTime<Utc>,
     pub deleted_at: Option<DateTime<Utc>>,
 }
 
@@ -166,6 +214,7 @@ impl User {
         full_name: Option<String>,
         role: UserRole,
     ) -> Self {
+        let now = Utc::now();
         Self {
             id: UserId::new(),
             email,
@@ -173,8 +222,13 @@ impl User {
             password_hash,
             status: UserStatus::default(),
             role,
-            created_at: Utc::now(),
-            updated_at: None,
+            global_role: None,
+            email_verified_at: None,
+            institution_id: None,
+            terms_accepted_at: now,
+            terms_version: "1.0".to_string(),
+            created_at: now,
+            updated_at: now,
             deleted_at: None,
         }
     }

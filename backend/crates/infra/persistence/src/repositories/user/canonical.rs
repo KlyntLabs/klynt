@@ -3,6 +3,7 @@
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
+use uuid::Uuid;
 
 use super::{role_to_db, status_to_db, PgUserRepository, UserRow};
 use base::ctx::ExecutionContext;
@@ -21,7 +22,7 @@ impl UserRepository for PgUserRepository {
             SELECT
                 id, email, name, password_hash,
                 status, email_verified_at, global_role,
-                created_at, terms_accepted_at, terms_version,
+                created_at, updated_at, terms_accepted_at, terms_version,
                 role, institution_id
             FROM users
             WHERE email = $1
@@ -44,7 +45,7 @@ impl UserRepository for PgUserRepository {
             SELECT
                 id, email, name, password_hash,
                 status, email_verified_at, global_role,
-                created_at, terms_accepted_at, terms_version,
+                created_at, updated_at, terms_accepted_at, terms_version,
                 role, institution_id,
                 deleted_at
             FROM users
@@ -64,17 +65,25 @@ impl UserRepository for PgUserRepository {
         full_name: String,
         email: Email,
         password_hash: String,
+        role: UserRole,
+        institution_id: Option<Uuid>,
     ) -> Result<UserId, RepositoryError> {
         let user_id = UserId::new();
+        let now = Utc::now();
         let user = User {
             id: user_id,
             email,
             full_name: Some(full_name).filter(|n| !n.is_empty()),
             password_hash,
             status: UserStatus::Pending,
-            role: UserRole::Student,
-            created_at: Utc::now(),
-            updated_at: None,
+            role,
+            global_role: None,
+            email_verified_at: None,
+            institution_id,
+            terms_accepted_at: now,
+            terms_version: "1.0".to_string(),
+            created_at: now,
+            updated_at: now,
             deleted_at: None,
         };
 
@@ -83,10 +92,10 @@ impl UserRepository for PgUserRepository {
             INSERT INTO users (
                 id, email, name, password_hash,
                 status, email_verified_at, global_role,
-                terms_accepted_at, terms_version,
+                created_at, updated_at, terms_accepted_at, terms_version,
                 role, institution_id
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
             ON CONFLICT (email) DO NOTHING
             RETURNING id
             "#,
@@ -99,9 +108,11 @@ impl UserRepository for PgUserRepository {
         .bind(None::<DateTime<Utc>>)
         .bind(None::<String>)
         .bind(user.created_at)
-        .bind("1.0")
+        .bind(user.updated_at)
+        .bind(user.terms_accepted_at)
+        .bind(&user.terms_version)
         .bind(role_to_db(user.role).as_str())
-        .bind(None::<uuid::Uuid>)
+        .bind(user.institution_id)
         .fetch_optional(&self.pool)
         .await?;
 
@@ -169,7 +180,8 @@ impl UserRepository for PgUserRepository {
                 name = $1,
                 status = $2,
                 role = $3,
-                password_hash = $4
+                password_hash = $4,
+                updated_at = NOW()
             WHERE id = $5
             "#,
         )
@@ -219,7 +231,7 @@ impl UserRepository for PgUserRepository {
             SELECT
                 id, email, name, password_hash,
                 status, email_verified_at, global_role,
-                created_at, terms_accepted_at, terms_version,
+                created_at, updated_at, terms_accepted_at, terms_version,
                 role, institution_id,
                 deleted_at
             FROM users

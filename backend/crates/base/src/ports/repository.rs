@@ -6,7 +6,8 @@
 
 use crate::ctx::ExecutionContext;
 use async_trait::async_trait;
-use domain::{Email, PaginationRequest, User, UserId};
+use domain::{Email, PaginationRequest, User, UserId, UserRole};
+use uuid::Uuid;
 
 /// Canonical User repository interface.
 ///
@@ -47,6 +48,8 @@ pub trait UserRepository: Send + Sync {
         full_name: String,
         email: Email,
         password_hash: String,
+        role: UserRole,
+        institution_id: Option<Uuid>,
     ) -> Result<UserId, RepositoryError>;
 
     /// Activate a pending user (email verification flow).

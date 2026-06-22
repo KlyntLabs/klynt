@@ -6,6 +6,7 @@ use domain::{Email, User, UserId, UserRole, UserStatus};
 
 /// Create a sample user for tests with full control over fields.
 pub fn sample_user(email: &str, full_name: &str, password_hash: &str, status: UserStatus) -> User {
+    let now = Utc::now();
     User {
         id: UserId::new(),
         email: Email::new(email.to_string()),
@@ -13,8 +14,13 @@ pub fn sample_user(email: &str, full_name: &str, password_hash: &str, status: Us
         password_hash: password_hash.to_string(),
         status,
         role: UserRole::Student,
-        created_at: Utc::now(),
-        updated_at: None,
+        global_role: None,
+        email_verified_at: None,
+        institution_id: None,
+        terms_accepted_at: now,
+        terms_version: "1.0".to_string(),
+        created_at: now,
+        updated_at: now,
         deleted_at: None,
     }
 }

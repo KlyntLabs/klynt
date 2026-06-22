@@ -94,6 +94,14 @@ impl std::fmt::Display for GlobalRole {
     }
 }
 
+impl std::str::FromStr for GlobalRole {
+    type Err = RoleError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::parse(s)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

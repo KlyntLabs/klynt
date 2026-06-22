@@ -47,6 +47,8 @@ async fn create_pending_user_creates_user_and_returns_id() {
             "Ada Lovelace".to_string(),
             email.clone(),
             "hash".to_string(),
+            UserRole::Student,
+            None,
         )
         .await
         .unwrap();
@@ -68,9 +70,16 @@ async fn create_pending_user_twice_with_same_email_returns_conflict() {
     let ctx = test_ctx();
     let email = unique_email();
 
-    repo.create_pending_user(&ctx, "First".to_string(), email.clone(), "hash".to_string())
-        .await
-        .unwrap();
+    repo.create_pending_user(
+        &ctx,
+        "First".to_string(),
+        email.clone(),
+        "hash".to_string(),
+        UserRole::Student,
+        None,
+    )
+    .await
+    .unwrap();
 
     let result = repo
         .create_pending_user(
@@ -78,6 +87,8 @@ async fn create_pending_user_twice_with_same_email_returns_conflict() {
             "Second".to_string(),
             email.clone(),
             "other".to_string(),
+            UserRole::Student,
+            None,
         )
         .await;
 
@@ -103,6 +114,8 @@ async fn find_by_email_returns_matching_user() {
             "Grace Hopper".to_string(),
             email.clone(),
             "hash".to_string(),
+            UserRole::Student,
+            None,
         )
         .await
         .unwrap();
@@ -128,6 +141,8 @@ async fn find_by_id_returns_matching_user() {
             "Alan Turing".to_string(),
             email.clone(),
             "hash".to_string(),
+            UserRole::Student,
+            None,
         )
         .await
         .unwrap();
@@ -153,6 +168,8 @@ async fn activate_user_changes_status_from_pending_to_active() {
             "Marie Curie".to_string(),
             email.clone(),
             "hash".to_string(),
+            UserRole::Student,
+            None,
         )
         .await
         .unwrap();
@@ -179,6 +196,8 @@ async fn update_password_changes_password_hash() {
             "User".to_string(),
             email.clone(),
             "old-hash".to_string(),
+            UserRole::Student,
+            None,
         )
         .await
         .unwrap();
@@ -207,6 +226,8 @@ async fn update_updates_mutable_fields_and_returns_user() {
             "Original".to_string(),
             email.clone(),
             "hash".to_string(),
+            UserRole::Student,
+            None,
         )
         .await
         .unwrap();
@@ -246,6 +267,8 @@ async fn delete_soft_deletes_user() {
             "To Delete".to_string(),
             email.clone(),
             "hash".to_string(),
+            UserRole::Student,
+            None,
         )
         .await
         .unwrap();
@@ -273,6 +296,8 @@ async fn list_returns_paginated_users_with_total() {
         "First Listed".to_string(),
         first_email.clone(),
         "hash".to_string(),
+        UserRole::Student,
+        None,
     )
     .await
     .unwrap();
@@ -282,6 +307,8 @@ async fn list_returns_paginated_users_with_total() {
         "Second Listed".to_string(),
         second_email.clone(),
         "hash".to_string(),
+        UserRole::Student,
+        None,
     )
     .await
     .unwrap();
@@ -371,8 +398,13 @@ async fn update_returns_not_found_for_missing_user() {
         password_hash: "hash".to_string(),
         status: UserStatus::Pending,
         role: UserRole::Student,
+        global_role: None,
+        email_verified_at: None,
+        institution_id: None,
+        terms_accepted_at: now,
+        terms_version: "1.0".to_string(),
         created_at: now,
-        updated_at: None,
+        updated_at: now,
         deleted_at: None,
     };
 

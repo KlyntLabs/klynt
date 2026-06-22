@@ -4,6 +4,7 @@ use crate::user::UserId;
 use crate::user::UserRole;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 use validator::Validate;
 
 /// Login request
@@ -53,6 +54,10 @@ pub struct RegistrationRequest {
     #[validate(length(min = 8, message = "Password must be at least 8 characters"))]
     pub password: String,
     pub full_name: Option<String>,
+    #[serde(default)]
+    pub role: UserRole,
+    #[serde(default)]
+    pub institution_id: Option<Uuid>,
 }
 
 /// Refresh token request
