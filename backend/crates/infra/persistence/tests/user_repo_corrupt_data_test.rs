@@ -74,6 +74,12 @@ async fn find_by_id_returns_error_for_invalid_role_in_db() {
 
     let result = repo.find_by_id(&ctx, user_id).await;
     assert!(result.is_err());
+
+    sqlx::query("DELETE FROM users WHERE id = $1")
+        .bind(user_id.inner())
+        .execute(&pool)
+        .await
+        .ok();
 }
 
 #[tokio::test]
@@ -118,6 +124,12 @@ async fn find_by_id_returns_error_for_invalid_global_role_in_db() {
 
     let result = repo.find_by_id(&ctx, user_id).await;
     assert!(result.is_err());
+
+    sqlx::query("DELETE FROM users WHERE id = $1")
+        .bind(user_id.inner())
+        .execute(&pool)
+        .await
+        .ok();
 }
 
 #[tokio::test]
@@ -129,6 +141,9 @@ async fn find_by_id_returns_error_for_invalid_email_in_db() {
     let repo = PgUserRepository::new(pool.clone());
     let ctx = test_ctx();
     let user_id = UserId::new();
+    // Use a unique invalid email so repeated test runs on a persistent database
+    // do not collide on the UNIQUE constraint.
+    let email = format!("not-an-email-{}", user_id.inner());
     let now = Utc::now();
 
     sqlx::query(
@@ -143,7 +158,7 @@ async fn find_by_id_returns_error_for_invalid_email_in_db() {
         "#,
     )
     .bind(user_id.inner())
-    .bind("not-an-email")
+    .bind(&email)
     .bind("Name")
     .bind("hash")
     .bind("pending_verification")
@@ -161,4 +176,12 @@ async fn find_by_id_returns_error_for_invalid_email_in_db() {
 
     let result = repo.find_by_id(&ctx, user_id).await;
     assert!(result.is_err());
+
+    // Clean up so this test does not leave corrupt rows behind for concurrent
+    // or subsequent test runs.
+    sqlx::query("DELETE FROM users WHERE id = $1")
+        .bind(user_id.inner())
+        .execute(&pool)
+        .await
+        .ok();
 }

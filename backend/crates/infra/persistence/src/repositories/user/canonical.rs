@@ -265,11 +265,18 @@ impl UserRepository for PgUserRepository {
         .fetch_one(&self.pool)
         .await?;
 
-        let users = rows
-            .into_iter()
-            .map(|r| r.into_user())
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(map_error)?;
+        // Defensive: skip rows that cannot be mapped to the domain model. A
+        // single corrupt row (e.g. an invalid role inserted out-of-band) should
+        // not break the list endpoint for every caller.
+        let mut users = Vec::with_capacity(rows.len());
+        for row in rows {
+            match row.into_user() {
+                Ok(user) => users.push(user),
+                Err(err) => {
+                    tracing::warn!(error = %err, "skipping corrupt user row in list");
+                }
+            }
+        }
 
         Ok((users, total as u64))
     }
