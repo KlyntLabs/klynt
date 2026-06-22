@@ -28,7 +28,7 @@ impl AuditEventRepository for PgAuditEventRepository {
                 tenant_id, before_data, after_data,
                 success, error_message, request_id
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            VALUES ($1, $2, $3::INET, $4, $5, $6, $7, $8, $9, $10, $11, $12)
             "#,
         )
         .bind(event.id)

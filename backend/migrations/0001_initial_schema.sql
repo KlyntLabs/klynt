@@ -1,6 +1,9 @@
 -- Initial schema for multi-tenant authentication system
 -- Phase 1: Core Auth Foundation
 
+-- Requires pgcrypto extension for gen_random_uuid().
+-- The 0005_fix_pgcrypto_and_audit_ip migration enables it explicitly.
+
 -- ============================================================================
 -- Users Table
 -- ============================================================================
