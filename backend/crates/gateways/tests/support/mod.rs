@@ -107,6 +107,15 @@ pub fn build_test_services_with_rate_limiter_and_proxies(
     services
 }
 
+/// Build test gateway services with a custom health reporter.
+pub fn build_test_services_with_health_reporter(
+    health_reporter: Arc<dyn observability::health::HealthReporter>,
+) -> gateways::state::Services {
+    let (mut services, _, _) = build_test_services_with_fakes();
+    services.health_reporter = health_reporter;
+    services
+}
+
 /// Default test configuration.
 pub fn test_config() -> gateways::Config {
     gateways::Config::default()

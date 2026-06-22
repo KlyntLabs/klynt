@@ -161,6 +161,16 @@ GET /health/live                    - Liveness probe
 GET /health/ready                   - Readiness probe
 ```
 
+### Observability Routes
+
+```
+GET /metrics                        - Prometheus metrics (public; restrict before production)
+```
+
+> **Security note:** `/metrics` is currently served without authentication. It
+> must be protected (separate admin port, auth, or network policy) before
+> exposing the gateway to untrusted networks.
+
 ## Error Handling
 
 Gateway errors implement `IntoResponse` and expose stable error codes:
