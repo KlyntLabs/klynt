@@ -76,6 +76,8 @@ pub async fn from_config(config: &Config) -> Result<Services, GatewayError> {
 
 **Rule:** Do NOT wire dependencies inside services — always here.
 
+**Rate limiting:** If `rate_limiter.enabled` is `true`, `REDIS_URL` must be configured; otherwise `from_config` returns a `GatewayError::Configuration` error. When disabled, a no-op limiter is wired.
+
 ### 2. HTTP Handlers (`routes/`)
 
 Route handlers delegate to services:

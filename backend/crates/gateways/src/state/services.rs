@@ -128,13 +128,11 @@ impl Services {
             return Ok(Arc::new(NoOpRateLimiter));
         }
 
-        let Some(redis_url) = &config.redis_url else {
-            tracing::warn!(
-                "rate limiting is enabled but no Redis URL is configured; \
-                 using no-op rate limiter"
-            );
-            return Ok(Arc::new(NoOpRateLimiter));
-        };
+        let redis_url = config.redis_url.as_ref().ok_or_else(|| {
+            crate::GatewayError::configuration(
+                "RATE_LIMITER_ENABLED is true but REDIS_URL is not configured",
+            )
+        })?;
 
         let limiter = RedisRateLimiter::new(config.rate_limiter.clone(), redis_url)
             .await

@@ -58,3 +58,25 @@ async fn services_requires_database_url() {
         "unexpected error: {err}"
     );
 }
+
+#[tokio::test]
+async fn services_requires_redis_url_when_rate_limiting_enabled() {
+    let mut config = test_config();
+    config.redis_url = None;
+    config.rate_limiter = config::RateLimiterConfig {
+        enabled: true,
+        ..Default::default()
+    };
+
+    let result = Services::from_config(&config).await;
+
+    assert!(result.is_err());
+    let err = match result {
+        Err(e) => e.to_string(),
+        Ok(_) => panic!("expected error"),
+    };
+    assert!(
+        err.contains("REDIS_URL is not configured"),
+        "unexpected error: {err}"
+    );
+}

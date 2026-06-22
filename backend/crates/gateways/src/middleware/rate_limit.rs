@@ -64,7 +64,7 @@ async fn check(
 /// Falls back to the peer address when the peer is not trusted, the header is
 /// missing/malformed, or every address in the chain is trusted.
 fn client_ip(trusted_proxies: &[IpNet], peer: SocketAddr, headers: &HeaderMap) -> IpAddr {
-    let peer_ip = peer.ip();
+    let peer_ip = normalize_ip(peer.ip());
 
     if trusted_proxies.is_empty() {
         return peer_ip;
@@ -78,6 +78,7 @@ fn client_ip(trusted_proxies: &[IpNet], peer: SocketAddr, headers: &HeaderMap) -
         if let Ok(value) = value.to_str() {
             for part in value.split(',').map(str::trim).rev() {
                 if let Ok(ip) = part.parse::<IpAddr>() {
+                    let ip = normalize_ip(ip);
                     if !is_trusted_ip(&ip, trusted_proxies) {
                         return ip;
                     }
@@ -87,6 +88,15 @@ fn client_ip(trusted_proxies: &[IpNet], peer: SocketAddr, headers: &HeaderMap) -
     }
 
     peer_ip
+}
+
+/// Normalize IPv4-mapped IPv6 addresses to their IPv4 representation so that
+/// an IPv4 trusted-proxy CIDR such as `192.168.1.0/24` matches `::ffff:192.168.1.1`.
+fn normalize_ip(ip: IpAddr) -> IpAddr {
+    match ip {
+        IpAddr::V6(v6) => v6.to_ipv4_mapped().map(IpAddr::V4).unwrap_or(ip),
+        IpAddr::V4(_) => ip,
+    }
 }
 
 fn is_trusted_ip(ip: &IpAddr, trusted_nets: &[IpNet]) -> bool {
@@ -178,5 +188,15 @@ mod tests {
         let ip = client_ip(&[net("2001:db8:ff::/64")], peer, &headers);
 
         assert_eq!(ip, "2001:db8::1".parse::<IpAddr>().unwrap());
+    }
+
+    #[test]
+    fn client_ip_normalizes_ipv4_mapped_ipv6_addresses() {
+        let peer = SocketAddr::from(("::ffff:10.0.0.2".parse::<IpAddr>().unwrap(), 1234));
+        let headers = header_map_with_xff("::ffff:203.0.113.42");
+
+        let ip = client_ip(&[net("10.0.0.0/8")], peer, &headers);
+
+        assert_eq!(ip, IpAddr::from([203, 0, 113, 42]));
     }
 }
