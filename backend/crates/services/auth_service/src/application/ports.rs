@@ -3,42 +3,12 @@
 use async_trait::async_trait;
 
 use klynt_base::ctx::ExecutionContext;
-use klynt_common::domain::User;
 use klynt_common::util::UserId;
 
 use crate::error::AuthError;
 
-/// Port for user lookups and mutations needed by auth flows.
-#[async_trait]
-pub trait UserRepository: Send + Sync {
-    /// Find a user by email address.
-    async fn find_by_email(
-        &self,
-        ctx: &ExecutionContext,
-        email: &str,
-    ) -> Result<Option<User>, AuthError>;
-
-    /// Create a new pending user and return their ID.
-    async fn create_pending_user(
-        &self,
-        ctx: &ExecutionContext,
-        full_name: Option<String>,
-        email: &str,
-        password_hash: &str,
-    ) -> Result<UserId, AuthError>;
-
-    /// Activate a user account (after email verification).
-    async fn activate_user(&self, ctx: &ExecutionContext, user_id: UserId)
-        -> Result<(), AuthError>;
-
-    /// Update the user's password hash.
-    async fn update_password(
-        &self,
-        ctx: &ExecutionContext,
-        user_id: UserId,
-        password_hash: &str,
-    ) -> Result<(), AuthError>;
-}
+// Canonical user repository port from klynt_base.
+pub use klynt_base::ports::repository::UserRepository;
 
 /// Port for audit logging.
 #[async_trait]

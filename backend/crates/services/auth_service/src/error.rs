@@ -2,7 +2,7 @@
 
 use axum::http::StatusCode;
 
-use klynt_base::ports::{HttpError, PasswordHashError};
+use klynt_base::ports::{HttpError, PasswordHashError, RepositoryError};
 use klynt_common::domain::DomainError;
 
 use crate::domain::PasswordPolicyError;
@@ -52,6 +52,17 @@ impl From<PasswordHashError> for AuthError {
     fn from(err: PasswordHashError) -> Self {
         match err {
             PasswordHashError::Internal(msg) => Self::Domain(DomainError::internal_msg(msg)),
+        }
+    }
+}
+
+impl From<RepositoryError> for AuthError {
+    fn from(err: RepositoryError) -> Self {
+        match err {
+            RepositoryError::NotFound => Self::UserNotFound,
+            RepositoryError::Conflict(msg) => Self::Domain(DomainError::Conflict(msg)),
+            RepositoryError::Validation(msg) => Self::Domain(DomainError::InvalidInput(msg)),
+            RepositoryError::Database(msg) | RepositoryError::Internal(msg) => Self::Internal(msg),
         }
     }
 }

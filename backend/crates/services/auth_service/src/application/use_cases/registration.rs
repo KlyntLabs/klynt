@@ -2,6 +2,7 @@
 
 use klynt_base::ctx::ExecutionContext;
 use klynt_common::contracts::auth::RegistrationRequest;
+use klynt_common::domain::{DomainError, Email};
 use validator::Validate;
 
 use crate::domain::{Token, TokenKind};
@@ -26,10 +27,18 @@ pub(crate) async fn execute(
         .hash(&request.password)
         .await?;
 
+    let email = Email::parse(&request.email)
+        .map_err(|e| AuthError::Domain(DomainError::InvalidInput(e.to_string())))?;
+
     let user_id = service
         .internal()
         .user_repository
-        .create_pending_user(ctx, request.full_name, &request.email, &password_hash)
+        .create_pending_user(
+            ctx,
+            request.full_name.unwrap_or_default(),
+            email,
+            password_hash,
+        )
         .await?;
 
     service

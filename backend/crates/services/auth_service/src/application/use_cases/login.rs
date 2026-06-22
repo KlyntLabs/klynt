@@ -2,6 +2,7 @@
 
 use klynt_base::ctx::ExecutionContext;
 use klynt_common::contracts::auth::{LoginRequest, LoginResponse};
+use klynt_common::domain::{DomainError, Email};
 use validator::Validate;
 
 use crate::error::AuthError;
@@ -17,10 +18,13 @@ pub(crate) async fn execute(
         .validate()
         .map_err(|e| AuthError::validation(e.to_string()))?;
 
+    let email = Email::parse(&request.email)
+        .map_err(|e| AuthError::Domain(DomainError::InvalidInput(e.to_string())))?;
+
     let user = match service
         .internal()
         .user_repository
-        .find_by_email(ctx, &request.email)
+        .find_by_email(ctx, &email)
         .await?
     {
         Some(user) => user,

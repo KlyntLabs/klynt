@@ -1,6 +1,7 @@
 //! Password reset use cases - request and complete reset.
 
 use klynt_base::ctx::ExecutionContext;
+use klynt_common::domain::{DomainError, Email};
 
 use crate::domain::{Token, TokenKind};
 use crate::error::AuthError;
@@ -14,10 +15,13 @@ pub(crate) async fn request(
     ctx: &ExecutionContext,
     email: &str,
 ) -> Result<(), AuthError> {
+    let parsed_email = Email::parse(email)
+        .map_err(|e| AuthError::Domain(DomainError::InvalidInput(e.to_string())))?;
+
     let user = match service
         .internal()
         .user_repository
-        .find_by_email(ctx, email)
+        .find_by_email(ctx, &parsed_email)
         .await?
     {
         Some(user) => user,
@@ -78,7 +82,7 @@ pub(crate) async fn reset(
     service
         .internal()
         .user_repository
-        .update_password(ctx, user_id, &password_hash)
+        .update_password(ctx, user_id, password_hash)
         .await?;
 
     service

@@ -1,14 +1,12 @@
-//! Adapter from persistence user repository to auth_service `UserRepository` port.
+//! Adapter from persistence user repository to canonical `UserRepository` port.
 
 use async_trait::async_trait;
 use chrono::Utc;
 
 use klynt_base::ctx::ExecutionContext;
+use klynt_base::ports::repository::{RepositoryError, UserRepository};
 use klynt_common::domain::{Email, User, UserRole, UserStatus};
 use klynt_common::util::UserId;
-
-use crate::application::ports::UserRepository;
-use crate::error::AuthError;
 
 /// Adapter wrapping a [`klynt_persistence::repositories::UserRepository`].
 pub struct UserRepositoryAdapter<T> {
@@ -29,39 +27,35 @@ where
     async fn find_by_email(
         &self,
         ctx: &ExecutionContext,
-        email: &str,
-    ) -> Result<Option<User>, AuthError> {
-        let email = klynt_common::util::Email::parse(email).map_err(|e| {
-            AuthError::Domain(klynt_common::domain::DomainError::InvalidInput(
-                e.to_string(),
-            ))
-        })?;
-
+        email: &Email,
+    ) -> Result<Option<User>, RepositoryError> {
         self.inner
-            .find_by_email(ctx, &email)
+            .find_by_email(ctx, email)
             .await
-            .map_err(map_persistence_error)
+            .map_err(map_error)
+    }
+
+    async fn find_by_id(
+        &self,
+        ctx: &ExecutionContext,
+        user_id: UserId,
+    ) -> Result<Option<User>, RepositoryError> {
+        self.inner.find_by_id(ctx, user_id).await.map_err(map_error)
     }
 
     async fn create_pending_user(
         &self,
         ctx: &ExecutionContext,
-        full_name: Option<String>,
-        email: &str,
-        password_hash: &str,
-    ) -> Result<UserId, AuthError> {
-        let email = klynt_common::util::Email::parse(email).map_err(|e| {
-            AuthError::Domain(klynt_common::domain::DomainError::InvalidInput(
-                e.to_string(),
-            ))
-        })?;
-
+        full_name: String,
+        email: Email,
+        password_hash: String,
+    ) -> Result<UserId, RepositoryError> {
         let user_id = UserId::new();
         let user = User {
             id: user_id,
             email: Email::new(email.as_str().to_string()),
-            full_name,
-            password_hash: password_hash.to_string(),
+            full_name: Some(full_name).filter(|n| !n.is_empty()),
+            password_hash,
             status: UserStatus::Pending,
             role: UserRole::Student,
             created_at: Utc::now(),
@@ -72,11 +66,9 @@ where
         match self.inner.create_if_not_exists(ctx, &email, &user).await {
             Ok(klynt_persistence::repositories::CreateResult::Created) => Ok(user_id),
             Ok(klynt_persistence::repositories::CreateResult::AlreadyExists(_)) => Err(
-                AuthError::Domain(klynt_common::domain::DomainError::Conflict(format!(
-                    "email already registered: {email}"
-                ))),
+                RepositoryError::Conflict(format!("email already registered: {email}")),
             ),
-            Err(e) => Err(map_persistence_error(e)),
+            Err(e) => Err(map_error(e)),
         }
     }
 
@@ -84,30 +76,62 @@ where
         &self,
         ctx: &ExecutionContext,
         user_id: UserId,
-    ) -> Result<(), AuthError> {
+    ) -> Result<(), RepositoryError> {
         self.inner
             .set_email_verified(ctx, user_id)
             .await
-            .map_err(map_persistence_error)
+            .map_err(map_error)
     }
 
     async fn update_password(
         &self,
         ctx: &ExecutionContext,
         user_id: UserId,
-        password_hash: &str,
-    ) -> Result<(), AuthError> {
-        let hashed = klynt_persistence::ports::HashedPassword::new(password_hash);
+        password_hash: String,
+    ) -> Result<(), RepositoryError> {
+        let hashed = klynt_persistence::ports::HashedPassword::new(&password_hash);
 
         self.inner
             .update_password(ctx, user_id, &hashed)
             .await
-            .map_err(map_persistence_error)
+            .map_err(map_error)
+    }
+
+    async fn update(&self, _ctx: &ExecutionContext, _user: User) -> Result<User, RepositoryError> {
+        Err(RepositoryError::Internal(
+            "update not supported by auth service adapter".to_string(),
+        ))
+    }
+
+    async fn delete(
+        &self,
+        _ctx: &ExecutionContext,
+        _user_id: UserId,
+    ) -> Result<(), RepositoryError> {
+        Err(RepositoryError::Internal(
+            "delete not supported by auth service adapter".to_string(),
+        ))
+    }
+
+    async fn list(
+        &self,
+        _ctx: &ExecutionContext,
+        _pagination: klynt_common::domain::PaginationRequest,
+    ) -> Result<(Vec<User>, u64), RepositoryError> {
+        Err(RepositoryError::Internal(
+            "list not supported by auth service adapter".to_string(),
+        ))
     }
 }
 
-fn map_persistence_error(err: klynt_common::domain::DomainError) -> AuthError {
-    AuthError::Domain(klynt_common::domain::DomainError::Internal(err.to_string()))
+fn map_error(err: klynt_common::domain::DomainError) -> RepositoryError {
+    match err {
+        klynt_common::domain::DomainError::NotFound(_) => RepositoryError::NotFound,
+        klynt_common::domain::DomainError::Conflict(msg) => RepositoryError::Conflict(msg),
+        klynt_common::domain::DomainError::Validation(msg) => RepositoryError::Validation(msg),
+        klynt_common::domain::DomainError::InvalidInput(msg) => RepositoryError::Validation(msg),
+        e => RepositoryError::Internal(e.to_string()),
+    }
 }
 
 #[cfg(test)]
@@ -202,20 +226,18 @@ mod tests {
         let adapter = UserRepositoryAdapter::new(FakePersistenceRepository::default());
         let ctx = ExecutionContext::new(RequestContext::new());
 
+        let email = Email::parse("ada@example.com").unwrap();
         let user_id = adapter
             .create_pending_user(
                 &ctx,
-                Some("Ada".to_string()),
-                "ada@example.com",
-                "hash-password",
+                "Ada".to_string(),
+                email.clone(),
+                "hash-password".to_string(),
             )
             .await
             .unwrap();
 
-        let found = adapter
-            .find_by_email(&ctx, "ada@example.com")
-            .await
-            .unwrap();
+        let found = adapter.find_by_email(&ctx, &email).await.unwrap();
         assert!(found.is_some());
         assert_eq!(found.unwrap().id, user_id);
     }
@@ -225,20 +247,16 @@ mod tests {
         let adapter = UserRepositoryAdapter::new(FakePersistenceRepository::default());
         let ctx = ExecutionContext::new(RequestContext::new());
 
+        let email = Email::parse("ada@example.com").unwrap();
         adapter
-            .create_pending_user(&ctx, None, "ada@example.com", "hash")
+            .create_pending_user(&ctx, String::new(), email.clone(), "hash".to_string())
             .await
             .unwrap();
         let result = adapter
-            .create_pending_user(&ctx, None, "ada@example.com", "hash")
+            .create_pending_user(&ctx, String::new(), email.clone(), "hash".to_string())
             .await;
 
-        assert!(matches!(
-            result,
-            Err(AuthError::Domain(
-                klynt_common::domain::DomainError::Conflict(_)
-            ))
-        ));
+        assert!(matches!(result, Err(RepositoryError::Conflict(_))));
     }
 
     #[tokio::test]
@@ -246,17 +264,14 @@ mod tests {
         let adapter = UserRepositoryAdapter::new(FakePersistenceRepository::default());
         let ctx = ExecutionContext::new(RequestContext::new());
 
+        let email = Email::parse("ada@example.com").unwrap();
         let user_id = adapter
-            .create_pending_user(&ctx, None, "ada@example.com", "hash")
+            .create_pending_user(&ctx, String::new(), email.clone(), "hash".to_string())
             .await
             .unwrap();
         adapter.activate_user(&ctx, user_id).await.unwrap();
 
-        let found = adapter
-            .find_by_email(&ctx, "ada@example.com")
-            .await
-            .unwrap()
-            .unwrap();
+        let found = adapter.find_by_email(&ctx, &email).await.unwrap().unwrap();
         assert!(found.is_active());
     }
 
@@ -265,20 +280,17 @@ mod tests {
         let adapter = UserRepositoryAdapter::new(FakePersistenceRepository::default());
         let ctx = ExecutionContext::new(RequestContext::new());
 
+        let email = Email::parse("ada@example.com").unwrap();
         let user_id = adapter
-            .create_pending_user(&ctx, None, "ada@example.com", "old-hash")
+            .create_pending_user(&ctx, String::new(), email.clone(), "old-hash".to_string())
             .await
             .unwrap();
         adapter
-            .update_password(&ctx, user_id, "new-hash")
+            .update_password(&ctx, user_id, "new-hash".to_string())
             .await
             .unwrap();
 
-        let found = adapter
-            .find_by_email(&ctx, "ada@example.com")
-            .await
-            .unwrap()
-            .unwrap();
+        let found = adapter.find_by_email(&ctx, &email).await.unwrap().unwrap();
         assert_eq!(found.password_hash, "new-hash");
     }
 }
