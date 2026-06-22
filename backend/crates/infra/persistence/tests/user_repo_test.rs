@@ -6,7 +6,7 @@
 use base::ctx::{ExecutionContext, RequestContext};
 use base::ports::repository::{RepositoryError, UserRepository};
 use chrono::Utc;
-use domain::{Email, PaginationRequest, User, UserId, UserRole, UserStatus};
+use domain::{Email, GlobalRole, PaginationRequest, User, UserId, UserRole, UserStatus};
 use persistence::repositories::user::PgUserRepository;
 
 fn database_url() -> Option<String> {
@@ -304,6 +304,56 @@ async fn update_updates_mutable_fields_and_returns_user() {
     assert_eq!(found.password_hash, "updated-hash");
     assert_eq!(found.status, UserStatus::Active);
     assert_eq!(found.role, UserRole::Instructor);
+}
+
+#[tokio::test]
+async fn update_persists_schema_aligned_fields() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let repo = PgUserRepository::new(pool);
+    let ctx = test_ctx();
+    let email = unique_email();
+    let institution_id = UserId::new().inner();
+    let now = Utc::now();
+
+    let user_id = repo
+        .create_pending_user(
+            &ctx,
+            "Original".to_string(),
+            email.clone(),
+            "hash".to_string(),
+            UserRole::Student,
+            None,
+        )
+        .await
+        .unwrap();
+
+    let mut user = repo.find_by_id(&ctx, user_id).await.unwrap().unwrap();
+    user.full_name = Some("Updated Name".to_string());
+    user.password_hash = "updated-hash".to_string();
+    user.status = UserStatus::Active;
+    user.role = UserRole::Instructor;
+    user.global_role = Some(GlobalRole::Admin);
+    user.email_verified_at = Some(now);
+    user.institution_id = Some(institution_id);
+    user.terms_accepted_at = now;
+    user.terms_version = "2.0".to_string();
+
+    let updated = repo.update(&ctx, user.clone()).await.unwrap();
+    assert_eq!(updated.global_role, Some(GlobalRole::Admin));
+    assert_eq!(updated.email_verified_at, Some(now));
+    assert_eq!(updated.institution_id, Some(institution_id));
+    assert_eq!(updated.terms_accepted_at, now);
+    assert_eq!(updated.terms_version, "2.0");
+
+    let found = repo.find_by_id(&ctx, user_id).await.unwrap().unwrap();
+    assert_eq!(found.global_role, Some(GlobalRole::Admin));
+    assert_eq!(found.email_verified_at, Some(now));
+    assert_eq!(found.institution_id, Some(institution_id));
+    assert_eq!(found.terms_accepted_at, now);
+    assert_eq!(found.terms_version, "2.0");
 }
 
 #[tokio::test]

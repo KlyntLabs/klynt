@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use domain::{DomainError, Email, User, UserId, UserRole, UserStatus};
+use domain::{DomainError, Email, GlobalRole, User, UserId, UserRole, UserStatus};
 
 /// PostgreSQL implementation of the user repository.
 pub struct PgUserRepository {
@@ -46,6 +46,12 @@ impl UserRow {
             .map_err(|e| DomainError::internal_msg(format!("invalid role in database: {e:?}")))?;
         let status = DbUserStatus::parse(&self.status)
             .map_err(|e| DomainError::internal_msg(format!("invalid status in database: {e:?}")))?;
+        let global_role = match self.global_role {
+            Some(raw) => Some(raw.parse::<GlobalRole>().map_err(|e| {
+                DomainError::internal_msg(format!("invalid global_role in database: {e:?}"))
+            })?),
+            None => None,
+        };
 
         Ok(User {
             id: UserId(self.id),
@@ -58,7 +64,7 @@ impl UserRow {
             password_hash: self.password_hash,
             status: status_from_db(status),
             role,
-            global_role: self.global_role.and_then(|r| r.parse().ok()),
+            global_role,
             email_verified_at: self.email_verified_at,
             institution_id: self.institution_id,
             terms_accepted_at: self.terms_accepted_at,

@@ -136,7 +136,7 @@ components:
           type: [string, "null"]
         role:
           type: string
-          enum: [student, teacher, admin, parent]
+          enum: [student, instructor, admin]
           default: student
         institution_id:
           type: [string, "null"]
@@ -220,7 +220,7 @@ components:
           type: [string, "null"]
         role:
           type: string
-          enum: [student, teacher, admin, parent]
+          enum: [student, instructor, admin]
 
     LogoutRequest:
       type: object

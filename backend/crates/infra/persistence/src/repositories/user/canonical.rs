@@ -181,14 +181,24 @@ impl UserRepository for PgUserRepository {
                 status = $2,
                 role = $3,
                 password_hash = $4,
+                global_role = $5,
+                email_verified_at = $6,
+                institution_id = $7,
+                terms_accepted_at = $8,
+                terms_version = $9,
                 updated_at = NOW()
-            WHERE id = $5
+            WHERE id = $10
             "#,
         )
         .bind(user.full_name.as_deref().unwrap_or(""))
         .bind(status_to_db(user.status).as_str())
         .bind(role_to_db(user.role).as_str())
         .bind(&user.password_hash)
+        .bind(user.global_role.map(|r| r.as_str()))
+        .bind(user.email_verified_at)
+        .bind(user.institution_id)
+        .bind(user.terms_accepted_at)
+        .bind(&user.terms_version)
         .bind(user.id.0)
         .execute(&self.pool)
         .await?;
