@@ -69,7 +69,7 @@ impl UserRepository for PgUserRepository {
         let user_id = UserId::new();
         let user = User {
             id: user_id,
-            email: Email::new(email.as_str().to_string()),
+            email,
             full_name: Some(full_name).filter(|n| !n.is_empty()),
             password_hash,
             status: UserStatus::Pending,
@@ -93,7 +93,7 @@ impl UserRepository for PgUserRepository {
             "#,
         )
         .bind(user.id.0)
-        .bind(email.as_str())
+        .bind(user.email.as_str())
         .bind(user.full_name.as_deref().unwrap_or(""))
         .bind(&user.password_hash)
         .bind(status_to_db(user.status).as_str())
@@ -110,7 +110,8 @@ impl UserRepository for PgUserRepository {
             Ok(user_id)
         } else {
             Err(RepositoryError::Conflict(format!(
-                "email already registered: {email}"
+                "email already registered: {}",
+                user.email
             )))
         }
     }
@@ -253,9 +254,9 @@ impl UserRepository for PgUserRepository {
     }
 }
 
+/// Maps errors produced by [`UserRow::into_user`] into repository errors.
 fn map_error(err: DomainError) -> RepositoryError {
     match err {
-        DomainError::NotFound(_) => RepositoryError::NotFound,
         DomainError::Conflict(msg) => RepositoryError::Conflict(msg),
         DomainError::Validation(msg) => RepositoryError::Validation(msg),
         DomainError::InvalidInput(msg) => RepositoryError::Validation(msg),

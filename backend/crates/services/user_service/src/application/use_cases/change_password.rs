@@ -41,7 +41,7 @@ pub(crate) async fn execute(
         .await?;
     user.password_hash = new_hash;
 
-    let _ = service.internal().user_repository.update(ctx, user).await?;
+    service.internal().user_repository.update(ctx, user).await?;
 
     service
         .internal()

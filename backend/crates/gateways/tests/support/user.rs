@@ -59,9 +59,7 @@ impl UserRepository for FakeUserServiceRepository {
         _email: Email,
         _password_hash: String,
     ) -> Result<UserId, RepositoryError> {
-        Err(RepositoryError::Internal(
-            "create_pending_user not used by gateway user tests".to_string(),
-        ))
+        unimplemented!("create_pending_user not used by gateway user tests")
     }
 
     async fn activate_user(
@@ -69,9 +67,7 @@ impl UserRepository for FakeUserServiceRepository {
         _ctx: &ExecutionContext,
         _user_id: UserId,
     ) -> Result<(), RepositoryError> {
-        Err(RepositoryError::Internal(
-            "activate_user not used by gateway user tests".to_string(),
-        ))
+        unimplemented!("activate_user not used by gateway user tests")
     }
 
     async fn update_password(
@@ -80,9 +76,7 @@ impl UserRepository for FakeUserServiceRepository {
         _user_id: UserId,
         _password_hash: String,
     ) -> Result<(), RepositoryError> {
-        Err(RepositoryError::Internal(
-            "update_password not used by gateway user tests".to_string(),
-        ))
+        unimplemented!("update_password not used by gateway user tests")
     }
 
     async fn update(&self, _ctx: &ExecutionContext, user: User) -> Result<User, RepositoryError> {
