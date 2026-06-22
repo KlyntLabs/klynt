@@ -46,6 +46,17 @@ impl Validated for ApiConfig {
             }
         }
 
+        for proxy in &self.trusted_proxies {
+            let is_valid =
+                proxy.parse::<ipnet::IpNet>().is_ok() || proxy.parse::<std::net::IpAddr>().is_ok();
+            if !is_valid {
+                return Err(ConfigError::InvalidTrustedProxy(format!(
+                    "'{}' is not a valid IP or CIDR",
+                    proxy
+                )));
+            }
+        }
+
         Ok(())
     }
 }
@@ -93,6 +104,44 @@ mod tests {
         assert!(matches!(
             config.validated(),
             Err(ConfigError::InvalidOrigin(_))
+        ));
+    }
+
+    #[test]
+    fn valid_trusted_proxies_are_accepted() {
+        let config = ApiConfig {
+            trusted_proxies: vec![
+                "127.0.0.1".to_string(),
+                "10.0.0.0/8".to_string(),
+                "::1".to_string(),
+                "2001:db8::/32".to_string(),
+            ],
+            ..Default::default()
+        };
+        assert!(config.validated().is_ok());
+    }
+
+    #[test]
+    fn invalid_trusted_proxy_is_rejected() {
+        let config = ApiConfig {
+            trusted_proxies: vec!["not-an-ip".to_string()],
+            ..Default::default()
+        };
+        assert!(matches!(
+            config.validated(),
+            Err(ConfigError::InvalidTrustedProxy(_))
+        ));
+    }
+
+    #[test]
+    fn invalid_trusted_proxy_cidr_prefix_is_rejected() {
+        let config = ApiConfig {
+            trusted_proxies: vec!["10.0.0.0/33".to_string()],
+            ..Default::default()
+        };
+        assert!(matches!(
+            config.validated(),
+            Err(ConfigError::InvalidTrustedProxy(_))
         ));
     }
 }

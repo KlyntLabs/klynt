@@ -47,6 +47,9 @@ chrono = { workspace = true }
 # === IDs ===
 uuid = { workspace = true }
 
+# === Networking ===
+ipnet = { workspace = true }
+
 # === Database ===
 sqlx = { workspace = true }
 

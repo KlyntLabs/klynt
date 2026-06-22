@@ -66,6 +66,9 @@ base64 = "0.22"
 # Validation
 validator = { version = "0.19", features = ["derive"] }
 
+# Networking
+ipnet = "2"
+
 # Database
 sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "postgres", "uuid", "chrono", "migrate", "json"] }
 

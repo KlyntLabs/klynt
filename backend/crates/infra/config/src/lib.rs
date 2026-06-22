@@ -22,6 +22,9 @@ pub enum ConfigError {
     #[error("invalid origin URL: {0}")]
     InvalidOrigin(String),
 
+    #[error("invalid trusted proxy: {0}")]
+    InvalidTrustedProxy(String),
+
     #[error("rate limiter max_requests must be at least 1")]
     InvalidMaxRequests,
 

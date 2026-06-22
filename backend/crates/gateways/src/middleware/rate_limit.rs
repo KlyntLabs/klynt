@@ -6,6 +6,7 @@ use axum::extract::{ConnectInfo, Request, State};
 use axum::http::HeaderMap;
 use axum::middleware::Next;
 use axum::response::Response;
+use ipnet::IpNet;
 use persistence::ports::{RateLimitAction, RateLimitScope};
 
 use crate::state::Services;
@@ -55,24 +56,30 @@ async fn check(
 /// Resolve the client IP, taking trusted proxies into account.
 ///
 /// When `trusted_proxies` is empty, the immediate peer address is used. When
-/// proxies are configured and the peer is trusted, the left-most untrusted IP
-/// from `X-Forwarded-For` is used. Falls back to the peer address on parse
-/// errors or when the peer is not trusted.
+/// proxies are configured and the peer is trusted, `X-Forwarded-For` is parsed
+/// from right to left (closest to the server), trusted proxies are skipped,
+/// and the first untrusted IP is returned. Parsing from right to left prevents
+/// clients from prepending spoofed IPs to the header.
+///
+/// Falls back to the peer address when the peer is not trusted, the header is
+/// missing/malformed, or every address in the chain is trusted.
 fn client_ip(trusted_proxies: &[String], peer: SocketAddr, headers: &HeaderMap) -> IpAddr {
+    let peer_ip = peer.ip();
+
     if trusted_proxies.is_empty() {
-        return peer.ip();
+        return peer_ip;
     }
 
-    let peer_ip = peer.ip();
-    if !is_trusted_ip(&peer_ip, trusted_proxies) {
+    let trusted_nets = parse_trusted_nets(trusted_proxies);
+    if !is_trusted_ip(&peer_ip, &trusted_nets) {
         return peer_ip;
     }
 
     if let Some(value) = headers.get("x-forwarded-for") {
         if let Ok(value) = value.to_str() {
-            for part in value.split(',').map(str::trim) {
+            for part in value.split(',').map(str::trim).rev() {
                 if let Ok(ip) = part.parse::<IpAddr>() {
-                    if !is_trusted_ip(&ip, trusted_proxies) {
+                    if !is_trusted_ip(&ip, &trusted_nets) {
                         return ip;
                     }
                 }
@@ -83,38 +90,23 @@ fn client_ip(trusted_proxies: &[String], peer: SocketAddr, headers: &HeaderMap) 
     peer_ip
 }
 
-fn is_trusted_ip(ip: &IpAddr, trusted: &[String]) -> bool {
-    trusted.iter().any(|entry| matches_trusted(ip, entry))
+fn parse_trusted_nets(trusted_proxies: &[String]) -> Vec<IpNet> {
+    trusted_proxies
+        .iter()
+        .filter_map(|entry| {
+            if let Ok(net) = entry.parse::<IpNet>() {
+                return Some(net);
+            }
+            if let Ok(ip) = entry.parse::<IpAddr>() {
+                return Some(IpNet::from(ip));
+            }
+            None
+        })
+        .collect()
 }
 
-fn matches_trusted(ip: &IpAddr, entry: &str) -> bool {
-    if let Ok(trusted_ip) = entry.parse::<IpAddr>() {
-        return ip == &trusted_ip;
-    }
-
-    if let Some((addr, prefix_str)) = entry.split_once('/') {
-        if let (Ok(network), Ok(prefix)) = (addr.parse::<IpAddr>(), prefix_str.parse::<u8>()) {
-            return matches_cidr(ip, &network, prefix);
-        }
-    }
-
-    false
-}
-
-fn matches_cidr(ip: &IpAddr, network: &IpAddr, prefix: u8) -> bool {
-    match (ip, network) {
-        (IpAddr::V4(ip), IpAddr::V4(network)) => {
-            let ip_bits = u32::from(*ip);
-            let network_bits = u32::from(*network);
-            let mask = if prefix == 0 {
-                0
-            } else {
-                u32::MAX << (32 - prefix.min(32))
-            };
-            ip_bits & mask == network_bits & mask
-        }
-        _ => false,
-    }
+fn is_trusted_ip(ip: &IpAddr, trusted_nets: &[IpNet]) -> bool {
+    trusted_nets.iter().any(|net| net.contains(ip))
 }
 
 #[cfg(test)]
@@ -158,9 +150,21 @@ mod tests {
     }
 
     #[test]
-    fn client_ip_skips_trusted_ips_in_x_forwarded_for() {
+    fn client_ip_parses_x_forwarded_for_right_to_left() {
         let peer = SocketAddr::from(([10, 0, 0, 1], 1234));
         let headers = header_map_with_xff("203.0.113.42, 10.0.0.2, 10.0.0.3");
+
+        let ip = client_ip(&["10.0.0.0/8".to_string()], peer, &headers);
+
+        assert_eq!(ip, IpAddr::from([203, 0, 113, 42]));
+    }
+
+    #[test]
+    fn client_ip_ignores_spoofed_ips_prepended_to_x_forwarded_for() {
+        let peer = SocketAddr::from(([10, 0, 0, 1], 1234));
+        // A malicious client prepends a spoofed IP. Right-to-left parsing uses
+        // the IP closest to the server (after skipping trusted proxies).
+        let headers = header_map_with_xff("1.2.3.4, 203.0.113.42, 10.0.0.2");
 
         let ip = client_ip(&["10.0.0.0/8".to_string()], peer, &headers);
 
@@ -175,5 +179,15 @@ mod tests {
         let ip = client_ip(&["127.0.0.1".to_string()], peer, &headers);
 
         assert_eq!(ip, IpAddr::from([127, 0, 0, 1]));
+    }
+
+    #[test]
+    fn client_ip_supports_ipv6_cidr_trusted_proxies() {
+        let peer = SocketAddr::from(("2001:db8:ff::2".parse::<IpAddr>().unwrap(), 1234));
+        let headers = header_map_with_xff("2001:db8::1, 2001:db8:ff::3");
+
+        let ip = client_ip(&["2001:db8:ff::/64".to_string()], peer, &headers);
+
+        assert_eq!(ip, "2001:db8::1".parse::<IpAddr>().unwrap());
     }
 }
