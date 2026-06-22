@@ -19,6 +19,7 @@ tracing-error = { workspace = true }
 # Async
 tokio = { workspace = true }
 async-trait = { workspace = true }
+futures-util = { workspace = true }
 
 # Serialization
 serde = { workspace = true }

@@ -21,6 +21,7 @@ edition = "2021"
 # Async runtime
 tokio = { version = "1", features = ["full"] }
 async-trait = "0.1"
+futures-util = { version = "0.3", default-features = false, features = ["alloc"] }
 
 # Web framework
 axum = "0.8"
@@ -78,7 +79,7 @@ redis = { version = "0.27", features = ["tokio-comp"] }
 # Metrics
 prometheus = { version = "0.13", default-features = false }
 metrics = "0.24"
-metrics-exporter-prometheus = "0.16"
+metrics-exporter-prometheus = { version = "0.16", default-features = false }
 
 # Internal crates
 base = { path = "crates/base" }

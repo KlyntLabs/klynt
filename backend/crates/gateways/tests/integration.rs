@@ -44,6 +44,29 @@ async fn health_endpoint_returns_ok() {
 }
 
 #[tokio::test]
+async fn health_live_endpoint_returns_ok() {
+    let response = app()
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/health/live")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(json["status"], "alive");
+    assert!(json["timestamp"].is_string());
+}
+
+#[tokio::test]
 async fn health_ready_endpoint_returns_ok_when_healthy() {
     let response = app()
         .oneshot(

@@ -5,7 +5,8 @@ use std::sync::Arc;
 use auth_service::{AuthConfig, AuthService};
 use ipnet::IpNet;
 use observability::health::{
-    CompositeHealthReporter, HealthReporter, PostgresHealthCheck, RedisHealthCheck,
+    AlwaysUnhealthyCheck, CompositeHealthReporter, HealthReporter, PostgresHealthCheck,
+    RedisHealthCheck,
 };
 use observability::metrics::{install_recorder, PrometheusHandle};
 use observability::HealthCheck;
@@ -65,8 +66,7 @@ impl Services {
             config::parse_trusted_proxies(&config.trusted_proxies)
                 .map_err(|e| crate::GatewayError::configuration(e.to_string()))?,
         );
-        let health_reporter =
-            Self::create_health_reporter(&pool, config.redis_url.as_deref()).await?;
+        let health_reporter = Self::create_health_reporter(&pool, config.redis_url.as_deref());
         let metrics_handle = install_recorder();
 
         Ok(Self {
@@ -154,30 +154,25 @@ impl Services {
         Ok(Arc::new(limiter))
     }
 
-    async fn create_health_reporter(
+    fn create_health_reporter(
         pool: &sqlx::PgPool,
         redis_url: Option<&str>,
-    ) -> Result<Arc<dyn HealthReporter>, crate::GatewayError> {
+    ) -> Arc<dyn HealthReporter> {
         let mut checks: Vec<Arc<dyn HealthCheck>> =
             vec![Arc::new(PostgresHealthCheck::new(pool.clone()))];
 
         if let Some(redis_url) = redis_url {
-            let client = redis::Client::open(redis_url).map_err(|e| {
-                crate::GatewayError::configuration(format!(
-                    "Redis health check client creation: {e}"
-                ))
-            })?;
-            let conn = client
-                .get_multiplexed_async_connection()
-                .await
-                .map_err(|e| {
-                    crate::GatewayError::configuration(format!(
-                        "Redis health check connection: {e}"
-                    ))
-                })?;
-            checks.push(Arc::new(RedisHealthCheck::new(conn)));
+            match redis::Client::open(redis_url) {
+                Ok(client) => checks.push(Arc::new(RedisHealthCheck::new(client))),
+                Err(e) => {
+                    tracing::error!(error = %e, "failed to create redis health check client");
+                    // Fall back to a check that will always report unhealthy so
+                    // readiness reflects the misconfiguration without crashing.
+                    checks.push(Arc::new(AlwaysUnhealthyCheck::new("redis")));
+                }
+            }
         }
 
-        Ok(Arc::new(CompositeHealthReporter::new(checks)))
+        Arc::new(CompositeHealthReporter::new(checks))
     }
 }

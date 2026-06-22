@@ -22,6 +22,7 @@ gateways/
 │   │   ├── auth.rs             # Bearer token authentication
 │   │   ├── cors.rs             # CORS configuration
 │   │   ├── error_handler.rs    # Error response formatting
+│   │   ├── metrics.rs          # HTTP request metrics
 │   │   ├── rate_limit.rs       # Per-action rate limiting
 │   │   ├── request_id.rs       # Request ID generation/tracking
 │   │   └── security_headers.rs # Security headers
@@ -106,6 +107,7 @@ Cross-cutting HTTP concerns:
 | `auth` | Bearer token authentication, injects user context |
 | `cors` | CORS headers |
 | `error_handler` | Error response formatting |
+| `metrics` | HTTP request count/duration metrics |
 | `rate_limit` | Per-action rate limiting on auth endpoints |
 | `request_id` | Request ID generation/tracking |
 | `security_headers` | Security headers (HSTS, CSP, etc.) |
@@ -154,7 +156,9 @@ DELETE /api/v1/users/{id}          - Soft delete user
 ### Health Routes (`routes/health.rs`)
 
 ```
-GET /health                         - Liveness check
+GET /health                         - Legacy health check
+GET /health/live                    - Liveness probe
+GET /health/ready                   - Readiness probe
 ```
 
 ## Error Handling

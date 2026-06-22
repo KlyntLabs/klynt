@@ -6,7 +6,7 @@ use crate::state::Services;
 
 /// GET /health
 ///
-/// Liveness probe. Always returns 200 OK when the gateway is running.
+/// Legacy health check. Always returns 200 OK when the gateway is running.
 pub async fn health_check(State(_services): State<Services>) -> Json<serde_json::Value> {
     Json(serde_json::json!({
         "status": "ok",
@@ -14,6 +14,16 @@ pub async fn health_check(State(_services): State<Services>) -> Json<serde_json:
         "services": {
             "auth": "ok"
         }
+    }))
+}
+
+/// GET /health/live
+///
+/// Liveness probe. Always returns 200 OK when the gateway process is running.
+pub async fn live_check(State(_services): State<Services>) -> Json<serde_json::Value> {
+    Json(serde_json::json!({
+        "status": "alive",
+        "timestamp": chrono::Utc::now().to_rfc3339(),
     }))
 }
 

@@ -18,6 +18,7 @@ pub fn create_router(config: Config, services: Services) -> Router {
     Router::new()
         // Health checks (no auth required)
         .route("/health", axum::routing::get(health::health_check))
+        .route("/health/live", axum::routing::get(health::live_check))
         .route("/health/ready", axum::routing::get(health::ready_check))
         // Prometheus metrics (no auth required)
         .route("/metrics", axum::routing::get(metrics::metrics))

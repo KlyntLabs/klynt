@@ -1,14 +1,17 @@
 //! Infrastructure health checks and readiness reporting.
 
 use std::sync::Arc;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use redis::aio::MultiplexedConnection;
+use futures_util::future::join_all;
 use sqlx::PgPool;
 
 use crate::ports::{ComponentHealth, HealthCheck};
+
+/// Default timeout for an individual readiness check.
+const CHECK_TIMEOUT: Duration = Duration::from_secs(2);
 
 /// Aggregate readiness report returned by [`HealthReporter`].
 #[derive(Debug, Clone, serde::Serialize)]
@@ -42,18 +45,64 @@ impl CompositeHealthReporter {
 impl HealthReporter for CompositeHealthReporter {
     async fn ready(&self) -> HealthReport {
         let checked_at = Utc::now();
-        let mut components = Vec::with_capacity(self.checks.len());
 
-        for check in &self.checks {
-            components.push(check.check().await);
-        }
+        let futures = self.checks.iter().map(|check| {
+            let check = check.clone();
+            async move {
+                let name = check.name().to_string();
+                match tokio::time::timeout(CHECK_TIMEOUT, check.check()).await {
+                    Ok(component) => component,
+                    Err(_) => ComponentHealth {
+                        name,
+                        healthy: false,
+                        latency_ms: CHECK_TIMEOUT.as_secs_f64() * 1000.0,
+                        error: Some("timeout".to_string()),
+                    },
+                }
+            }
+        });
 
+        let components = join_all(futures).await;
         let healthy = components.iter().all(|c| c.healthy);
 
         HealthReport {
             healthy,
             checked_at,
             components,
+        }
+    }
+}
+
+/// Check that always reports unhealthy.
+///
+/// Useful as a fallback when an infrastructure client cannot be constructed
+/// at startup but the process must still start and report readiness.
+#[derive(Clone)]
+pub struct AlwaysUnhealthyCheck {
+    name: String,
+}
+
+impl AlwaysUnhealthyCheck {
+    /// Create a check named `name` that always reports unhealthy.
+    pub fn new(name: &str) -> Self {
+        Self {
+            name: name.to_string(),
+        }
+    }
+}
+
+#[async_trait]
+impl HealthCheck for AlwaysUnhealthyCheck {
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    async fn check(&self) -> ComponentHealth {
+        ComponentHealth {
+            name: self.name.clone(),
+            healthy: false,
+            latency_ms: 0.0,
+            error: Some("connection failed".to_string()),
         }
     }
 }
@@ -109,26 +158,34 @@ impl HealthCheck for PostgresHealthCheck {
                 latency_ms,
                 error: None,
             },
-            Err(e) => ComponentHealth {
-                name: self.name().to_string(),
-                healthy: false,
-                latency_ms,
-                error: Some(e.to_string()),
-            },
+            Err(e) => {
+                tracing::error!(error = %e, "postgres health check failed");
+                ComponentHealth {
+                    name: self.name().to_string(),
+                    healthy: false,
+                    latency_ms,
+                    error: Some("connection failed".to_string()),
+                }
+            }
         }
     }
 }
 
 /// Redis readiness check.
+///
+/// Holds a [`redis::Client`] rather than an open connection so that Redis
+/// unavailability at startup does not crash the process. The connection is
+/// acquired lazily inside [`HealthCheck::check`], allowing readiness to report
+/// `503` when Redis is down.
 #[derive(Clone)]
 pub struct RedisHealthCheck {
-    conn: MultiplexedConnection,
+    client: redis::Client,
 }
 
 impl RedisHealthCheck {
-    /// Create a new Redis health check backed by `conn`.
-    pub fn new(conn: MultiplexedConnection) -> Self {
-        Self { conn }
+    /// Create a new Redis health check from `client`.
+    pub fn new(client: redis::Client) -> Self {
+        Self { client }
     }
 }
 
@@ -140,8 +197,13 @@ impl HealthCheck for RedisHealthCheck {
 
     async fn check(&self) -> ComponentHealth {
         let start = Instant::now();
-        let mut conn = self.conn.clone();
-        let result: Result<(), redis::RedisError> = redis::cmd("PING").query_async(&mut conn).await;
+
+        let result: Result<(), redis::RedisError> = async {
+            let mut conn = self.client.get_multiplexed_async_connection().await?;
+            redis::cmd("PING").query_async(&mut conn).await
+        }
+        .await;
+
         let latency_ms = start.elapsed().as_secs_f64() * 1000.0;
 
         match result {
@@ -151,12 +213,15 @@ impl HealthCheck for RedisHealthCheck {
                 latency_ms,
                 error: None,
             },
-            Err(e) => ComponentHealth {
-                name: self.name().to_string(),
-                healthy: false,
-                latency_ms,
-                error: Some(e.to_string()),
-            },
+            Err(e) => {
+                tracing::error!(error = %e, "redis health check failed");
+                ComponentHealth {
+                    name: self.name().to_string(),
+                    healthy: false,
+                    latency_ms,
+                    error: Some("connection failed".to_string()),
+                }
+            }
         }
     }
 }
