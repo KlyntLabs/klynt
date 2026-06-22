@@ -51,6 +51,15 @@ pub enum DomainError {
 
     #[error("authentication required")]
     AuthenticationRequired,
+
+    #[error("tenant limit reached")]
+    TenantLimitReached,
+
+    #[error("user is not a member of tenant")]
+    NotTenantMember,
+
+    #[error("invalid tenant slug")]
+    InvalidTenantSlug,
 }
 
 impl DomainError {
