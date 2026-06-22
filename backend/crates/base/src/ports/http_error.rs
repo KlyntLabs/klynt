@@ -37,6 +37,8 @@ impl HttpError for domain::DomainError {
             Self::NotFound(_) => StatusCode::NOT_FOUND,
             Self::Conflict(_) => StatusCode::CONFLICT,
             Self::NotPermitted(_) | Self::AuthenticationRequired => StatusCode::FORBIDDEN,
+            Self::TenantLimitReached | Self::NotTenantMember => StatusCode::FORBIDDEN,
+            Self::InvalidTenantSlug => StatusCode::BAD_REQUEST,
             Self::RateLimited => StatusCode::TOO_MANY_REQUESTS,
             Self::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
@@ -57,6 +59,9 @@ impl HttpError for domain::DomainError {
             Self::Conflict(_) => "CONFLICT",
             Self::NotPermitted(_) => "FORBIDDEN",
             Self::AuthenticationRequired => "AUTHENTICATION_REQUIRED",
+            Self::TenantLimitReached => "TENANT_LIMIT_REACHED",
+            Self::NotTenantMember => "NOT_TENANT_MEMBER",
+            Self::InvalidTenantSlug => "INVALID_TENANT_SLUG",
             Self::RateLimited => "RATE_LIMITED",
             Self::Internal(_) => "INTERNAL_SERVER_ERROR",
         }
@@ -89,6 +94,9 @@ mod tests {
                 DomainError::internal_msg("oops"),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ),
+            (DomainError::TenantLimitReached, StatusCode::FORBIDDEN),
+            (DomainError::NotTenantMember, StatusCode::FORBIDDEN),
+            (DomainError::InvalidTenantSlug, StatusCode::BAD_REQUEST),
         ];
 
         for (err, expected) in cases {

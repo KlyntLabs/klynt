@@ -51,6 +51,7 @@ impl std::str::FromStr for TenantId {
 
 /// Human-readable tenant slug used in URLs.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(transparent)]
 pub struct TenantSlug(String);
 
 impl TenantSlug {
@@ -75,11 +76,6 @@ impl TenantSlug {
 
     /// Get the canonical slug string.
     pub fn as_str(&self) -> &str {
-        &self.0
-    }
-
-    /// Get the canonical slug string (alias for [`as_str`]).
-    pub fn inner(&self) -> &str {
         &self.0
     }
 }

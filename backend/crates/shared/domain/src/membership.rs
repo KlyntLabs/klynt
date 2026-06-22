@@ -43,11 +43,6 @@ impl TenantRole {
     pub fn can_administer(self) -> bool {
         matches!(self, Self::Owner | Self::Admin)
     }
-
-    /// Whether this role can manage tenant billing and ownership.
-    pub fn can_own(self) -> bool {
-        matches!(self, Self::Owner)
-    }
 }
 
 impl std::fmt::Display for TenantRole {
@@ -89,3 +84,7 @@ impl Membership {
         self.role = role;
     }
 }
+
+#[cfg(test)]
+#[path = "membership_test.rs"]
+mod tests;
