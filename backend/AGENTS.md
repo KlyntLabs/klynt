@@ -69,7 +69,7 @@ The `gateways` crate is the **composition root** where:
 | [`base`](../crates/base/AGENTS.md) | Canonical ports + in-memory testkit | Define new persistence interface |
 | [`shared/domain`](../crates/shared/domain/AGENTS.md) | Domain types, contracts, errors | Share domain types across crates |
 | [`infra/persistence`](../crates/infra/persistence/AGENTS.md) | Postgres/Redis port implementations | Need concrete repository/cache |
-| [`infra/telemetry`](../crates/infra/telemetry/AGENTS.md) | Tracing, audit, metrics, health | Add observability |
+| [`infra/observability`](../crates/infra/observability/AGENTS.md) | Tracing, audit, metrics, health | Add observability |
 | [`infra/config`](../crates/infra/config/AGENTS.md) | Configuration loading | Add config values |
 | [`services/auth_service`](../crates/services/auth_service/AGENTS.md) | Registration, login, email verification, password reset | Implement auth flows |
 | [`services/session_service`](../crates/services/session_service/AGENTS.md) | Session creation, validation, invalidation | Manage session lifecycle |

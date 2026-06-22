@@ -18,7 +18,7 @@ COPY crates/base/Cargo.toml crates/base/
 COPY crates/shared/domain/Cargo.toml crates/shared/domain/
 COPY crates/infra/config/Cargo.toml crates/infra/config/
 COPY crates/infra/persistence/Cargo.toml crates/infra/persistence/
-COPY crates/infra/telemetry/Cargo.toml crates/infra/telemetry/
+COPY crates/infra/observability/Cargo.toml crates/infra/observability/
 COPY crates/services/auth_service/Cargo.toml crates/services/auth_service/
 COPY crates/services/session_service/Cargo.toml crates/services/session_service/
 COPY crates/services/user_service/Cargo.toml crates/services/user_service/
@@ -31,7 +31,7 @@ RUN mkdir -p \
     crates/shared/domain/src \
     crates/infra/config/src \
     crates/infra/persistence/src \
-    crates/infra/telemetry/src \
+    crates/infra/observability/src \
     crates/services/auth_service/src \
     crates/services/session_service/src \
     crates/services/user_service/src \
@@ -42,7 +42,7 @@ RUN mkdir -p \
     echo '' > crates/shared/domain/src/lib.rs && \
     echo '' > crates/infra/config/src/lib.rs && \
     echo '' > crates/infra/persistence/src/lib.rs && \
-    echo '' > crates/infra/telemetry/src/lib.rs && \
+    echo '' > crates/infra/observability/src/lib.rs && \
     echo '' > crates/services/auth_service/src/lib.rs && \
     echo '' > crates/services/session_service/src/lib.rs && \
     echo '' > crates/services/user_service/src/lib.rs && \

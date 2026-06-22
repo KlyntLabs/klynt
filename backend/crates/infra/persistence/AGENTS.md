@@ -138,7 +138,7 @@ cargo nextest run --package persistence
 - `base` — Port interfaces to implement
 - `config` — Configuration
 - `domain` — Domain types
-- `telemetry` — Tracing/instrumentation
+- `observability` — Tracing/instrumentation
 - `sqlx` — Postgres client
 - `redis` — Redis client
 - `argon2` — Password hashing
@@ -148,4 +148,4 @@ cargo nextest run --package persistence
 - [Backend AGENTS.md](../../../AGENTS.md) — Overall architecture
 - [base AGENTS.md](../../base/AGENTS.md) — Port definitions
 - [domain AGENTS.md](../../shared/domain/AGENTS.md) — Domain types
-- [telemetry AGENTS.md](../telemetry/AGENTS.md) — Observability
+- [observability AGENTS.md](../observability/AGENTS.md) — Observability

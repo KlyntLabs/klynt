@@ -4,7 +4,7 @@ members = [
     "crates/base",
     "crates/shared/domain",
     "crates/infra/persistence",
-    "crates/infra/telemetry",
+    "crates/infra/observability",
     "crates/infra/config",
     "crates/services/auth_service",
     "crates/services/user_service",
@@ -79,7 +79,7 @@ prometheus = { version = "0.13", default-features = false }
 base = { path = "crates/base" }
 domain = { path = "crates/shared/domain" }
 persistence = { path = "crates/infra/persistence" }
-telemetry = { path = "crates/infra/telemetry" }
+observability = { path = "crates/infra/observability" }
 config = { path = "crates/infra/config" }
 
 # Services

@@ -2,7 +2,7 @@ use std::time::Instant;
 
 use async_trait::async_trait;
 
-use telemetry::ports::{ComponentHealth, HealthCheck};
+use observability::ports::{ComponentHealth, HealthCheck};
 
 use crate::rate_limiter::RedisRateLimiter;
 use crate::repositories::pg_session::PgSessionStore;

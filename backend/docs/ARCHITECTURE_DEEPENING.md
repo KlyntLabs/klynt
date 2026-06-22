@@ -62,7 +62,7 @@ backend/crates/
 │       └── contracts/
 ├── infra/
 │   ├── persistence  # Postgres / Redis implementations of ports
-│   ├── telemetry    # Tracing, audit, metrics, health
+│   ├── observability    # Tracing, audit, metrics, health
 │   └── config       # Configuration loading
 ├── services/
 │   ├── auth_service

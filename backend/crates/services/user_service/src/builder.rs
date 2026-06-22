@@ -91,7 +91,7 @@ impl UserBuilder {
                     pool.clone(),
                 ),
             );
-            Arc::new(telemetry::audit::AuditService::new(audit_repo)) as Arc<dyn AuditLogger>
+            Arc::new(observability::audit::AuditService::new(audit_repo)) as Arc<dyn AuditLogger>
         });
 
         let password_hasher = self.password_hasher.unwrap_or_else(|| {

@@ -1,4 +1,4 @@
-# telemetry — Tracing, Audit, Metrics, Health
+# observability — Tracing, Audit, Metrics, Health
 
 ## Overview
 
@@ -7,7 +7,7 @@ Infrastructure crate providing **observability primitives**: tracing setup, audi
 ## Structure
 
 ```
-telemetry/
+observability/
 ├── src/
 │   ├── tracing.rs          # Tracing subscriber setup
 │   ├── audit.rs            # AuditLogger implementation
@@ -93,7 +93,7 @@ pub struct AuditEvent {
 In gateway composition root:
 
 ```rust
-use telemetry::{init_tracing, PgAuditLogger};
+use observability::{init_tracing, PgAuditLogger};
 
 fn init_telemetry(config: &Config) -> Result<AuditLogger> {
     init_tracing(&config.service_name, &config.log_level);

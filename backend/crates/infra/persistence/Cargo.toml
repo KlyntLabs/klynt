@@ -11,7 +11,7 @@ workspace = true
 base = { path = "../../base" }
 config = { path = "../config" }
 domain = { path = "../../shared/domain" }
-telemetry = { path = "../telemetry" }
+observability = { path = "../observability" }
 
 # Database
 sqlx = { workspace = true }

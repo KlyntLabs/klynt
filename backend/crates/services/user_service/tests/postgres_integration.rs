@@ -109,7 +109,7 @@ async fn audit_service_creates_profile_updated_event() {
 
     let audit_repo =
         Arc::new(persistence::repositories::sqlx_audit_repo::PgAuditEventRepository::new(pool));
-    let audit_service = Arc::new(telemetry::audit::AuditService::new(audit_repo));
+    let audit_service = Arc::new(observability::audit::AuditService::new(audit_repo));
     let ctx = test_ctx();
     let user_id = UserId::new();
 

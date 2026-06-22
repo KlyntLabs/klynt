@@ -113,11 +113,11 @@ dependencies = [
  "base64",
  "chrono",
  "domain",
+ "observability",
  "persistence",
  "rand",
  "sha2",
  "sqlx",
- "telemetry",
  "thiserror",
  "tokio",
  "tracing",
@@ -759,12 +759,12 @@ dependencies = [
  "config 0.1.0",
  "config 0.15.24",
  "domain",
+ "observability",
  "persistence",
  "serde",
  "serde_json",
  "session_service",
  "sqlx",
- "telemetry",
  "thiserror",
  "tokio",
  "tower",
@@ -1343,6 +1343,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "observability"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "base",
+ "chrono",
+ "domain",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "tracing-error",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
 name = "once_cell"
 version = "1.21.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1430,13 +1447,13 @@ dependencies = [
  "chrono",
  "config 0.1.0",
  "domain",
+ "observability",
  "rand",
  "rand_core",
  "redis",
  "serde",
  "serde_json",
  "sqlx",
- "telemetry",
  "thiserror",
  "tokio",
  "tracing",
@@ -2288,23 +2305,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "telemetry"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "base",
- "chrono",
- "domain",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
- "tracing-error",
- "tracing-subscriber",
- "uuid",
-]
-
-[[package]]
 name = "thiserror"
 version = "2.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2661,9 +2661,9 @@ dependencies = [
  "base",
  "chrono",
  "domain",
+ "observability",
  "persistence",
  "sqlx",
- "telemetry",
  "thiserror",
  "tokio",
  "uuid",

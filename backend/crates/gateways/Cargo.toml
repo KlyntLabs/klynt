@@ -15,7 +15,7 @@ domain = { path = "../shared/domain" }
 
 # === Storage and infrastructure adapters ===
 persistence = { path = "../infra/persistence" }
-telemetry = { path = "../infra/telemetry" }
+observability = { path = "../infra/observability" }
 
 # === Web Framework ===
 axum = { workspace = true }

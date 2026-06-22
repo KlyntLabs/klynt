@@ -4,7 +4,7 @@ use sqlx::PgPool;
 use crate::repositories::AuditEventRepository;
 use base::ctx::ExecutionContext;
 use domain::DomainError;
-use telemetry::audit::types::AuditEvent;
+use observability::audit::types::AuditEvent;
 
 /// PostgreSQL implementation of audit event repository.
 pub struct PgAuditEventRepository {

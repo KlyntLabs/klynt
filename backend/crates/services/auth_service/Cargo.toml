@@ -10,7 +10,7 @@ domain = { path = "../../shared/domain" }
 
 # === Storage and infrastructure adapters ===
 persistence = { path = "../../../crates/infra/persistence" }
-telemetry = { path = "../../../crates/infra/telemetry" }
+observability = { path = "../../../crates/infra/observability" }
 
 # === Async Runtime ===
 tokio = { workspace = true }

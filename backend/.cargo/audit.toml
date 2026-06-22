@@ -5,8 +5,4 @@ ignore = [
     # uses the Postgres feature of sqlx, so the RSA code path is not exercised.
     # No fixed upgrade is currently available.
     "RUSTSEC-2023-0071",
-    # `telemetry` crate name collision: cargo audit matches our local workspace
-    # crate `telemetry` against the unrelated crates.io `telemetry` crate.
-    # Our crate is a local path dependency, not the vulnerable published crate.
-    "RUSTSEC-2021-0046",
 ]

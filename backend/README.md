@@ -13,7 +13,7 @@ backend/crates/
 │   └── domain              # Domain types, contracts, and errors (user, auth, role, error)
 ├── infra/
 │   ├── persistence         # PostgreSQL repositories, Redis rate limiting/idempotency, Argon2 hashing, email
-│   ├── telemetry           # Tracing, audit logging, metrics, health-check ports
+│   ├── observability       # Tracing, audit logging, metrics, health-check ports
 │   └── config              # Configuration loading and validation
 ├── services/
 │   ├── auth_service        # Registration, login, email verification, password reset
@@ -54,7 +54,7 @@ backend/crates/
 ## Shared Infrastructure
 
 - `persistence` — PostgreSQL repositories, Redis rate limiting/idempotency, Argon2 password hashing, mock email service, session/token stores
-- `telemetry` — Tracing setup, audit logging service, health-check ports, and metrics
+- `observability` — Tracing setup, audit logging service, health-check ports, and metrics
 - `config` — Application configuration loading from files and environment
 
 ## Local Development

@@ -205,7 +205,7 @@ async fn test_register_flow() {
 
 ### Infrastructure
 - `persistence` — Concrete implementations
-- `telemetry` — Observability
+- `observability` — Observability
 
 ### Web Framework
 - `axum` — HTTP framework

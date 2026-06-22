@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use crate::Error;
 
-pub use telemetry::ports::{ComponentHealth, HealthCheck};
+pub use observability::ports::{ComponentHealth, HealthCheck};
 
 /// A generic idempotency cache.
 #[async_trait::async_trait]

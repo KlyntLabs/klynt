@@ -1,7 +1,7 @@
 //! Repository traits and models.
 
 pub use base::ports::token::TokenStore;
-pub use telemetry::audit::types::AuditEventRepository;
+pub use observability::audit::types::AuditEventRepository;
 
 pub mod pg_session;
 pub mod pg_user;

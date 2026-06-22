@@ -155,7 +155,7 @@ Password changes invalidate existing sessions for security.
 - `base` — Port interfaces
 - `domain` — Domain types and contracts
 - `persistence` — Concrete implementations (only in wiring)
-- `telemetry` — Audit logging
+- `observability` — Audit logging
 - `chrono` — Time handling
 - `uuid` — ID handling
 - `validator` — Input validation

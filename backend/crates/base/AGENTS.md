@@ -161,4 +161,4 @@ impl MyPort for FakeMyPort {
 - [Backend AGENTS.md](../../AGENTS.md) — Overall architecture
 - [domain AGENTS.md](../shared/domain/AGENTS.md) — Domain types
 - [persistence AGENTS.md](../infra/persistence/AGENTS.md) — Postgres implementations
-- [telemetry AGENTS.md](../infra/telemetry/AGENTS.md) — Observability
+- [observability AGENTS.md](../infra/observability/AGENTS.md) — Observability
