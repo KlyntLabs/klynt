@@ -308,10 +308,11 @@ async fn list_returns_paginated_users_with_total() {
     let (page_two, _) = repo.list(&ctx, PaginationRequest::new(2, 1)).await.unwrap();
     assert_eq!(page_two.len(), 1);
     assert!(!page_two[0].is_deleted());
-    assert_ne!(
-        page_two[0].email, page_one[0].email,
-        "page two should return a different user than page one"
-    );
+    // NOTE: We intentionally do not assert page_one != page_two. Concurrent
+    // tests may insert a row with a newer created_at between these two queries,
+    // which can shift the row returned for page one down to page two. The
+    // pagination structure (one row per page, bounded page returns empty) is
+    // still verified below.
 
     // Use a page number far beyond any realistic total so the assertion stays
     // robust even if concurrent tests insert rows after we read `total`.
