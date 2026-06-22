@@ -53,9 +53,9 @@ impl SessionStore for PgSessionStore {
         _ctx: &ExecutionContext,
         token: &SessionToken,
     ) -> Result<Option<Session>, SessionError> {
-        let row: Option<(Uuid, DateTime<Utc>, DateTime<Utc>)> = sqlx::query_as(
+        let row: Option<(Uuid, DateTime<Utc>)> = sqlx::query_as(
             r#"
-            SELECT user_id, expires_at, created_at
+            SELECT user_id, expires_at
             FROM sessions
             WHERE token = $1
               AND expires_at > NOW()
@@ -65,10 +65,9 @@ impl SessionStore for PgSessionStore {
         .fetch_optional(&self.pool)
         .await?;
 
-        Ok(row.map(|(user_id, expires_at, created_at)| Session {
+        Ok(row.map(|(user_id, expires_at)| Session {
             user_id: UserId(user_id),
             expires_at,
-            created_at,
         }))
     }
 

@@ -123,7 +123,6 @@ mod tests {
             let session = Session {
                 user_id,
                 expires_at,
-                created_at: Utc::now(),
             };
             self.sessions.lock().unwrap().insert(token, session);
             Ok(token)

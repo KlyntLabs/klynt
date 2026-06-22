@@ -44,7 +44,6 @@ impl std::fmt::Display for SessionToken {
 pub struct Session {
     pub user_id: UserId,
     pub expires_at: DateTime<Utc>,
-    pub created_at: DateTime<Utc>,
 }
 
 impl Session {
