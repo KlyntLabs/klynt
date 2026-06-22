@@ -5,6 +5,7 @@ use base::ports::session::{SessionStore, SessionToken};
 use domain::{Email, UserId, UserStatus};
 use persistence::repositories::cached_session_store::CachedSessionStore;
 use persistence::repositories::session::PgSessionStore;
+use redis::aio::MultiplexedConnection;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -24,6 +25,11 @@ async fn setup_pool() -> PgPool {
         .await
         .unwrap();
     pool
+}
+
+async fn setup_redis() -> MultiplexedConnection {
+    let client = redis::Client::open(redis_url().as_str()).unwrap();
+    client.get_multiplexed_async_connection().await.unwrap()
 }
 
 async fn create_test_user(pool: &PgPool) -> UserId {
@@ -48,63 +54,116 @@ async fn create_test_user(pool: &PgPool) -> UserId {
     user_id
 }
 
+fn cache_key(token: &SessionToken) -> String {
+    format!("session:{}", token.0)
+}
+
+async fn redis_has_key(conn: &mut MultiplexedConnection, key: &str) -> bool {
+    let value: Option<String> = redis::cmd("GET").arg(key).query_async(conn).await.unwrap();
+    value.is_some()
+}
+
+async fn redis_del_key(conn: &mut MultiplexedConnection, key: &str) {
+    redis::cmd("DEL")
+        .arg(key)
+        .query_async::<()>(conn)
+        .await
+        .unwrap();
+}
+
 // Requires DATABASE_URL and REDIS_URL environment variables.
 #[tokio::test]
-async fn cached_store_falls_back_to_postgres_and_rehydrates_cache() {
+async fn cached_store_populates_and_hits_cache() {
     let pool = setup_pool().await;
+    let mut inspect_conn = setup_redis().await;
     let user_id = create_test_user(&pool).await;
-    let client = redis::Client::open(redis_url().as_str()).unwrap();
-    let conn = client.get_multiplexed_async_connection().await.unwrap();
-
     let postgres = PgSessionStore::new(pool);
-    let store = CachedSessionStore::new(postgres, conn);
+    let store = CachedSessionStore::connect(postgres, &redis_url())
+        .await
+        .unwrap();
     let ctx = ExecutionContext::new(RequestContext::new());
     let expires_at = chrono::Utc::now() + chrono::Duration::hours(1);
 
     let token = store.create(&ctx, user_id, expires_at).await.unwrap();
+    let key = cache_key(&token);
 
-    // First read may hit Postgres and populate cache.
+    // create() should have written the session to Redis.
+    assert!(redis_has_key(&mut inspect_conn, &key).await);
+
+    // First read may hit Postgres and (re)populate cache.
     let session = store.find_valid(&ctx, &token).await.unwrap().unwrap();
     assert_eq!(session.user_id, user_id);
+    assert!(redis_has_key(&mut inspect_conn, &key).await);
 
-    // Second read should hit cache (verified by Redis MONITOR in CI).
+    // Second read should hit cache; the Redis key must still exist.
     let session2 = store.find_valid(&ctx, &token).await.unwrap().unwrap();
     assert_eq!(session2.user_id, user_id);
+    assert!(redis_has_key(&mut inspect_conn, &key).await);
 
     store.revoke(&ctx, &token).await.unwrap();
+
+    // Revoke should delete the cached key.
+    assert!(!redis_has_key(&mut inspect_conn, &key).await);
     assert!(store.find_valid(&ctx, &token).await.unwrap().is_none());
+}
+
+#[tokio::test]
+async fn cached_store_falls_back_to_postgres_and_rehydrates_cache() {
+    let pool = setup_pool().await;
+    let mut inspect_conn = setup_redis().await;
+    let user_id = create_test_user(&pool).await;
+    let postgres = PgSessionStore::new(pool);
+    let store = CachedSessionStore::connect(postgres, &redis_url())
+        .await
+        .unwrap();
+    let ctx = ExecutionContext::new(RequestContext::new());
+    let expires_at = chrono::Utc::now() + chrono::Duration::hours(1);
+
+    let token = store.create(&ctx, user_id, expires_at).await.unwrap();
+    let key = cache_key(&token);
+
+    // Simulate a cache miss by deleting the Redis entry after creation.
+    redis_del_key(&mut inspect_conn, &key).await;
+    assert!(!redis_has_key(&mut inspect_conn, &key).await);
+
+    // find_valid should fall back to Postgres and rehydrate the cache.
+    let session = store.find_valid(&ctx, &token).await.unwrap().unwrap();
+    assert_eq!(session.user_id, user_id);
+    assert!(redis_has_key(&mut inspect_conn, &key).await);
 }
 
 #[tokio::test]
 async fn revoked_token_is_not_found_in_cache_or_postgres() {
     let pool = setup_pool().await;
+    let mut inspect_conn = setup_redis().await;
     let user_id = create_test_user(&pool).await;
-    let client = redis::Client::open(redis_url().as_str()).unwrap();
-    let conn = client.get_multiplexed_async_connection().await.unwrap();
-
     let postgres = PgSessionStore::new(pool);
-    let store = CachedSessionStore::new(postgres, conn);
+    let store = CachedSessionStore::connect(postgres, &redis_url())
+        .await
+        .unwrap();
     let ctx = ExecutionContext::new(RequestContext::new());
     let expires_at = chrono::Utc::now() + chrono::Duration::hours(1);
 
     let token = store.create(&ctx, user_id, expires_at).await.unwrap();
+    let key = cache_key(&token);
 
     // Populate cache.
     let _ = store.find_valid(&ctx, &token).await.unwrap();
+    assert!(redis_has_key(&mut inspect_conn, &key).await);
 
     // Revoke should clear both stores.
     store.revoke(&ctx, &token).await.unwrap();
+    assert!(!redis_has_key(&mut inspect_conn, &key).await);
     assert!(store.find_valid(&ctx, &token).await.unwrap().is_none());
 }
 
 #[tokio::test]
 async fn unknown_token_returns_none() {
     let pool = setup_pool().await;
-    let client = redis::Client::open(redis_url().as_str()).unwrap();
-    let conn = client.get_multiplexed_async_connection().await.unwrap();
-
     let postgres = PgSessionStore::new(pool);
-    let store = CachedSessionStore::new(postgres, conn);
+    let store = CachedSessionStore::connect(postgres, &redis_url())
+        .await
+        .unwrap();
     let ctx = ExecutionContext::new(RequestContext::new());
     let token = SessionToken::new();
 

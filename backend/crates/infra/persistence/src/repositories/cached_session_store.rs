@@ -2,6 +2,14 @@
 //!
 //! Postgres remains the authoritative store. Redis is used only to reduce
 //! read latency; any Redis failure is logged and falls back to Postgres.
+//!
+//! # Best-effort invalidation note
+//!
+//! `revoke` deletes the session from Postgres and then attempts to delete the
+//! cached entry from Redis. If Redis is unreachable at revoke time, the cached
+//! entry is left in place and will continue to be treated as valid until its
+//! TTL expires (currently 15 minutes). Callers should ensure Redis is available
+//! for revocation to take immediate effect.
 
 use std::sync::Arc;
 
@@ -9,7 +17,7 @@ use async_trait::async_trait;
 use base::ctx::ExecutionContext;
 use base::ports::session::{Session, SessionError, SessionStore, SessionToken};
 use chrono::{DateTime, Utc};
-use domain::UserId;
+use domain::{DomainError, UserId};
 use redis::aio::MultiplexedConnection;
 use tokio::sync::Mutex;
 
@@ -18,18 +26,35 @@ use super::session::PgSessionStore;
 const SESSION_TTL_SECONDS: u64 = 900; // 15 minutes
 
 /// Read-through Redis cache over [`PgSessionStore`].
+///
+/// See the module-level documentation for important notes on best-effort cache
+/// invalidation during `revoke`.
 pub struct CachedSessionStore {
     postgres: PgSessionStore,
     redis: Arc<Mutex<MultiplexedConnection>>,
 }
 
 impl CachedSessionStore {
-    /// Create a new cached store backed by `postgres` and `redis`.
+    /// Create a new cached store from an existing Redis `MultiplexedConnection`.
+    ///
+    /// Prefer [`CachedSessionStore::connect`] when wiring the composition root.
     pub fn new(postgres: PgSessionStore, redis: MultiplexedConnection) -> Self {
         Self {
             postgres,
             redis: Arc::new(Mutex::new(redis)),
         }
+    }
+
+    /// Connect to Redis at `redis_url` and return a new cached store.
+    pub async fn connect(postgres: PgSessionStore, redis_url: &str) -> Result<Self, DomainError> {
+        let client = redis::Client::open(redis_url)
+            .map_err(|e| DomainError::internal_msg(format!("invalid redis url: {e}")))?;
+        let conn = client
+            .get_multiplexed_async_connection()
+            .await
+            .map_err(|e| DomainError::internal_msg(format!("redis connection failed: {e}")))?;
+
+        Ok(Self::new(postgres, conn))
     }
 
     fn cache_key(token: &SessionToken) -> String {
@@ -146,6 +171,12 @@ impl SessionStore for CachedSessionStore {
         Ok(session)
     }
 
+    /// Revoke the session.
+    ///
+    /// The session is always removed from Postgres. Cache invalidation is
+    /// best-effort: if Redis is unreachable, the cached entry will remain
+    /// valid until its TTL expires. See the module-level documentation for
+    /// security implications.
     async fn revoke(
         &self,
         ctx: &ExecutionContext,

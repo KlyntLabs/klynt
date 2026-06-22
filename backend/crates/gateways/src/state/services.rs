@@ -73,21 +73,16 @@ impl Services {
     ) -> Result<SessionService, crate::GatewayError> {
         let postgres = PgSessionStore::new(pool);
 
-        let store: Arc<dyn base::ports::session::SessionStore> = if let Some(redis_url) =
-            &config.redis_url
-        {
-            let client = redis::Client::open(redis_url.as_str())
-                .map_err(|e| crate::GatewayError::configuration(format!("Redis client: {e}")))?;
-            let conn = client
-                .get_multiplexed_async_connection()
-                .await
-                .map_err(|e| {
-                    crate::GatewayError::configuration(format!("Redis connection: {e}"))
-                })?;
-            Arc::new(CachedSessionStore::new(postgres, conn))
-        } else {
-            Arc::new(postgres)
-        };
+        let store: Arc<dyn base::ports::session::SessionStore> =
+            if let Some(redis_url) = &config.redis_url {
+                Arc::new(
+                    CachedSessionStore::connect(postgres, redis_url)
+                        .await
+                        .map_err(|e| crate::GatewayError::configuration(format!("Redis: {e}")))?,
+                )
+            } else {
+                Arc::new(postgres)
+            };
 
         Ok(SessionService::new(
             SessionConfig {

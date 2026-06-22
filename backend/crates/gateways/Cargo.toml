@@ -50,7 +50,4 @@ uuid = { workspace = true }
 # === Database ===
 sqlx = { workspace = true }
 
-# === Cache ===
-redis = { workspace = true }
-
 [dev-dependencies]
