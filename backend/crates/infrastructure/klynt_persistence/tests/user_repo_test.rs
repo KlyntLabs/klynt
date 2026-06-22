@@ -314,8 +314,9 @@ async fn list_returns_paginated_users_with_total() {
     assert!(page_emails.contains(&first_email));
     assert!(page_emails.contains(&second_email));
 
+    let beyond_total_page = (page_one_total + 1) as u32;
     let (empty, empty_total) = repo
-        .list(&ctx, PaginationRequest::new(100, 1))
+        .list(&ctx, PaginationRequest::new(beyond_total_page, 1))
         .await
         .unwrap();
     assert!(empty.is_empty());
