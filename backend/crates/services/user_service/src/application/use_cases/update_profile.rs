@@ -28,11 +28,7 @@ pub(crate) async fn execute(
 
     user.update_profile(updates.full_name)?;
 
-    service
-        .internal()
-        .user_repository
-        .update(ctx, &user)
-        .await?;
+    let user = service.internal().user_repository.update(ctx, user).await?;
 
     service
         .internal()

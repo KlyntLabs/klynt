@@ -3,29 +3,10 @@
 use async_trait::async_trait;
 
 use klynt_base::ctx::ExecutionContext;
-use klynt_common::domain::{PaginationRequest, User};
 use klynt_common::util::UserId;
 
-use crate::error::UserError;
-
-#[async_trait]
-pub trait UserRepository: Send + Sync {
-    async fn find_by_id(
-        &self,
-        ctx: &ExecutionContext,
-        id: UserId,
-    ) -> Result<Option<User>, UserError>;
-
-    async fn update(&self, ctx: &ExecutionContext, user: &User) -> Result<(), UserError>;
-
-    async fn delete(&self, ctx: &ExecutionContext, id: UserId) -> Result<(), UserError>;
-
-    async fn list(
-        &self,
-        ctx: &ExecutionContext,
-        pagination: PaginationRequest,
-    ) -> Result<(Vec<User>, u64), UserError>;
-}
+// Canonical user repository port from klynt_base.
+pub use klynt_base::ports::repository::UserRepository;
 
 #[async_trait]
 pub trait AuditLogger: Send + Sync {
