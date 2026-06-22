@@ -71,7 +71,7 @@ impl UserRepository for FakeUserRepository {
         let user_id = UserId::new();
         let user = User {
             id: user_id,
-            email: Email::new(email.as_str().to_string()),
+            email,
             password_hash,
             full_name: Some(full_name).filter(|n| !n.is_empty()),
             status: UserStatus::Pending,
@@ -83,7 +83,7 @@ impl UserRepository for FakeUserRepository {
         self.users
             .lock()
             .unwrap()
-            .insert(email.as_str().to_string(), user);
+            .insert(user.email.as_str().to_string(), user);
         Ok(user_id)
     }
 

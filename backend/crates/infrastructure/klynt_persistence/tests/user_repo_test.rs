@@ -265,19 +265,48 @@ async fn list_returns_paginated_users_with_total() {
 
     let repo = PgUserRepository::new(pool);
     let ctx = test_ctx();
-    let email = unique_email();
+    let first_email = unique_email();
+    let second_email = unique_email();
 
     repo.create_pending_user(
         &ctx,
-        "Listed".to_string(),
-        email.clone(),
+        "First Listed".to_string(),
+        first_email.clone(),
+        "hash".to_string(),
+    )
+    .await
+    .unwrap();
+
+    repo.create_pending_user(
+        &ctx,
+        "Second Listed".to_string(),
+        second_email.clone(),
         "hash".to_string(),
     )
     .await
     .unwrap();
 
     let (users, total) = repo.list(&ctx, PaginationRequest::first()).await.unwrap();
-    assert!(total >= 1);
+    assert!(total >= 2);
     assert!(!users.is_empty());
     assert!(users.iter().all(|u| !u.is_deleted()));
+
+    let (page_one, page_one_total) = repo.list(&ctx, PaginationRequest::new(1, 1)).await.unwrap();
+    assert_eq!(page_one.len(), 1);
+    assert!(page_one_total >= 2);
+    assert_eq!(page_one[0].email, second_email);
+    assert!(page_one.iter().all(|u| !u.is_deleted()));
+
+    let (page_two, page_two_total) = repo.list(&ctx, PaginationRequest::new(2, 1)).await.unwrap();
+    assert_eq!(page_two.len(), 1);
+    assert_eq!(page_two_total, page_one_total);
+    assert_eq!(page_two[0].email, first_email);
+    assert!(page_two.iter().all(|u| !u.is_deleted()));
+
+    let (empty, empty_total) = repo
+        .list(&ctx, PaginationRequest::new(100, 1))
+        .await
+        .unwrap();
+    assert!(empty.is_empty());
+    assert_eq!(empty_total, page_one_total);
 }
