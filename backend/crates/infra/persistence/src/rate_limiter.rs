@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use async_trait::async_trait;
 use redis::aio::MultiplexedConnection;
 
@@ -11,17 +9,19 @@ use crate::ports::{RateLimitDecision, RateLimitScope, RateLimiter as RateLimiter
 /// Redis-backed fixed-window rate limiter.
 ///
 /// Keys are scoped per IP address and expire after the configured window.
+/// `MultiplexedConnection` is cheaply cloneable and multiplexes requests, so
+/// the connection is cloned per check rather than guarded by a global mutex.
 pub struct RedisRateLimiter {
     config: RateLimiterConfig,
-    conn: Arc<tokio::sync::Mutex<MultiplexedConnection>>,
+    conn: MultiplexedConnection,
     script: redis::Script,
 }
 
 impl RedisRateLimiter {
-    /// Returns the underlying Redis connection so other infrastructure
-    /// components (e.g. health checks) can reuse it.
-    pub(crate) fn conn(&self) -> &Arc<tokio::sync::Mutex<MultiplexedConnection>> {
-        &self.conn
+    /// Returns a clone of the underlying Redis connection so other
+    /// infrastructure components (e.g. health checks) can reuse it.
+    pub(crate) fn conn(&self) -> MultiplexedConnection {
+        self.conn.clone()
     }
 
     pub async fn new(config: RateLimiterConfig, redis_url: &str) -> Result<Self, DomainError> {
@@ -51,7 +51,7 @@ impl RedisRateLimiter {
 
         Ok(Self {
             config,
-            conn: Arc::new(tokio::sync::Mutex::new(conn)),
+            conn,
             script,
         })
     }
@@ -68,13 +68,13 @@ impl RateLimiterPort for RedisRateLimiter {
             return RateLimitDecision::allowed();
         }
 
-        let mut conn = self.conn.lock().await;
+        let mut conn = self.conn.clone();
         let result: Result<(i64, i64), redis::RedisError> = self
             .script
             .key(self.key(&scope))
             .arg(self.config.max_requests as i64)
             .arg(self.config.window_seconds as i64)
-            .invoke_async(&mut *conn)
+            .invoke_async(&mut conn)
             .await;
 
         match result {

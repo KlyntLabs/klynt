@@ -72,9 +72,8 @@ impl HealthCheck for RedisRateLimiter {
 
     async fn check(&self) -> ComponentHealth {
         let start = Instant::now();
-        let mut conn = self.conn().lock().await;
-        let result: Result<(), redis::RedisError> =
-            redis::cmd("PING").query_async(&mut *conn).await;
+        let mut conn = self.conn();
+        let result: Result<(), redis::RedisError> = redis::cmd("PING").query_async(&mut conn).await;
         let latency_ms = start.elapsed().as_secs_f64() * 1000.0;
 
         match result {

@@ -23,8 +23,8 @@ pub struct Services {
     /// Rate limiter shared across auth endpoints.
     pub rate_limiter: Arc<dyn RateLimiter>,
     /// Trusted proxy networks used to resolve the real client IP from
-    /// `X-Forwarded-For`. Parsed once at startup.
-    pub trusted_proxies: Vec<IpNet>,
+    /// `X-Forwarded-For`. Parsed once at startup and shared across requests.
+    pub trusted_proxies: Arc<Vec<IpNet>>,
 }
 
 impl Services {
@@ -54,8 +54,10 @@ impl Services {
         let session_service = Self::create_session_service(session_store);
         let user_service = Self::create_user_service(config, pool).await?;
         let rate_limiter = Self::create_rate_limiter(config).await?;
-        let trusted_proxies = config::parse_trusted_proxies(&config.trusted_proxies)
-            .map_err(|e| crate::GatewayError::configuration(e.to_string()))?;
+        let trusted_proxies = Arc::new(
+            config::parse_trusted_proxies(&config.trusted_proxies)
+                .map_err(|e| crate::GatewayError::configuration(e.to_string()))?,
+        );
 
         Ok(Self {
             auth: Arc::new(auth_service),

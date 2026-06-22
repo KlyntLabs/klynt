@@ -73,7 +73,7 @@ pub fn build_test_services_with_fakes() -> (
         user: Arc::new(user_service),
         session: session_service.clone(),
         rate_limiter: Arc::new(NoOpRateLimiter),
-        trusted_proxies: Vec::new(),
+        trusted_proxies: Arc::new(Vec::new()),
     };
 
     (services, session_service, user_repo)
@@ -101,7 +101,7 @@ pub fn build_test_services_with_rate_limiter_and_proxies(
 ) -> gateways::state::Services {
     let (mut services, _, _) = build_test_services_with_fakes();
     services.rate_limiter = rate_limiter;
-    services.trusted_proxies = trusted_proxies;
+    services.trusted_proxies = Arc::new(trusted_proxies);
     services
 }
 

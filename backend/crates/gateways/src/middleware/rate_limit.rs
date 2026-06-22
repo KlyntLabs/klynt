@@ -100,7 +100,31 @@ fn normalize_ip(ip: IpAddr) -> IpAddr {
 }
 
 fn is_trusted_ip(ip: &IpAddr, trusted_nets: &[IpNet]) -> bool {
-    trusted_nets.iter().any(|net| net.contains(ip))
+    trusted_nets.iter().any(|net| matches_ip_in_net(ip, net))
+}
+
+/// Match an IP against a CIDR, normalizing across the IPv4/IPv6 boundary.
+///
+/// - An IPv4-mapped IPv6 address (`::ffff:a.b.c.d`) matches an IPv4 CIDR.
+/// - A native IPv4 address matches an IPv4-mapped IPv6 CIDR such as
+///   `::ffff:10.0.0.0/120`.
+fn matches_ip_in_net(ip: &IpAddr, net: &IpNet) -> bool {
+    if net.contains(ip) {
+        return true;
+    }
+
+    match (ip, net) {
+        (IpAddr::V4(v4), IpNet::V6(_)) => {
+            let mapped = IpAddr::V6(v4.to_ipv6_mapped());
+            net.contains(&mapped)
+        }
+        (IpAddr::V6(v6), IpNet::V4(_)) => v6
+            .to_ipv4_mapped()
+            .map(IpAddr::V4)
+            .map(|v4| net.contains(&v4))
+            .unwrap_or(false),
+        _ => false,
+    }
 }
 
 #[cfg(test)]
@@ -193,6 +217,28 @@ mod tests {
     #[test]
     fn client_ip_normalizes_ipv4_mapped_ipv6_addresses() {
         let peer = SocketAddr::from(("::ffff:10.0.0.2".parse::<IpAddr>().unwrap(), 1234));
+        let headers = header_map_with_xff("::ffff:203.0.113.42");
+
+        let ip = client_ip(&[net("10.0.0.0/8")], peer, &headers);
+
+        assert_eq!(ip, IpAddr::from([203, 0, 113, 42]));
+    }
+
+    #[test]
+    fn client_ip_matches_native_ipv4_against_ipv4_mapped_ipv6_cidr() {
+        // Operator configures an IPv4-mapped IPv6 CIDR for an IPv4-only proxy.
+        let peer = SocketAddr::from(([10, 0, 0, 2], 1234));
+        let headers = header_map_with_xff("203.0.113.42");
+
+        let ip = client_ip(&[net("::ffff:10.0.0.0/120")], peer, &headers);
+
+        assert_eq!(ip, IpAddr::from([203, 0, 113, 42]));
+    }
+
+    #[test]
+    fn client_ip_normalizes_ipv4_mapped_xff_against_ipv4_cidr() {
+        // XFF contains IPv4-mapped IPv6 but the trusted proxy CIDR is IPv4.
+        let peer = SocketAddr::from(([10, 0, 0, 2], 1234));
         let headers = header_map_with_xff("::ffff:203.0.113.42");
 
         let ip = client_ip(&[net("10.0.0.0/8")], peer, &headers);
