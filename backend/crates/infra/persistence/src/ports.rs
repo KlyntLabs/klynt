@@ -50,6 +50,18 @@ pub enum RateLimitAction {
     EmailVerification,
 }
 
+impl RateLimitAction {
+    /// String representation used for stable keys (e.g., Redis keys).
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Login => "login",
+            Self::Register => "register",
+            Self::PasswordReset => "password_reset",
+            Self::EmailVerification => "email_verification",
+        }
+    }
+}
+
 /// Scope used to identify a rate-limit bucket.
 #[derive(Debug, Clone)]
 pub struct RateLimitScope {

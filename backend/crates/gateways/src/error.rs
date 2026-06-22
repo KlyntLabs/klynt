@@ -163,6 +163,7 @@ mod tests {
                 GatewayError::ServiceUnavailable("unavailable".to_string()),
                 StatusCode::SERVICE_UNAVAILABLE,
             ),
+            (GatewayError::RateLimited(60), StatusCode::TOO_MANY_REQUESTS),
             (
                 GatewayError::internal("internal"),
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -247,6 +248,22 @@ mod tests {
             let response = error.into_response();
             assert_eq!(response.status(), expected);
         }
+    }
+
+    #[test]
+    fn rate_limited_error_includes_retry_after_header_and_body() {
+        let response = GatewayError::RateLimited(90).into_response();
+
+        assert_eq!(response.status(), StatusCode::TOO_MANY_REQUESTS);
+        assert_eq!(
+            response
+                .headers()
+                .get(axum::http::header::RETRY_AFTER)
+                .unwrap()
+                .to_str()
+                .unwrap(),
+            "90"
+        );
     }
 
     #[test]

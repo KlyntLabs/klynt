@@ -36,6 +36,8 @@ paths:
           description: Invalid input
         '409':
           description: Email already registered
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
 
   /auth/verify-email:
     post:
@@ -102,6 +104,8 @@ paths:
           description: Login successful
         '401':
           description: Invalid credentials
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
 
   /auth/logout:
     post:
@@ -229,6 +233,40 @@ components:
       properties:
         session_token:
           type: string
+
+    RateLimitError:
+      type: object
+      required:
+        - success
+        - error
+        - code
+        - retry_after
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+        error:
+          type: string
+        code:
+          type: string
+          enum: [RATE_LIMITED]
+        retry_after:
+          type: integer
+          minimum: 0
+
+  responses:
+    TooManyRequests:
+      description: Rate limit exceeded
+      headers:
+        Retry-After:
+          description: Number of seconds to wait before retrying
+          schema:
+            type: integer
+            minimum: 0
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RateLimitError'
 
 tags:
   - name: Health

@@ -21,6 +21,8 @@ pub struct Services {
     pub session: Arc<SessionService>,
     /// Rate limiter shared across auth endpoints.
     pub rate_limiter: Arc<dyn RateLimiter>,
+    /// Trusted proxy CIDRs or IPs used to resolve the real client IP.
+    pub trusted_proxies: Vec<String>,
 }
 
 impl Services {
@@ -56,6 +58,7 @@ impl Services {
             user: Arc::new(user_service),
             session: Arc::new(session_service),
             rate_limiter,
+            trusted_proxies: config.trusted_proxies.clone(),
         })
     }
 
@@ -117,13 +120,17 @@ impl Services {
     async fn create_rate_limiter(
         config: &Config,
     ) -> Result<Arc<dyn RateLimiter>, crate::GatewayError> {
-        if let Some(redis_url) = &config.redis_url {
-            let limiter = RedisRateLimiter::new(config.rate_limiter.clone(), redis_url)
-                .await
-                .map_err(|e| crate::GatewayError::configuration(format!("Rate limiter: {e}")))?;
-            Ok(Arc::new(limiter))
-        } else {
-            Ok(Arc::new(NoOpRateLimiter))
+        if !config.rate_limiter.enabled {
+            return Ok(Arc::new(NoOpRateLimiter));
         }
+
+        let Some(redis_url) = &config.redis_url else {
+            return Ok(Arc::new(NoOpRateLimiter));
+        };
+
+        let limiter = RedisRateLimiter::new(config.rate_limiter.clone(), redis_url)
+            .await
+            .map_err(|e| crate::GatewayError::configuration(format!("Rate limiter: {e}")))?;
+        Ok(Arc::new(limiter))
     }
 }

@@ -57,7 +57,7 @@ impl RedisRateLimiter {
     }
 
     fn key(&self, scope: &RateLimitScope) -> String {
-        format!("rate_limit:{}:{:?}", scope.ip, scope.action)
+        format!("rate_limit:{}:{}", scope.ip, scope.action.as_str())
     }
 }
 

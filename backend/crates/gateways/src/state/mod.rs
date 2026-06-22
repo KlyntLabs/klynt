@@ -35,6 +35,11 @@ pub struct Config {
     #[serde(default)]
     pub allowed_origins: Vec<String>,
 
+    /// Trusted proxy CIDRs or IPs used to resolve the real client IP from
+    /// `X-Forwarded-For` / `Forwarded` headers.
+    #[serde(default)]
+    pub trusted_proxies: Vec<String>,
+
     /// Log level for tracing.
     #[serde(default = "default_log_level")]
     pub log_level: String,
@@ -55,6 +60,7 @@ impl Default for Config {
             rate_limiter: config::RateLimiterConfig::default(),
             hsts_enabled: false,
             allowed_origins: Vec::new(),
+            trusted_proxies: Vec::new(),
             log_level: default_log_level(),
         }
     }
@@ -91,6 +97,7 @@ impl From<config::AppConfig> for Config {
             rate_limiter: config.rate_limiter,
             hsts_enabled: config.hsts_enabled,
             allowed_origins: config.api.allowed_origins,
+            trusted_proxies: config.api.trusted_proxies,
             log_level: config.log_level,
         }
     }

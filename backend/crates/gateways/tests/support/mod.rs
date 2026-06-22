@@ -1,5 +1,8 @@
 //! Test support utilities and fake implementations for the gateway.
 
+#![allow(dead_code)]
+#![allow(unused_imports)]
+
 use std::sync::Arc;
 
 use base::ports::{Clock, PasswordHashError, PasswordHasher};
@@ -69,6 +72,7 @@ pub fn build_test_services_with_fakes() -> (
         user: Arc::new(user_service),
         session: session_service.clone(),
         rate_limiter: Arc::new(NoOpRateLimiter),
+        trusted_proxies: Vec::new(),
     };
 
     (services, session_service, user_repo)
@@ -86,6 +90,17 @@ pub fn build_test_services_with_rate_limiter(
 ) -> gateways::state::Services {
     let (mut services, _, _) = build_test_services_with_fakes();
     services.rate_limiter = rate_limiter;
+    services
+}
+
+/// Build test gateway services with a custom rate limiter and trusted proxies.
+pub fn build_test_services_with_rate_limiter_and_proxies(
+    rate_limiter: Arc<dyn RateLimiter>,
+    trusted_proxies: Vec<String>,
+) -> gateways::state::Services {
+    let (mut services, _, _) = build_test_services_with_fakes();
+    services.rate_limiter = rate_limiter;
+    services.trusted_proxies = trusted_proxies;
     services
 }
 

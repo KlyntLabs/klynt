@@ -24,6 +24,7 @@ fn test_config() -> Config {
         rate_limiter: config::RateLimiterConfig::default(),
         hsts_enabled: false,
         allowed_origins: vec!["http://localhost:5173".to_string()],
+        trusted_proxies: Vec::new(),
         log_level: "warn".to_string(),
     }
 }
