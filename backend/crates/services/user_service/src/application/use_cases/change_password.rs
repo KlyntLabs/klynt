@@ -13,7 +13,7 @@ pub(crate) async fn execute(
     current_password: &str,
     new_password: &str,
 ) -> Result<(), UserError> {
-    let mut user = service
+    let user = service
         .internal()
         .user_repository
         .find_by_id(ctx, user_id)
@@ -39,9 +39,12 @@ pub(crate) async fn execute(
         .password_hasher
         .hash(new_password)
         .await?;
-    user.password_hash = new_hash;
 
-    service.internal().user_repository.update(ctx, user).await?;
+    service
+        .internal()
+        .user_repository
+        .update_password(ctx, user_id, new_hash)
+        .await?;
 
     service
         .internal()

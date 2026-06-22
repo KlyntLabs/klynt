@@ -73,10 +73,17 @@ impl UserRepository for FakeUserServiceRepository {
     async fn update_password(
         &self,
         _ctx: &ExecutionContext,
-        _user_id: UserId,
-        _password_hash: String,
+        user_id: UserId,
+        password_hash: String,
     ) -> Result<(), RepositoryError> {
-        unimplemented!("update_password not used by gateway user tests")
+        let mut users = self.users.lock().unwrap();
+        let mut user = users
+            .get(&user_id)
+            .ok_or(RepositoryError::NotFound)?
+            .clone();
+        user.password_hash = password_hash;
+        users.insert(user_id, user);
+        Ok(())
     }
 
     async fn update(&self, _ctx: &ExecutionContext, user: User) -> Result<User, RepositoryError> {

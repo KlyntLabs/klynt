@@ -3,9 +3,10 @@
 //! These tests require `DATABASE_URL` to point at a running PostgreSQL instance.
 //! If `DATABASE_URL` is unset, the tests are skipped.
 
+use chrono::Utc;
 use klynt_base::ctx::{ExecutionContext, RequestContext};
-use klynt_base::ports::repository::UserRepository;
-use klynt_common::domain::{Email, PaginationRequest, UserRole, UserStatus};
+use klynt_base::ports::repository::{RepositoryError, UserRepository};
+use klynt_common::domain::{Email, PaginationRequest, User, UserRole, UserStatus};
 use klynt_common::util::UserId;
 use klynt_persistence::repositories::pg_user::PgUserRepository;
 
@@ -309,4 +310,75 @@ async fn list_returns_paginated_users_with_total() {
         .unwrap();
     assert!(empty.is_empty());
     assert_eq!(empty_total, page_one_total);
+}
+
+#[tokio::test]
+async fn activate_user_returns_not_found_for_missing_user() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let repo = PgUserRepository::new(pool);
+    let ctx = test_ctx();
+    let missing_id = UserId::new();
+
+    let result = repo.activate_user(&ctx, missing_id).await;
+    assert!(matches!(result, Err(RepositoryError::NotFound)));
+}
+
+#[tokio::test]
+async fn update_password_returns_not_found_for_missing_user() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let repo = PgUserRepository::new(pool);
+    let ctx = test_ctx();
+    let missing_id = UserId::new();
+
+    let result = repo
+        .update_password(&ctx, missing_id, "new-hash".to_string())
+        .await;
+    assert!(matches!(result, Err(RepositoryError::NotFound)));
+}
+
+#[tokio::test]
+async fn update_returns_not_found_for_missing_user() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let repo = PgUserRepository::new(pool);
+    let ctx = test_ctx();
+    let missing_id = UserId::new();
+    let now = Utc::now();
+
+    let user = User {
+        id: missing_id,
+        email: Email::new("missing@example.com".to_string()),
+        full_name: None,
+        password_hash: "hash".to_string(),
+        status: UserStatus::Pending,
+        role: UserRole::Student,
+        created_at: now,
+        updated_at: None,
+        deleted_at: None,
+    };
+
+    let result = repo.update(&ctx, user).await;
+    assert!(matches!(result, Err(RepositoryError::NotFound)));
+}
+
+#[tokio::test]
+async fn delete_returns_not_found_for_missing_user() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let repo = PgUserRepository::new(pool);
+    let ctx = test_ctx();
+    let missing_id = UserId::new();
+
+    let result = repo.delete(&ctx, missing_id).await;
+    assert!(matches!(result, Err(RepositoryError::NotFound)));
 }
