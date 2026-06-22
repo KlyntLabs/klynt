@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 use chrono::Utc;
 use klynt_base::ctx::{ExecutionContext, RequestContext};
-use klynt_base::ports::PasswordHasher;
+use klynt_base::ports::{audit::AuditLogger, PasswordHasher};
 use klynt_common::domain::{PaginationRequest, UserStatus};
 use klynt_common::util::UserId;
 use user_service::{
@@ -115,5 +115,5 @@ async fn audit_service_creates_profile_updated_event() {
     let ctx = test_ctx();
     let user_id = UserId::new();
 
-    let _ = audit_service.log_profile_updated(&ctx, user_id).await;
+    let _ = AuditLogger::log_profile_updated(&*audit_service, &ctx, user_id).await;
 }

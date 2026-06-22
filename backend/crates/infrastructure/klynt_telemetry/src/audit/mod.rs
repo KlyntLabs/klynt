@@ -3,7 +3,9 @@ pub mod types;
 use std::sync::Arc;
 use uuid::Uuid;
 
+use async_trait::async_trait;
 use klynt_base::ctx::ExecutionContext;
+use klynt_base::ports::audit::AuditLogger;
 use klynt_common::util::UserId;
 
 use crate::types::{AuditAction, AuditEvent, AuditEventRepository, ResourceType};
@@ -177,9 +179,6 @@ impl AuditService {
         }
     }
 }
-
-use async_trait::async_trait;
-use klynt_base::ports::audit::AuditLogger;
 
 #[async_trait]
 impl AuditLogger for AuditService {

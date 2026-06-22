@@ -21,7 +21,7 @@ pub trait EmailSender: Send + Sync {
     async fn send_password_reset(
         &self,
         ctx: &ExecutionContext,
-        email: &str,
+        email: &Email,
         token: &str,
         base_url: &str,
     ) -> Result<(), EmailError>;

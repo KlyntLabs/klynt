@@ -125,15 +125,12 @@ impl EmailSender for MockEmailService {
     async fn send_password_reset(
         &self,
         _ctx: &ExecutionContext,
-        email: &str,
+        email: &Email,
         token: &str,
         base_url: &str,
     ) -> Result<(), EmailError> {
-        let parsed_email =
-            Email::parse(email).map_err(|e| EmailError::SendFailed(e.to_string()))?;
-
         let content = crate::email_content::PasswordResetEmail::new(
-            parsed_email,
+            email.clone(),
             token.to_string(),
             base_url.to_string(),
         );
@@ -214,11 +211,12 @@ mod tests {
     async fn email_sender_trait_sends_password_reset() {
         let service = MockEmailService::new();
         let ctx = ExecutionContext::new(RequestContext::new());
+        let email = Email::parse("test@example.com").unwrap();
 
         let result = EmailSender::send_password_reset(
             &service,
             &ctx,
-            "test@example.com",
+            &email,
             "reset-token",
             "https://klynt.edu",
         )

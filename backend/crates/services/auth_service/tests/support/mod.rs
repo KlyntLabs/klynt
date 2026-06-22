@@ -294,13 +294,13 @@ impl EmailSender for FakeEmailSender {
     async fn send_password_reset(
         &self,
         _ctx: &ExecutionContext,
-        email: &str,
+        email: &Email,
         token: &str,
         base_url: &str,
     ) -> Result<(), EmailError> {
         self.sent.lock().unwrap().push((
             "password_reset".to_string(),
-            email.to_string(),
+            email.as_str().to_string(),
             format!("{base_url}/reset-password/{token}"),
         ));
         Ok(())

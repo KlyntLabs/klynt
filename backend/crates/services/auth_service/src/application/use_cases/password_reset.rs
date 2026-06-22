@@ -45,7 +45,12 @@ pub(crate) async fn request(
     if let Err(e) = service
         .internal()
         .email_sender
-        .send_password_reset(ctx, email, &token.plaintext, &service.config().base_url)
+        .send_password_reset(
+            ctx,
+            &parsed_email,
+            &token.plaintext,
+            &service.config().base_url,
+        )
         .await
     {
         tracing::warn!(
