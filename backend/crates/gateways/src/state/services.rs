@@ -39,8 +39,11 @@ impl Services {
             .await
             .map_err(|e| crate::GatewayError::configuration(format!("Migrations: {e}")))?;
 
-        let auth_service = Self::create_auth_service(config, pool.clone()).await?;
-        let session_service = Self::create_session_service(config, pool.clone()).await?;
+        let session_store = Self::create_session_store(config, pool.clone()).await;
+
+        let auth_service =
+            Self::create_auth_service(config, pool.clone(), session_store.clone()).await?;
+        let session_service = Self::create_session_service(session_store);
         let user_service = Self::create_user_service(config, pool).await?;
 
         Ok(Self {
@@ -50,9 +53,23 @@ impl Services {
         })
     }
 
+    async fn create_session_store(
+        config: &Config,
+        pool: sqlx::PgPool,
+    ) -> Arc<dyn base::ports::session::SessionStore> {
+        let postgres = PgSessionStore::new(pool);
+
+        if let Some(redis_url) = &config.redis_url {
+            Arc::new(CachedSessionStore::connect(postgres, redis_url).await)
+        } else {
+            Arc::new(postgres)
+        }
+    }
+
     async fn create_auth_service(
         config: &Config,
         pool: sqlx::PgPool,
+        session_store: Arc<dyn base::ports::session::SessionStore>,
     ) -> Result<AuthService, crate::GatewayError> {
         AuthService::builder()
             .with_config(AuthConfig {
@@ -62,30 +79,21 @@ impl Services {
                 password_policy: None,
             })
             .with_pool(pool)
+            .with_session_store(session_store)
             .build()
             .await
             .map_err(|e| crate::GatewayError::configuration(format!("Auth service: {e}")))
     }
 
-    async fn create_session_service(
-        config: &Config,
-        pool: sqlx::PgPool,
-    ) -> Result<SessionService, crate::GatewayError> {
-        let postgres = PgSessionStore::new(pool);
-
-        let store: Arc<dyn base::ports::session::SessionStore> =
-            if let Some(redis_url) = &config.redis_url {
-                Arc::new(CachedSessionStore::connect(postgres, redis_url).await)
-            } else {
-                Arc::new(postgres)
-            };
-
-        Ok(SessionService::new(
+    fn create_session_service(
+        session_store: Arc<dyn base::ports::session::SessionStore>,
+    ) -> SessionService {
+        SessionService::new(
             SessionConfig {
                 session_duration_secs: 86400,
             },
-            store,
-        ))
+            session_store,
+        )
     }
 
     async fn create_user_service(
