@@ -2,6 +2,7 @@
 
 use base::ctx::ExecutionContext;
 use domain::UserId;
+use serde_json::json;
 
 use crate::error::UserError;
 use crate::UserService;
@@ -34,6 +35,8 @@ pub(crate) async fn execute(
         return Err(UserError::invalid_password());
     }
 
+    let before_json = json!({ "password_hash": user.password_hash });
+
     let new_hash = service
         .internal()
         .password_hasher
@@ -43,13 +46,15 @@ pub(crate) async fn execute(
     service
         .internal()
         .user_repository
-        .update_password(ctx, user_id, new_hash)
+        .update_password(ctx, user_id, new_hash.clone())
         .await?;
+
+    let after_json = json!({ "password_hash": new_hash });
 
     service
         .internal()
         .audit_logger
-        .log_password_changed(ctx, user_id)
+        .log_password_changed(ctx, user_id, before_json, after_json)
         .await;
 
     Ok(())

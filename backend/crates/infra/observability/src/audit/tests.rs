@@ -228,13 +228,35 @@ async fn audit_logger_trait_logs_profile_updated_event() {
     let (service, repo) = capturing_service();
     let ctx = ExecutionContext::new(RequestContext::new());
     let user_id = UserId::new();
+    let before = serde_json::json!({ "full_name": "Old Name" });
+    let after = serde_json::json!({ "full_name": "New Name" });
 
-    AuditLogger::log_profile_updated(&service, &ctx, user_id).await;
+    AuditLogger::log_profile_updated(&service, &ctx, user_id, before.clone(), after.clone()).await;
 
     let events = repo.events();
     assert_eq!(events.len(), 1);
     assert_eq!(events[0].action, AuditAction::UserProfileUpdated);
     assert_eq!(events[0].actor_user_id, Some(user_id));
+    assert_eq!(events[0].before_data, Some(before));
+    assert_eq!(events[0].after_data, Some(after));
+}
+
+#[tokio::test]
+async fn audit_logger_trait_logs_password_changed_event() {
+    let (service, repo) = capturing_service();
+    let ctx = ExecutionContext::new(RequestContext::new());
+    let user_id = UserId::new();
+    let before = serde_json::json!({ "password_hash": "old-hash" });
+    let after = serde_json::json!({ "password_hash": "new-hash" });
+
+    AuditLogger::log_password_changed(&service, &ctx, user_id, before.clone(), after.clone()).await;
+
+    let events = repo.events();
+    assert_eq!(events.len(), 1);
+    assert_eq!(events[0].action, AuditAction::UserPasswordChanged);
+    assert_eq!(events[0].actor_user_id, Some(user_id));
+    assert_eq!(events[0].before_data, Some(before));
+    assert_eq!(events[0].after_data, Some(after));
 }
 
 #[tokio::test]

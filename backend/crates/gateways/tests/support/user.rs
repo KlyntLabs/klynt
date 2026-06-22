@@ -146,9 +146,23 @@ impl UserAuditLogger for StubUserAuditLogger {
     ) {
     }
 
-    async fn log_profile_updated(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
+    async fn log_profile_updated(
+        &self,
+        _ctx: &ExecutionContext,
+        _user_id: UserId,
+        _before: serde_json::Value,
+        _after: serde_json::Value,
+    ) {
+    }
 
-    async fn log_password_changed(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
+    async fn log_password_changed(
+        &self,
+        _ctx: &ExecutionContext,
+        _user_id: UserId,
+        _before: serde_json::Value,
+        _after: serde_json::Value,
+    ) {
+    }
 
     async fn log_user_deleted(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
 }

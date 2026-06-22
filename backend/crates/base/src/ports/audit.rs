@@ -2,6 +2,7 @@
 
 use async_trait::async_trait;
 use domain::UserId;
+use serde_json::Value;
 
 use crate::ctx::ExecutionContext;
 
@@ -38,10 +39,22 @@ pub trait AuditLogger: Send + Sync {
     // User management events
 
     /// Log a profile update.
-    async fn log_profile_updated(&self, ctx: &ExecutionContext, user_id: UserId);
+    async fn log_profile_updated(
+        &self,
+        ctx: &ExecutionContext,
+        user_id: UserId,
+        before: Value,
+        after: Value,
+    );
 
     /// Log a password change.
-    async fn log_password_changed(&self, ctx: &ExecutionContext, user_id: UserId);
+    async fn log_password_changed(
+        &self,
+        ctx: &ExecutionContext,
+        user_id: UserId,
+        before: Value,
+        after: Value,
+    );
 
     /// Log user deletion.
     async fn log_user_deleted(&self, ctx: &ExecutionContext, user_id: UserId);

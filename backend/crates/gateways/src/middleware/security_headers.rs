@@ -24,6 +24,12 @@ pub async fn security_headers(hsts_enabled: bool, req: Request, next: Next) -> R
         "Permissions-Policy",
         HeaderValue::from_static("geolocation=(), microphone=(), camera=()"),
     );
+    headers.insert(
+        "Content-Security-Policy",
+        HeaderValue::from_static(
+            "default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
+        ),
+    );
 
     if hsts_enabled {
         headers.insert(
@@ -77,6 +83,15 @@ mod tests {
             .to_str()
             .unwrap()
             .contains("geolocation=()"));
+        assert_eq!(
+            response
+                .headers()
+                .get("Content-Security-Policy")
+                .unwrap()
+                .to_str()
+                .unwrap(),
+            "default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
+        );
         assert!(response
             .headers()
             .get("Strict-Transport-Security")

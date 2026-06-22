@@ -98,11 +98,15 @@ impl AuditService {
         &self,
         ctx: &ExecutionContext,
         user_id: UserId,
+        before: serde_json::Value,
+        after: serde_json::Value,
     ) -> Result<(), DomainError> {
         let event = AuditEvent::new(AuditAction::UserProfileUpdated, ResourceType::User)
             .with_actor(user_id)
             .with_resource(user_id.inner())
-            .with_request_id(ctx.request.request_id.0);
+            .with_request_id(ctx.request.request_id.0)
+            .with_before(before)
+            .with_after(after);
 
         self.repo.log(ctx, event).await
     }
@@ -112,11 +116,15 @@ impl AuditService {
         &self,
         ctx: &ExecutionContext,
         user_id: UserId,
+        before: serde_json::Value,
+        after: serde_json::Value,
     ) -> Result<(), DomainError> {
         let event = AuditEvent::new(AuditAction::UserPasswordChanged, ResourceType::User)
             .with_actor(user_id)
             .with_resource(user_id.inner())
-            .with_request_id(ctx.request.request_id.0);
+            .with_request_id(ctx.request.request_id.0)
+            .with_before(before)
+            .with_after(after);
 
         self.repo.log(ctx, event).await
     }
@@ -240,20 +248,32 @@ impl AuditLogger for AuditService {
         .await;
     }
 
-    async fn log_profile_updated(&self, ctx: &ExecutionContext, user_id: UserId) {
+    async fn log_profile_updated(
+        &self,
+        ctx: &ExecutionContext,
+        user_id: UserId,
+        before: serde_json::Value,
+        after: serde_json::Value,
+    ) {
         self.try_log(
             ctx,
             "user_profile_updated",
-            self.log_profile_updated(ctx, user_id),
+            self.log_profile_updated(ctx, user_id, before, after),
         )
         .await;
     }
 
-    async fn log_password_changed(&self, ctx: &ExecutionContext, user_id: UserId) {
+    async fn log_password_changed(
+        &self,
+        ctx: &ExecutionContext,
+        user_id: UserId,
+        before: serde_json::Value,
+        after: serde_json::Value,
+    ) {
         self.try_log(
             ctx,
             "user_password_changed",
-            self.log_password_changed(ctx, user_id),
+            self.log_password_changed(ctx, user_id, before, after),
         )
         .await;
     }
