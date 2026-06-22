@@ -88,8 +88,20 @@ impl AuditLogger for StubAuditLogger {
 
 /// Build a test auth service with default fake dependencies.
 pub fn build_test_service() -> (AuthService, Arc<FakeUserRepository>, Arc<FakeEmailSender>) {
+    let (service, user_repository, email_sender, _) = build_test_service_with_clock();
+    (service, user_repository, email_sender)
+}
+
+/// Build a test auth service and return the frozen test clock for assertions.
+pub fn build_test_service_with_clock() -> (
+    AuthService,
+    Arc<FakeUserRepository>,
+    Arc<FakeEmailSender>,
+    Arc<TestClock>,
+) {
     let email_sender = Arc::new(FakeEmailSender::default());
     let user_repository = Arc::new(FakeUserRepository::new());
+    let clock = Arc::new(TestClock::new());
     let service = AuthService::new(
         AuthConfig::default(),
         Dependencies {
@@ -99,12 +111,12 @@ pub fn build_test_service() -> (AuthService, Arc<FakeUserRepository>, Arc<FakeEm
             email_sender: email_sender.clone(),
             audit_logger: Arc::new(StubAuditLogger),
             password_hasher: Arc::new(TestPasswordHasher::new()),
-            clock: Arc::new(TestClock::new()),
+            clock: clock.clone(),
         },
     )
     .expect("valid test dependencies");
 
-    (service, user_repository, email_sender)
+    (service, user_repository, email_sender, clock)
 }
 
 /// Create a test user model pre-hashed for the default [`TestPasswordHasher`].

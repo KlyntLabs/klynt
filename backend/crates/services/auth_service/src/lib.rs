@@ -169,8 +169,14 @@ pub struct AuthConfig {
     /// Base URL for email links.
     pub base_url: String,
 
-    /// Session duration in seconds.
+    /// Standard session duration in seconds.
     pub session_duration_secs: u64,
+
+    /// Extended session duration in seconds for "remember me" sessions.
+    pub long_session_duration_secs: u64,
+
+    /// Refresh token duration in seconds.
+    pub refresh_duration_secs: u64,
 
     /// Token duration in seconds (for future access tokens).
     pub token_duration_secs: u64,
@@ -180,9 +186,19 @@ pub struct AuthConfig {
 }
 
 impl AuthConfig {
-    /// Session duration as a chrono duration.
+    /// Standard session duration.
     pub fn session_duration(&self) -> Duration {
         Duration::seconds(self.session_duration_secs as i64)
+    }
+
+    /// Extended "remember me" session duration.
+    pub fn long_session_duration(&self) -> Duration {
+        Duration::seconds(self.long_session_duration_secs as i64)
+    }
+
+    /// Refresh token lifetime.
+    pub fn refresh_duration(&self) -> Duration {
+        Duration::seconds(self.refresh_duration_secs as i64)
     }
 }
 
@@ -190,8 +206,10 @@ impl Default for AuthConfig {
     fn default() -> Self {
         Self {
             base_url: "https://klynt.edu".to_string(),
-            session_duration_secs: 86400, // 24 hours
-            token_duration_secs: 3600,    // 1 hour
+            session_duration_secs: 24 * 3600,           // 24 hours
+            long_session_duration_secs: 30 * 24 * 3600, // 30 days
+            refresh_duration_secs: 30 * 24 * 3600,      // 30 days
+            token_duration_secs: 3600,                  // 1 hour
             password_policy: None,
         }
     }

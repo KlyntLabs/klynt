@@ -94,6 +94,7 @@ async fn create_uses_configured_duration() {
     let service = SessionService::with_clock(
         SessionConfig {
             session_duration_secs: 7200,
+            long_session_duration_secs: 86400,
         },
         store.clone(),
         Arc::new(clock),

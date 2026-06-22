@@ -34,6 +34,19 @@ impl std::fmt::Display for SessionToken {
     }
 }
 
+/// Classification of a session token.
+///
+/// Implementations may use this to apply different lifetimes, rotation rules,
+/// or revocation policies. The canonical [`SessionStore`] port remains
+/// token-agnostic; the kind is a service-level concern.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SessionKind {
+    /// Short-lived token used to authorize API requests.
+    Access,
+    /// Long-lived token used to obtain new access tokens.
+    Refresh,
+}
+
 /// An authenticated session.
 #[derive(Clone, Debug)]
 pub struct Session {

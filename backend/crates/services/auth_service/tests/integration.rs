@@ -1,6 +1,7 @@
 //! Integration tests for auth service public interface.
 
 use base::ports::repository::UserRepository;
+use chrono::{Duration, Utc};
 use domain::contracts::auth::{LoginRequest, RegistrationRequest};
 use domain::{UserId, UserRole, UserStatus};
 
@@ -240,4 +241,70 @@ async fn request_password_reset_returns_ok_for_unknown_email() {
         .await;
 
     assert!(result.is_ok());
+}
+
+#[tokio::test]
+async fn login_returns_distinct_access_and_refresh_tokens() {
+    let (service, user_repo, _) = support::build_test_service();
+    let ctx = support::test_ctx();
+
+    let user = support::test_user("ada@example.com", "Str0ng!Pass#123", UserStatus::Active);
+    user_repo.insert(user);
+
+    let response = service
+        .login(
+            &ctx,
+            LoginRequest {
+                email: "ada@example.com".to_string(),
+                password: "Str0ng!Pass#123".to_string(),
+                remember_me: Some(false),
+            },
+        )
+        .await
+        .unwrap();
+
+    assert!(!response.access_token.is_empty());
+    assert!(!response.refresh_token.is_empty());
+    assert_ne!(response.access_token, response.refresh_token);
+}
+
+#[tokio::test]
+async fn login_remember_me_extends_access_session_lifetime() {
+    let (service, user_repo, _, clock) = support::build_test_service_with_clock();
+    let ctx = support::test_ctx();
+    let now = Utc::now();
+    clock.freeze_at(now);
+
+    let user = support::test_user("ada@example.com", "Str0ng!Pass#123", UserStatus::Active);
+    user_repo.insert(user);
+
+    let short_lived = service
+        .login(
+            &ctx,
+            LoginRequest {
+                email: "ada@example.com".to_string(),
+                password: "Str0ng!Pass#123".to_string(),
+                remember_me: Some(false),
+            },
+        )
+        .await
+        .unwrap();
+
+    let long_lived = service
+        .login(
+            &ctx,
+            LoginRequest {
+                email: "ada@example.com".to_string(),
+                password: "Str0ng!Pass#123".to_string(),
+                remember_me: Some(true),
+            },
+        )
+        .await
+        .unwrap();
+
+    let expected_short = now + Duration::seconds(86400);
+    let expected_long = now + Duration::seconds(30 * 24 * 3600);
+
+    assert_eq!(short_lived.expires_at, expected_short);
+    assert_eq!(long_lived.expires_at, expected_long);
 }

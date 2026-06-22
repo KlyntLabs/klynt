@@ -62,23 +62,36 @@ pub(crate) async fn execute(
         return Err(AuthError::account_inactive());
     }
 
-    let expires_at = service.internal().clock.now() + service.config().session_duration();
-    let session_token = service
+    let remember_me = request.remember_me.unwrap_or(false);
+    let access_duration = if remember_me {
+        service.config().long_session_duration()
+    } else {
+        service.config().session_duration()
+    };
+    let expires_at = service.internal().clock.now() + access_duration;
+
+    let access_token = service
         .internal()
         .session_store
         .create(ctx, user.id, expires_at)
         .await?;
 
+    let refresh_expires_at = service.internal().clock.now() + service.config().refresh_duration();
+    let refresh_token = service
+        .internal()
+        .session_store
+        .create(ctx, user.id, refresh_expires_at)
+        .await?;
+
     service
         .internal()
         .audit_logger
-        .log_session_created(ctx, user.id, session_token.to_string())
+        .log_session_created(ctx, user.id, access_token.to_string())
         .await;
 
-    let token_string = session_token.to_string();
     Ok(LoginResponse {
-        access_token: token_string.clone(),
-        refresh_token: token_string,
+        access_token: access_token.to_string(),
+        refresh_token: refresh_token.to_string(),
         expires_at,
         user: user.into(),
     })

@@ -14,9 +14,8 @@ pub use error::{SessionError, SessionResult};
 use std::sync::Arc;
 
 use base::ctx::ExecutionContext;
-use base::ports::session::{Session, SessionStore, SessionToken};
+use base::ports::session::{Session, SessionKind, SessionStore, SessionToken};
 use base::ports::{Clock, SystemClock};
-use chrono::Duration;
 use domain::UserId;
 
 /// Session service — small interface, deep implementation.
@@ -57,15 +56,28 @@ impl SessionService {
             .ok_or(SessionError::InvalidToken)
     }
 
-    /// Create a new session for a user.
+    /// Create a new access session for a user.
     pub async fn create(
         &self,
         ctx: &ExecutionContext,
         user_id: UserId,
     ) -> SessionResult<SessionToken> {
-        let duration_secs = i64::try_from(self.config.session_duration_secs)
-            .map_err(|_| SessionError::StoreError("session duration too large".to_string()))?;
-        let expires_at = self.clock.now() + Duration::seconds(duration_secs);
+        self.create_with_kind(ctx, user_id, SessionKind::Access)
+            .await
+    }
+
+    /// Create a new session for a user, choosing the token kind.
+    pub async fn create_with_kind(
+        &self,
+        ctx: &ExecutionContext,
+        user_id: UserId,
+        kind: SessionKind,
+    ) -> SessionResult<SessionToken> {
+        let duration = match kind {
+            SessionKind::Access => self.config.session_duration(),
+            SessionKind::Refresh => self.config.refresh_duration(),
+        };
+        let expires_at = self.clock.now() + duration;
         self.session_store
             .create(ctx, user_id, expires_at)
             .await

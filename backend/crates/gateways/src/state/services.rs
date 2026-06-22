@@ -105,6 +105,8 @@ impl Services {
             .with_config(AuthConfig {
                 base_url: config.base_url.clone(),
                 session_duration_secs: 86400,
+                long_session_duration_secs: 30 * 24 * 3600,
+                refresh_duration_secs: 30 * 24 * 3600,
                 token_duration_secs: 3600,
                 password_policy: None,
             })
@@ -121,6 +123,7 @@ impl Services {
         session_service::SessionService::new(
             session_service::SessionConfig {
                 session_duration_secs: 86400,
+                long_session_duration_secs: 30 * 24 * 3600,
             },
             session_store,
         )
