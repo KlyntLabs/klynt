@@ -17,7 +17,7 @@ pub(crate) async fn execute(
     let user_id = service
         .internal()
         .token_store
-        .consume(TokenKind::EmailVerification, &token_hash)
+        .consume(ctx, TokenKind::EmailVerification, token_hash)
         .await?;
 
     service

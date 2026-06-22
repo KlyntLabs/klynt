@@ -8,9 +8,9 @@ use axum::{
 };
 use chrono::{Duration, Utc};
 use klynt_base::ctx::{ExecutionContext, RequestContext};
+use klynt_base::ports::session::SessionStore;
 use klynt_common::domain::{Email, UserRole, UserStatus};
 use klynt_common::util::UserId;
-use klynt_persistence::session::SessionStore;
 use tower::ServiceExt;
 
 mod support;

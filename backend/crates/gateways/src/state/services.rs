@@ -3,6 +3,7 @@
 use std::sync::Arc;
 
 use auth_service::{AuthConfig, AuthService};
+use klynt_base::ports::session::SessionStore;
 use klynt_persistence::repositories::pg_session::PgSessionStore;
 use user_service::{UserConfig, UserService};
 
@@ -14,7 +15,7 @@ pub struct Services {
     pub auth: Arc<AuthService>,
     pub user: Arc<UserService>,
     /// Session store exposed for HTTP authentication middleware.
-    pub session_store: Arc<dyn klynt_persistence::session::SessionStore>,
+    pub session_store: Arc<dyn SessionStore>,
 }
 
 impl Services {
@@ -50,18 +51,11 @@ impl Services {
     async fn create_auth_service(
         config: &Config,
         pool: sqlx::PgPool,
-    ) -> Result<
-        (
-            AuthService,
-            Arc<dyn klynt_persistence::session::SessionStore>,
-        ),
-        crate::GatewayError,
-    > {
+    ) -> Result<(AuthService, Arc<dyn SessionStore>), crate::GatewayError> {
         // The gateway middleware needs direct access to the persistence session store.
         // The auth service uses its own session-store port backed by the same pool,
         // so both observe the same data.
-        let session_store: Arc<dyn klynt_persistence::session::SessionStore> =
-            Arc::new(PgSessionStore::new(pool.clone()));
+        let session_store: Arc<dyn SessionStore> = Arc::new(PgSessionStore::new(pool.clone()));
 
         let auth_service = AuthService::builder()
             .with_config(AuthConfig {

@@ -1,6 +1,7 @@
 //! Logout use case - end a session.
 
 use klynt_base::ctx::ExecutionContext;
+use uuid::Uuid;
 
 use crate::domain::SessionToken;
 use crate::error::AuthError;
@@ -12,6 +13,9 @@ pub(crate) async fn execute(
     ctx: &ExecutionContext,
     session_token: &str,
 ) -> Result<(), AuthError> {
-    let token = SessionToken::parse(session_token)?;
-    service.internal().session_store.revoke(ctx, &token).await
+    let token = Uuid::parse_str(session_token)
+        .map(SessionToken)
+        .map_err(|_| AuthError::InvalidToken)?;
+    service.internal().session_store.revoke(ctx, &token).await?;
+    Ok(())
 }

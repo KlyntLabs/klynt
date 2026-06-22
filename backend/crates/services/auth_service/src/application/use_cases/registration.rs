@@ -52,9 +52,10 @@ pub(crate) async fn execute(
         .internal()
         .token_store
         .save(
+            ctx,
             TokenKind::EmailVerification,
             user_id,
-            &token.hash,
+            token.hash,
             token.expires_at,
         )
         .await?;

@@ -2,9 +2,9 @@
 
 use chrono::{Duration, Utc};
 use klynt_base::ctx::{ExecutionContext, RequestContext};
+use klynt_base::ports::session::SessionStore;
 use klynt_common::util::{Email, UserId, UserStatus};
 use klynt_persistence::repositories::pg_session::PgSessionStore;
-use klynt_persistence::session::SessionStore;
 use sqlx::PgPool;
 use uuid::Uuid;
 

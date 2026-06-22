@@ -7,12 +7,9 @@ use klynt_base::ports::{Clock, PasswordHasher, SystemClock};
 use crate::application::ports::{AuditLogger, EmailSender, UserRepository};
 use crate::domain::{SessionStore, TokenStore};
 use crate::error::AuthError;
-use crate::infrastructure::{
-    repositories::{SessionRepositoryAdapter, TokenRepositoryAdapter},
-    services::{
-        AuditLoggerAdapter as AuthAuditLoggerAdapter, EmailSenderAdapter,
-        PasswordHasherAdapter as AuthPasswordHasherAdapter,
-    },
+use crate::infrastructure::services::{
+    AuditLoggerAdapter as AuthAuditLoggerAdapter, EmailSenderAdapter,
+    PasswordHasherAdapter as AuthPasswordHasherAdapter,
 };
 use crate::AuthConfig;
 use crate::AuthService;
@@ -113,15 +110,14 @@ impl AuthBuilder {
         });
 
         let session_store = self.session_store.unwrap_or_else(|| {
-            Arc::new(SessionRepositoryAdapter::new(
-                klynt_persistence::repositories::pg_session::PgSessionStore::new(pool.clone()),
-            ))
+            Arc::new(klynt_persistence::repositories::pg_session::PgSessionStore::new(pool.clone()))
+                as Arc<dyn SessionStore>
         });
 
         let token_store = self.token_store.unwrap_or_else(|| {
-            Arc::new(TokenRepositoryAdapter::new(
+            Arc::new(
                 klynt_persistence::repositories::sqlx_token_repo::PgTokenStore::new(pool.clone()),
-            ))
+            ) as Arc<dyn TokenStore>
         });
 
         let email_sender = self.email_sender.unwrap_or_else(|| {

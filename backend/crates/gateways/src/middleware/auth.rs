@@ -8,7 +8,8 @@ use axum::{
 };
 
 use klynt_base::ctx::{ActorType, ExecutionContext, RequestContext, RequestId};
-use klynt_persistence::session::SessionToken;
+use klynt_base::ports::session::SessionToken;
+use uuid::Uuid;
 
 use crate::state::Services;
 
@@ -74,7 +75,7 @@ fn extract_bearer_token(headers: &axum::http::HeaderMap) -> Option<SessionToken>
     let header = headers.get(AUTHORIZATION)?;
     let text = header.to_str().ok()?;
     let token = text.strip_prefix(BEARER_PREFIX)?;
-    SessionToken::parse(token).ok()
+    Uuid::parse_str(token).map(SessionToken).ok()
 }
 
 /// Rejection response used when authentication is required.

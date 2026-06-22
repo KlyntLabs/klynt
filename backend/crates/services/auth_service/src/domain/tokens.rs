@@ -1,26 +1,13 @@
-use async_trait::async_trait;
-use chrono::{DateTime, Duration, Utc};
+//! Token types for email verification and password reset.
+//!
+//! The canonical [`TokenStore`] port and [`TokenKind`] enum live in
+//! [`klynt_base::ports::token`]; this module re-exports them and keeps the
+//! domain-specific [`Token`] generation/hashing logic.
 
+use chrono::{DateTime, Utc};
 use klynt_common::util::UserId;
 
-use crate::error::AuthError;
-
-/// Which kind of token — determines TTL and target table.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum TokenKind {
-    EmailVerification,
-    PasswordReset,
-}
-
-impl TokenKind {
-    /// Token lifetime before expiry.
-    pub const fn ttl(self) -> Duration {
-        match self {
-            Self::EmailVerification => Duration::hours(24),
-            Self::PasswordReset => Duration::minutes(30),
-        }
-    }
-}
+pub use klynt_base::ports::token::{TokenError, TokenKind, TokenStore};
 
 /// A generated token — plaintext (for email) + hash (for storage).
 ///
@@ -89,26 +76,6 @@ fn base64_url_encode(data: &[u8]) -> String {
     BASE64_URL_SAFE_NO_PAD.encode(data)
 }
 
-/// Outbound port for token storage.
-#[async_trait]
-pub trait TokenStore: Send + Sync {
-    /// Store a token hash with its expiry.
-    async fn save(
-        &self,
-        kind: TokenKind,
-        user_id: UserId,
-        token_hash: &str,
-        expires_at: DateTime<Utc>,
-    ) -> Result<(), AuthError>;
-
-    /// Atomically consume a token: validate it exists, is unused, is not
-    /// expired, and mark it used — all in one step.
-    ///
-    /// Returns the user_id on success, or an error if the token is
-    /// invalid/expired/already-used.
-    async fn consume(&self, kind: TokenKind, token_hash: &str) -> Result<UserId, AuthError>;
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -156,10 +123,10 @@ mod tests {
     #[test]
     fn expired_token_detection_works() {
         let mut token = Token::generate(TokenKind::EmailVerification, UserId::new());
-        token.expires_at = Utc::now() - Duration::seconds(1);
+        token.expires_at = Utc::now() - chrono::Duration::seconds(1);
         assert!(token.is_expired());
 
-        token.expires_at = Utc::now() + Duration::seconds(1);
+        token.expires_at = Utc::now() + chrono::Duration::seconds(1);
         assert!(!token.is_expired());
     }
 }

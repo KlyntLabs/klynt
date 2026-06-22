@@ -1,12 +1,9 @@
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use sqlx::PgPool;
-
-use crate::repositories::TokenStore;
-use crate::tokens::TokenKind;
 use klynt_base::ctx::ExecutionContext;
-use klynt_common::domain::error::{DomainError, TokenError};
+use klynt_base::ports::token::{TokenError, TokenKind, TokenStore};
 use klynt_common::util::UserId;
+use sqlx::PgPool;
 
 /// PostgreSQL implementation of [`TokenStore`].
 ///
@@ -19,6 +16,7 @@ pub struct PgTokenStore {
 }
 
 impl PgTokenStore {
+    /// Create a new store backed by `pool`.
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }
@@ -31,9 +29,9 @@ impl TokenStore for PgTokenStore {
         _ctx: &ExecutionContext,
         kind: TokenKind,
         user_id: UserId,
-        token_hash: &str,
+        token_hash: String,
         expires_at: DateTime<Utc>,
-    ) -> Result<(), DomainError> {
+    ) -> Result<(), TokenError> {
         let result = match kind {
             TokenKind::EmailVerification => {
                 sqlx::query(
@@ -43,7 +41,7 @@ impl TokenStore for PgTokenStore {
                     "#,
                 )
                 .bind(user_id.0)
-                .bind(token_hash)
+                .bind(&token_hash)
                 .bind(expires_at)
                 .execute(&self.pool)
                 .await
@@ -56,14 +54,14 @@ impl TokenStore for PgTokenStore {
                     "#,
                 )
                 .bind(user_id.0)
-                .bind(token_hash)
+                .bind(&token_hash)
                 .bind(expires_at)
                 .execute(&self.pool)
                 .await
             }
         };
 
-        result.map_err(DomainError::internal)?;
+        result?;
         Ok(())
     }
 
@@ -71,8 +69,8 @@ impl TokenStore for PgTokenStore {
         &self,
         _ctx: &ExecutionContext,
         kind: TokenKind,
-        token_hash: &str,
-    ) -> Result<UserId, DomainError> {
+        token_hash: String,
+    ) -> Result<UserId, TokenError> {
         let result = match kind {
             TokenKind::EmailVerification => {
                 sqlx::query_scalar::<_, uuid::Uuid>(
@@ -85,7 +83,7 @@ impl TokenStore for PgTokenStore {
                     RETURNING user_id
                     "#,
                 )
-                .bind(token_hash)
+                .bind(&token_hash)
                 .fetch_optional(&self.pool)
                 .await
             }
@@ -100,23 +98,20 @@ impl TokenStore for PgTokenStore {
                     RETURNING user_id
                     "#,
                 )
-                .bind(token_hash)
+                .bind(&token_hash)
                 .fetch_optional(&self.pool)
                 .await
             }
         };
 
-        result
-            .map_err(DomainError::internal)?
-            .map(UserId)
-            .ok_or(DomainError::InvalidToken(TokenError::Invalid))
+        result?.map(UserId).ok_or(TokenError::Invalid)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use klynt_base::ctx::{ExecutionContext, RequestContext};
+    use klynt_base::ctx::RequestContext;
     use uuid::Uuid;
 
     async fn test_pool() -> PgPool {
@@ -167,14 +162,14 @@ mod tests {
                 &ctx,
                 TokenKind::EmailVerification,
                 user_id,
-                &token_hash,
+                token_hash.clone(),
                 expires_at,
             )
             .await
             .unwrap();
 
         let result = store
-            .consume(&ctx, TokenKind::EmailVerification, &token_hash)
+            .consume(&ctx, TokenKind::EmailVerification, token_hash)
             .await
             .unwrap();
         assert_eq!(result, user_id);
@@ -195,14 +190,14 @@ mod tests {
                 &ctx,
                 TokenKind::PasswordReset,
                 user_id,
-                &token_hash,
+                token_hash.clone(),
                 expires_at,
             )
             .await
             .unwrap();
 
         let result = store
-            .consume(&ctx, TokenKind::PasswordReset, &token_hash)
+            .consume(&ctx, TokenKind::PasswordReset, token_hash)
             .await
             .unwrap();
         assert_eq!(result, user_id);
@@ -223,24 +218,21 @@ mod tests {
                 &ctx,
                 TokenKind::EmailVerification,
                 user_id,
-                &token_hash,
+                token_hash.clone(),
                 expires_at,
             )
             .await
             .unwrap();
 
         let first = store
-            .consume(&ctx, TokenKind::EmailVerification, &token_hash)
+            .consume(&ctx, TokenKind::EmailVerification, token_hash.clone())
             .await;
         assert!(first.is_ok());
 
         let second = store
-            .consume(&ctx, TokenKind::EmailVerification, &token_hash)
+            .consume(&ctx, TokenKind::EmailVerification, token_hash)
             .await;
-        assert!(matches!(
-            second,
-            Err(DomainError::InvalidToken(TokenError::Invalid))
-        ));
+        assert!(matches!(second, Err(TokenError::Invalid)));
     }
 
     #[tokio::test]
@@ -258,18 +250,15 @@ mod tests {
                 &ctx,
                 TokenKind::PasswordReset,
                 user_id,
-                &token_hash,
+                token_hash.clone(),
                 expires_at,
             )
             .await
             .unwrap();
 
         let result = store
-            .consume(&ctx, TokenKind::PasswordReset, &token_hash)
+            .consume(&ctx, TokenKind::PasswordReset, token_hash)
             .await;
-        assert!(matches!(
-            result,
-            Err(DomainError::InvalidToken(TokenError::Invalid))
-        ));
+        assert!(matches!(result, Err(TokenError::Invalid)));
     }
 }

@@ -6,7 +6,9 @@ use std::sync::{Arc, Mutex};
 use async_trait::async_trait;
 use auth_service::{
     application::ports::{AuditLogger, EmailSender},
-    domain::{Session, SessionStore, SessionToken, TokenKind, TokenStore},
+    domain::{
+        Session, SessionError, SessionStore, SessionToken, TokenError, TokenKind, TokenStore,
+    },
     error::AuthError,
     AuthConfig, AuthService, Dependencies as AuthDependencies,
 };
@@ -178,12 +180,12 @@ impl SessionStore for FakeSessionStore {
         _ctx: &ExecutionContext,
         user_id: UserId,
         expires_at: DateTime<Utc>,
-    ) -> Result<SessionToken, AuthError> {
+    ) -> Result<SessionToken, SessionError> {
         let token = SessionToken::new();
         let session = Session {
-            token,
             user_id,
             expires_at,
+            created_at: Utc::now(),
         };
         self.sessions.lock().unwrap().insert(token, session);
         Ok(token)
@@ -193,7 +195,7 @@ impl SessionStore for FakeSessionStore {
         &self,
         _ctx: &ExecutionContext,
         token: &SessionToken,
-    ) -> Result<Option<Session>, AuthError> {
+    ) -> Result<Option<Session>, SessionError> {
         Ok(self
             .sessions
             .lock()
@@ -203,7 +205,11 @@ impl SessionStore for FakeSessionStore {
             .cloned())
     }
 
-    async fn revoke(&self, _ctx: &ExecutionContext, token: &SessionToken) -> Result<(), AuthError> {
+    async fn revoke(
+        &self,
+        _ctx: &ExecutionContext,
+        token: &SessionToken,
+    ) -> Result<(), SessionError> {
         self.sessions.lock().unwrap().remove(token);
         Ok(())
     }
@@ -221,29 +227,35 @@ pub struct FakeTokenStore {
 impl TokenStore for FakeTokenStore {
     async fn save(
         &self,
+        _ctx: &ExecutionContext,
         kind: TokenKind,
         user_id: UserId,
-        token_hash: &str,
+        token_hash: String,
         expires_at: DateTime<Utc>,
-    ) -> Result<(), AuthError> {
+    ) -> Result<(), TokenError> {
         self.tokens
             .lock()
             .unwrap()
-            .insert((kind, token_hash.to_string()), (user_id, expires_at, false));
+            .insert((kind, token_hash), (user_id, expires_at, false));
         Ok(())
     }
 
-    async fn consume(&self, kind: TokenKind, token_hash: &str) -> Result<UserId, AuthError> {
+    async fn consume(
+        &self,
+        _ctx: &ExecutionContext,
+        kind: TokenKind,
+        token_hash: String,
+    ) -> Result<UserId, TokenError> {
         let mut tokens = self.tokens.lock().unwrap();
-        match tokens.get_mut(&(kind, token_hash.to_string())) {
+        match tokens.get_mut(&(kind, token_hash)) {
             Some((user_id, expires_at, used)) => {
                 if *used || *expires_at <= Utc::now() {
-                    return Err(AuthError::InvalidToken);
+                    return Err(TokenError::Invalid);
                 }
                 *used = true;
                 Ok(*user_id)
             }
-            None => Err(AuthError::InvalidToken),
+            None => Err(TokenError::Invalid),
         }
     }
 }

@@ -1,12 +1,10 @@
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
+use klynt_base::ctx::ExecutionContext;
+use klynt_base::ports::session::{Session, SessionError, SessionStore, SessionToken};
+use klynt_common::util::UserId;
 use sqlx::PgPool;
 use uuid::Uuid;
-
-use crate::session::{Session, SessionStore, SessionToken};
-use klynt_base::ctx::ExecutionContext;
-use klynt_common::domain::DomainError;
-use klynt_common::util::UserId;
 
 /// PostgreSQL implementation of the session store.
 pub struct PgSessionStore {
@@ -14,10 +12,12 @@ pub struct PgSessionStore {
 }
 
 impl PgSessionStore {
+    /// Create a new store backed by `pool`.
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }
 
+    /// Return the underlying connection pool.
     pub fn pool(&self) -> &PgPool {
         &self.pool
     }
@@ -30,7 +30,7 @@ impl SessionStore for PgSessionStore {
         _ctx: &ExecutionContext,
         user_id: UserId,
         expires_at: DateTime<Utc>,
-    ) -> Result<SessionToken, DomainError> {
+    ) -> Result<SessionToken, SessionError> {
         let token = SessionToken::new();
 
         sqlx::query(
@@ -43,8 +43,7 @@ impl SessionStore for PgSessionStore {
         .bind(user_id.0)
         .bind(expires_at)
         .execute(&self.pool)
-        .await
-        .map_err(DomainError::internal)?;
+        .await?;
 
         Ok(token)
     }
@@ -53,10 +52,10 @@ impl SessionStore for PgSessionStore {
         &self,
         _ctx: &ExecutionContext,
         token: &SessionToken,
-    ) -> Result<Option<Session>, DomainError> {
-        let row: Option<(Uuid, DateTime<Utc>)> = sqlx::query_as(
+    ) -> Result<Option<Session>, SessionError> {
+        let row: Option<(Uuid, DateTime<Utc>, DateTime<Utc>)> = sqlx::query_as(
             r#"
-            SELECT user_id, expires_at
+            SELECT user_id, expires_at, created_at
             FROM sessions
             WHERE token = $1
               AND expires_at > NOW()
@@ -64,13 +63,12 @@ impl SessionStore for PgSessionStore {
         )
         .bind(token.0)
         .fetch_optional(&self.pool)
-        .await
-        .map_err(DomainError::internal)?;
+        .await?;
 
-        Ok(row.map(|(user_id, expires_at)| Session {
-            token: *token,
+        Ok(row.map(|(user_id, expires_at, created_at)| Session {
             user_id: UserId(user_id),
             expires_at,
+            created_at,
         }))
     }
 
@@ -78,7 +76,7 @@ impl SessionStore for PgSessionStore {
         &self,
         _ctx: &ExecutionContext,
         token: &SessionToken,
-    ) -> Result<(), DomainError> {
+    ) -> Result<(), SessionError> {
         sqlx::query(
             r#"
             DELETE FROM sessions
@@ -87,8 +85,7 @@ impl SessionStore for PgSessionStore {
         )
         .bind(token.0)
         .execute(&self.pool)
-        .await
-        .map_err(DomainError::internal)?;
+        .await?;
 
         Ok(())
     }

@@ -33,9 +33,10 @@ pub(crate) async fn request(
         .internal()
         .token_store
         .save(
+            ctx,
             TokenKind::PasswordReset,
             user.id,
-            &token.hash,
+            token.hash,
             token.expires_at,
         )
         .await?;
@@ -71,7 +72,7 @@ pub(crate) async fn reset(
     let user_id = service
         .internal()
         .token_store
-        .consume(TokenKind::PasswordReset, &token_hash)
+        .consume(ctx, TokenKind::PasswordReset, token_hash)
         .await?;
 
     let password_hash = service
