@@ -61,6 +61,61 @@ async fn create_pending_user_creates_user_and_returns_id() {
 }
 
 #[tokio::test]
+async fn create_pending_user_persists_institution_id_for_instructor() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let repo = PgUserRepository::new(pool);
+    let ctx = test_ctx();
+    let email = unique_email();
+    let institution_id = UserId::new().inner();
+
+    let user_id = repo
+        .create_pending_user(
+            &ctx,
+            "Teacher".to_string(),
+            email.clone(),
+            "hash".to_string(),
+            UserRole::Instructor,
+            Some(institution_id),
+        )
+        .await
+        .unwrap();
+
+    let found = repo.find_by_id(&ctx, user_id).await.unwrap().unwrap();
+    assert_eq!(found.role, UserRole::Instructor);
+    assert_eq!(found.institution_id, Some(institution_id));
+}
+
+#[tokio::test]
+async fn create_pending_user_stores_none_institution_id_when_not_provided() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let repo = PgUserRepository::new(pool);
+    let ctx = test_ctx();
+    let email = unique_email();
+
+    let user_id = repo
+        .create_pending_user(
+            &ctx,
+            "Student".to_string(),
+            email.clone(),
+            "hash".to_string(),
+            UserRole::Student,
+            None,
+        )
+        .await
+        .unwrap();
+
+    let found = repo.find_by_id(&ctx, user_id).await.unwrap().unwrap();
+    assert_eq!(found.role, UserRole::Student);
+    assert_eq!(found.institution_id, None);
+}
+
+#[tokio::test]
 async fn create_pending_user_twice_with_same_email_returns_conflict() {
     let Some(pool) = setup_pool().await else {
         return;

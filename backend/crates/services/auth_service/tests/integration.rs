@@ -1,7 +1,8 @@
 //! Integration tests for auth service public interface.
 
+use base::ports::repository::UserRepository;
 use domain::contracts::auth::{LoginRequest, RegistrationRequest};
-use domain::{UserRole, UserStatus};
+use domain::{UserId, UserRole, UserStatus};
 
 mod support;
 
@@ -60,6 +61,56 @@ async fn full_registration_flow() {
         .logout(&ctx, &login_response.access_token)
         .await
         .unwrap();
+}
+
+#[tokio::test]
+async fn registration_persists_institution_id_for_instructor() {
+    let (service, user_repo, _) = support::build_test_service();
+    let ctx = support::test_ctx();
+    let institution_id = UserId::new().inner();
+
+    let user_id = service
+        .register(
+            &ctx,
+            RegistrationRequest {
+                email: "teacher@example.com".to_string(),
+                password: "Str0ng!Pass#123".to_string(),
+                full_name: Some("Teacher".to_string()),
+                role: UserRole::Instructor,
+                institution_id: Some(institution_id),
+            },
+        )
+        .await
+        .unwrap();
+
+    let user = user_repo.find_by_id(&ctx, user_id).await.unwrap().unwrap();
+    assert_eq!(user.role, UserRole::Instructor);
+    assert_eq!(user.institution_id, Some(institution_id));
+}
+
+#[tokio::test]
+async fn registration_ignores_institution_id_for_student() {
+    let (service, user_repo, _) = support::build_test_service();
+    let ctx = support::test_ctx();
+    let institution_id = UserId::new().inner();
+
+    let user_id = service
+        .register(
+            &ctx,
+            RegistrationRequest {
+                email: "student@example.com".to_string(),
+                password: "Str0ng!Pass#123".to_string(),
+                full_name: Some("Student".to_string()),
+                role: UserRole::Student,
+                institution_id: Some(institution_id),
+            },
+        )
+        .await
+        .unwrap();
+
+    let user = user_repo.find_by_id(&ctx, user_id).await.unwrap().unwrap();
+    assert_eq!(user.role, UserRole::Student);
+    assert_eq!(user.institution_id, None);
 }
 
 #[tokio::test]
