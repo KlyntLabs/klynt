@@ -1,7 +1,7 @@
 //! Integration tests for the PostgreSQL session store.
 
 use base::ctx::{ExecutionContext, RequestContext};
-use base::ports::session::SessionStore;
+use base::ports::session::{SessionKind, SessionStore};
 use chrono::{Duration, Utc};
 use domain::{Email, UserId, UserStatus};
 use persistence::repositories::session::PgSessionStore;
@@ -52,12 +52,16 @@ async fn create_and_find_session() {
     let ctx = ExecutionContext::new(RequestContext::new());
     let expires_at = Utc::now() + Duration::hours(1);
 
-    let token = store.create(&ctx, user_id, expires_at).await.unwrap();
+    let token = store
+        .create(&ctx, user_id, SessionKind::Access, None, expires_at)
+        .await
+        .unwrap();
     let session = store.find_valid(&ctx, &token).await.unwrap();
 
     assert!(session.is_some());
     let session = session.unwrap();
     assert_eq!(session.user_id, user_id);
+    assert_eq!(session.kind, SessionKind::Access);
 }
 
 #[tokio::test]
@@ -68,7 +72,10 @@ async fn expired_session_is_not_found() {
     let ctx = ExecutionContext::new(RequestContext::new());
     let expires_at = Utc::now() - Duration::hours(1);
 
-    let token = store.create(&ctx, user_id, expires_at).await.unwrap();
+    let token = store
+        .create(&ctx, user_id, SessionKind::Access, None, expires_at)
+        .await
+        .unwrap();
     let session = store.find_valid(&ctx, &token).await.unwrap();
 
     assert!(session.is_none());
@@ -82,7 +89,10 @@ async fn revoked_session_is_not_found() {
     let ctx = ExecutionContext::new(RequestContext::new());
     let expires_at = Utc::now() + Duration::hours(1);
 
-    let token = store.create(&ctx, user_id, expires_at).await.unwrap();
+    let token = store
+        .create(&ctx, user_id, SessionKind::Access, None, expires_at)
+        .await
+        .unwrap();
     store.revoke(&ctx, &token).await.unwrap();
 
     let session = store.find_valid(&ctx, &token).await.unwrap();

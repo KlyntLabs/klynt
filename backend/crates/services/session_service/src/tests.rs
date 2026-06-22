@@ -3,10 +3,13 @@ use std::sync::Mutex;
 
 use async_trait::async_trait;
 use base::ctx::{ExecutionContext, RequestContext};
-use base::ports::session::{Session, SessionError as StoreError, SessionStore, SessionToken};
+use base::ports::session::{
+    Session, SessionError as StoreError, SessionKind, SessionStore, SessionToken,
+};
 use base::testkit::clock::TestClock;
 use chrono::{DateTime, Duration, Utc};
 use domain::UserId;
+use uuid::Uuid;
 
 use super::*;
 
@@ -21,12 +24,16 @@ impl SessionStore for FakeSessionStore {
         &self,
         _ctx: &ExecutionContext,
         user_id: UserId,
+        kind: SessionKind,
+        pair_id: Option<Uuid>,
         expires_at: DateTime<Utc>,
     ) -> Result<SessionToken, StoreError> {
         let token = SessionToken::new();
         let session = Session {
             user_id,
             expires_at,
+            kind,
+            pair_id,
         };
         self.sessions.lock().unwrap().insert(token, session);
         Ok(token)
@@ -52,6 +59,18 @@ impl SessionStore for FakeSessionStore {
         token: &SessionToken,
     ) -> Result<(), StoreError> {
         self.sessions.lock().unwrap().remove(token);
+        Ok(())
+    }
+
+    async fn revoke_pair(
+        &self,
+        _ctx: &ExecutionContext,
+        pair_id: Uuid,
+        except_token: &SessionToken,
+    ) -> Result<(), StoreError> {
+        let mut sessions = self.sessions.lock().unwrap();
+        sessions
+            .retain(|token, session| !(session.pair_id == Some(pair_id) && token != except_token));
         Ok(())
     }
 }
@@ -83,6 +102,35 @@ async fn validate_returns_invalid_token_for_unknown_token() {
 
     let result = service.validate(&ctx, &SessionToken::new()).await;
     assert!(matches!(result, Err(SessionError::InvalidToken)));
+}
+
+#[tokio::test]
+async fn validate_access_rejects_refresh_token() {
+    let store = Arc::new(FakeSessionStore::default());
+    let service = SessionService::new(SessionConfig::default(), store.clone());
+    let ctx = test_ctx();
+    let user_id = UserId::new();
+
+    let refresh = service.create_refresh(&ctx, user_id, None).await.unwrap();
+    let result = service.validate_access(&ctx, &refresh.token).await;
+
+    assert!(matches!(result, Err(SessionError::InvalidToken)));
+}
+
+#[tokio::test]
+async fn validate_access_accepts_long_lived_token() {
+    let store = Arc::new(FakeSessionStore::default());
+    let service = SessionService::new(SessionConfig::default(), store.clone());
+    let ctx = test_ctx();
+    let user_id = UserId::new();
+
+    let access = service
+        .create_access(&ctx, user_id, true, None)
+        .await
+        .unwrap();
+    let session = service.validate_access(&ctx, &access.token).await.unwrap();
+
+    assert_eq!(session.kind, SessionKind::LongLived);
 }
 
 #[tokio::test]
@@ -125,6 +173,37 @@ async fn invalidate_removes_session() {
 
     let session = store.find_valid(&ctx, &created.token).await.unwrap();
     assert!(session.is_none());
+}
+
+#[tokio::test]
+async fn invalidate_pair_removes_paired_session() {
+    let store = Arc::new(FakeSessionStore::default());
+    let service = SessionService::new(SessionConfig::default(), store.clone());
+    let ctx = test_ctx();
+    let user_id = UserId::new();
+    let pair_id = Uuid::new_v4();
+
+    let access = service
+        .create_access(&ctx, user_id, false, Some(pair_id))
+        .await
+        .unwrap();
+    let refresh = service
+        .create_refresh(&ctx, user_id, Some(pair_id))
+        .await
+        .unwrap();
+
+    service.invalidate_pair(&ctx, &access.token).await.unwrap();
+
+    assert!(store
+        .find_valid(&ctx, &refresh.token)
+        .await
+        .unwrap()
+        .is_none());
+    assert!(store
+        .find_valid(&ctx, &access.token)
+        .await
+        .unwrap()
+        .is_none());
 }
 
 #[test]

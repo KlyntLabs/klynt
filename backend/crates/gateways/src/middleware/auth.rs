@@ -62,7 +62,7 @@ pub async fn require_auth(
 
     let session = services
         .session
-        .validate(&ctx, &token)
+        .validate_access(&ctx, &token)
         .await
         .map_err(|e| match e {
             session_service::SessionError::InvalidToken => {

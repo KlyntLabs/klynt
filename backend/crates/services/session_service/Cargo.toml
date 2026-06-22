@@ -8,6 +8,7 @@ base = { path = "../../../crates/base" }
 domain = { path = "../../shared/domain" }
 chrono = { workspace = true }
 thiserror = { workspace = true }
+uuid = { workspace = true }
 
 [dev-dependencies]
 base = { path = "../../../crates/base", features = ["testkit"] }

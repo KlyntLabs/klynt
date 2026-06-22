@@ -12,10 +12,13 @@ use auth_service::application::ports::{AuditLogger, EmailSender};
 use auth_service::{AuthConfig, AuthService, Dependencies};
 use base::ctx::ExecutionContext;
 use base::ports::email::EmailError;
-use base::ports::session::{Session, SessionError as BaseSessionError, SessionStore, SessionToken};
+use base::ports::session::{
+    Session, SessionError as BaseSessionError, SessionKind, SessionStore, SessionToken,
+};
 use base::testkit::{sample_user, FakeSessionStore, FakeTokenStore, FakeUserRepository};
 use chrono::{DateTime, Utc};
 use domain::{Email, User, UserId, UserStatus};
+use uuid::Uuid;
 
 pub use session_service::SessionConfig as TestSessionConfig;
 
@@ -196,6 +199,8 @@ impl SessionStore for FailingSessionStore {
         &self,
         _ctx: &ExecutionContext,
         user_id: UserId,
+        kind: SessionKind,
+        pair_id: Option<Uuid>,
         expires_at: DateTime<Utc>,
     ) -> Result<SessionToken, BaseSessionError> {
         let mut inner = self.inner.lock().unwrap();
@@ -211,6 +216,8 @@ impl SessionStore for FailingSessionStore {
             Session {
                 user_id,
                 expires_at,
+                kind,
+                pair_id,
             },
         );
         Ok(token)
@@ -236,6 +243,19 @@ impl SessionStore for FailingSessionStore {
     ) -> Result<(), BaseSessionError> {
         let mut inner = self.inner.lock().unwrap();
         inner.sessions.remove(token);
+        Ok(())
+    }
+
+    async fn revoke_pair(
+        &self,
+        _ctx: &ExecutionContext,
+        pair_id: Uuid,
+        except_token: &SessionToken,
+    ) -> Result<(), BaseSessionError> {
+        let mut inner = self.inner.lock().unwrap();
+        inner
+            .sessions
+            .retain(|token, session| !(session.pair_id == Some(pair_id) && token != except_token));
         Ok(())
     }
 }

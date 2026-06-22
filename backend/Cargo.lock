@@ -192,6 +192,7 @@ dependencies = [
  "axum",
  "chrono",
  "domain",
+ "serde",
  "sqlx",
  "thiserror 2.0.18",
  "tokio",
@@ -2126,6 +2127,7 @@ dependencies = [
  "domain",
  "thiserror 2.0.18",
  "tokio",
+ "uuid",
 ]
 
 [[package]]

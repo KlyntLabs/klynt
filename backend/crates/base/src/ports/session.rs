@@ -36,10 +36,11 @@ impl std::fmt::Display for SessionToken {
 
 /// Classification of a session token.
 ///
-/// Implementations may use this to apply different lifetimes, rotation rules,
-/// or revocation policies. The canonical [`SessionStore`] port remains
-/// token-agnostic; the kind is a service-level concern.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+/// Implementations use this to apply different lifetimes, rotation rules,
+/// and authorization policies. `Access` and `LongLived` tokens may authorize
+/// API requests; `Refresh` tokens may not.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum SessionKind {
     /// Short-lived token used to authorize API requests.
     Access,
@@ -49,11 +50,42 @@ pub enum SessionKind {
     Refresh,
 }
 
+impl SessionKind {
+    /// Returns true if this kind may be used to authorize API requests.
+    pub fn is_access(self) -> bool {
+        matches!(self, Self::Access | Self::LongLived)
+    }
+
+    /// Returns the database representation of this kind.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Access => "access",
+            Self::LongLived => "long_lived",
+            Self::Refresh => "refresh",
+        }
+    }
+}
+
+impl TryFrom<&str> for SessionKind {
+    type Error = String;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            "access" => Ok(Self::Access),
+            "long_lived" => Ok(Self::LongLived),
+            "refresh" => Ok(Self::Refresh),
+            _ => Err(format!("unknown session kind: {value}")),
+        }
+    }
+}
+
 /// An authenticated session.
 #[derive(Clone, Debug)]
 pub struct Session {
     pub user_id: UserId,
     pub expires_at: DateTime<Utc>,
+    pub kind: SessionKind,
+    pub pair_id: Option<Uuid>,
 }
 
 impl Session {
@@ -71,6 +103,8 @@ pub trait SessionStore: Send + Sync {
         &self,
         ctx: &ExecutionContext,
         user_id: UserId,
+        kind: SessionKind,
+        pair_id: Option<Uuid>,
         expires_at: DateTime<Utc>,
     ) -> Result<SessionToken, SessionError>;
 
@@ -86,6 +120,14 @@ pub trait SessionStore: Send + Sync {
         &self,
         ctx: &ExecutionContext,
         token: &SessionToken,
+    ) -> Result<(), SessionError>;
+
+    /// Revoke all sessions belonging to the same pair.
+    async fn revoke_pair(
+        &self,
+        ctx: &ExecutionContext,
+        pair_id: Uuid,
+        except_token: &SessionToken,
     ) -> Result<(), SessionError>;
 }
 

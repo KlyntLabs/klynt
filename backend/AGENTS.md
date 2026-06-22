@@ -49,7 +49,7 @@ Services are decoupled from infrastructure through **ports** (trait interfaces) 
 ### 2. Deep Modules
 Services expose small, intention-revealing interfaces while hiding complex implementation:
 - **auth_service** — 6 methods cover all authentication flows
-- **session_service** — 3 methods manage session lifecycle
+- **session_service** — Small surface covering session creation, access validation, and paired invalidation
 - **user_service** — Profile management isolated
 
 Each service is tested through its public interface — no testing past the boundary.
@@ -149,6 +149,9 @@ See [`docs/ARCHITECTURE_DEEPENING.md`](./docs/ARCHITECTURE_DEEPENING.md) for ful
 | `REDIS_URL` | Redis connection string | `redis://localhost:6379` |
 | `KLYNT_API__HOST` | API bind host | `127.0.0.1` |
 | `KLYNT_API__PORT` | API bind port | `3000` |
+| `KLYNT_SESSION__DURATION_SECONDS` | Default access session TTL | `86400` (24h) |
+| `KLYNT_SESSION__LONG_LIVED_DURATION_SECONDS` | "Remember me" access session TTL | `2592000` (30d) |
+| `KLYNT_SESSION__REFRESH_DURATION_SECONDS` | Refresh session TTL | `604800` (7d) |
 
 ## Related Documentation
 

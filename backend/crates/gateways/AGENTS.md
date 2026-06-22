@@ -110,7 +110,7 @@ Cross-cutting HTTP concerns:
 
 | Middleware | Purpose |
 |------------|---------|
-| `auth` | Bearer token authentication, injects user context |
+| `auth` | Bearer token authentication; validates access tokens and rejects refresh tokens |
 | `cors` | CORS headers |
 | `error_handler` | Error response formatting |
 | `metrics` | HTTP request count/duration metrics |

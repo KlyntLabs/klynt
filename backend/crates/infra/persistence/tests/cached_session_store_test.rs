@@ -1,7 +1,7 @@
 //! Integration tests for the Redis read-through session cache.
 
 use base::ctx::{ExecutionContext, RequestContext};
-use base::ports::session::{SessionStore, SessionToken};
+use base::ports::session::{SessionKind, SessionStore, SessionToken};
 use domain::{Email, UserId, UserStatus};
 use persistence::repositories::cached_session_store::CachedSessionStore;
 use persistence::repositories::session::PgSessionStore;
@@ -82,7 +82,10 @@ async fn cached_store_populates_and_hits_cache() {
     let ctx = ExecutionContext::new(RequestContext::new());
     let expires_at = chrono::Utc::now() + chrono::Duration::hours(1);
 
-    let token = store.create(&ctx, user_id, expires_at).await.unwrap();
+    let token = store
+        .create(&ctx, user_id, SessionKind::Access, None, expires_at)
+        .await
+        .unwrap();
     let key = cache_key(&token);
 
     // create() should have written the session to Redis.
@@ -115,7 +118,10 @@ async fn cached_store_falls_back_to_postgres_and_rehydrates_cache() {
     let ctx = ExecutionContext::new(RequestContext::new());
     let expires_at = chrono::Utc::now() + chrono::Duration::hours(1);
 
-    let token = store.create(&ctx, user_id, expires_at).await.unwrap();
+    let token = store
+        .create(&ctx, user_id, SessionKind::Access, None, expires_at)
+        .await
+        .unwrap();
     let key = cache_key(&token);
 
     // Simulate a cache miss by deleting the Redis entry after creation.
@@ -138,7 +144,10 @@ async fn cached_store_round_trips_through_postgres_when_redis_is_unreachable() {
     let ctx = ExecutionContext::new(RequestContext::new());
     let expires_at = chrono::Utc::now() + chrono::Duration::hours(1);
 
-    let token = store.create(&ctx, user_id, expires_at).await.unwrap();
+    let token = store
+        .create(&ctx, user_id, SessionKind::Access, None, expires_at)
+        .await
+        .unwrap();
 
     let session = store.find_valid(&ctx, &token).await.unwrap().unwrap();
     assert_eq!(session.user_id, user_id);
@@ -157,7 +166,10 @@ async fn revoked_token_is_not_found_in_cache_or_postgres() {
     let ctx = ExecutionContext::new(RequestContext::new());
     let expires_at = chrono::Utc::now() + chrono::Duration::hours(1);
 
-    let token = store.create(&ctx, user_id, expires_at).await.unwrap();
+    let token = store
+        .create(&ctx, user_id, SessionKind::Access, None, expires_at)
+        .await
+        .unwrap();
     let key = cache_key(&token);
 
     // Populate cache.

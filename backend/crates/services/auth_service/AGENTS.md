@@ -37,7 +37,7 @@ Six core methods — all authentication flows:
 
 | Method | Purpose | Returns |
 |--------|---------|---------|
-| `login()` | Authenticate and create session | `LoginResponse` |
+| `login()` | Authenticate and create access + refresh session pair | `LoginResponse` |
 | `register()` | Register with email verification | `RegistrationResponse` |
 | `verify_email()` | Complete email verification | `EmailVerifyResponse` |
 | `request_password_reset()` | Initiate password reset | `PasswordResetInitResponse` |
@@ -50,7 +50,7 @@ Behind each method, the service orchestrates:
 
 1. **Validation** — Password policy, email format
 2. **Persistence** — User lookups/creates via `UserRepository`
-3. **Tokens/Sessions** — Managed via `SessionStore` / `TokenStore`
+3. **Tokens/Sessions** — Managed via `session_service::SessionService` / `TokenStore`
 4. **Security** — Password hashing via `PasswordHasher`
 5. **Notifications** — Email sending via `EmailSender`
 6. **Audit** — Event logging via `AuditLogger`
@@ -108,15 +108,16 @@ Construct the service with all dependencies:
 
 ```rust
 let auth_service = AuthService::builder()
-    .config(config)
-    .user_repository(user_repo)
-    .session_store(session_store)
-    .token_store(token_store)
-    .password_hasher(hasher)
-    .email_sender(email_sender)
-    .audit_logger(audit_logger)
-    .clock(clock)
-    .build()?;
+    .with_config(config)
+    .with_pool(pool)
+    .with_session_service(session_service)
+    .with_token_store(token_store)
+    .with_password_hasher(hasher)
+    .with_email_sender(email_sender)
+    .with_audit_logger(audit_logger)
+    .with_clock(clock)
+    .build()
+    .await?;
 ```
 
 ## When to Use This Service

@@ -13,10 +13,11 @@
 
 use async_trait::async_trait;
 use base::ctx::ExecutionContext;
-use base::ports::session::{Session, SessionError, SessionStore, SessionToken};
+use base::ports::session::{Session, SessionError, SessionKind, SessionStore, SessionToken};
 use chrono::{DateTime, Utc};
 use domain::UserId;
 use redis::aio::MultiplexedConnection;
+use uuid::Uuid;
 
 use super::session::PgSessionStore;
 
@@ -102,6 +103,8 @@ impl CachedSessionStore {
                 Ok(Some(Session {
                     user_id: cached.user_id,
                     expires_at: cached.expires_at,
+                    kind: cached.kind,
+                    pair_id: cached.pair_id,
                 }))
             }
             None => Ok(None),
@@ -127,6 +130,8 @@ impl CachedSessionStore {
         let cached = CachedSession {
             user_id: session.user_id,
             expires_at: session.expires_at,
+            kind: session.kind,
+            pair_id: session.pair_id,
         };
         let json = serde_json::to_string(&cached)
             .map_err(|e| SessionError::Internal(format!("serialize: {e}")))?;
@@ -165,6 +170,8 @@ impl CachedSessionStore {
 struct CachedSession {
     user_id: UserId,
     expires_at: DateTime<Utc>,
+    kind: SessionKind,
+    pair_id: Option<Uuid>,
 }
 
 #[async_trait]
@@ -173,12 +180,19 @@ impl SessionStore for CachedSessionStore {
         &self,
         ctx: &ExecutionContext,
         user_id: UserId,
+        kind: SessionKind,
+        pair_id: Option<Uuid>,
         expires_at: DateTime<Utc>,
     ) -> Result<SessionToken, SessionError> {
-        let token = self.postgres.create(ctx, user_id, expires_at).await?;
+        let token = self
+            .postgres
+            .create(ctx, user_id, kind, pair_id, expires_at)
+            .await?;
         let session = Session {
             user_id,
             expires_at,
+            kind,
+            pair_id,
         };
         // Best-effort cache write; don't fail the request if Redis is down.
         if let Err(e) = self.write_cache(&token, &session).await {
@@ -224,6 +238,21 @@ impl SessionStore for CachedSessionStore {
         if let Err(e) = self.invalidate_cache(token).await {
             tracing::warn!(error = %e, "failed to invalidate session cache");
         }
+        Ok(())
+    }
+
+    async fn revoke_pair(
+        &self,
+        ctx: &ExecutionContext,
+        pair_id: Uuid,
+        except_token: &SessionToken,
+    ) -> Result<(), SessionError> {
+        self.postgres
+            .revoke_pair(ctx, pair_id, except_token)
+            .await?;
+        // Cache invalidation for the pair is best-effort. We can't enumerate
+        // cached tokens by pair_id in Redis without a secondary index, so we
+        // rely on the 15-minute TTL to expire any stale cached pair entries.
         Ok(())
     }
 }

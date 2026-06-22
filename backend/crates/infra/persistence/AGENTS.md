@@ -12,15 +12,15 @@ persistence/
 │   ├── repositories/          # Postgres implementations
 │   │   ├── mod.rs
 │   │   ├── user.rs            # PgUserRepository
-│   │   └── session.rs        # PgSessionStore
-│   ├── stores/                # Redis implementations
-│   │   ├── mod.rs
-│   │   ├── session.rs         # RedisSessionStore
-│   │   └── token.rs           # RedisTokenStore
+│   │   ├── session.rs         # PgSessionStore
+│   │   ├── cached_session_store.rs # Redis-backed cache over PgSessionStore
+│   │   ├── token.rs           # PgTokenStore
+│   │   ├── audit_event.rs     # PgAuditLogger
+│   │   └── idempotency.rs     # RedisIdempotencyStore
 │   ├── rate_limiter.rs        # Redis-based rate limiting
-│   ├── idempotency.rs         # Redis-based idempotency
-│   ├── crypto.rs              # Argon2PasswordHasher
+│   ├── password_hasher.rs     # Argon2PasswordHasher
 │   ├── email.rs               # MockEmailSender (logs to stdout)
+│   ├── health.rs              # DB/Redis health checks
 │   └── lib.rs
 ├── tests/                     # Integration tests with real DB
 └── Cargo.toml
@@ -33,9 +33,10 @@ persistence/
 | Port | Implementation | Store |
 |------|----------------|-------|
 | `UserRepository` | `PgUserRepository` | Postgres |
-| `SessionStore` | `PgSessionStore` | Postgres |
-| `SessionStore` | `RedisSessionStore` | Redis (preferred) |
-| `TokenStore` | `RedisTokenStore` | Redis |
+| `SessionStore` | `CachedSessionStore` | Postgres + Redis cache |
+| `TokenStore` | `PgTokenStore` | Postgres |
+| `AuditLogger` | `PgAuditLogger` | Postgres |
+| `IdempotencyStore` | `RedisIdempotencyStore` | Redis |
 
 ### 2. Cross-Cutting Features
 
@@ -97,28 +98,18 @@ impl From<sqlx::Error> for RepositoryError {
 
 ## Redis Usage
 
-### Session Store
+### Cached Session Store
 
-```rust
-use redis::AsyncCommands;
-
-impl SessionStore for RedisSessionStore {
-    async fn create(&self, session: &Session) -> Result<(), SessionError> {
-        let key = format!("session:{}", session.token());
-        let ttl = session.expires_in().num_seconds() as usize;
-        self.conn
-            .set_ex(key, serde_json::to_vec(session)?, ttl)
-            .await?;
-    }
-}
-```
+`CachedSessionStore` wraps `PgSessionStore` with a Redis cache for hot lookups. It stores session records as serialized JSON and falls back to Postgres on cache misses.
 
 ### Token Store
 
+Tokens are persisted in Postgres via `PgTokenStore`.
+
 ```rust
-impl TokenStore for RedisTokenStore {
-    async fn create(&self, token: &str, kind: TokenKind, ttl: i64) -> Result<(), TokenError> {
-        // Store with expiration
+impl TokenStore for PgTokenStore {
+    async fn save(&self, ctx: &ExecutionContext, token: &Token) -> Result<(), TokenError> {
+        // Insert token hash with kind and expiry
     }
 }
 ```

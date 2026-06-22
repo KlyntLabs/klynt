@@ -10,19 +10,25 @@ Service responsible for **session lifecycle**: creation, validation, and invalid
 session_service/
 ├── src/
 │   ├── lib.rs              # Service definition
-│   └── error.rs           # Service-specific errors
+│   ├── config.rs           # Session configuration (durations)
+│   └── error.rs            # Service-specific errors
 └── Cargo.toml
 ```
 
 ## Public Interface
 
-Three core methods for session management:
+Core methods for session management:
 
 | Method | Purpose | Returns |
 |--------|---------|---------|
-| `create_session()` | Create session for user | `Session` |
-| `validate_session()` | Validate session token | `Session` |
-| `invalidate_session()` | End a session | `()` |
+| `create()` | Create a default access session for user | `CreatedSession` |
+| `create_access()` | Create access session, optionally extended for "remember me" | `CreatedSession` |
+| `create_refresh()` | Create refresh session for user | `CreatedSession` |
+| `create_with_kind()` | Create session of a specific kind | `CreatedSession` |
+| `validate()` | Validate any session token | `Session` |
+| `validate_access()` | Validate token and reject refresh tokens | `Session` |
+| `invalidate()` | End a session | `()` |
+| `invalidate_pair()` | End a session and its paired session | `()` |
 
 ## Design Philosophy
 
@@ -44,6 +50,7 @@ The service depends on **only two ports**:
 
 ```rust
 pub struct SessionService {
+    config: SessionConfig,
     session_store: Arc<dyn SessionStore>,
     clock: Arc<dyn Clock>,
 }
@@ -51,6 +58,7 @@ pub struct SessionService {
 
 | Dependency | Purpose |
 |------------|---------|
+| `SessionConfig` | Session lifetime configuration |
 | `SessionStore` | Session persistence |
 | `Clock` | Time for expiry calculations |
 
@@ -73,20 +81,28 @@ pub struct SessionService {
 use session_service::SessionService;
 use base::ports::{SessionStore, Clock};
 use domain::UserId;
+use uuid::Uuid;
 
-// Create session
-let session = session_service
-    .create_session(user_id, session_duration)
+let pair_id = Uuid::new_v4();
+
+// Create access session (default TTL)
+let access = session_service
+    .create_access(ctx, user_id, false, Some(pair_id))
     .await?;
 
-// Validate session
-let session = session_service
-    .validate_session(&token)
+// Create refresh session (long TTL)
+let refresh = session_service
+    .create_refresh(ctx, user_id, Some(pair_id))
     .await?;
 
-// Invalidate session
+// Validate access token for API authorization
+let session = session_service
+    .validate_access(&token)
+    .await?;
+
+// Invalidate a session and its paired session
 session_service
-    .invalidate_session(&token)
+    .invalidate_pair(&token)
     .await?;
 ```
 
@@ -116,12 +132,17 @@ Unit tests use `FakeSessionStore` from `base::testkit`:
 ```rust
 use base::testkit::{FakeSessionStore, TestClock};
 use domain::UserId;
+use std::sync::Arc;
 
 #[tokio::test]
 async fn test_create_and_validate_session() {
-    let session_store = FakeSessionStore::new();
-    let clock = TestClock::new();
-    let service = SessionService::new(session_store, clock);
+    let session_store = Arc::new(FakeSessionStore::new());
+    let clock = Arc::new(TestClock::new());
+    let service = SessionService::with_clock(
+        SessionConfig::default(),
+        session_store,
+        clock,
+    );
     // ... test logic
 }
 ```
@@ -130,10 +151,8 @@ async fn test_create_and_validate_session() {
 
 | Error | When Returned |
 |-------|---------------|
-| `SessionError::NotFound` | Session doesn't exist or already invalidated |
-| `SessionError::Expired` | Session exists but past expiry |
-| `SessionError::InvalidInput` | Invalid token format |
-| `SessionError::Internal` | Unexpected storage error |
+| `SessionError::InvalidToken` | Session doesn't exist, expired, or wrong kind (e.g., refresh token used as access) |
+| `SessionError::StoreError` | Underlying storage error |
 
 ## Dependencies
 

@@ -346,3 +346,51 @@ async fn logout_without_token_returns_bad_request() {
 
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
+
+#[tokio::test]
+async fn refresh_token_cannot_access_protected_route() {
+    let (services, session_service, auth_user_repo, user_service_repo) =
+        support::build_test_services_with_auth_fakes();
+    let config = support::test_config();
+    let app = gateways::create_router(config, services);
+
+    let user_id = UserId::new();
+    let now = Utc::now();
+    let user = User {
+        id: user_id,
+        email: Email::new("ada@example.com".to_string()),
+        full_name: Some("Ada Lovelace".to_string()),
+        password_hash: "hash-password".to_string(),
+        status: UserStatus::Active,
+        role: UserRole::Student,
+        global_role: None,
+        email_verified_at: None,
+        institution_id: None,
+        terms_accepted_at: now,
+        terms_version: "1.0".to_string(),
+        created_at: now,
+        updated_at: now,
+        deleted_at: None,
+    };
+    auth_user_repo.insert(user.clone());
+    user_service_repo.insert(user);
+
+    let refresh = session_service
+        .create_refresh(&ExecutionContext::new(RequestContext::new()), user_id, None)
+        .await
+        .unwrap();
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/api/v1/users/me")
+                .header("authorization", format!("Bearer {}", refresh.token.0))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+}

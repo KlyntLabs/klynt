@@ -5,9 +5,10 @@ use std::sync::Mutex;
 
 use async_trait::async_trait;
 use base::ctx::ExecutionContext;
-use base::ports::session::{Session, SessionError, SessionStore, SessionToken};
+use base::ports::session::{Session, SessionError, SessionKind, SessionStore, SessionToken};
 use chrono::{DateTime, Utc};
 use domain::UserId;
+use uuid::Uuid;
 
 /// Fake persistence session store for middleware tests.
 #[derive(Default)]
@@ -21,12 +22,16 @@ impl SessionStore for FakePersistenceSessionStore {
         &self,
         _ctx: &ExecutionContext,
         user_id: UserId,
+        kind: SessionKind,
+        pair_id: Option<Uuid>,
         expires_at: DateTime<Utc>,
     ) -> Result<SessionToken, SessionError> {
         let token = SessionToken::new();
         let session = Session {
             user_id,
             expires_at,
+            kind,
+            pair_id,
         };
         self.sessions.lock().unwrap().insert(token, session);
         Ok(token)
@@ -52,6 +57,18 @@ impl SessionStore for FakePersistenceSessionStore {
         token: &SessionToken,
     ) -> Result<(), SessionError> {
         self.sessions.lock().unwrap().remove(token);
+        Ok(())
+    }
+
+    async fn revoke_pair(
+        &self,
+        _ctx: &ExecutionContext,
+        pair_id: Uuid,
+        except_token: &SessionToken,
+    ) -> Result<(), SessionError> {
+        let mut sessions = self.sessions.lock().unwrap();
+        sessions
+            .retain(|token, session| !(session.pair_id == Some(pair_id) && token != except_token));
         Ok(())
     }
 }

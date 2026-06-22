@@ -6,12 +6,13 @@ use std::sync::{Arc, Mutex};
 use async_trait::async_trait;
 use auth_service::{
     application::ports::{AuditLogger, EmailSender},
-    core::{Session, SessionError, SessionStore, SessionToken, TokenError, TokenKind, TokenStore},
+    core::{TokenError, TokenKind, TokenStore},
     AuthConfig, AuthService, Dependencies as AuthDependencies,
 };
 use base::ctx::ExecutionContext;
 use base::ports::email::EmailError;
 use base::ports::repository::{RepositoryError, UserRepository};
+use base::ports::session::{Session, SessionError, SessionKind, SessionStore, SessionToken};
 use chrono::{DateTime, Utc};
 use domain::{Email, PaginationRequest, User, UserId, UserRole, UserStatus};
 use uuid::Uuid;
@@ -195,12 +196,16 @@ impl SessionStore for FakeSessionStore {
         &self,
         _ctx: &ExecutionContext,
         user_id: UserId,
+        kind: SessionKind,
+        pair_id: Option<Uuid>,
         expires_at: DateTime<Utc>,
     ) -> Result<SessionToken, SessionError> {
         let token = SessionToken::new();
         let session = Session {
             user_id,
             expires_at,
+            kind,
+            pair_id,
         };
         self.sessions.lock().unwrap().insert(token, session);
         Ok(token)
@@ -226,6 +231,18 @@ impl SessionStore for FakeSessionStore {
         token: &SessionToken,
     ) -> Result<(), SessionError> {
         self.sessions.lock().unwrap().remove(token);
+        Ok(())
+    }
+
+    async fn revoke_pair(
+        &self,
+        _ctx: &ExecutionContext,
+        pair_id: Uuid,
+        except_token: &SessionToken,
+    ) -> Result<(), SessionError> {
+        let mut sessions = self.sessions.lock().unwrap();
+        sessions
+            .retain(|token, session| !(session.pair_id == Some(pair_id) && token != except_token));
         Ok(())
     }
 }

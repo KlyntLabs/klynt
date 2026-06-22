@@ -3,6 +3,7 @@
 use base::ctx::ExecutionContext;
 use domain::contracts::auth::{LoginRequest, LoginResponse};
 use domain::{DomainError, Email};
+use uuid::Uuid;
 use validator::Validate;
 
 use crate::error::AuthError;
@@ -63,17 +64,18 @@ pub(crate) async fn execute(
     }
 
     let remember_me = request.remember_me.unwrap_or(false);
+    let pair_id = Uuid::new_v4();
 
     let access = service
         .internal()
         .session_service
-        .create_access(ctx, user.id, remember_me)
+        .create_access(ctx, user.id, remember_me, Some(pair_id))
         .await?;
 
     let refresh = match service
         .internal()
         .session_service
-        .create_refresh(ctx, user.id)
+        .create_refresh(ctx, user.id, Some(pair_id))
         .await
     {
         Ok(session) => session,

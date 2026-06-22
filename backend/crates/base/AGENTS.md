@@ -52,7 +52,7 @@ Add a port to `base::ports` when:
 | Port | Purpose | Methods |
 |------|---------|---------|
 | `UserRepository` | User persistence | `create`, `by_id`, `by_email`, `update`, `list`, `delete` |
-| `SessionStore` | Session lifecycle | `create`, `validate`, `invalidate`, `by_token` |
+| `SessionStore` | Session lifecycle | `create`, `find_valid`, `revoke`, `revoke_pair` |
 | `TokenStore` | Verification tokens | `create`, `consume`, `by_token` |
 | `AuditLogger` | Audit trail | `log_event` |
 | `EmailSender` | Transactional email | `send_email` |
@@ -82,7 +82,7 @@ Use real implementations only for:
 | Fake | Real Implementation |
 |------|---------------------|
 | `FakeUserRepository` | `PgUserRepository` |
-| `FakeSessionStore` | `RedisSessionStore` |
+| `FakeSessionStore` | `PgSessionStore` |
 | `FakeTokenStore` | `RedisTokenStore` |
 | `TestClock` | `SystemClock` |
 | `TestPasswordHasher` | `Argon2PasswordHasher` |
@@ -114,6 +114,18 @@ pub trait MyPort: Send + Sync {
     async fn do_something(&self, input: &SomeType) -> Result<(), PortError>;
 }
 ```
+
+### Session Kinds
+
+`base::ports::session::SessionKind` distinguishes how a session may be used:
+
+| Kind | Purpose |
+|------|---------|
+| `Access` | Short-lived API session |
+| `LongLived` | Extended access session for "remember me" |
+| `Refresh` | Long-lived refresh-only session; rejected by `validate_access` |
+
+Sessions created as a pair share a `pair_id: Uuid`. This allows logout to revoke both the access and refresh tokens together.
 
 ### 2. Error Pattern
 

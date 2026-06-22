@@ -19,7 +19,7 @@ pub(crate) async fn execute(
     service
         .internal()
         .session_service
-        .invalidate(ctx, &token)
+        .invalidate_pair(ctx, &token)
         .await?;
     Ok(())
 }

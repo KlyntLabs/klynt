@@ -71,10 +71,14 @@ mod tests {
         let user_id = UserId::new();
         let expires_at = Utc::now() + Duration::hours(1);
 
-        let token = store.create(&ctx, user_id, expires_at).await.unwrap();
+        let token = store
+            .create(&ctx, user_id, SessionKind::Access, None, expires_at)
+            .await
+            .unwrap();
         let session = store.find_valid(&ctx, &token).await.unwrap().unwrap();
 
         assert_eq!(session.user_id, user_id);
+        assert_eq!(session.kind, SessionKind::Access);
         assert!(!session.is_expired());
     }
 
@@ -85,7 +89,10 @@ mod tests {
         let user_id = UserId::new();
         let expires_at = Utc::now() + Duration::hours(1);
 
-        let token = store.create(&ctx, user_id, expires_at).await.unwrap();
+        let token = store
+            .create(&ctx, user_id, SessionKind::Access, None, expires_at)
+            .await
+            .unwrap();
         store.revoke(&ctx, &token).await.unwrap();
 
         let session = store.find_valid(&ctx, &token).await.unwrap();
@@ -99,10 +106,48 @@ mod tests {
         let user_id = UserId::new();
         let expires_at = Utc::now() - Duration::hours(1);
 
-        let token = store.create(&ctx, user_id, expires_at).await.unwrap();
+        let token = store
+            .create(&ctx, user_id, SessionKind::Access, None, expires_at)
+            .await
+            .unwrap();
         let session = store.find_valid(&ctx, &token).await.unwrap();
 
         assert!(session.is_none());
+    }
+
+    #[tokio::test]
+    async fn fake_session_store_revoke_pair_removes_paired_session() {
+        let ctx = ExecutionContext::new(RequestContext::new());
+        let store = FakeSessionStore::default();
+        let user_id = UserId::new();
+        let pair_id = Uuid::new_v4();
+        let expires_at = Utc::now() + Duration::hours(1);
+
+        let access = store
+            .create(
+                &ctx,
+                user_id,
+                SessionKind::Access,
+                Some(pair_id),
+                expires_at,
+            )
+            .await
+            .unwrap();
+        let refresh = store
+            .create(
+                &ctx,
+                user_id,
+                SessionKind::Refresh,
+                Some(pair_id),
+                expires_at,
+            )
+            .await
+            .unwrap();
+
+        store.revoke_pair(&ctx, pair_id, &access).await.unwrap();
+
+        assert!(store.find_valid(&ctx, &refresh).await.unwrap().is_none());
+        assert!(store.find_valid(&ctx, &access).await.unwrap().is_some());
     }
 
     /// In-memory fake for exercising the canonical trait.
@@ -117,12 +162,16 @@ mod tests {
             &self,
             _ctx: &ExecutionContext,
             user_id: UserId,
+            kind: SessionKind,
+            pair_id: Option<Uuid>,
             expires_at: DateTime<Utc>,
         ) -> Result<SessionToken, SessionError> {
             let token = SessionToken::new();
             let session = Session {
                 user_id,
                 expires_at,
+                kind,
+                pair_id,
             };
             self.sessions.lock().unwrap().insert(token, session);
             Ok(token)
@@ -148,6 +197,19 @@ mod tests {
             token: &SessionToken,
         ) -> Result<(), SessionError> {
             self.sessions.lock().unwrap().remove(token);
+            Ok(())
+        }
+
+        async fn revoke_pair(
+            &self,
+            _ctx: &ExecutionContext,
+            pair_id: Uuid,
+            except_token: &SessionToken,
+        ) -> Result<(), SessionError> {
+            let mut sessions = self.sessions.lock().unwrap();
+            sessions.retain(|token, session| {
+                !(session.pair_id == Some(pair_id) && token != except_token)
+            });
             Ok(())
         }
     }
