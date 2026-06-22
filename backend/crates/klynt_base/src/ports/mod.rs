@@ -2,6 +2,7 @@
 
 pub mod audit;
 pub mod clock;
+pub mod email;
 pub mod http_error;
 pub mod password_hasher;
 pub mod repository;
@@ -10,6 +11,7 @@ pub mod token;
 
 pub use audit::AuditLogger;
 pub use clock::{Clock, SystemClock};
+pub use email::{EmailError, EmailSender};
 pub use http_error::HttpError;
 pub use password_hasher::{PasswordHashError, PasswordHasher};
 pub use repository::{RepositoryError, UserRepository};
