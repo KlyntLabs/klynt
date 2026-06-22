@@ -26,7 +26,8 @@ gateways/
 │   │   ├── request_id.rs       # Request ID generation/tracking
 │   │   └── security_headers.rs # Security headers
 │   ├── error.rs                # Gateway error types
-│   └── lib.rs
+│   ├── lib.rs
+│   └── openapi.yaml            # OpenAPI specification
 ├── tests/                      # Integration tests
 │   ├── config_from_env.rs
 │   ├── integration.rs
@@ -37,7 +38,6 @@ gateways/
 │       ├── rate_limiter.rs
 │       ├── session.rs
 │       └── user.rs
-├── openapi.yaml                # OpenAPI specification
 └── Cargo.toml
 ```
 
@@ -48,6 +48,7 @@ gateways/
 **This is the ONLY place where concrete implementations are wired:**
 
 ```rust
+use std::sync::Arc;
 use ipnet::IpNet;
 
 pub struct Services {
@@ -55,14 +56,16 @@ pub struct Services {
     pub user: Arc<UserService>,
     pub session: Arc<SessionService>,
     pub rate_limiter: Arc<dyn RateLimiter>,
-    pub trusted_proxies: Vec<IpNet>,
+    pub trusted_proxies: Arc<Vec<IpNet>>,
 }
 
 pub async fn from_config(config: &Config) -> Result<Services, GatewayError> {
     // ... connect pool, run migrations ...
 
-    let trusted_proxies = config::parse_trusted_proxies(&config.trusted_proxies)
-        .map_err(|e| GatewayError::configuration(e.to_string()))?;
+    let trusted_proxies = Arc::new(
+        config::parse_trusted_proxies(&config.trusted_proxies)
+            .map_err(|e| GatewayError::configuration(e.to_string()))?,
+    );
 
     Ok(Services {
         auth: Arc::new(auth_service),
