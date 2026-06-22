@@ -10,6 +10,7 @@ use axum::{
 use base::ctx::{ExecutionContext, RequestContext};
 use chrono::Utc;
 use domain::{Email, User, UserId, UserRole, UserStatus};
+use gateways::constants::SESSION_TOKEN_COOKIE;
 use tower::ServiceExt;
 
 mod support;
@@ -174,8 +175,8 @@ async fn sso_cookie_authenticates_across_subdomains() {
         .to_str()
         .unwrap();
     assert!(
-        set_cookie.contains("session_token="),
-        "set-cookie should contain session_token: {set_cookie}"
+        set_cookie.contains(&format!("{SESSION_TOKEN_COOKIE}=")),
+        "set-cookie should contain {SESSION_TOKEN_COOKIE}: {set_cookie}"
     );
     // The cookie crate normalizes RFC 6265 domain attributes by stripping the
     // legacy leading dot; both forms are functionally equivalent for SSO.
@@ -190,6 +191,10 @@ async fn sso_cookie_authenticates_across_subdomains() {
     assert!(
         set_cookie.contains("Path=/"),
         "set-cookie should have path /: {set_cookie}"
+    );
+    assert!(
+        set_cookie.contains("Max-Age="),
+        "set-cookie should have Max-Age: {set_cookie}"
     );
 
     let cookie_value = set_cookie.split(';').next().unwrap().trim();
@@ -259,8 +264,7 @@ async fn logout_with_cookie_clears_session_cookie() {
             Request::builder()
                 .method(Method::POST)
                 .uri("/api/v1/auth/logout")
-                .header("content-type", "application/json")
-                .header("cookie", format!("session_token={token}"))
+                .header("cookie", format!("{SESSION_TOKEN_COOKIE}={token}"))
                 .body(Body::empty())
                 .unwrap(),
         )
@@ -276,8 +280,24 @@ async fn logout_with_cookie_clears_session_cookie() {
         .to_str()
         .unwrap();
     assert!(
-        set_cookie.contains("session_token="),
-        "set-cookie should reference session_token: {set_cookie}"
+        set_cookie.contains(&format!("{SESSION_TOKEN_COOKIE}=")),
+        "set-cookie should reference {SESSION_TOKEN_COOKIE}: {set_cookie}"
+    );
+    assert!(
+        set_cookie.contains("Domain=.klynt.edu") || set_cookie.contains("Domain=klynt.edu"),
+        "set-cookie should set cross-subdomain domain: {set_cookie}"
+    );
+    assert!(
+        set_cookie.contains("Path=/"),
+        "set-cookie should have path /: {set_cookie}"
+    );
+    assert!(
+        set_cookie.contains("HttpOnly"),
+        "set-cookie should be HttpOnly: {set_cookie}"
+    );
+    assert!(
+        set_cookie.contains("SameSite=Lax"),
+        "set-cookie should be SameSite=Lax: {set_cookie}"
     );
     assert!(
         set_cookie.contains("Max-Age=0") || set_cookie.contains("Expires="),

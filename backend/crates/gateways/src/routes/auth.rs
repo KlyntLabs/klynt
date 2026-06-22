@@ -1,11 +1,18 @@
 //! Authentication HTTP handlers.
 
-use axum::{body::Bytes, extract::State, http::StatusCode, response::IntoResponse, Json};
+use axum::{
+    body::Bytes,
+    extract::{FromRequest, Request, State},
+    http::{header, StatusCode},
+    response::{IntoResponse, Json},
+};
+use chrono::Utc;
 use tower_cookies::{Cookie, Cookies};
 
 use base::ctx::{ExecutionContext, RequestContext};
 use domain::contracts::auth::{LoginRequest, RegistrationRequest};
 
+use crate::constants::SESSION_TOKEN_COOKIE;
 use crate::response::SuccessResponse;
 use crate::state::Services;
 
@@ -27,12 +34,20 @@ pub(crate) async fn login(
         .await
         .map_err(crate::GatewayError::from)?;
 
-    let mut cookie = Cookie::new("session_token", response.access_token.clone());
+    let mut cookie = Cookie::new(SESSION_TOKEN_COOKIE, response.access_token.clone());
     cookie.set_domain(services.config.cookie_domain.clone());
     cookie.set_path("/");
     cookie.set_http_only(true);
     cookie.set_secure(services.config.cookie_secure);
     cookie.set_same_site(tower_cookies::cookie::SameSite::Lax);
+
+    let ttl_seconds = response
+        .expires_at
+        .signed_duration_since(Utc::now())
+        .num_seconds()
+        .max(0);
+    cookie.set_max_age(tower_cookies::cookie::time::Duration::seconds(ttl_seconds));
+
     cookies.add(cookie);
 
     Ok((StatusCode::OK, Json(SuccessResponse::ok(response))))
@@ -136,20 +151,15 @@ pub(crate) struct ResetPasswordRequest {
 pub(crate) async fn logout(
     State(services): State<Services>,
     cookies: Cookies,
-    body: Bytes,
+    OptionalJson(request): OptionalJson<LogoutRequest>,
 ) -> Result<impl IntoResponse, crate::GatewayError> {
-    let request: Option<LogoutRequest> = if body.is_empty() {
-        None
-    } else {
-        Some(
-            serde_json::from_slice(&body)
-                .map_err(|_| crate::GatewayError::BadRequest("Invalid JSON body".to_string()))?,
-        )
-    };
-
     let token = request
         .and_then(|r| r.session_token)
-        .or_else(|| cookies.get("session_token").map(|c| c.value().to_string()))
+        .or_else(|| {
+            cookies
+                .get(SESSION_TOKEN_COOKIE)
+                .map(|c| c.value().to_string())
+        })
         .ok_or_else(|| crate::GatewayError::BadRequest("Missing session token".to_string()))?;
 
     services
@@ -158,9 +168,12 @@ pub(crate) async fn logout(
         .await
         .map_err(crate::GatewayError::from)?;
 
-    let mut removal = Cookie::new("session_token", "");
+    let mut removal = Cookie::new(SESSION_TOKEN_COOKIE, "");
     removal.set_domain(services.config.cookie_domain.clone());
     removal.set_path("/");
+    removal.set_http_only(true);
+    removal.set_secure(services.config.cookie_secure);
+    removal.set_same_site(tower_cookies::cookie::SameSite::Lax);
     cookies.remove(removal);
 
     Ok(Json(SuccessResponse::message("Logged out successfully")))
@@ -169,4 +182,43 @@ pub(crate) async fn logout(
 #[derive(serde::Deserialize)]
 pub(crate) struct LogoutRequest {
     session_token: Option<String>,
+}
+
+/// JSON body extractor that returns `None` when the body is missing, empty, or
+/// the content-type is not `application/json`.
+///
+/// This is useful for endpoints that accept an optional JSON payload while also
+/// reading state from cookies or headers.
+pub(crate) struct OptionalJson<T>(Option<T>);
+
+impl<T, S> FromRequest<S> for OptionalJson<T>
+where
+    T: serde::de::DeserializeOwned + Send + Sync,
+    S: Send + Sync,
+{
+    type Rejection = crate::GatewayError;
+
+    async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
+        let content_type = req
+            .headers()
+            .get(header::CONTENT_TYPE)
+            .and_then(|v| v.to_str().ok());
+        let is_json = content_type
+            .map(|ct| ct.starts_with("application/json"))
+            .unwrap_or(false);
+        if !is_json {
+            return Ok(OptionalJson(None));
+        }
+
+        let bytes = Bytes::from_request(req, state)
+            .await
+            .map_err(|_| crate::GatewayError::BadRequest("Failed to read body".to_string()))?;
+        if bytes.is_empty() {
+            return Ok(OptionalJson(None));
+        }
+
+        let value = serde_json::from_slice(&bytes)
+            .map_err(|_| crate::GatewayError::BadRequest("Invalid JSON body".to_string()))?;
+        Ok(OptionalJson(Some(value)))
+    }
 }

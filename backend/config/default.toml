@@ -13,4 +13,6 @@ window_seconds = 60
 log_level = "debug"
 hsts_enabled = false
 cookie_domain = ".klynt.edu"
+# WARNING: cookie_secure must be true in production with TLS termination.
+# Leaving it false sends session cookies over plaintext HTTP.
 cookie_secure = false

@@ -11,6 +11,7 @@ use base::ports::session::SessionToken;
 use tower_cookies::Cookies;
 use uuid::Uuid;
 
+use crate::constants::SESSION_TOKEN_COOKIE;
 use crate::state::Services;
 
 const BEARER_PREFIX: &str = "Bearer ";
@@ -86,7 +87,7 @@ fn extract_session_token(
         return Some(token);
     }
     cookies
-        .get("session_token")
+        .get(SESSION_TOKEN_COOKIE)
         .and_then(|c| Uuid::parse_str(c.value()).ok())
         .map(SessionToken)
 }

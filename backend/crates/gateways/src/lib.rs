@@ -10,6 +10,7 @@
 //! - **Implementation**: All HTTP complexity (routing, middleware, services) hidden inside
 //! - **Composition Root**: Services are wired together in [`state::Services`]
 
+pub mod constants;
 pub mod error;
 pub mod middleware;
 pub mod response;
