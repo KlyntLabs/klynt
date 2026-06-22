@@ -3,7 +3,7 @@
 use chrono::{Duration, Utc};
 use klynt_base::ctx::{ExecutionContext, RequestContext};
 use klynt_base::ports::session::SessionStore;
-use klynt_common::util::{Email, UserId, UserStatus};
+use klynt_domain::{Email, UserId, UserStatus};
 use klynt_persistence::repositories::pg_session::PgSessionStore;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -36,7 +36,7 @@ async fn create_test_user(pool: &PgPool) -> UserId {
     .bind(email.as_str())
     .bind("hashed")
     .bind("Test User")
-    .bind(UserStatus::Active.to_string())
+    .bind(UserStatus::Active.as_str())
     .execute(pool)
     .await
     .unwrap();

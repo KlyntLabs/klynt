@@ -5,7 +5,7 @@
 //! domain-specific [`Token`] generation/hashing logic.
 
 use chrono::{DateTime, Utc};
-use klynt_common::util::UserId;
+use klynt_domain::UserId;
 
 pub use klynt_base::ports::token::{TokenError, TokenKind, TokenStore};
 

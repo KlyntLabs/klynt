@@ -2,7 +2,7 @@
 resolver = "2"
 members = [
     "crates/klynt_base",
-    "crates/shared/klynt_common",
+    "crates/shared/klynt_domain",
     "crates/infrastructure/klynt_persistence",
     "crates/infrastructure/klynt_telemetry",
     "crates/infrastructure/klynt_config",
@@ -77,7 +77,7 @@ prometheus = { version = "0.13", default-features = false }
 
 # Internal crates
 klynt_base = { path = "crates/klynt_base" }
-klynt_common = { path = "crates/shared/klynt_common" }
+klynt_domain = { path = "crates/shared/klynt_domain" }
 klynt_persistence = { path = "crates/infrastructure/klynt_persistence" }
 klynt_telemetry = { path = "crates/infrastructure/klynt_telemetry" }
 klynt_config = { path = "crates/infrastructure/klynt_config" }

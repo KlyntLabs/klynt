@@ -5,8 +5,7 @@ use crate::ports::EmailService;
 use async_trait::async_trait;
 use klynt_base::ctx::ExecutionContext;
 use klynt_base::ports::email::{EmailError, EmailSender};
-use klynt_common::domain::DomainError;
-use klynt_common::util::Email;
+use klynt_domain::{DomainError, Email};
 
 /// A recorded email captured by the mock adapter.
 #[derive(Debug, Clone)]
@@ -145,7 +144,7 @@ mod tests {
     use crate::ports::EmailService;
     use klynt_base::ctx::{ExecutionContext, RequestContext};
     use klynt_base::ports::email::EmailSender;
-    use klynt_common::util::Email;
+    use klynt_domain::Email;
 
     use super::MockEmailService;
 

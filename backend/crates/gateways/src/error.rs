@@ -187,37 +187,37 @@ mod tests {
             ),
             (
                 GatewayError::from(auth_service::AuthError::Domain(
-                    klynt_common::domain::DomainError::InvalidInput("input".to_string()),
+                    klynt_domain::DomainError::InvalidInput("input".to_string()),
                 )),
                 StatusCode::BAD_REQUEST,
             ),
             (
                 GatewayError::from(auth_service::AuthError::Domain(
-                    klynt_common::domain::DomainError::Validation("invalid".to_string()),
+                    klynt_domain::DomainError::Validation("invalid".to_string()),
                 )),
                 StatusCode::BAD_REQUEST,
             ),
             (
                 GatewayError::from(auth_service::AuthError::Domain(
-                    klynt_common::domain::DomainError::NotFound("missing".to_string()),
+                    klynt_domain::DomainError::NotFound("missing".to_string()),
                 )),
                 StatusCode::NOT_FOUND,
             ),
             (
                 GatewayError::from(auth_service::AuthError::Domain(
-                    klynt_common::domain::DomainError::Conflict("duplicate".to_string()),
+                    klynt_domain::DomainError::Conflict("duplicate".to_string()),
                 )),
                 StatusCode::CONFLICT,
             ),
             (
                 GatewayError::from(auth_service::AuthError::Domain(
-                    klynt_common::domain::DomainError::NotPermitted("no".to_string()),
+                    klynt_domain::DomainError::NotPermitted("no".to_string()),
                 )),
                 StatusCode::FORBIDDEN,
             ),
             (
                 GatewayError::from(auth_service::AuthError::Domain(
-                    klynt_common::domain::DomainError::Internal("domain".to_string()),
+                    klynt_domain::DomainError::Internal("domain".to_string()),
                 )),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ),

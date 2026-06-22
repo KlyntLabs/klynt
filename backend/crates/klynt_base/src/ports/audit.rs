@@ -1,7 +1,7 @@
 //! Canonical audit logging interface.
 
 use async_trait::async_trait;
-use klynt_common::util::UserId;
+use klynt_domain::UserId;
 
 use crate::ctx::ExecutionContext;
 

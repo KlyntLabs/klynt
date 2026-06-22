@@ -1,15 +1,16 @@
 [package]
 name = "session_service"
-version.workspace = true
-edition.workspace = true
+version = "0.1.0"
+edition = "2021"
 
 [dependencies]
 klynt_base = { path = "../../../crates/klynt_base" }
-klynt_common = { path = "../../shared/klynt_common" }
-chrono.workspace = true
-thiserror.workspace = true
-uuid.workspace = true
+klynt_domain = { path = "../../shared/klynt_domain" }
+chrono = { workspace = true }
+thiserror = { workspace = true }
+uuid = { workspace = true }
 
 [dev-dependencies]
-async-trait.workspace = true
-tokio.workspace = true
+klynt_base = { path = "../../../crates/klynt_base", features = ["testkit"] }
+async-trait = { workspace = true }
+tokio = { workspace = true }

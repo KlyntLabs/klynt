@@ -1,7 +1,7 @@
 //! Authentication-related contracts.
 
-use crate::domain::types::UserRole;
-use crate::util::id::UserId;
+use crate::user::UserId;
+use crate::user::UserRole;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use validator::Validate;
@@ -34,8 +34,8 @@ pub struct UserSessionInfo {
     pub role: UserRole,
 }
 
-impl From<crate::domain::User> for UserSessionInfo {
-    fn from(user: crate::domain::User) -> Self {
+impl From<crate::user::User> for UserSessionInfo {
+    fn from(user: crate::user::User) -> Self {
         Self {
             id: user.id,
             email: user.email.inner().to_string(),

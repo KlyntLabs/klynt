@@ -8,7 +8,7 @@ use tokio::sync::Mutex;
 use uuid::Uuid;
 
 use crate::ports::IdempotencyStore;
-use klynt_common::domain::DomainError;
+use klynt_domain::DomainError;
 
 /// Redis-backed idempotency store.
 ///

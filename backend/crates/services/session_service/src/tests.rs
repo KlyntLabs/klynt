@@ -2,10 +2,11 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 
 use async_trait::async_trait;
-use chrono::{Duration, Utc};
+use chrono::{DateTime, Duration, Utc};
 use klynt_base::ctx::{ExecutionContext, RequestContext};
 use klynt_base::ports::session::{Session, SessionError as StoreError, SessionStore, SessionToken};
-use klynt_common::util::UserId;
+use klynt_base::testkit::clock::TestClock;
+use klynt_domain::UserId;
 
 use super::*;
 
@@ -20,7 +21,7 @@ impl SessionStore for FakeSessionStore {
         &self,
         _ctx: &ExecutionContext,
         user_id: UserId,
-        expires_at: chrono::DateTime<Utc>,
+        expires_at: DateTime<Utc>,
     ) -> Result<SessionToken, StoreError> {
         let token = SessionToken::new();
         let session = Session {
@@ -67,21 +68,9 @@ async fn validate_returns_session_for_valid_token() {
     let user_id = UserId::new();
 
     let token = service.create(&ctx, user_id).await.unwrap();
-    let session = service.validate(&ctx, &token.to_string()).await.unwrap();
+    let session = service.validate(&ctx, &token).await.unwrap();
 
     assert_eq!(session.user_id, user_id);
-}
-
-#[tokio::test]
-async fn validate_returns_invalid_token_for_malformed_input() {
-    let service = SessionService::new(
-        SessionConfig::default(),
-        Arc::new(FakeSessionStore::default()),
-    );
-    let ctx = test_ctx();
-
-    let result = service.validate(&ctx, "not-a-uuid").await;
-    assert!(matches!(result, Err(SessionError::InvalidToken)));
 }
 
 #[tokio::test]
@@ -92,20 +81,22 @@ async fn validate_returns_invalid_token_for_unknown_token() {
     );
     let ctx = test_ctx();
 
-    let result = service
-        .validate(&ctx, &SessionToken::new().to_string())
-        .await;
+    let result = service.validate(&ctx, &SessionToken::new()).await;
     assert!(matches!(result, Err(SessionError::InvalidToken)));
 }
 
 #[tokio::test]
 async fn create_uses_configured_duration() {
+    let now = Utc::now();
+    let clock = TestClock::new();
+    clock.freeze_at(now);
     let store = Arc::new(FakeSessionStore::default());
-    let service = SessionService::new(
+    let service = SessionService::with_clock(
         SessionConfig {
             session_duration_secs: 7200,
         },
         store.clone(),
+        Arc::new(clock),
     );
     let ctx = test_ctx();
     let user_id = UserId::new();
@@ -113,9 +104,7 @@ async fn create_uses_configured_duration() {
     let token = service.create(&ctx, user_id).await.unwrap();
     let session = store.find_valid(&ctx, &token).await.unwrap().unwrap();
 
-    let expected_min = Utc::now() + Duration::seconds(7100);
-    let expected_max = Utc::now() + Duration::seconds(7300);
-    assert!(session.expires_at >= expected_min && session.expires_at <= expected_max);
+    assert_eq!(session.expires_at, now + Duration::seconds(7200));
 }
 
 #[tokio::test]
@@ -126,7 +115,7 @@ async fn invalidate_removes_session() {
     let user_id = UserId::new();
 
     let token = service.create(&ctx, user_id).await.unwrap();
-    service.invalidate(&ctx, &token.to_string()).await.unwrap();
+    service.invalidate(&ctx, &token).await.unwrap();
 
     let session = store.find_valid(&ctx, &token).await.unwrap();
     assert!(session.is_none());
@@ -134,18 +123,22 @@ async fn invalidate_removes_session() {
 
 #[test]
 fn session_error_mapping() {
-    use klynt_base::ports::session::SessionError as StoreError;
+    use klynt_base::ports::session::SessionError as BaseError;
 
     assert!(matches!(
-        SessionError::from(StoreError::NotFound),
+        SessionError::from(BaseError::NotFound),
         SessionError::InvalidToken
     ));
     assert!(matches!(
-        SessionError::from(StoreError::Expired),
+        SessionError::from(BaseError::Expired),
         SessionError::InvalidToken
     ));
     assert!(matches!(
-        SessionError::from(StoreError::Database("boom".to_string())),
+        SessionError::from(BaseError::Database("boom".to_string())),
+        SessionError::StoreError(_)
+    ));
+    assert!(matches!(
+        SessionError::from(BaseError::Internal("oops".to_string())),
         SessionError::StoreError(_)
     ));
 }

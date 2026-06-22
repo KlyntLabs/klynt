@@ -22,8 +22,8 @@ use std::sync::Arc;
 use chrono::Duration;
 use klynt_base::ctx::ExecutionContext;
 use klynt_base::ports::{Clock, PasswordHasher};
-use klynt_common::contracts::auth::{LoginRequest, LoginResponse, RegistrationRequest};
-use klynt_common::util::UserId;
+use klynt_domain::contracts::auth::{LoginRequest, LoginResponse, RegistrationRequest};
+use klynt_domain::UserId;
 
 // Public exports
 pub use builder::AuthBuilder;

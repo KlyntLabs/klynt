@@ -1,7 +1,7 @@
 //! Canonical email sending interface.
 
 use async_trait::async_trait;
-use klynt_common::domain::Email;
+use klynt_domain::Email;
 
 use crate::ctx::ExecutionContext;
 

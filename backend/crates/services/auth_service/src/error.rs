@@ -5,7 +5,7 @@ use axum::http::StatusCode;
 use klynt_base::ports::{
     EmailError, HttpError, PasswordHashError, RepositoryError, SessionError, TokenError,
 };
-use klynt_common::domain::DomainError;
+use klynt_domain::DomainError;
 
 use crate::domain::PasswordPolicyError;
 

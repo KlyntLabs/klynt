@@ -21,8 +21,7 @@ use std::sync::Arc;
 
 use klynt_base::ctx::ExecutionContext;
 use klynt_base::ports::{Clock, PasswordHasher};
-use klynt_common::domain::PaginationRequest;
-use klynt_common::util::UserId;
+use klynt_domain::{PaginationRequest, UserId};
 
 pub use builder::UserBuilder;
 pub use error::{UserError, UserResult};
@@ -130,7 +129,7 @@ impl UserService {
         &self,
         ctx: &ExecutionContext,
         pagination: PaginationRequest,
-    ) -> Result<klynt_common::domain::PaginatedResponse<UserProfile>, UserError> {
+    ) -> Result<klynt_domain::PaginatedResponse<UserProfile>, UserError> {
         application::use_cases::list_users::execute(self, ctx, pagination).await
     }
 

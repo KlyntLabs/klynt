@@ -9,8 +9,8 @@ workspace = true
 [dependencies]
 # Internal crates
 klynt_base = { path = "../../klynt_base" }
-klynt_common = { path = "../../shared/klynt_common" }
 klynt_config = { path = "../klynt_config" }
+klynt_domain = { path = "../../shared/klynt_domain" }
 klynt_telemetry = { path = "../klynt_telemetry" }
 
 # Database

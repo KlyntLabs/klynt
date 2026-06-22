@@ -1,7 +1,7 @@
 //! User domain logic.
 
 use chrono::{DateTime, Utc};
-pub use klynt_common::domain::User;
+pub use klynt_domain::User;
 
 use crate::error::UserError;
 
@@ -36,8 +36,7 @@ impl UserExt for User {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use klynt_common::domain::{Email, UserRole, UserStatus};
-    use klynt_common::util::UserId;
+    use klynt_domain::{Email, UserId, UserRole, UserStatus};
 
     fn sample_user() -> User {
         User {

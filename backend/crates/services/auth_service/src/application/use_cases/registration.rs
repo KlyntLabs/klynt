@@ -1,8 +1,8 @@
 //! Registration use case - create pending user and send verification email.
 
 use klynt_base::ctx::ExecutionContext;
-use klynt_common::contracts::auth::RegistrationRequest;
-use klynt_common::domain::{DomainError, Email};
+use klynt_domain::contracts::auth::RegistrationRequest;
+use klynt_domain::{DomainError, Email};
 use validator::Validate;
 
 use crate::domain::{Token, TokenKind};
@@ -14,7 +14,7 @@ pub(crate) async fn execute(
     service: &AuthService,
     ctx: &ExecutionContext,
     request: RegistrationRequest,
-) -> Result<klynt_common::util::UserId, AuthError> {
+) -> Result<klynt_domain::UserId, AuthError> {
     request
         .validate()
         .map_err(|e| AuthError::validation(e.to_string()))?;

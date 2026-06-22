@@ -2,8 +2,7 @@ use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use klynt_common::domain::{DomainError, User, UserRole, UserStatus};
-use klynt_common::util::{Email, Role as DbRole, UserId, UserStatus as DbUserStatus};
+use klynt_domain::{DomainError, Email, User, UserId, UserRole, UserStatus};
 
 /// PostgreSQL implementation of the user repository.
 pub struct PgUserRepository {
@@ -55,6 +54,63 @@ impl UserRow {
             updated_at: None,
             deleted_at: self.deleted_at,
         })
+    }
+}
+
+/// Database-specific role mapping.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum DbRole {
+    Student,
+    Teacher,
+    Admin,
+    Parent,
+}
+
+impl DbRole {
+    pub(crate) fn parse(raw: &str) -> Result<Self, &'static str> {
+        match raw.to_lowercase().as_str() {
+            "student" => Ok(Self::Student),
+            "teacher" => Ok(Self::Teacher),
+            "admin" => Ok(Self::Admin),
+            "parent" => Ok(Self::Parent),
+            _ => Err("unknown role"),
+        }
+    }
+
+    pub(crate) fn as_str(&self) -> &'static str {
+        match self {
+            DbRole::Student => "student",
+            DbRole::Teacher => "teacher",
+            DbRole::Admin => "admin",
+            DbRole::Parent => "parent",
+        }
+    }
+}
+
+/// Database-specific status mapping.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum DbUserStatus {
+    PendingVerification,
+    Active,
+    Suspended,
+}
+
+impl DbUserStatus {
+    pub(crate) fn parse(raw: &str) -> Result<Self, &'static str> {
+        match raw.to_lowercase().as_str() {
+            "pending_verification" => Ok(Self::PendingVerification),
+            "active" => Ok(Self::Active),
+            "suspended" => Ok(Self::Suspended),
+            _ => Err("unknown status"),
+        }
+    }
+
+    pub(crate) fn as_str(&self) -> &'static str {
+        match self {
+            DbUserStatus::PendingVerification => "pending_verification",
+            DbUserStatus::Active => "active",
+            DbUserStatus::Suspended => "suspended",
+        }
     }
 }
 

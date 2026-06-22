@@ -7,8 +7,7 @@ use chrono::{DateTime, Utc};
 use super::{role_to_db, status_to_db, PgUserRepository, UserRow};
 use klynt_base::ctx::ExecutionContext;
 use klynt_base::ports::repository::{RepositoryError, UserRepository};
-use klynt_common::domain::{DomainError, Email, PaginationRequest, User, UserRole, UserStatus};
-use klynt_common::util::UserId;
+use klynt_domain::{DomainError, Email, PaginationRequest, User, UserId, UserRole, UserStatus};
 
 #[async_trait]
 impl UserRepository for PgUserRepository {

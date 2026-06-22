@@ -5,7 +5,7 @@
 
 use async_trait::async_trait;
 use chrono::{DateTime, Duration, Utc};
-use klynt_common::util::UserId;
+use klynt_domain::UserId;
 
 use crate::ctx::ExecutionContext;
 

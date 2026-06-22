@@ -11,7 +11,7 @@ pub(crate) async fn execute(
     service: &AuthService,
     ctx: &ExecutionContext,
     token: &str,
-) -> Result<klynt_common::util::UserId, AuthError> {
+) -> Result<klynt_domain::UserId, AuthError> {
     let token_hash = Token::sha256_hash(token);
 
     let user_id = service

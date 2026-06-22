@@ -1,7 +1,7 @@
 //! Delete user use case.
 
 use klynt_base::ctx::ExecutionContext;
-use klynt_common::util::UserId;
+use klynt_domain::UserId;
 
 use crate::domain::UserExt;
 use crate::error::UserError;

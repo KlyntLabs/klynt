@@ -1,8 +1,12 @@
-//! User role types.
+//! Platform-wide authorization roles.
+//!
+//! `Role` is the platform-wide authorization role (student, teacher, admin,
+//! parent) used for institution-scoped checks.
 
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
+/// Role parsing error.
 #[derive(Debug, Error, PartialEq)]
 pub enum RoleError {
     #[error("unknown role")]
@@ -20,6 +24,7 @@ pub enum Role {
 }
 
 impl Role {
+    /// Parse a platform role from its string representation.
     pub fn parse(raw: &str) -> Result<Self, RoleError> {
         match raw.to_lowercase().as_str() {
             "student" => Ok(Self::Student),
@@ -30,10 +35,12 @@ impl Role {
         }
     }
 
+    /// Whether this role requires an institution association.
     pub fn requires_institution(self) -> bool {
         matches!(self, Role::Teacher | Role::Admin)
     }
 
+    /// Return the canonical string representation.
     pub fn as_str(&self) -> &'static str {
         match self {
             Role::Student => "student",
@@ -61,6 +68,7 @@ pub enum GlobalRole {
 }
 
 impl GlobalRole {
+    /// Parse a global role from its string representation.
     pub fn parse(raw: &str) -> Result<Self, RoleError> {
         match raw.to_lowercase().as_str() {
             "owner" => Ok(Self::Owner),
@@ -70,6 +78,7 @@ impl GlobalRole {
         }
     }
 
+    /// Return the canonical string representation.
     pub fn as_str(&self) -> &'static str {
         match self {
             GlobalRole::Owner => "owner",
@@ -80,40 +89,6 @@ impl GlobalRole {
 }
 
 impl std::fmt::Display for GlobalRole {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(self.as_str())
-    }
-}
-
-/// User account status.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum UserStatus {
-    PendingVerification,
-    Active,
-    Suspended,
-}
-
-impl UserStatus {
-    pub fn parse(raw: &str) -> Result<Self, RoleError> {
-        match raw.to_lowercase().as_str() {
-            "pending_verification" => Ok(Self::PendingVerification),
-            "active" => Ok(Self::Active),
-            "suspended" => Ok(Self::Suspended),
-            _ => Err(RoleError::Unknown),
-        }
-    }
-
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            UserStatus::PendingVerification => "pending_verification",
-            UserStatus::Active => "active",
-            UserStatus::Suspended => "suspended",
-        }
-    }
-}
-
-impl std::fmt::Display for UserStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(self.as_str())
     }
@@ -168,30 +143,6 @@ mod tests {
     fn global_role_as_str_and_display_match() {
         for role in [GlobalRole::Owner, GlobalRole::Admin, GlobalRole::User] {
             assert_eq!(role.as_str(), role.to_string());
-        }
-    }
-
-    #[test]
-    fn user_status_parse_accepts_known_values() {
-        assert_eq!(
-            UserStatus::parse("pending_verification").unwrap(),
-            UserStatus::PendingVerification
-        );
-        assert_eq!(UserStatus::parse("ACTIVE").unwrap(), UserStatus::Active);
-        assert_eq!(
-            UserStatus::parse("Suspended").unwrap(),
-            UserStatus::Suspended
-        );
-    }
-
-    #[test]
-    fn user_status_as_str_and_display_match() {
-        for status in [
-            UserStatus::PendingVerification,
-            UserStatus::Active,
-            UserStatus::Suspended,
-        ] {
-            assert_eq!(status.as_str(), status.to_string());
         }
     }
 }

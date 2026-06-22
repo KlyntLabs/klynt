@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use klynt_base::ctx::ExecutionContext;
 use klynt_base::ports::token::{TokenError, TokenKind, TokenStore};
-use klynt_common::util::UserId;
+use klynt_domain::UserId;
 use sqlx::PgPool;
 
 /// PostgreSQL implementation of [`TokenStore`].

@@ -1,6 +1,6 @@
 //! Email content templates.
 
-use klynt_common::util::Email;
+use klynt_domain::Email;
 
 /// Domain entity for email content.
 ///

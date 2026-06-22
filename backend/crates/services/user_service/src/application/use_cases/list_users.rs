@@ -1,7 +1,7 @@
 //! List users use case.
 
 use klynt_base::ctx::ExecutionContext;
-use klynt_common::domain::{PaginatedResponse, PaginationRequest};
+use klynt_domain::{PaginatedResponse, PaginationRequest};
 
 use crate::error::UserError;
 use crate::models::UserProfile;

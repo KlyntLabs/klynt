@@ -1,7 +1,7 @@
 //! Integration tests for auth service public interface.
 
-use klynt_common::contracts::auth::{LoginRequest, RegistrationRequest};
-use klynt_common::domain::UserStatus;
+use klynt_domain::contracts::auth::{LoginRequest, RegistrationRequest};
+use klynt_domain::UserStatus;
 
 mod support;
 
@@ -89,7 +89,7 @@ async fn login_fails_for_inactive_user() {
         "Str0ng!Pass#123",
         UserStatus::Pending,
     );
-    user_repo.insert("inactive@example.com", user);
+    user_repo.insert(user);
 
     let result = service
         .login(
@@ -111,7 +111,7 @@ async fn password_reset_flow() {
     let ctx = support::test_ctx();
 
     let user = support::test_user("ada@example.com", "OldPass#123", UserStatus::Active);
-    user_repo.insert("ada@example.com", user);
+    user_repo.insert(user);
 
     // Request reset
     service

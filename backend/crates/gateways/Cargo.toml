@@ -11,7 +11,7 @@ session_service = { path = "../services/session_service" }
 
 # === Phase 1 Foundation ===
 klynt_base = { path = "../klynt_base" }
-klynt_common = { path = "../shared/klynt_common" }
+klynt_domain = { path = "../shared/klynt_domain" }
 
 # === Storage and infrastructure adapters ===
 klynt_persistence = { path = "../infrastructure/klynt_persistence" }

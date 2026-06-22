@@ -6,10 +6,9 @@ use uuid::Uuid;
 use async_trait::async_trait;
 use klynt_base::ctx::ExecutionContext;
 use klynt_base::ports::audit::AuditLogger;
-use klynt_common::util::UserId;
+use klynt_domain::{DomainError, UserId};
 
 use crate::types::{AuditAction, AuditEvent, AuditEventRepository, ResourceType};
-use klynt_common::domain::DomainError;
 
 /// Audit logging service.
 ///

@@ -3,7 +3,7 @@ use argon2::{
     password_hash::{rand_core::OsRng, SaltString},
     Argon2, PasswordHash, PasswordHasher as Argon2PasswordHasherTrait, PasswordVerifier,
 };
-use klynt_common::domain::DomainError;
+use klynt_domain::DomainError;
 
 #[derive(Debug, Default, Clone)]
 pub struct Argon2PasswordHasher;

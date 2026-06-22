@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # structure and cargo can resolve the workspace dependency graph.
 COPY Cargo.toml Cargo.lock ./
 COPY crates/klynt_base/Cargo.toml crates/klynt_base/
-COPY crates/shared/klynt_common/Cargo.toml crates/shared/klynt_common/
+COPY crates/shared/klynt_domain/Cargo.toml crates/shared/klynt_domain/
 COPY crates/infrastructure/klynt_config/Cargo.toml crates/infrastructure/klynt_config/
 COPY crates/infrastructure/klynt_persistence/Cargo.toml crates/infrastructure/klynt_persistence/
 COPY crates/infrastructure/klynt_telemetry/Cargo.toml crates/infrastructure/klynt_telemetry/
@@ -27,7 +27,7 @@ COPY crates/klynt-server/Cargo.toml crates/klynt-server/
 # Create stub source files so cargo can build the dependency graph and cache deps
 RUN mkdir -p \
     crates/klynt_base/src \
-    crates/shared/klynt_common/src \
+    crates/shared/klynt_domain/src \
     crates/infrastructure/klynt_config/src \
     crates/infrastructure/klynt_persistence/src \
     crates/infrastructure/klynt_telemetry/src \
@@ -37,7 +37,7 @@ RUN mkdir -p \
     crates/klynt-server/src && \
     echo 'fn main() {}' > crates/klynt-server/src/main.rs && \
     echo '' > crates/klynt_base/src/lib.rs && \
-    echo '' > crates/shared/klynt_common/src/lib.rs && \
+    echo '' > crates/shared/klynt_domain/src/lib.rs && \
     echo '' > crates/infrastructure/klynt_config/src/lib.rs && \
     echo '' > crates/infrastructure/klynt_persistence/src/lib.rs && \
     echo '' > crates/infrastructure/klynt_telemetry/src/lib.rs && \

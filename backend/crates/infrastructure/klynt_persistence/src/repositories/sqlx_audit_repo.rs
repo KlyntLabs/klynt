@@ -3,7 +3,7 @@ use sqlx::PgPool;
 
 use crate::repositories::AuditEventRepository;
 use klynt_base::ctx::ExecutionContext;
-use klynt_common::domain::DomainError;
+use klynt_domain::DomainError;
 use klynt_telemetry::audit::types::AuditEvent;
 
 /// PostgreSQL implementation of audit event repository.

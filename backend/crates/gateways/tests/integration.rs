@@ -8,8 +8,7 @@ use axum::{
 };
 use chrono::Utc;
 use klynt_base::ctx::{ExecutionContext, RequestContext};
-use klynt_common::domain::{Email, UserRole, UserStatus};
-use klynt_common::util::UserId;
+use klynt_domain::{Email, User, UserId, UserRole, UserStatus};
 use tower::ServiceExt;
 
 mod support;
@@ -283,12 +282,12 @@ async fn authenticated_app() -> (axum::Router, UserId, String) {
     let token = session_service
         .create(
             &ExecutionContext::new(RequestContext::new()),
-            klynt_common::util::UserId(user_id.inner()),
+            UserId(user_id.inner()),
         )
         .await
         .unwrap();
 
-    user_repo.insert(klynt_common::domain::User {
+    user_repo.insert(User {
         id: user_id,
         email: Email::new("ada@example.com".to_string()),
         full_name: Some("Ada Lovelace".to_string()),

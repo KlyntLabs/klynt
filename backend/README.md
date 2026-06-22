@@ -9,7 +9,7 @@ backend/crates/
 ├── core/                   # Base abstractions
 │   └── klynt_base          # Foundation types and context
 ├── shared/                 # Shared types and utilities
-│   └── klynt_common        # Domain types, contracts, errors, utilities
+│   └── klynt_domain        # Domain types, contracts, errors
 ├── infrastructure/         # Shared infrastructure
 │   ├── klynt_persistence   # Repositories, storage ports, rate limiting, email, hashing
 │   ├── klynt_telemetry     # Tracing, audit logging, metrics, health-check ports

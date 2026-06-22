@@ -4,8 +4,7 @@ mod tests {
     use crate::ctx::ExecutionContext;
     use async_trait::async_trait;
     use chrono::Utc;
-    use klynt_common::domain::{Email, PaginationRequest, User, UserRole, UserStatus};
-    use klynt_common::util::UserId;
+    use klynt_domain::{Email, PaginationRequest, User, UserId, UserRole, UserStatus};
 
     #[test]
     fn test_user_repository_trait_exists() {

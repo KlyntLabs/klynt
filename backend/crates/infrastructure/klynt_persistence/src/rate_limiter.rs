@@ -4,8 +4,8 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use redis::aio::MultiplexedConnection;
 
-use klynt_common::domain::DomainError;
 use klynt_config::RateLimiterConfig;
+use klynt_domain::DomainError;
 
 use crate::ports::{RateLimitDecision, RateLimiter as RateLimiterPort};
 

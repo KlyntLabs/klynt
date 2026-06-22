@@ -1,7 +1,7 @@
 //! Password reset use cases - request and complete reset.
 
 use klynt_base::ctx::ExecutionContext;
-use klynt_common::domain::{DomainError, Email};
+use klynt_domain::{DomainError, Email};
 
 use crate::domain::{Token, TokenKind};
 use crate::error::AuthError;

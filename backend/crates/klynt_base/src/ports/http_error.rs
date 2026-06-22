@@ -7,7 +7,7 @@ use axum::http::StatusCode;
 
 /// Maps an error to an HTTP response classification.
 ///
-/// Implementations are provided for `klynt_common::domain::DomainError`
+/// Implementations are provided for `klynt_domain::DomainError`
 /// and expected to be provided by service crates for their own error types.
 /// The gateway uses these classifications when building responses.
 pub trait HttpError {
@@ -22,7 +22,7 @@ pub trait HttpError {
     }
 }
 
-impl HttpError for klynt_common::domain::DomainError {
+impl HttpError for klynt_domain::DomainError {
     fn status_code(&self) -> StatusCode {
         match self {
             Self::InvalidInput(_)
@@ -66,7 +66,7 @@ impl HttpError for klynt_common::domain::DomainError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use klynt_common::domain::DomainError;
+    use klynt_domain::DomainError;
 
     #[test]
     fn domain_error_status_codes() {

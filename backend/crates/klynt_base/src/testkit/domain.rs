@@ -2,8 +2,7 @@
 
 use chrono::Utc;
 
-use klynt_common::domain::{Email, User, UserRole, UserStatus};
-use klynt_common::util::UserId;
+use klynt_domain::{Email, User, UserId, UserRole, UserStatus};
 
 /// Create a sample user for tests with full control over fields.
 pub fn sample_user(email: &str, full_name: &str, password_hash: &str, status: UserStatus) -> User {

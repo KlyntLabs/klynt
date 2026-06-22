@@ -6,8 +6,7 @@ use axum::{
     Json,
 };
 
-use klynt_common::domain::PaginationRequest;
-use klynt_common::util::UserId;
+use klynt_domain::{PaginationRequest, UserId};
 
 use crate::middleware::auth::AuthContext;
 use crate::response::SuccessResponse;

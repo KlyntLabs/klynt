@@ -8,8 +8,7 @@ use chrono::{DateTime, Utc};
 use klynt_base::ctx::ExecutionContext;
 use klynt_base::ports::repository::{RepositoryError, UserRepository};
 use klynt_base::ports::{Clock, PasswordHashError, PasswordHasher};
-use klynt_common::domain::{Email, PaginationRequest, User};
-use klynt_common::util::UserId;
+use klynt_domain::{Email, PaginationRequest, User, UserId};
 use user_service::{
     application::ports::AuditLogger as UserAuditLogger, Dependencies as UserDependencies,
     UserConfig, UserService,

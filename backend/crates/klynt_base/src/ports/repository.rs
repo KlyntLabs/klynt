@@ -6,8 +6,7 @@
 
 use crate::ctx::ExecutionContext;
 use async_trait::async_trait;
-use klynt_common::domain::{Email, PaginationRequest, User};
-use klynt_common::util::UserId;
+use klynt_domain::{Email, PaginationRequest, User, UserId};
 
 /// Canonical User repository interface.
 ///

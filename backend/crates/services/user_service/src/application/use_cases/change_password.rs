@@ -1,7 +1,7 @@
 //! Change password use case.
 
 use klynt_base::ctx::ExecutionContext;
-use klynt_common::util::UserId;
+use klynt_domain::UserId;
 
 use crate::error::UserError;
 use crate::UserService;

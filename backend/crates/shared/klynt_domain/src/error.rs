@@ -2,9 +2,9 @@
 
 use thiserror::Error;
 
-use crate::util::role::Role;
+use crate::role::{Role, RoleError};
 
-/// Base error type for domain operations
+/// Base error type for domain operations.
 #[derive(Error, Debug)]
 pub enum DomainError {
     #[error("Entity not found: {0}")]
@@ -54,17 +54,17 @@ pub enum DomainError {
 }
 
 impl DomainError {
-    /// Create not found error
+    /// Create a not-found error.
     pub fn not_found(entity: &str) -> Self {
         Self::NotFound(entity.to_string())
     }
 
-    /// Create conflict error
+    /// Create a conflict error.
     pub fn conflict(msg: &str) -> Self {
         Self::Conflict(msg.to_string())
     }
 
-    /// Create validation error
+    /// Create a validation error.
     pub fn validation(msg: &str) -> Self {
         Self::Validation(msg.to_string())
     }
@@ -83,7 +83,7 @@ impl DomainError {
     }
 }
 
-/// Result type for domain operations
+/// Result type for domain operations.
 pub type DomainResult<T> = Result<T, DomainError>;
 
 /// Email validation error.
@@ -102,13 +102,6 @@ pub enum NameError {
     Empty,
     #[error("name is too long")]
     TooLong,
-}
-
-/// Role parsing error.
-#[derive(Debug, Error, PartialEq)]
-pub enum RoleError {
-    #[error("unknown role")]
-    Unknown,
 }
 
 /// Token validation error.

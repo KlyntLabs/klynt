@@ -1,7 +1,9 @@
 //! User-related contracts.
 
-use crate::domain::User;
-use crate::util::id::UserId;
+use crate::user::User;
+use crate::user::UserId;
+use crate::user::UserRole;
+use crate::user::UserStatus;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use validator::Validate;
@@ -12,8 +14,8 @@ pub struct UserProfile {
     pub id: UserId,
     pub email: String,
     pub full_name: Option<String>,
-    pub role: crate::domain::UserRole,
-    pub status: crate::domain::UserStatus,
+    pub role: UserRole,
+    pub status: UserStatus,
     pub created_at: DateTime<Utc>,
 }
 

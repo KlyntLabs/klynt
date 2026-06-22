@@ -26,4 +26,4 @@ pub use repository::*;
 pub use token_generator::*;
 
 /// Unified error type used by storage ports and operations.
-pub type Error = klynt_common::domain::DomainError;
+pub type Error = klynt_domain::DomainError;

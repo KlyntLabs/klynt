@@ -3,7 +3,7 @@
 use axum::http::StatusCode;
 
 use klynt_base::ports::{HttpError, PasswordHashError, RepositoryError};
-use klynt_common::domain::DomainError;
+use klynt_domain::DomainError;
 
 /// User service-specific error type.
 #[derive(thiserror::Error, Debug)]
