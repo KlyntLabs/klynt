@@ -20,11 +20,6 @@ impl SessionToken {
     pub fn new() -> Self {
         Self(Uuid::new_v4())
     }
-
-    /// Return the token as a string.
-    pub fn as_str(&self) -> String {
-        self.0.to_string()
-    }
 }
 
 impl Default for SessionToken {

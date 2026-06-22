@@ -26,7 +26,7 @@ mod tests {
     #[test]
     fn session_token_as_str_round_trips() {
         let token = SessionToken::new();
-        let parsed = Uuid::parse_str(&token.as_str()).unwrap();
+        let parsed = Uuid::parse_str(&token.to_string()).unwrap();
         assert_eq!(parsed, token.0);
     }
 
