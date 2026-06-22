@@ -1,0 +1,16 @@
+[package]
+name = "session_service"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+klynt_base = { path = "../../../crates/klynt_base" }
+klynt_common = { path = "../../shared/klynt_common" }
+async-trait.workspace = true
+chrono.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+klynt_base = { path = "../../../crates/klynt_base", features = ["testkit"] }

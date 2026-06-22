@@ -8,6 +8,7 @@ members = [
     "crates/infrastructure/klynt_config",
     "crates/services/auth_service",
     "crates/services/user_service",
+    "crates/services/session_service",
     "crates/gateways",
     "crates/klynt-server",
 ]
@@ -84,6 +85,7 @@ klynt_config = { path = "crates/infrastructure/klynt_config" }
 # Services
 auth_service = { path = "crates/services/auth_service" }
 user_service = { path = "crates/services/user_service" }
+session_service = { path = "crates/services/session_service" }
 
 # Gateway
 gateways = { path = "crates/gateways" }
