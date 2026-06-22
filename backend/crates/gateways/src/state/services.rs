@@ -3,6 +3,7 @@
 use std::sync::Arc;
 
 use auth_service::{AuthConfig, AuthService};
+use ipnet::IpNet;
 use persistence::ports::RateLimiter;
 use persistence::rate_limiter::{NoOpRateLimiter, RedisRateLimiter};
 use persistence::repositories::cached_session_store::CachedSessionStore;
@@ -21,8 +22,9 @@ pub struct Services {
     pub session: Arc<SessionService>,
     /// Rate limiter shared across auth endpoints.
     pub rate_limiter: Arc<dyn RateLimiter>,
-    /// Trusted proxy CIDRs or IPs used to resolve the real client IP.
-    pub trusted_proxies: Vec<String>,
+    /// Trusted proxy networks used to resolve the real client IP from
+    /// `X-Forwarded-For`. Parsed once at startup.
+    pub trusted_proxies: Vec<IpNet>,
 }
 
 impl Services {
@@ -52,13 +54,15 @@ impl Services {
         let session_service = Self::create_session_service(session_store);
         let user_service = Self::create_user_service(config, pool).await?;
         let rate_limiter = Self::create_rate_limiter(config).await?;
+        let trusted_proxies = parse_trusted_proxies(&config.trusted_proxies)
+            .map_err(crate::GatewayError::configuration)?;
 
         Ok(Self {
             auth: Arc::new(auth_service),
             user: Arc::new(user_service),
             session: Arc::new(session_service),
             rate_limiter,
-            trusted_proxies: config.trusted_proxies.clone(),
+            trusted_proxies,
         })
     }
 
@@ -125,6 +129,10 @@ impl Services {
         }
 
         let Some(redis_url) = &config.redis_url else {
+            tracing::warn!(
+                "rate limiting is enabled but no Redis URL is configured; \
+                 using no-op rate limiter"
+            );
             return Ok(Arc::new(NoOpRateLimiter));
         };
 
@@ -133,4 +141,19 @@ impl Services {
             .map_err(|e| crate::GatewayError::configuration(format!("Rate limiter: {e}")))?;
         Ok(Arc::new(limiter))
     }
+}
+
+fn parse_trusted_proxies(proxies: &[String]) -> Result<Vec<IpNet>, String> {
+    proxies
+        .iter()
+        .map(|entry| {
+            if let Ok(net) = entry.parse::<IpNet>() {
+                Ok(net)
+            } else if let Ok(ip) = entry.parse::<std::net::IpAddr>() {
+                Ok(IpNet::from(ip))
+            } else {
+                Err(format!("'{}' is not a valid IP or CIDR", entry))
+            }
+        })
+        .collect()
 }

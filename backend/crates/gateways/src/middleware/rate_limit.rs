@@ -63,15 +63,14 @@ async fn check(
 ///
 /// Falls back to the peer address when the peer is not trusted, the header is
 /// missing/malformed, or every address in the chain is trusted.
-fn client_ip(trusted_proxies: &[String], peer: SocketAddr, headers: &HeaderMap) -> IpAddr {
+fn client_ip(trusted_proxies: &[IpNet], peer: SocketAddr, headers: &HeaderMap) -> IpAddr {
     let peer_ip = peer.ip();
 
     if trusted_proxies.is_empty() {
         return peer_ip;
     }
 
-    let trusted_nets = parse_trusted_nets(trusted_proxies);
-    if !is_trusted_ip(&peer_ip, &trusted_nets) {
+    if !is_trusted_ip(&peer_ip, trusted_proxies) {
         return peer_ip;
     }
 
@@ -79,7 +78,7 @@ fn client_ip(trusted_proxies: &[String], peer: SocketAddr, headers: &HeaderMap) 
         if let Ok(value) = value.to_str() {
             for part in value.split(',').map(str::trim).rev() {
                 if let Ok(ip) = part.parse::<IpAddr>() {
-                    if !is_trusted_ip(&ip, &trusted_nets) {
+                    if !is_trusted_ip(&ip, trusted_proxies) {
                         return ip;
                     }
                 }
@@ -88,21 +87,6 @@ fn client_ip(trusted_proxies: &[String], peer: SocketAddr, headers: &HeaderMap) 
     }
 
     peer_ip
-}
-
-fn parse_trusted_nets(trusted_proxies: &[String]) -> Vec<IpNet> {
-    trusted_proxies
-        .iter()
-        .filter_map(|entry| {
-            if let Ok(net) = entry.parse::<IpNet>() {
-                return Some(net);
-            }
-            if let Ok(ip) = entry.parse::<IpAddr>() {
-                return Some(IpNet::from(ip));
-            }
-            None
-        })
-        .collect()
 }
 
 fn is_trusted_ip(ip: &IpAddr, trusted_nets: &[IpNet]) -> bool {
@@ -117,6 +101,11 @@ mod tests {
         let mut headers = HeaderMap::new();
         headers.insert("x-forwarded-for", value.parse().unwrap());
         headers
+    }
+
+    fn net(s: &str) -> IpNet {
+        s.parse::<IpNet>()
+            .unwrap_or_else(|_| IpNet::from(s.parse::<IpAddr>().unwrap()))
     }
 
     #[test]
@@ -134,7 +123,7 @@ mod tests {
         let peer = SocketAddr::from(([192, 168, 1, 1], 1234));
         let headers = header_map_with_xff("10.0.0.5");
 
-        let ip = client_ip(&["10.0.0.0/8".to_string()], peer, &headers);
+        let ip = client_ip(&[net("10.0.0.0/8")], peer, &headers);
 
         assert_eq!(ip, IpAddr::from([192, 168, 1, 1]));
     }
@@ -144,7 +133,7 @@ mod tests {
         let peer = SocketAddr::from(([127, 0, 0, 1], 1234));
         let headers = header_map_with_xff("203.0.113.42");
 
-        let ip = client_ip(&["127.0.0.1".to_string()], peer, &headers);
+        let ip = client_ip(&[net("127.0.0.1")], peer, &headers);
 
         assert_eq!(ip, IpAddr::from([203, 0, 113, 42]));
     }
@@ -154,7 +143,7 @@ mod tests {
         let peer = SocketAddr::from(([10, 0, 0, 1], 1234));
         let headers = header_map_with_xff("203.0.113.42, 10.0.0.2, 10.0.0.3");
 
-        let ip = client_ip(&["10.0.0.0/8".to_string()], peer, &headers);
+        let ip = client_ip(&[net("10.0.0.0/8")], peer, &headers);
 
         assert_eq!(ip, IpAddr::from([203, 0, 113, 42]));
     }
@@ -166,7 +155,7 @@ mod tests {
         // the IP closest to the server (after skipping trusted proxies).
         let headers = header_map_with_xff("1.2.3.4, 203.0.113.42, 10.0.0.2");
 
-        let ip = client_ip(&["10.0.0.0/8".to_string()], peer, &headers);
+        let ip = client_ip(&[net("10.0.0.0/8")], peer, &headers);
 
         assert_eq!(ip, IpAddr::from([203, 0, 113, 42]));
     }
@@ -176,7 +165,7 @@ mod tests {
         let peer = SocketAddr::from(([127, 0, 0, 1], 1234));
         let headers = header_map_with_xff("not-an-ip");
 
-        let ip = client_ip(&["127.0.0.1".to_string()], peer, &headers);
+        let ip = client_ip(&[net("127.0.0.1")], peer, &headers);
 
         assert_eq!(ip, IpAddr::from([127, 0, 0, 1]));
     }
@@ -186,7 +175,7 @@ mod tests {
         let peer = SocketAddr::from(("2001:db8:ff::2".parse::<IpAddr>().unwrap(), 1234));
         let headers = header_map_with_xff("2001:db8::1, 2001:db8:ff::3");
 
-        let ip = client_ip(&["2001:db8:ff::/64".to_string()], peer, &headers);
+        let ip = client_ip(&[net("2001:db8:ff::/64")], peer, &headers);
 
         assert_eq!(ip, "2001:db8::1".parse::<IpAddr>().unwrap());
     }

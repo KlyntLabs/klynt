@@ -128,7 +128,9 @@ async fn register_rate_limit_returns_429_with_retry_after() {
 async fn login_rate_limit_uses_x_forwarded_for_behind_trusted_proxy() {
     let services = support::build_test_services_with_rate_limiter_and_proxies(
         Arc::new(support::FakeRateLimiter::new(1)),
-        vec!["127.0.0.1".to_string()],
+        vec![ipnet::IpNet::from(
+            "127.0.0.1".parse::<std::net::IpAddr>().unwrap(),
+        )],
     );
     let config = support::test_config();
     let app = gateways::create_router(config, services);

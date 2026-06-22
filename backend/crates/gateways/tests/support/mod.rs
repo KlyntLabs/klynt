@@ -7,6 +7,7 @@ use std::sync::Arc;
 
 use base::ports::{Clock, PasswordHashError, PasswordHasher};
 use chrono::{DateTime, Utc};
+use ipnet::IpNet;
 use persistence::ports::RateLimiter;
 use persistence::rate_limiter::NoOpRateLimiter;
 
@@ -96,7 +97,7 @@ pub fn build_test_services_with_rate_limiter(
 /// Build test gateway services with a custom rate limiter and trusted proxies.
 pub fn build_test_services_with_rate_limiter_and_proxies(
     rate_limiter: Arc<dyn RateLimiter>,
-    trusted_proxies: Vec<String>,
+    trusted_proxies: Vec<IpNet>,
 ) -> gateways::state::Services {
     let (mut services, _, _) = build_test_services_with_fakes();
     services.rate_limiter = rate_limiter;
