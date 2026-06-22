@@ -1,6 +1,6 @@
-//! Health check endpoint.
+//! Health check endpoints.
 
-use axum::{extract::State, response::Json};
+use axum::{extract::State, http::StatusCode, response::Json};
 
 use crate::state::Services;
 
@@ -15,4 +15,20 @@ pub async fn health_check(State(_services): State<Services>) -> Json<serde_json:
             "auth": "ok"
         }
     }))
+}
+
+/// GET /health/ready
+///
+/// Readiness probe. Returns 200 when all dependencies are healthy, otherwise
+/// 503 Service Unavailable.
+pub async fn ready_check(
+    State(services): State<Services>,
+) -> (StatusCode, Json<observability::health::HealthReport>) {
+    let report = services.health_reporter.ready().await;
+    let status = if report.healthy {
+        StatusCode::OK
+    } else {
+        StatusCode::SERVICE_UNAVAILABLE
+    };
+    (status, Json(report))
 }

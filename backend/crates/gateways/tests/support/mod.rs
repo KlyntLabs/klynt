@@ -74,6 +74,8 @@ pub fn build_test_services_with_fakes() -> (
         session: session_service.clone(),
         rate_limiter: Arc::new(NoOpRateLimiter),
         trusted_proxies: Arc::new(Vec::new()),
+        health_reporter: Arc::new(observability::health::AlwaysReadyHealthReporter::default()),
+        metrics_handle: observability::metrics::install_recorder(),
     };
 
     (services, session_service, user_repo)

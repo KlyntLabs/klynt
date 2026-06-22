@@ -77,6 +77,8 @@ redis = { version = "0.27", features = ["tokio-comp"] }
 
 # Metrics
 prometheus = { version = "0.13", default-features = false }
+metrics = "0.24"
+metrics-exporter-prometheus = "0.16"
 
 # Internal crates
 base = { path = "crates/base" }

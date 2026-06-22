@@ -44,6 +44,74 @@ async fn health_endpoint_returns_ok() {
 }
 
 #[tokio::test]
+async fn health_ready_endpoint_returns_ok_when_healthy() {
+    let response = app()
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/health/ready")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(json["healthy"], true);
+    assert!(json["components"].is_array());
+    assert!(json["checked_at"].is_string());
+}
+
+#[tokio::test]
+async fn metrics_endpoint_returns_prometheus_exposition() {
+    // Prime the metrics endpoint with at least one request.
+    let _ = app()
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/health")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    let response = app()
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/metrics")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(
+        response
+            .headers()
+            .get("content-type")
+            .unwrap()
+            .to_str()
+            .unwrap(),
+        "text/plain; version=0.0.4"
+    );
+
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let text = String::from_utf8(body.to_vec()).unwrap();
+    assert!(text.contains("http_requests_total"));
+    assert!(text.contains("http_request_duration_seconds"));
+}
+
+#[tokio::test]
 async fn openapi_endpoint_returns_ok_with_json_content_type() {
     let response = app()
         .oneshot(

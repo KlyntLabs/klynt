@@ -29,3 +29,11 @@ uuid = { workspace = true }
 
 # Time
 chrono = { workspace = true }
+
+# Metrics
+metrics = { workspace = true }
+metrics-exporter-prometheus = { workspace = true }
+
+# Database / cache (used by concrete health checks)
+sqlx = { workspace = true }
+redis = { workspace = true }

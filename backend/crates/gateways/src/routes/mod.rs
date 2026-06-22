@@ -2,6 +2,7 @@
 
 pub mod auth;
 pub mod health;
+pub mod metrics;
 pub mod openapi;
 pub mod users;
 
@@ -15,8 +16,11 @@ pub fn create_router(config: Config, services: Services) -> Router {
     let allowed_origins = config.allowed_origins.clone();
 
     Router::new()
-        // Health check (no auth required)
+        // Health checks (no auth required)
         .route("/health", axum::routing::get(health::health_check))
+        .route("/health/ready", axum::routing::get(health::ready_check))
+        // Prometheus metrics (no auth required)
+        .route("/metrics", axum::routing::get(metrics::metrics))
         // OpenAPI spec
         .route("/openapi.json", axum::routing::get(openapi::openapi_spec))
         // API v1 routes
@@ -35,6 +39,8 @@ pub fn create_router(config: Config, services: Services) -> Router {
         .layer(axum::middleware::from_fn(
             crate::middleware::error_handler::error_handler_middleware,
         ))
+        // Request metrics (outermost layer so it observes final status)
+        .layer(axum::middleware::from_fn(crate::middleware::metrics::track))
         .with_state(services)
 }
 

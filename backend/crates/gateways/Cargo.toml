@@ -47,6 +47,12 @@ chrono = { workspace = true }
 # === IDs ===
 uuid = { workspace = true }
 
+# === Metrics ===
+metrics = { workspace = true }
+
+# === Cache (used by Redis health check wiring) ===
+redis = { workspace = true }
+
 # === Networking ===
 ipnet = { workspace = true }
 
