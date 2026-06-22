@@ -29,8 +29,7 @@ where
         ctx: &ExecutionContext,
         email: &Email,
     ) -> Result<Option<User>, RepositoryError> {
-        self.inner
-            .find_by_email(ctx, email)
+        klynt_persistence::repositories::UserRepository::find_by_email(&self.inner, ctx, email)
             .await
             .map_err(map_error)
     }
@@ -40,7 +39,9 @@ where
         ctx: &ExecutionContext,
         user_id: UserId,
     ) -> Result<Option<User>, RepositoryError> {
-        self.inner.find_by_id(ctx, user_id).await.map_err(map_error)
+        klynt_persistence::repositories::UserRepository::find_by_id(&self.inner, ctx, user_id)
+            .await
+            .map_err(map_error)
     }
 
     async fn create_pending_user(
@@ -91,10 +92,14 @@ where
     ) -> Result<(), RepositoryError> {
         let hashed = klynt_persistence::ports::HashedPassword::new(&password_hash);
 
-        self.inner
-            .update_password(ctx, user_id, &hashed)
-            .await
-            .map_err(map_error)
+        klynt_persistence::repositories::UserRepository::update_password(
+            &self.inner,
+            ctx,
+            user_id,
+            &hashed,
+        )
+        .await
+        .map_err(map_error)
     }
 
     async fn update(&self, _ctx: &ExecutionContext, _user: User) -> Result<User, RepositoryError> {

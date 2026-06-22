@@ -27,8 +27,7 @@ impl UserRepository for UserRepositoryAdapter {
         ctx: &ExecutionContext,
         email: &Email,
     ) -> Result<Option<User>, RepositoryError> {
-        self.inner
-            .find_by_email(ctx, email)
+        PersistenceUserRepository::find_by_email(&self.inner, ctx, email)
             .await
             .map_err(map_error)
     }
@@ -94,8 +93,7 @@ impl UserRepository for UserRepositoryAdapter {
         password_hash: String,
     ) -> Result<(), RepositoryError> {
         let hashed = klynt_persistence::ports::HashedPassword::new(&password_hash);
-        self.inner
-            .update_password(ctx, user_id, &hashed)
+        PersistenceUserRepository::update_password(&self.inner, ctx, user_id, &hashed)
             .await
             .map_err(map_error)
     }

@@ -4,7 +4,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::ports::HashedPassword;
-use crate::repositories::{CreateResult, UserRepository};
+use crate::repositories::{CreateResult, UserRepository as PersistenceUserRepository};
 use klynt_base::ctx::ExecutionContext;
 use klynt_common::domain::{DomainError, User, UserRole, UserStatus};
 use klynt_common::util::{Email, Role as DbRole, UserId, UserStatus as DbUserStatus};
@@ -25,7 +25,7 @@ impl PgUserRepository {
 }
 
 #[derive(sqlx::FromRow)]
-struct UserRow {
+pub(crate) struct UserRow {
     id: Uuid,
     email: String,
     name: String,
@@ -38,7 +38,7 @@ struct UserRow {
 }
 
 impl UserRow {
-    fn into_user(self) -> Result<User, DomainError> {
+    pub(crate) fn into_user(self) -> Result<User, DomainError> {
         let role = DbRole::parse(&self.role)
             .map_err(|e| DomainError::internal_msg(format!("invalid role in database: {e:?}")))?;
         let status = DbUserStatus::parse(&self.status)
@@ -62,7 +62,7 @@ impl UserRow {
     }
 }
 
-fn role_to_db(role: UserRole) -> DbRole {
+pub(crate) fn role_to_db(role: UserRole) -> DbRole {
     match role {
         UserRole::Student => DbRole::Student,
         UserRole::Instructor => DbRole::Teacher,
@@ -80,7 +80,7 @@ fn role_from_db(role: DbRole) -> UserRole {
     }
 }
 
-fn status_to_db(status: UserStatus) -> DbUserStatus {
+pub(crate) fn status_to_db(status: UserStatus) -> DbUserStatus {
     match status {
         UserStatus::Active => DbUserStatus::Active,
         UserStatus::Inactive | UserStatus::Suspended => DbUserStatus::Suspended,
@@ -97,7 +97,7 @@ fn status_from_db(status: DbUserStatus) -> UserStatus {
 }
 
 #[async_trait]
-impl UserRepository for PgUserRepository {
+impl PersistenceUserRepository for PgUserRepository {
     async fn create_if_not_exists(
         &self,
         _ctx: &ExecutionContext,
@@ -136,8 +136,7 @@ impl UserRepository for PgUserRepository {
             return Ok(CreateResult::Created);
         }
 
-        let existing = self
-            .find_by_email(_ctx, email)
+        let existing = <Self as PersistenceUserRepository>::find_by_email(self, _ctx, email)
             .await?
             .ok_or_else(|| DomainError::internal_msg("conflict user disappeared"))?;
         Ok(CreateResult::AlreadyExists(existing))
@@ -239,6 +238,8 @@ impl UserRepository for PgUserRepository {
         Ok(())
     }
 }
+
+mod canonical;
 
 /// Extended user repository operations used by the user_service.
 impl PgUserRepository {
