@@ -761,6 +761,7 @@ dependencies = [
  "domain",
  "observability",
  "persistence",
+ "redis",
  "serde",
  "serde_json",
  "session_service",

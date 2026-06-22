@@ -3,6 +3,7 @@
 use std::sync::Arc;
 
 use auth_service::{AuthConfig, AuthService};
+use persistence::repositories::cached_session_store::CachedSessionStore;
 use persistence::repositories::session::PgSessionStore;
 use session_service::{SessionConfig, SessionService};
 use user_service::{UserConfig, UserService};
@@ -67,17 +68,32 @@ impl Services {
     }
 
     async fn create_session_service(
-        _config: &Config,
+        config: &Config,
         pool: sqlx::PgPool,
     ) -> Result<SessionService, crate::GatewayError> {
-        let session_store: Arc<dyn base::ports::session::SessionStore> =
-            Arc::new(PgSessionStore::new(pool));
+        let postgres = PgSessionStore::new(pool);
+
+        let store: Arc<dyn base::ports::session::SessionStore> = if let Some(redis_url) =
+            &config.redis_url
+        {
+            let client = redis::Client::open(redis_url.as_str())
+                .map_err(|e| crate::GatewayError::configuration(format!("Redis client: {e}")))?;
+            let conn = client
+                .get_multiplexed_async_connection()
+                .await
+                .map_err(|e| {
+                    crate::GatewayError::configuration(format!("Redis connection: {e}"))
+                })?;
+            Arc::new(CachedSessionStore::new(postgres, conn))
+        } else {
+            Arc::new(postgres)
+        };
 
         Ok(SessionService::new(
             SessionConfig {
                 session_duration_secs: 86400,
             },
-            session_store,
+            store,
         ))
     }
 
