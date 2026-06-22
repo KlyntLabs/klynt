@@ -5,6 +5,9 @@
 pub mod config;
 pub mod error;
 
+#[cfg(test)]
+mod tests;
+
 pub use config::SessionConfig;
 pub use error::{SessionError, SessionResult};
 
