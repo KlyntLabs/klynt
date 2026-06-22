@@ -331,6 +331,7 @@ name = "config"
 version = "0.1.0"
 dependencies = [
  "config 0.15.24",
+ "http",
  "ipnet",
  "serde",
  "thiserror 2.0.18",

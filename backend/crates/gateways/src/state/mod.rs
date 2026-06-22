@@ -70,7 +70,7 @@ fn default_log_level() -> String {
 }
 
 fn default_csp_directive() -> String {
-    "default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'".to_string()
+    config::DEFAULT_CONTENT_SECURITY_POLICY.to_string()
 }
 
 impl Default for Config {

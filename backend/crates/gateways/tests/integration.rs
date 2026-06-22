@@ -6,8 +6,8 @@ use axum::{
 };
 use base::ctx::{ExecutionContext, RequestContext};
 use chrono::Utc;
+use config::DEFAULT_CONTENT_SECURITY_POLICY;
 use domain::{Email, User, UserId, UserRole, UserStatus};
-use gateways::middleware::security_headers::DEFAULT_CONTENT_SECURITY_POLICY;
 use tower::ServiceExt;
 
 mod support;

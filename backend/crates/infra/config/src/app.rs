@@ -1,6 +1,13 @@
+use http::HeaderValue;
 use serde::Deserialize;
 
 use super::{ApiConfig, ConfigError, RateLimiterConfig, SessionConfig, Validated};
+
+/// Default Content-Security-Policy directive.
+///
+/// This is the canonical default used by the config loader and the gateway
+/// security headers middleware. Keep it in sync with `.env.example`.
+pub const DEFAULT_CONTENT_SECURITY_POLICY: &str = "default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'";
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct AppConfig {
@@ -27,7 +34,7 @@ fn default_cookie_domain() -> String {
 }
 
 fn default_csp_directive() -> String {
-    "default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'".to_string()
+    DEFAULT_CONTENT_SECURITY_POLICY.to_string()
 }
 
 impl Validated for AppConfig {
@@ -35,6 +42,13 @@ impl Validated for AppConfig {
         self.api.validated()?;
         self.rate_limiter.validated()?;
         self.session.validated()?;
+
+        HeaderValue::from_str(&self.csp_directive).map_err(|e| {
+            ConfigError::InvalidCspDirective(format!(
+                "csp_directive is not a valid HTTP header value: {e}"
+            ))
+        })?;
+
         Ok(())
     }
 }
@@ -86,5 +100,30 @@ mod tests {
             csp_directive: default_csp_directive(),
         };
         assert!(config.validated().is_err());
+    }
+
+    #[test]
+    fn invalid_csp_directive_is_rejected() {
+        let mut config = AppConfig {
+            api: ApiConfig::default(),
+            rate_limiter: RateLimiterConfig::default(),
+            session: SessionConfig::default(),
+            log_level: "info".to_string(),
+            hsts_enabled: false,
+            database_url: Some("postgresql://localhost/db".to_string()),
+            redis_url: Some("redis://localhost".to_string()),
+            cookie_domain: ".klynt.edu".to_string(),
+            cookie_secure: false,
+            csp_report_only: false,
+            csp_directive: "\n".to_string(),
+        };
+        assert!(matches!(
+            config.validated(),
+            Err(ConfigError::InvalidCspDirective(_))
+        ));
+
+        // Should validate after fixing the directive.
+        config.csp_directive = default_csp_directive();
+        assert!(config.validated().is_ok());
     }
 }

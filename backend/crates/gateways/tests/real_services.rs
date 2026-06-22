@@ -3,7 +3,8 @@
 //! These tests require Postgres and Redis running locally. The pre-push hook sets
 //! the standard test URLs; for local runs use docker compose from the repo root.
 
-use gateways::{middleware::security_headers::DEFAULT_CONTENT_SECURITY_POLICY, Config, Services};
+use config::DEFAULT_CONTENT_SECURITY_POLICY;
+use gateways::{Config, Services};
 
 fn database_url() -> String {
     std::env::var("DATABASE_URL")

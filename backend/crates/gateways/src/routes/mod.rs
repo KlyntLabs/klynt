@@ -6,7 +6,7 @@ pub mod metrics;
 pub mod openapi;
 pub mod users;
 
-use axum::{middleware, Router};
+use axum::{http::HeaderValue, middleware, Router};
 use tower_cookies::CookieManagerLayer;
 
 use crate::state::{Config, Services};
@@ -15,7 +15,8 @@ use crate::state::{Config, Services};
 pub fn create_router(config: Config, services: Services) -> Router {
     let hsts_enabled = config.hsts_enabled;
     let csp_report_only = config.csp_report_only;
-    let csp_directive = config.csp_directive.clone();
+    let csp_directive = HeaderValue::from_str(&config.csp_directive)
+        .expect("CSP directive should have been validated at config load time");
     let allowed_origins = config.allowed_origins.clone();
 
     Router::new()

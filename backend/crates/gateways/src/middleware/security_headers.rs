@@ -2,9 +2,6 @@
 
 use axum::{extract::Request, http::HeaderValue, middleware::Next, response::Response};
 
-/// Default Content-Security-Policy directive.
-pub const DEFAULT_CONTENT_SECURITY_POLICY: &str = "default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'";
-
 /// Standard security headers applied to every response.
 ///
 /// When `hsts_enabled` is `true`, the `Strict-Transport-Security` header is
@@ -14,10 +11,13 @@ pub const DEFAULT_CONTENT_SECURITY_POLICY: &str = "default-src 'self'; script-sr
 /// `csp_report_only` controls whether the CSP is enforced or delivered as
 /// `Content-Security-Policy-Report-Only`, which is useful for safely rolling
 /// out a new policy without breaking the frontend.
+///
+/// The `csp_directive` value is expected to have been validated at config load
+/// time, so no per-request parsing is performed here.
 pub async fn security_headers(
     hsts_enabled: bool,
     csp_report_only: bool,
-    csp_directive: String,
+    csp_directive: HeaderValue,
     req: Request,
     next: Next,
 ) -> Response {
@@ -38,14 +38,12 @@ pub async fn security_headers(
         HeaderValue::from_static("geolocation=(), microphone=(), camera=()"),
     );
 
-    let csp_value = HeaderValue::from_str(&csp_directive)
-        .expect("CSP directive should be a valid HTTP header value");
     let csp_header_name = if csp_report_only {
         "Content-Security-Policy-Report-Only"
     } else {
         "Content-Security-Policy"
     };
-    headers.insert(csp_header_name, csp_value);
+    headers.insert(csp_header_name, csp_directive);
 
     if hsts_enabled {
         headers.insert(
@@ -66,6 +64,10 @@ mod tests {
 
     use super::*;
 
+    fn default_csp() -> HeaderValue {
+        HeaderValue::from_static(config::DEFAULT_CONTENT_SECURITY_POLICY)
+    }
+
     async fn handler() -> impl IntoResponse {
         (StatusCode::OK, "ok")
     }
@@ -75,13 +77,7 @@ mod tests {
         let app = Router::new()
             .route("/", get(handler))
             .layer(middleware::from_fn(move |req, next| {
-                security_headers(
-                    false,
-                    false,
-                    DEFAULT_CONTENT_SECURITY_POLICY.to_string(),
-                    req,
-                    next,
-                )
+                security_headers(false, false, default_csp(), req, next)
             }));
 
         let response = app
@@ -112,7 +108,7 @@ mod tests {
                 .unwrap()
                 .to_str()
                 .unwrap(),
-            DEFAULT_CONTENT_SECURITY_POLICY
+            config::DEFAULT_CONTENT_SECURITY_POLICY
         );
         assert!(response
             .headers()
@@ -125,13 +121,7 @@ mod tests {
         let app = Router::new()
             .route("/", get(handler))
             .layer(middleware::from_fn(move |req, next| {
-                security_headers(
-                    true,
-                    false,
-                    DEFAULT_CONTENT_SECURITY_POLICY.to_string(),
-                    req,
-                    next,
-                )
+                security_headers(true, false, default_csp(), req, next)
             }));
 
         let response = app
@@ -150,13 +140,7 @@ mod tests {
         let app = Router::new()
             .route("/", get(handler))
             .layer(middleware::from_fn(move |req, next| {
-                security_headers(
-                    false,
-                    true,
-                    DEFAULT_CONTENT_SECURITY_POLICY.to_string(),
-                    req,
-                    next,
-                )
+                security_headers(false, true, default_csp(), req, next)
             }));
 
         let response = app
@@ -171,7 +155,7 @@ mod tests {
                 .unwrap()
                 .to_str()
                 .unwrap(),
-            DEFAULT_CONTENT_SECURITY_POLICY
+            config::DEFAULT_CONTENT_SECURITY_POLICY
         );
         assert!(response.headers().get("Content-Security-Policy").is_none());
     }
