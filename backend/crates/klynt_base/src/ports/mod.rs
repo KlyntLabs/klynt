@@ -5,9 +5,11 @@ pub mod http_error;
 pub mod password_hasher;
 pub mod repository;
 pub mod session;
+pub mod token;
 
 pub use clock::{Clock, SystemClock};
 pub use http_error::HttpError;
 pub use password_hasher::{PasswordHashError, PasswordHasher};
 pub use repository::{RepositoryError, UserRepository};
 pub use session::{Session, SessionError, SessionStore, SessionToken};
+pub use token::{TokenError, TokenKind, TokenStore};
