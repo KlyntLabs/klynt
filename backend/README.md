@@ -6,26 +6,47 @@ Service-oriented Rust backend for the Klynt Education Platform. Built with Axum,
 
 ```
 backend/crates/
-├── core/                   # Base abstractions
-│   └── klynt_base          # Foundation types and context
-├── shared/                 # Shared types and utilities
-│   └── klynt_domain        # Domain types, contracts, errors
-├── infrastructure/         # Shared infrastructure
-│   ├── klynt_persistence   # Repositories, storage ports, rate limiting, email, hashing
+├── klynt_base              # Canonical ports and testkit
+│   ├── src/ports           # Repository, session, token, audit, email, password-hasher, clock, HTTP-error ports
+│   └── src/testkit         # In-memory fakes for unit and integration tests
+├── shared/
+│   └── klynt_domain        # Domain types, contracts, and errors (user, auth, role, error)
+├── infrastructure/
+│   ├── klynt_persistence   # PostgreSQL repositories, Redis rate limiting/idempotency, Argon2 hashing, email
 │   ├── klynt_telemetry     # Tracing, audit logging, metrics, health-check ports
 │   └── klynt_config        # Configuration loading and validation
-├── services/               # Business services
-│   ├── auth_service        # Authentication and authorization
-│   └── user_service        # User profile management
-├── gateways/               # HTTP entry points
-│   └── gateways            # HTTP API gateway + composition root
+├── services/
+│   ├── auth_service        # Registration, login, email verification, password reset
+│   ├── session_service     # Session creation, validation, and invalidation
+│   └── user_service        # Profiles, password changes, user listing, soft delete
+├── gateways/               # HTTP API gateway + composition root
+│   └── gateways
 └── klynt-server            # Minimal binary entrypoint
 ```
+
+## Base Abstractions
+
+- `klynt_base::ports` — Canonical ports consumed by all services:
+  - `UserRepository` — User CRUD and listing
+  - `SessionStore` — Session persistence
+  - `TokenStore` — Verification-token storage
+  - `AuditLogger` — Audit-event logging
+  - `EmailSender` — Transactional email
+  - `PasswordHasher` — Password hashing/verification
+  - `Clock` — Time abstraction
+  - `HttpError` — Gateway-facing error mapping
+- `klynt_base::testkit` — Reusable in-memory test doubles:
+  - `FakeUserRepository`
+  - `FakeSessionStore`
+  - `FakeTokenStore`
+  - `TestClock`
+  - `TestPasswordHasher`
 
 ## Services
 
 - `auth_service` — Authentication and authorization (register, login, email verification, password reset)
-- `user_service` — User profile management (profiles, password changes, user listing)
+- `session_service` — Session lifecycle (create, validate, invalidate)
+- `user_service` — User profile management (profiles, password changes, user listing, soft delete)
 
 ## Gateway
 

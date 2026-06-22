@@ -116,7 +116,6 @@ dependencies = [
  "klynt_persistence",
  "klynt_telemetry",
  "rand",
- "serde",
  "sha2",
  "sqlx",
  "thiserror",
@@ -1183,7 +1182,6 @@ dependencies = [
  "redis",
  "serde",
  "serde_json",
- "sha2",
  "sqlx",
  "thiserror",
  "tokio",
@@ -1926,7 +1924,6 @@ dependencies = [
  "klynt_domain",
  "thiserror",
  "tokio",
- "uuid",
 ]
 
 [[package]]

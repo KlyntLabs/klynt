@@ -8,7 +8,6 @@ klynt_base = { path = "../../../crates/klynt_base" }
 klynt_domain = { path = "../../shared/klynt_domain" }
 chrono = { workspace = true }
 thiserror = { workspace = true }
-uuid = { workspace = true }
 
 [dev-dependencies]
 klynt_base = { path = "../../../crates/klynt_base", features = ["testkit"] }
