@@ -4,10 +4,10 @@ pub mod services;
 
 pub use services::Services;
 
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 /// Gateway configuration.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Config {
     /// Service name for tracing.
     pub service_name: String,
@@ -23,6 +23,9 @@ pub struct Config {
 
     /// Redis URL.
     pub redis_url: Option<String>,
+
+    /// Rate limiter configuration.
+    pub rate_limiter: config::RateLimiterConfig,
 
     /// Whether to emit the HSTS security header.
     #[serde(default)]
@@ -49,6 +52,7 @@ impl Default for Config {
             base_url: "https://klynt.edu".to_string(),
             database_url: String::new(),
             redis_url: None,
+            rate_limiter: config::RateLimiterConfig::default(),
             hsts_enabled: false,
             allowed_origins: Vec::new(),
             log_level: default_log_level(),
@@ -84,6 +88,7 @@ impl From<config::AppConfig> for Config {
             base_url,
             database_url: config.database_url.unwrap_or_default(),
             redis_url: config.redis_url,
+            rate_limiter: config.rate_limiter,
             hsts_enabled: config.hsts_enabled,
             allowed_origins: config.api.allowed_origins,
             log_level: config.log_level,

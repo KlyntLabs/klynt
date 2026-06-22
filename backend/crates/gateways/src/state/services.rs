@@ -3,6 +3,8 @@
 use std::sync::Arc;
 
 use auth_service::{AuthConfig, AuthService};
+use persistence::ports::RateLimiter;
+use persistence::rate_limiter::{NoOpRateLimiter, RedisRateLimiter};
 use persistence::repositories::cached_session_store::CachedSessionStore;
 use persistence::repositories::session::PgSessionStore;
 use session_service::{SessionConfig, SessionService};
@@ -17,6 +19,8 @@ pub struct Services {
     pub user: Arc<UserService>,
     /// Session service exposed for HTTP authentication middleware.
     pub session: Arc<SessionService>,
+    /// Rate limiter shared across auth endpoints.
+    pub rate_limiter: Arc<dyn RateLimiter>,
 }
 
 impl Services {
@@ -45,11 +49,13 @@ impl Services {
             Self::create_auth_service(config, pool.clone(), session_store.clone()).await?;
         let session_service = Self::create_session_service(session_store);
         let user_service = Self::create_user_service(config, pool).await?;
+        let rate_limiter = Self::create_rate_limiter(config).await?;
 
         Ok(Self {
             auth: Arc::new(auth_service),
             user: Arc::new(user_service),
             session: Arc::new(session_service),
+            rate_limiter,
         })
     }
 
@@ -106,5 +112,18 @@ impl Services {
             .build()
             .await
             .map_err(|e| crate::GatewayError::configuration(format!("User service: {e}")))
+    }
+
+    async fn create_rate_limiter(
+        config: &Config,
+    ) -> Result<Arc<dyn RateLimiter>, crate::GatewayError> {
+        if let Some(redis_url) = &config.redis_url {
+            let limiter = RedisRateLimiter::new(config.rate_limiter.clone(), redis_url)
+                .await
+                .map_err(|e| crate::GatewayError::configuration(format!("Rate limiter: {e}")))?;
+            Ok(Arc::new(limiter))
+        } else {
+            Ok(Arc::new(NoOpRateLimiter))
+        }
     }
 }

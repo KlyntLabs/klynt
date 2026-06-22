@@ -8,20 +8,6 @@ use domain::contracts::auth::{LoginRequest, RegistrationRequest};
 use crate::response::SuccessResponse;
 use crate::state::Services;
 
-/// Auth router — handles login, register, password reset, etc.
-pub fn routes() -> axum::Router<Services> {
-    axum::Router::new()
-        .route("/login", axum::routing::post(login))
-        .route("/register", axum::routing::post(register))
-        .route("/verify-email", axum::routing::post(verify_email))
-        .route(
-            "/request-password-reset",
-            axum::routing::post(request_password_reset),
-        )
-        .route("/reset-password", axum::routing::post(reset_password))
-        .route("/logout", axum::routing::post(logout))
-}
-
 fn execution_context() -> ExecutionContext {
     ExecutionContext::new(RequestContext::new())
 }
@@ -29,7 +15,7 @@ fn execution_context() -> ExecutionContext {
 /// POST /api/v1/auth/login
 ///
 /// Authenticate a user and return a session token.
-async fn login(
+pub(crate) async fn login(
     State(services): State<Services>,
     Json(request): Json<LoginRequest>,
 ) -> Result<impl IntoResponse, crate::GatewayError> {
@@ -45,7 +31,7 @@ async fn login(
 /// POST /api/v1/auth/register
 ///
 /// Register a new user.
-async fn register(
+pub(crate) async fn register(
     State(services): State<Services>,
     Json(request): Json<RegistrationRequest>,
 ) -> Result<impl IntoResponse, crate::GatewayError> {
@@ -64,7 +50,7 @@ async fn register(
 /// POST /api/v1/auth/verify-email
 ///
 /// Verify email with token.
-async fn verify_email(
+pub(crate) async fn verify_email(
     State(services): State<Services>,
     Json(request): Json<VerifyEmailRequest>,
 ) -> Result<impl IntoResponse, crate::GatewayError> {
@@ -80,14 +66,14 @@ async fn verify_email(
 }
 
 #[derive(serde::Deserialize)]
-struct VerifyEmailRequest {
+pub(crate) struct VerifyEmailRequest {
     token: String,
 }
 
 /// POST /api/v1/auth/request-password-reset
 ///
 /// Request password reset email.
-async fn request_password_reset(
+pub(crate) async fn request_password_reset(
     State(services): State<Services>,
     Json(request): Json<RequestPasswordResetRequest>,
 ) -> Result<impl IntoResponse, crate::GatewayError> {
@@ -104,14 +90,14 @@ async fn request_password_reset(
 }
 
 #[derive(serde::Deserialize)]
-struct RequestPasswordResetRequest {
+pub(crate) struct RequestPasswordResetRequest {
     email: String,
 }
 
 /// POST /api/v1/auth/reset-password
 ///
 /// Reset password with token.
-async fn reset_password(
+pub(crate) async fn reset_password(
     State(services): State<Services>,
     Json(request): Json<ResetPasswordRequest>,
 ) -> Result<impl IntoResponse, crate::GatewayError> {
@@ -127,7 +113,7 @@ async fn reset_password(
 }
 
 #[derive(serde::Deserialize)]
-struct ResetPasswordRequest {
+pub(crate) struct ResetPasswordRequest {
     token: String,
     new_password: String,
 }
@@ -135,7 +121,7 @@ struct ResetPasswordRequest {
 /// POST /api/v1/auth/logout
 ///
 /// Logout and invalidate session.
-async fn logout(
+pub(crate) async fn logout(
     State(services): State<Services>,
     Json(request): Json<LogoutRequest>,
 ) -> Result<impl IntoResponse, crate::GatewayError> {
@@ -149,6 +135,6 @@ async fn logout(
 }
 
 #[derive(serde::Deserialize)]
-struct LogoutRequest {
+pub(crate) struct LogoutRequest {
     session_token: String,
 }

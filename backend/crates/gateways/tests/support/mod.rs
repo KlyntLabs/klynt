@@ -4,12 +4,16 @@ use std::sync::Arc;
 
 use base::ports::{Clock, PasswordHashError, PasswordHasher};
 use chrono::{DateTime, Utc};
+use persistence::ports::RateLimiter;
+use persistence::rate_limiter::NoOpRateLimiter;
 
 pub mod auth;
+pub mod rate_limiter;
 pub mod session;
 pub mod user;
 
 pub use auth::build_test_auth_service;
+pub use rate_limiter::FakeRateLimiter;
 pub use session::FakePersistenceSessionStore;
 pub use user::{build_test_user_service, FakeUserServiceRepository};
 
@@ -64,6 +68,7 @@ pub fn build_test_services_with_fakes() -> (
         auth: Arc::new(auth_service),
         user: Arc::new(user_service),
         session: session_service.clone(),
+        rate_limiter: Arc::new(NoOpRateLimiter),
     };
 
     (services, session_service, user_repo)
@@ -72,6 +77,15 @@ pub fn build_test_services_with_fakes() -> (
 /// Build test gateway services.
 pub fn build_test_services() -> gateways::state::Services {
     let (services, _, _) = build_test_services_with_fakes();
+    services
+}
+
+/// Build test gateway services with a custom rate limiter.
+pub fn build_test_services_with_rate_limiter(
+    rate_limiter: Arc<dyn RateLimiter>,
+) -> gateways::state::Services {
+    let (mut services, _, _) = build_test_services_with_fakes();
+    services.rate_limiter = rate_limiter;
     services
 }
 

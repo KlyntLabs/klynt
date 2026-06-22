@@ -1,4 +1,3 @@
-use std::net::IpAddr;
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -7,7 +6,7 @@ use redis::aio::MultiplexedConnection;
 use config::RateLimiterConfig;
 use domain::DomainError;
 
-use crate::ports::{RateLimitDecision, RateLimiter as RateLimiterPort};
+use crate::ports::{RateLimitDecision, RateLimitScope, RateLimiter as RateLimiterPort};
 
 /// Redis-backed fixed-window rate limiter.
 ///
@@ -57,14 +56,14 @@ impl RedisRateLimiter {
         })
     }
 
-    fn key(&self, ip: IpAddr) -> String {
-        format!("rate_limit:{}", ip)
+    fn key(&self, scope: &RateLimitScope) -> String {
+        format!("rate_limit:{}:{:?}", scope.ip, scope.action)
     }
 }
 
 #[async_trait]
 impl RateLimiterPort for RedisRateLimiter {
-    async fn check(&self, ip: IpAddr) -> RateLimitDecision {
+    async fn check(&self, scope: RateLimitScope) -> RateLimitDecision {
         if !self.config.enabled {
             return RateLimitDecision::allowed();
         }
@@ -72,7 +71,7 @@ impl RateLimiterPort for RedisRateLimiter {
         let mut conn = self.conn.lock().await;
         let result: Result<(i64, i64), redis::RedisError> = self
             .script
-            .key(self.key(ip))
+            .key(self.key(&scope))
             .arg(self.config.max_requests as i64)
             .arg(self.config.window_seconds as i64)
             .invoke_async(&mut *conn)
@@ -99,5 +98,19 @@ impl RateLimiterPort for RedisRateLimiter {
                 RateLimitDecision::allowed()
             }
         }
+    }
+}
+
+/// No-op rate limiter that always allows requests.
+///
+/// Used when Redis is not configured so the gateway can still depend on a
+/// `RateLimiter` implementation without rate-limiting behavior.
+#[derive(Debug, Default, Clone)]
+pub struct NoOpRateLimiter;
+
+#[async_trait]
+impl RateLimiterPort for NoOpRateLimiter {
+    async fn check(&self, _scope: RateLimitScope) -> RateLimitDecision {
+        RateLimitDecision::allowed()
     }
 }

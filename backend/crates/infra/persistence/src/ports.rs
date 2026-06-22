@@ -41,9 +41,25 @@ impl RateLimitDecision {
     }
 }
 
+/// Action being rate-limited.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum RateLimitAction {
+    Login,
+    Register,
+    PasswordReset,
+    EmailVerification,
+}
+
+/// Scope used to identify a rate-limit bucket.
+#[derive(Debug, Clone)]
+pub struct RateLimitScope {
+    pub ip: IpAddr,
+    pub action: RateLimitAction,
+}
+
 #[async_trait::async_trait]
 pub trait RateLimiter: Send + Sync {
-    async fn check(&self, ip: IpAddr) -> RateLimitDecision;
+    async fn check(&self, scope: RateLimitScope) -> RateLimitDecision;
 }
 
 pub mod email;

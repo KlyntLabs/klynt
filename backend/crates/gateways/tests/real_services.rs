@@ -21,6 +21,7 @@ fn test_config() -> Config {
         base_url: "http://localhost".to_string(),
         database_url: database_url(),
         redis_url: Some(redis_url()),
+        rate_limiter: config::RateLimiterConfig::default(),
         hsts_enabled: false,
         allowed_origins: vec!["http://localhost:5173".to_string()],
         log_level: "warn".to_string(),

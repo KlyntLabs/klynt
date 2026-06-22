@@ -40,6 +40,8 @@ pub fn create_router(config: Config, services: Services) -> Router {
 
 /// API v1 routes.
 fn api_v1_routes(services: Services) -> Router<Services> {
+    let auth_routes = auth_routes(services.clone());
+
     let protected_user_routes = users::routes().layer(middleware::from_fn_with_state(
         services,
         crate::middleware::auth::require_auth,
@@ -47,7 +49,33 @@ fn api_v1_routes(services: Services) -> Router<Services> {
 
     Router::new()
         // Auth routes (no authentication required)
-        .nest("/auth", auth::routes())
+        .nest("/auth", auth_routes)
         // Protected routes (require authentication)
         .nest("/users", protected_user_routes)
+}
+
+/// Auth routes with per-route rate limiting.
+fn auth_routes(services: Services) -> Router<Services> {
+    Router::new()
+        .route(
+            "/login",
+            axum::routing::post(auth::login).layer(middleware::from_fn_with_state(
+                services.clone(),
+                crate::middleware::rate_limit::rate_limit_login,
+            )),
+        )
+        .route(
+            "/register",
+            axum::routing::post(auth::register).layer(middleware::from_fn_with_state(
+                services.clone(),
+                crate::middleware::rate_limit::rate_limit_register,
+            )),
+        )
+        .route("/verify-email", axum::routing::post(auth::verify_email))
+        .route(
+            "/request-password-reset",
+            axum::routing::post(auth::request_password_reset),
+        )
+        .route("/reset-password", axum::routing::post(auth::reset_password))
+        .route("/logout", axum::routing::post(auth::logout))
 }

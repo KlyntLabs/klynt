@@ -33,6 +33,9 @@ pub enum GatewayError {
     #[error("Service unavailable: {0}")]
     ServiceUnavailable(String),
 
+    #[error("Rate limit exceeded")]
+    RateLimited(u32),
+
     /// Auth service errors.
     #[error("Auth error: {0}")]
     Auth(#[from] auth_service::AuthError),
@@ -67,6 +70,7 @@ impl GatewayError {
             Self::Conflict(_) => StatusCode::CONFLICT,
             Self::Configuration(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Self::ServiceUnavailable(_) => StatusCode::SERVICE_UNAVAILABLE,
+            Self::RateLimited(_) => StatusCode::TOO_MANY_REQUESTS,
             Self::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Self::Auth(auth_error) => auth_error.status_code(),
             Self::User(user_error) => user_error.status_code(),
@@ -82,6 +86,7 @@ impl GatewayError {
             Self::Conflict(_) => "CONFLICT",
             Self::Configuration(_) => "CONFIGURATION_ERROR",
             Self::ServiceUnavailable(_) => "SERVICE_UNAVAILABLE",
+            Self::RateLimited(_) => "RATE_LIMITED",
             Self::Internal(_) => "INTERNAL_SERVER_ERROR",
             Self::Auth(auth_error) => auth_error.error_code(),
             Self::User(user_error) => user_error.error_code(),
@@ -91,6 +96,21 @@ impl GatewayError {
 
 impl IntoResponse for GatewayError {
     fn into_response(self) -> Response {
+        if let Self::RateLimited(retry_after) = self {
+            let body = serde_json::json!({
+                "success": false,
+                "error": self.to_string(),
+                "code": self.error_code(),
+                "retry_after": retry_after,
+            });
+            return (
+                StatusCode::TOO_MANY_REQUESTS,
+                [(axum::http::header::RETRY_AFTER, retry_after.to_string())],
+                Json(body),
+            )
+                .into_response();
+        }
+
         let status = self.status_code();
         let body = serde_json::json!({
             "success": false,

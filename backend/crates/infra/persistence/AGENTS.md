@@ -43,7 +43,7 @@ persistence/
 |---------|----------------|
 | Password hashing | `Argon2PasswordHasher` |
 | Email sending | `MockEmailSender` (logs, no SMTP) |
-| Rate limiting | `RedisRateLimiter` |
+| Rate limiting | `RedisRateLimiter` (Redis), `NoOpRateLimiter` (always allows) |
 | Idempotency | `RedisIdempotencyStore` |
 
 ## When to Use This Crate
