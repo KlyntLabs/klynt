@@ -202,7 +202,12 @@ fn user_role_parses_known_values() {
     assert_eq!(UserRole::parse("teacher").unwrap(), UserRole::Instructor);
     assert_eq!(UserRole::parse("instructor").unwrap(), UserRole::Instructor);
     assert_eq!(UserRole::parse("admin").unwrap(), UserRole::Admin);
-    assert_eq!(UserRole::parse("parent").unwrap(), UserRole::Student);
+}
+
+#[test]
+fn user_role_parse_rejects_unknown_value() {
+    assert_eq!(UserRole::parse("parent").unwrap_err(), RoleError::Unknown);
+    assert_eq!(UserRole::parse("guest").unwrap_err(), RoleError::Unknown);
 }
 
 #[test]

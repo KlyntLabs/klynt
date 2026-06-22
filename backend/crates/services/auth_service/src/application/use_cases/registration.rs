@@ -36,6 +36,13 @@ pub(crate) async fn execute(
         None
     };
 
+    if request.role.requires_institution() && institution_id.is_none() {
+        return Err(AuthError::Domain(DomainError::InvalidInput(format!(
+            "institution_id is required for role {}",
+            request.role
+        ))));
+    }
+
     let user_id = service
         .internal()
         .user_repository

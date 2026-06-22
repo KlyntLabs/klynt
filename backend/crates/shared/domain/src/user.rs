@@ -124,7 +124,6 @@ impl UserRole {
             "student" => Ok(Self::Student),
             "teacher" | "instructor" => Ok(Self::Instructor),
             "admin" => Ok(Self::Admin),
-            "parent" => Ok(Self::Student),
             _ => Err(RoleError::Unknown),
         }
     }

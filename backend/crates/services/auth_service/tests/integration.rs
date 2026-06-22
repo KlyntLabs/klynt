@@ -114,6 +114,32 @@ async fn registration_ignores_institution_id_for_student() {
 }
 
 #[tokio::test]
+async fn registration_rejects_instructor_without_institution_id() {
+    let (service, user_repo, _) = support::build_test_service();
+    let ctx = support::test_ctx();
+
+    let result = service
+        .register(
+            &ctx,
+            RegistrationRequest {
+                email: "teacher@example.com".to_string(),
+                password: "Str0ng!Pass#123".to_string(),
+                full_name: Some("Teacher".to_string()),
+                role: UserRole::Instructor,
+                institution_id: None,
+            },
+        )
+        .await;
+
+    assert!(result.is_err());
+    assert!(user_repo
+        .find_by_email(&ctx, &domain::Email::parse("teacher@example.com").unwrap())
+        .await
+        .unwrap()
+        .is_none());
+}
+
+#[tokio::test]
 async fn login_fails_for_unknown_user() {
     let (service, _, _) = support::build_test_service();
     let ctx = support::test_ctx();
