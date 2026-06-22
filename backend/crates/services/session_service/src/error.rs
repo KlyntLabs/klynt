@@ -12,17 +12,13 @@ pub enum SessionError {
     StoreError(String),
 }
 
-impl From<klynt_base::ports::session::SessionError> for SessionError {
-    fn from(err: klynt_base::ports::session::SessionError) -> Self {
+impl From<base::ports::session::SessionError> for SessionError {
+    fn from(err: base::ports::session::SessionError) -> Self {
         match err {
-            klynt_base::ports::session::SessionError::NotFound => SessionError::InvalidToken,
-            klynt_base::ports::session::SessionError::Expired => SessionError::InvalidToken,
-            klynt_base::ports::session::SessionError::Database(msg) => {
-                SessionError::StoreError(msg)
-            }
-            klynt_base::ports::session::SessionError::Internal(msg) => {
-                SessionError::StoreError(msg)
-            }
+            base::ports::session::SessionError::NotFound => SessionError::InvalidToken,
+            base::ports::session::SessionError::Expired => SessionError::InvalidToken,
+            base::ports::session::SessionError::Database(msg) => SessionError::StoreError(msg),
+            base::ports::session::SessionError::Internal(msg) => SessionError::StoreError(msg),
         }
     }
 }

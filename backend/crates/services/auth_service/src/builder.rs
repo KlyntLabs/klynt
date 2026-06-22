@@ -2,10 +2,10 @@
 
 use std::sync::Arc;
 
-use klynt_base::ports::{AuditLogger, Clock, EmailSender, PasswordHasher, SystemClock};
+use base::ports::{AuditLogger, Clock, EmailSender, PasswordHasher, SystemClock};
 
 use crate::application::ports::UserRepository;
-use crate::domain::{SessionStore, TokenStore};
+use crate::core::{SessionStore, TokenStore};
 use crate::error::AuthError;
 use crate::infrastructure::services::PasswordHasherAdapter as AuthPasswordHasherAdapter;
 use crate::AuthConfig;
@@ -102,37 +102,38 @@ impl AuthBuilder {
         let config = self.config.unwrap_or_default();
 
         let user_repository = self.user_repository.unwrap_or_else(|| {
-            Arc::new(klynt_persistence::repositories::pg_user::PgUserRepository::new(pool.clone()))
-                as Arc<dyn UserRepository>
+            Arc::new(persistence::repositories::pg_user::PgUserRepository::new(
+                pool.clone(),
+            )) as Arc<dyn UserRepository>
         });
 
         let session_store = self.session_store.unwrap_or_else(|| {
-            Arc::new(klynt_persistence::repositories::pg_session::PgSessionStore::new(pool.clone()))
-                as Arc<dyn SessionStore>
+            Arc::new(persistence::repositories::pg_session::PgSessionStore::new(
+                pool.clone(),
+            )) as Arc<dyn SessionStore>
         });
 
         let token_store = self.token_store.unwrap_or_else(|| {
-            Arc::new(
-                klynt_persistence::repositories::sqlx_token_repo::PgTokenStore::new(pool.clone()),
-            ) as Arc<dyn TokenStore>
+            Arc::new(persistence::repositories::sqlx_token_repo::PgTokenStore::new(pool.clone()))
+                as Arc<dyn TokenStore>
         });
 
         let email_sender = self.email_sender.unwrap_or_else(|| {
-            Arc::new(klynt_persistence::email::MockEmailService::new()) as Arc<dyn EmailSender>
+            Arc::new(persistence::email::MockEmailService::new()) as Arc<dyn EmailSender>
         });
 
         let audit_logger = self.audit_logger.unwrap_or_else(|| {
             let audit_repo = Arc::new(
-                klynt_persistence::repositories::sqlx_audit_repo::PgAuditEventRepository::new(
+                persistence::repositories::sqlx_audit_repo::PgAuditEventRepository::new(
                     pool.clone(),
                 ),
             );
-            Arc::new(klynt_telemetry::audit::AuditService::new(audit_repo)) as Arc<dyn AuditLogger>
+            Arc::new(telemetry::audit::AuditService::new(audit_repo)) as Arc<dyn AuditLogger>
         });
 
         let password_hasher = self.password_hasher.unwrap_or_else(|| {
             Arc::new(AuthPasswordHasherAdapter::new(
-                klynt_persistence::password_hasher::Argon2PasswordHasher::new(),
+                persistence::password_hasher::Argon2PasswordHasher::new(),
             ))
         });
 

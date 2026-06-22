@@ -1,6 +1,6 @@
 //! Test support utilities and auth-service-specific fake implementations.
 //!
-//! Cross-cutting test doubles come from [`klynt_base::testkit`]; this module
+//! Cross-cutting test doubles come from [`base::testkit`]; this module
 //! keeps only the auth-service-specific fakes.
 
 use std::sync::{Arc, Mutex};
@@ -9,12 +9,12 @@ use async_trait::async_trait;
 
 use auth_service::application::ports::{AuditLogger, EmailSender};
 use auth_service::{AuthConfig, AuthService, Dependencies};
-use klynt_base::ctx::ExecutionContext;
-use klynt_base::ports::email::EmailError;
-use klynt_base::testkit::{sample_user, FakeSessionStore, FakeTokenStore, FakeUserRepository};
-use klynt_domain::{Email, User, UserId, UserStatus};
+use base::ctx::ExecutionContext;
+use base::ports::email::EmailError;
+use base::testkit::{sample_user, FakeSessionStore, FakeTokenStore, FakeUserRepository};
+use domain::{Email, User, UserId, UserStatus};
 
-pub use klynt_base::testkit::{test_ctx, TestClock, TestPasswordHasher};
+pub use base::testkit::{test_ctx, TestClock, TestPasswordHasher};
 
 /// Fake email sender that records sent emails.
 #[derive(Default, Clone)]

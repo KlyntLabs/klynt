@@ -2,13 +2,13 @@
 
 ## Overview
 
-Service-oriented Rust backend following **hexagonal architecture** with **dependency inversion**. Services depend on abstract ports defined in `klynt_base`, not on concrete infrastructure implementations.
+Service-oriented Rust backend following **hexagonal architecture** with **dependency inversion**. Services depend on abstract ports defined in `base`, not on concrete infrastructure implementations.
 
 ## Crate Dependency Graph
 
 ```
                      ┌─────────────────┐
-                     │   klynt-server  │ (binary)
+                     │     server      │ (binary)
                      └────────┬────────┘
                               │
                      ┌────────▼────────┐
@@ -26,8 +26,8 @@ Service-oriented Rust backend following **hexagonal architecture** with **depend
         ┌─────────────────────┼─────────────────────┐
         │                     │                     │
 ┌───────▼────────┐   ┌────────▼────────┐   ┌──────▼───────┐
-│ klynt_base     │   │ klynt_domain    │   │  klynt_*     │
-│ (ports+testkit)│   │ (types)          │   │ (infra)      │
+│ base           │   │ domain          │   │ infra crates │
+│ (ports+testkit)│   │ (types)         │   │              │
 └────────────────┘   └─────────────────┘   └──────────────┘
 ```
 
@@ -36,7 +36,7 @@ Service-oriented Rust backend following **hexagonal architecture** with **depend
 ## Architecture Principles
 
 ### 1. Hexagonal Architecture
-Services are decoupled from infrastructure through **ports** (trait interfaces) defined in `klynt_base::ports`:
+Services are decoupled from infrastructure through **ports** (trait interfaces) defined in `base::ports`:
 - `UserRepository` — User persistence
 - `SessionStore` — Session persistence
 - `TokenStore` — Verification token storage
@@ -66,40 +66,40 @@ The `gateways` crate is the **composition root** where:
 
 | Crate | Responsibility | When to Use |
 |-------|----------------|-------------|
-| [`klynt_base`](../crates/klynt_base/AGENTS.md) | Canonical ports + in-memory testkit | Define new persistence interface |
-| [`shared/klynt_domain`](../crates/shared/klynt_domain/AGENTS.md) | Domain types, contracts, errors | Share domain types across crates |
-| [`infrastructure/klynt_persistence`](../crates/infrastructure/klynt_persistence/AGENTS.md) | Postgres/Redis port implementations | Need concrete repository/cache |
-| [`infrastructure/klynt_telemetry`](../crates/infrastructure/klynt_telemetry/AGENTS.md) | Tracing, audit, metrics, health | Add observability |
-| [`infrastructure/klynt_config`](../crates/infrastructure/klynt_config/AGENTS.md) | Configuration loading | Add config values |
+| [`base`](../crates/base/AGENTS.md) | Canonical ports + in-memory testkit | Define new persistence interface |
+| [`shared/domain`](../crates/shared/domain/AGENTS.md) | Domain types, contracts, errors | Share domain types across crates |
+| [`infra/persistence`](../crates/infra/persistence/AGENTS.md) | Postgres/Redis port implementations | Need concrete repository/cache |
+| [`infra/telemetry`](../crates/infra/telemetry/AGENTS.md) | Tracing, audit, metrics, health | Add observability |
+| [`infra/config`](../crates/infra/config/AGENTS.md) | Configuration loading | Add config values |
 | [`services/auth_service`](../crates/services/auth_service/AGENTS.md) | Registration, login, email verification, password reset | Implement auth flows |
 | [`services/session_service`](../crates/services/session_service/AGENTS.md) | Session creation, validation, invalidation | Manage session lifecycle |
 | [`services/user_service`](../crates/services/user_service/AGENTS.md) | Profiles, password changes, user listing, soft delete | Manage user profiles |
 | [`gateways`](../crates/gateways/AGENTS.md) | HTTP handlers, middleware, composition root | Add HTTP endpoint |
-| [`klynt-server`](../crates/klynt-server/AGENTS.md) | Binary entrypoint | Run the server |
+| [`server`](../crates/server/AGENTS.md) | Binary entrypoint | Run the server |
 
 ## Workflow: Adding a New Feature
 
-1. **Define domain types** in `klynt_domain` if needed
-2. **Define port interface** in `klynt_base::ports` if persistence required
-3. **Implement service** depending only on `klynt_base` ports and `klynt_domain`
-4. **Implement port adapter** in `klynt_persistence` (or appropriate infra crate)
+1. **Define domain types** in `domain` if needed
+2. **Define port interface** in `base::ports` if persistence required
+3. **Implement service** depending only on `base` ports and `domain`
+4. **Implement port adapter** in `infra/persistence` (or appropriate infra crate)
 5. **Wire in gateway** at `gateways/src/state/services.rs`
 6. **Add HTTP route** in `gateways/src/routes/`
-7. **Test** against `klynt_base::testkit` fakes first, then integration tests
+7. **Test** against `base::testkit` fakes first, then integration tests
 
 ## Workflow: Adding a New Service
 
 1. Create crate under `crates/services/new_service/`
-2. Depend on `klynt_base` and `klynt_domain` only
+2. Depend on `base` and `domain` only
 3. Accept ports as constructor dependencies (builder pattern recommended)
-4. Test against `klynt_base::testkit` fakes — no external services
+4. Test against `base::testkit` fakes — no external services
 5. Wire in `gateways/src/state/services.rs`
 6. Add routes in `gateways/src/routes/`
 
 ## Testing Strategy
 
 ### Unit Tests (Service Layer)
-- Use `klynt_base::testkit` fakes for all dependencies
+- Use `base::testkit` fakes for all dependencies
 - No external services (Postgres, Redis) required
 - Tests cross the same interface as production code
 
@@ -130,16 +130,16 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo llvm-cov --workspace --all-features --no-clean --fail-under-lines 84
 
 # Run server
-cargo run --bin klynt-server
+cargo run --bin server
 ```
 
 ## Key Architectural Decisions
 
 See [`docs/ARCHITECTURE_DEEPENING.md`](./docs/ARCHITECTURE_DEEPENING.md) for full context on:
-- Why ports are canonical in `klynt_base`
+- Why ports are canonical in `base`
 - Why `session_service` was extracted from the gateway
 - Why testkit is centralized
-- Why `klynt_common` was split into `klynt_domain` and `klynt_base`
+- Why `klynt_common` was split into `domain` and `base`
 
 ## Environment Variables
 

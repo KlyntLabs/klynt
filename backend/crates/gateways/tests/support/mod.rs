@@ -2,8 +2,8 @@
 
 use std::sync::Arc;
 
+use base::ports::{Clock, PasswordHashError, PasswordHasher};
 use chrono::{DateTime, Utc};
-use klynt_base::ports::{Clock, PasswordHashError, PasswordHasher};
 
 pub mod auth;
 pub mod session;

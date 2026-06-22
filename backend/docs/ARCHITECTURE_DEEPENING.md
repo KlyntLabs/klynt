@@ -17,25 +17,25 @@ The Klynt backend had grown several structural friction points:
 
 Consolidate the backend around a small set of deep, canonical abstractions:
 
-1. **Canonical ports in `klynt_base::ports`** — Define each persistence / cross-cutting interface once, in the base crate, and have all services depend on those ports rather than concrete adapters.
-2. **Extract `session_service`** — Move session lifecycle logic (create, validate, invalidate) out of the gateway and into a dedicated business service that depends only on `klynt_base` ports.
-3. **Consolidate test fakes in `klynt_base::testkit`** — Provide one high-quality in-memory implementation of each port so services stop re-implementing their own test doubles.
-4. **Focus `klynt_domain`** — Replace the shallow `klynt_common` crate with focused domain modules: `user`, `auth`, `role`, `error`, and `contracts`.
-5. **Keep services adapter-thin** — Services consume ports; concrete adapters live in `klynt_persistence` or gateway composition and are wired at startup.
+1. **Canonical ports in `base::ports`** — Define each persistence / cross-cutting interface once, in the base crate, and have all services depend on those ports rather than concrete adapters.
+2. **Extract `session_service`** — Move session lifecycle logic (create, validate, invalidate) out of the gateway and into a dedicated business service that depends only on `base` ports.
+3. **Consolidate test fakes in `base::testkit`** — Provide one high-quality in-memory implementation of each port so services stop re-implementing their own test doubles.
+4. **Focus `domain`** — Replace the shallow `klynt_common` crate with focused domain modules: `user`, `auth`, `role`, `error`, and `contracts`.
+5. **Keep services adapter-thin** — Services consume ports; concrete adapters live in `persistence` or gateway composition and are wired at startup.
 
 ## Consequences
 
-- `klynt_common` was removed; its responsibilities moved to `klynt_domain` (domain types) and `klynt_base` (ports / testkit).
+- `klynt_common` was removed; its responsibilities moved to `domain` (domain types) and `base` (ports / testkit).
 - Adapter duplication dropped significantly; services no longer define their own repository / token / session interfaces.
 - The gateway depends on services, not on persistence details.
-- New services can be tested against `klynt_base::testkit` without Postgres or Redis.
-- Dependency direction is enforced by the compiler: services depend only on `klynt_base` and `klynt_domain`; infrastructure crates implement the ports.
+- New services can be tested against `base::testkit` without Postgres or Redis.
+- Dependency direction is enforced by the compiler: services depend only on `base` and `domain`; infrastructure crates implement the ports.
 
 ## Crate Structure
 
 ```
 backend/crates/
-├── klynt_base
+├── base
 │   ├── src/ports          # Canonical trait definitions
 │   │   ├── repository.rs
 │   │   ├── session.rs
@@ -54,22 +54,22 @@ backend/crates/
 │       ├── domain.rs
 │       └── context.rs
 ├── shared/
-│   └── klynt_domain       # Domain types and contracts
+│   └── domain       # Domain types and contracts
 │       ├── user.rs
 │       ├── auth.rs
 │       ├── role.rs
 │       ├── error.rs
 │       └── contracts/
-├── infrastructure/
-│   ├── klynt_persistence  # Postgres / Redis implementations of ports
-│   ├── klynt_telemetry    # Tracing, audit, metrics, health
-│   └── klynt_config       # Configuration loading
+├── infra/
+│   ├── persistence  # Postgres / Redis implementations of ports
+│   ├── telemetry    # Tracing, audit, metrics, health
+│   └── config       # Configuration loading
 ├── services/
 │   ├── auth_service
 │   ├── session_service
 │   └── user_service
-├── gateways/gateways      # HTTP handlers, middleware, composition root
-└── klynt-server           # Binary entrypoint
+├── gateways/              # HTTP handlers, middleware, composition root
+└── server           # Binary entrypoint
 ```
 
 ## Quality Gates

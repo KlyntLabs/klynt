@@ -2,11 +2,11 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 
 use async_trait::async_trait;
+use base::ctx::{ExecutionContext, RequestContext};
+use base::ports::session::{Session, SessionError as StoreError, SessionStore, SessionToken};
+use base::testkit::clock::TestClock;
 use chrono::{DateTime, Duration, Utc};
-use klynt_base::ctx::{ExecutionContext, RequestContext};
-use klynt_base::ports::session::{Session, SessionError as StoreError, SessionStore, SessionToken};
-use klynt_base::testkit::clock::TestClock;
-use klynt_domain::UserId;
+use domain::UserId;
 
 use super::*;
 
@@ -123,7 +123,7 @@ async fn invalidate_removes_session() {
 
 #[test]
 fn session_error_mapping() {
-    use klynt_base::ports::session::SessionError as BaseError;
+    use base::ports::session::SessionError as BaseError;
 
     assert!(matches!(
         SessionError::from(BaseError::NotFound),

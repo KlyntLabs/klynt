@@ -1,7 +1,7 @@
 //! Integration tests for auth service public interface.
 
-use klynt_domain::contracts::auth::{LoginRequest, RegistrationRequest};
-use klynt_domain::UserStatus;
+use domain::contracts::auth::{LoginRequest, RegistrationRequest};
+use domain::UserStatus;
 
 mod support;
 

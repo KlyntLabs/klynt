@@ -1,6 +1,6 @@
 //! User service integration tests.
 
-use klynt_domain::{PaginationRequest, UserId};
+use domain::{PaginationRequest, UserId};
 
 use user_service::application::ports::UserRepository;
 use user_service::error::UserError;
@@ -143,7 +143,7 @@ async fn cannot_delete_admin_user() {
     let ctx = support::test_ctx();
 
     let mut user = support::sample_user("admin@example.com", "Admin", "hash");
-    user.role = klynt_domain::UserRole::Admin;
+    user.role = domain::UserRole::Admin;
     let user_id = user.id;
     repo.insert(user);
 

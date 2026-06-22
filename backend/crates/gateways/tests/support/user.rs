@@ -4,11 +4,11 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
+use base::ctx::ExecutionContext;
+use base::ports::repository::{RepositoryError, UserRepository};
+use base::ports::{Clock, PasswordHashError, PasswordHasher};
 use chrono::{DateTime, Utc};
-use klynt_base::ctx::ExecutionContext;
-use klynt_base::ports::repository::{RepositoryError, UserRepository};
-use klynt_base::ports::{Clock, PasswordHashError, PasswordHasher};
-use klynt_domain::{Email, PaginationRequest, User, UserId};
+use domain::{Email, PaginationRequest, User, UserId};
 use user_service::{
     application::ports::AuditLogger as UserAuditLogger, Dependencies as UserDependencies,
     UserConfig, UserService,

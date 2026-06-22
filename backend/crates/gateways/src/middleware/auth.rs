@@ -7,8 +7,8 @@ use axum::{
     response::{IntoResponse, Response},
 };
 
-use klynt_base::ctx::{ActorType, ExecutionContext, RequestContext, RequestId};
-use klynt_base::ports::session::SessionToken;
+use base::ctx::{ActorType, ExecutionContext, RequestContext, RequestId};
+use base::ports::session::SessionToken;
 use uuid::Uuid;
 
 use crate::state::Services;

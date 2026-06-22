@@ -37,7 +37,7 @@ pub use state::{Config, Services};
 ///
 /// Returns `Ok(())` when server shuts down gracefully, or error on failure.
 pub async fn run(config: Config, services: Services) -> Result<(), GatewayError> {
-    klynt_telemetry::tracing::subscriber::init_tracing(&config.service_name);
+    telemetry::tracing::subscriber::init_tracing(&config.service_name);
 
     let app = routes::create_router(config.clone(), services);
 

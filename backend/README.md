@@ -6,27 +6,26 @@ Service-oriented Rust backend for the Klynt Education Platform. Built with Axum,
 
 ```
 backend/crates/
-├── klynt_base              # Canonical ports and testkit
+├── base                    # Canonical ports and testkit
 │   ├── src/ports           # Repository, session, token, audit, email, password-hasher, clock, HTTP-error ports
 │   └── src/testkit         # In-memory fakes for unit and integration tests
 ├── shared/
-│   └── klynt_domain        # Domain types, contracts, and errors (user, auth, role, error)
-├── infrastructure/
-│   ├── klynt_persistence   # PostgreSQL repositories, Redis rate limiting/idempotency, Argon2 hashing, email
-│   ├── klynt_telemetry     # Tracing, audit logging, metrics, health-check ports
-│   └── klynt_config        # Configuration loading and validation
+│   └── domain              # Domain types, contracts, and errors (user, auth, role, error)
+├── infra/
+│   ├── persistence         # PostgreSQL repositories, Redis rate limiting/idempotency, Argon2 hashing, email
+│   ├── telemetry           # Tracing, audit logging, metrics, health-check ports
+│   └── config              # Configuration loading and validation
 ├── services/
 │   ├── auth_service        # Registration, login, email verification, password reset
 │   ├── session_service     # Session creation, validation, and invalidation
 │   └── user_service        # Profiles, password changes, user listing, soft delete
 ├── gateways/               # HTTP API gateway + composition root
-│   └── gateways
-└── klynt-server            # Minimal binary entrypoint
+└── server                  # Minimal binary entrypoint
 ```
 
 ## Base Abstractions
 
-- `klynt_base::ports` — Canonical ports consumed by all services:
+- `base::ports` — Canonical ports consumed by all services:
   - `UserRepository` — User CRUD and listing
   - `SessionStore` — Session persistence
   - `TokenStore` — Verification-token storage
@@ -35,7 +34,7 @@ backend/crates/
   - `PasswordHasher` — Password hashing/verification
   - `Clock` — Time abstraction
   - `HttpError` — Gateway-facing error mapping
-- `klynt_base::testkit` — Reusable in-memory test doubles:
+- `base::testkit` — Reusable in-memory test doubles:
   - `FakeUserRepository`
   - `FakeSessionStore`
   - `FakeTokenStore`
@@ -54,9 +53,9 @@ backend/crates/
 
 ## Shared Infrastructure
 
-- `klynt_persistence` — PostgreSQL repositories, Redis rate limiting/idempotency, Argon2 password hashing, mock email service, session/token stores
-- `klynt_telemetry` — Tracing setup, audit logging service, health-check ports, and metrics
-- `klynt_config` — Application configuration loading from files and environment
+- `persistence` — PostgreSQL repositories, Redis rate limiting/idempotency, Argon2 password hashing, mock email service, session/token stores
+- `telemetry` — Tracing setup, audit logging service, health-check ports, and metrics
+- `config` — Application configuration loading from files and environment
 
 ## Local Development
 
@@ -93,7 +92,7 @@ Expected tables after migrations:
 ### Run the server
 
 ```bash
-cargo run --bin klynt-server
+cargo run --bin server
 ```
 
 The API is available at `http://localhost:3000/api/v1` by default.
@@ -150,4 +149,4 @@ Copy the root `.env.example` to `.env` and adjust as needed. Key backend variabl
 | `KLYNT_API__HOST` | API bind host | `127.0.0.1` |
 | `KLYNT_API__PORT` | API bind port | `3000` |
 
-See `crates/infrastructure/klynt_config/src/lib.rs` for the full configuration shape.
+See `crates/infra/config/src/lib.rs` for the full configuration shape.

@@ -1,9 +1,9 @@
 //! Logout use case - end a session.
 
-use klynt_base::ctx::ExecutionContext;
+use base::ctx::ExecutionContext;
 use uuid::Uuid;
 
-use crate::domain::SessionToken;
+use crate::core::SessionToken;
 use crate::error::AuthError;
 use crate::AuthService;
 

@@ -107,8 +107,8 @@ API specification for all endpoints. Keep in sync with route handlers.
 
 **DON'T** modify when:
 - Changing business logic (belongs in services)
-- Adding domain types (belongs in klynt_domain)
-- Changing persistence logic (belongs in klynt_persistence)
+- Adding domain types (belongs in domain)
+- Changing persistence logic (belongs in persistence)
 
 ## Route Organization
 
@@ -143,7 +143,7 @@ GET /health/redis                  - Redis health
 
 ## Error Handling
 
-Gateway errors implement `HttpError` from `klynt_base`:
+Gateway errors implement `HttpError` from `base`:
 
 ```rust
 impl HttpError for GatewayError {
@@ -200,12 +200,12 @@ async fn test_register_flow() {
 - `user_service` — User profiles
 
 ### Foundation
-- `klynt_base` — Ports and error types
-- `klynt_domain` — Domain types
+- `base` — Ports and error types
+- `domain` — Domain types
 
 ### Infrastructure
-- `klynt_persistence` — Concrete implementations
-- `klynt_telemetry` — Observability
+- `persistence` — Concrete implementations
+- `telemetry` — Observability
 
 ### Web Framework
 - `axum` — HTTP framework

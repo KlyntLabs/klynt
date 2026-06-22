@@ -4,7 +4,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Json, Response},
 };
-use klynt_base::ports::HttpError;
+use base::ports::HttpError;
 
 /// Gateway error type.
 #[derive(thiserror::Error, Debug)]
@@ -187,37 +187,37 @@ mod tests {
             ),
             (
                 GatewayError::from(auth_service::AuthError::Domain(
-                    klynt_domain::DomainError::InvalidInput("input".to_string()),
+                    domain::DomainError::InvalidInput("input".to_string()),
                 )),
                 StatusCode::BAD_REQUEST,
             ),
             (
                 GatewayError::from(auth_service::AuthError::Domain(
-                    klynt_domain::DomainError::Validation("invalid".to_string()),
+                    domain::DomainError::Validation("invalid".to_string()),
                 )),
                 StatusCode::BAD_REQUEST,
             ),
             (
                 GatewayError::from(auth_service::AuthError::Domain(
-                    klynt_domain::DomainError::NotFound("missing".to_string()),
+                    domain::DomainError::NotFound("missing".to_string()),
                 )),
                 StatusCode::NOT_FOUND,
             ),
             (
                 GatewayError::from(auth_service::AuthError::Domain(
-                    klynt_domain::DomainError::Conflict("duplicate".to_string()),
+                    domain::DomainError::Conflict("duplicate".to_string()),
                 )),
                 StatusCode::CONFLICT,
             ),
             (
                 GatewayError::from(auth_service::AuthError::Domain(
-                    klynt_domain::DomainError::NotPermitted("no".to_string()),
+                    domain::DomainError::NotPermitted("no".to_string()),
                 )),
                 StatusCode::FORBIDDEN,
             ),
             (
                 GatewayError::from(auth_service::AuthError::Domain(
-                    klynt_domain::DomainError::Internal("domain".to_string()),
+                    domain::DomainError::Internal("domain".to_string()),
                 )),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ),

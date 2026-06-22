@@ -1,10 +1,10 @@
 //! Update profile use case.
 
-use klynt_base::ctx::ExecutionContext;
-use klynt_domain::UserId;
+use base::ctx::ExecutionContext;
+use domain::UserId;
 use validator::Validate;
 
-use crate::domain::UserExt;
+use crate::core::UserExt;
 use crate::error::UserError;
 use crate::models::{ProfileUpdate, UserProfile};
 use crate::UserService;

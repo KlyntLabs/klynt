@@ -142,10 +142,10 @@ Default requirements (configurable):
 
 ## Testing
 
-Unit tests use `klynt_base::testkit` fakes:
+Unit tests use `base::testkit` fakes:
 
 ```rust
-use klynt_base::testkit::{FakeUserRepository, FakeSessionStore, TestClock};
+use base::testkit::{FakeUserRepository, FakeSessionStore, TestClock};
 
 #[tokio::test]
 async fn test_login_with_valid_credentials() {
@@ -158,14 +158,14 @@ async fn test_login_with_valid_credentials() {
 
 ## Dependencies
 
-- `klynt_base` — Port interfaces
-- `klynt_domain` — Domain types and contracts
+- `base` — Port interfaces
+- `domain` — Domain types and contracts
 - `chrono` — Time handling
 - `uuid` — ID generation
 
 ## Related Documentation
 
 - [Backend AGENTS.md](../../../AGENTS.md) — Overall architecture
-- [klynt_base AGENTS.md](../../klynt_base/AGENTS.md) — Port definitions
+- [base AGENTS.md](../../base/AGENTS.md) — Port definitions
 - [user_service AGENTS.md](../user_service/AGENTS.md) — User profiles
 - [session_service AGENTS.md](../session_service/AGENTS.md) — Session management

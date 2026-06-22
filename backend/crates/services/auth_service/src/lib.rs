@@ -12,26 +12,26 @@
 
 pub mod application;
 pub mod builder;
-pub mod domain;
+pub mod core;
 pub mod error;
 pub mod infrastructure;
 pub mod models;
 
 use std::sync::Arc;
 
+use base::ctx::ExecutionContext;
+use base::ports::{Clock, PasswordHasher};
 use chrono::Duration;
-use klynt_base::ctx::ExecutionContext;
-use klynt_base::ports::{Clock, PasswordHasher};
-use klynt_domain::contracts::auth::{LoginRequest, LoginResponse, RegistrationRequest};
-use klynt_domain::UserId;
+use domain::contracts::auth::{LoginRequest, LoginResponse, RegistrationRequest};
+use domain::UserId;
 
 // Public exports
 pub use builder::AuthBuilder;
-pub use domain::{PasswordPolicy, SessionToken};
+pub use core::{PasswordPolicy, SessionToken};
 pub use error::{AuthError, AuthResult};
 
 use application::ports::{AuditLogger, EmailSender, UserRepository};
-use domain::{SessionStore, TokenStore};
+use core::{SessionStore, TokenStore};
 
 /// Authentication service — deep module with small interface.
 ///

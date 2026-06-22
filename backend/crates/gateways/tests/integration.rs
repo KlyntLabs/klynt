@@ -6,9 +6,9 @@ use axum::{
     body::Body,
     http::{Method, Request, StatusCode},
 };
+use base::ctx::{ExecutionContext, RequestContext};
 use chrono::Utc;
-use klynt_base::ctx::{ExecutionContext, RequestContext};
-use klynt_domain::{Email, User, UserId, UserRole, UserStatus};
+use domain::{Email, User, UserId, UserRole, UserStatus};
 use tower::ServiceExt;
 
 mod support;

@@ -107,11 +107,11 @@ let user_service = UserService::builder()
 
 ## Testing
 
-Unit tests use `klynt_base::testkit` fakes:
+Unit tests use `base::testkit` fakes:
 
 ```rust
-use klynt_base::testkit::{FakeUserRepository, TestPasswordHasher};
-use klynt_domain::UserId;
+use base::testkit::{FakeUserRepository, TestPasswordHasher};
+use domain::UserId;
 
 #[tokio::test]
 async fn test_update_profile() {
@@ -152,10 +152,10 @@ Password changes invalidate existing sessions for security.
 
 ## Dependencies
 
-- `klynt_base` — Port interfaces
-- `klynt_domain` — Domain types and contracts
-- `klynt_persistence` — Concrete implementations (only in wiring)
-- `klynt_telemetry` — Audit logging
+- `base` — Port interfaces
+- `domain` — Domain types and contracts
+- `persistence` — Concrete implementations (only in wiring)
+- `telemetry` — Audit logging
 - `chrono` — Time handling
 - `uuid` — ID handling
 - `validator` — Input validation
@@ -164,5 +164,5 @@ Password changes invalidate existing sessions for security.
 ## Related Documentation
 
 - [Backend AGENTS.md](../../../AGENTS.md) — Overall architecture
-- [klynt_base AGENTS.md](../../klynt_base/AGENTS.md) — Port definitions
+- [base AGENTS.md](../../base/AGENTS.md) — Port definitions
 - [auth_service AGENTS.md](../auth_service/AGENTS.md) — Authentication flows

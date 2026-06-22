@@ -1,16 +1,16 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/klynt_base",
-    "crates/shared/klynt_domain",
-    "crates/infrastructure/klynt_persistence",
-    "crates/infrastructure/klynt_telemetry",
-    "crates/infrastructure/klynt_config",
+    "crates/base",
+    "crates/shared/domain",
+    "crates/infra/persistence",
+    "crates/infra/telemetry",
+    "crates/infra/config",
     "crates/services/auth_service",
     "crates/services/user_service",
     "crates/services/session_service",
     "crates/gateways",
-    "crates/klynt-server",
+    "crates/server",
 ]
 
 [workspace.package]
@@ -51,7 +51,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 tracing-error = "0.2"
 
 # Configuration
-config = "0.15"
+config_crate = { package = "config", version = "0.15" }
 dotenvy = "0.15"
 
 # Password hashing
@@ -76,11 +76,11 @@ redis = { version = "0.27", features = ["tokio-comp"] }
 prometheus = { version = "0.13", default-features = false }
 
 # Internal crates
-klynt_base = { path = "crates/klynt_base" }
-klynt_domain = { path = "crates/shared/klynt_domain" }
-klynt_persistence = { path = "crates/infrastructure/klynt_persistence" }
-klynt_telemetry = { path = "crates/infrastructure/klynt_telemetry" }
-klynt_config = { path = "crates/infrastructure/klynt_config" }
+base = { path = "crates/base" }
+domain = { path = "crates/shared/domain" }
+persistence = { path = "crates/infra/persistence" }
+telemetry = { path = "crates/infra/telemetry" }
+config = { path = "crates/infra/config" }
 
 # Services
 auth_service = { path = "crates/services/auth_service" }

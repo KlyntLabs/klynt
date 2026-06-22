@@ -12,16 +12,16 @@
 
 pub mod application;
 pub mod builder;
-pub mod domain;
+pub mod core;
 pub mod error;
 pub mod infrastructure;
 pub mod models;
 
 use std::sync::Arc;
 
-use klynt_base::ctx::ExecutionContext;
-use klynt_base::ports::{Clock, PasswordHasher};
-use klynt_domain::{PaginationRequest, UserId};
+use base::ctx::ExecutionContext;
+use base::ports::{Clock, PasswordHasher};
+use domain::{PaginationRequest, UserId};
 
 pub use builder::UserBuilder;
 pub use error::{UserError, UserResult};
@@ -129,7 +129,7 @@ impl UserService {
         &self,
         ctx: &ExecutionContext,
         pagination: PaginationRequest,
-    ) -> Result<klynt_domain::PaginatedResponse<UserProfile>, UserError> {
+    ) -> Result<domain::PaginatedResponse<UserProfile>, UserError> {
         application::use_cases::list_users::execute(self, ctx, pagination).await
     }
 

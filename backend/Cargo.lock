@@ -109,15 +109,15 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "axum",
+ "base",
  "base64",
  "chrono",
- "klynt_base",
- "klynt_domain",
- "klynt_persistence",
- "klynt_telemetry",
+ "domain",
+ "persistence",
  "rand",
  "sha2",
  "sqlx",
+ "telemetry",
  "thiserror",
  "tokio",
  "tracing",
@@ -181,6 +181,20 @@ dependencies = [
  "tower-layer",
  "tower-service",
  "tracing",
+]
+
+[[package]]
+name = "base"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "axum",
+ "chrono",
+ "domain",
+ "sqlx",
+ "thiserror",
+ "tokio",
+ "uuid",
 ]
 
 [[package]]
@@ -308,6 +322,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4ca0197aee26d1ae37445ee532fefce43251d24cc7c166799f4d46817f1d3973"
 dependencies = [
  "crossbeam-utils",
+]
+
+[[package]]
+name = "config"
+version = "0.1.0"
+dependencies = [
+ "config 0.15.24",
+ "serde",
+ "thiserror",
 ]
 
 [[package]]
@@ -511,6 +534,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "442039f5147480ba31067cb00ada1adae6892028e40e45fc5de7b7df6dcc1b5f"
 dependencies = [
  "const-random",
+]
+
+[[package]]
+name = "domain"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "uuid",
+ "validator",
 ]
 
 [[package]]
@@ -719,17 +754,17 @@ dependencies = [
  "async-trait",
  "auth_service",
  "axum",
+ "base",
  "chrono",
- "config",
- "klynt_base",
- "klynt_config",
- "klynt_domain",
- "klynt_persistence",
- "klynt_telemetry",
+ "config 0.1.0",
+ "config 0.15.24",
+ "domain",
+ "persistence",
  "serde",
  "serde_json",
  "session_service",
  "sqlx",
+ "telemetry",
  "thiserror",
  "tokio",
  "tower",
@@ -1121,92 +1156,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "klynt-server"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "dotenvy",
- "gateways",
- "tokio",
-]
-
-[[package]]
-name = "klynt_base"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "axum",
- "chrono",
- "klynt_domain",
- "sqlx",
- "thiserror",
- "tokio",
- "uuid",
-]
-
-[[package]]
-name = "klynt_config"
-version = "0.1.0"
-dependencies = [
- "config",
- "serde",
- "thiserror",
-]
-
-[[package]]
-name = "klynt_domain"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "serde",
- "serde_json",
- "thiserror",
- "uuid",
- "validator",
-]
-
-[[package]]
-name = "klynt_persistence"
-version = "0.1.0"
-dependencies = [
- "argon2",
- "async-trait",
- "base64",
- "chrono",
- "klynt_base",
- "klynt_config",
- "klynt_domain",
- "klynt_telemetry",
- "rand",
- "rand_core",
- "redis",
- "serde",
- "serde_json",
- "sqlx",
- "thiserror",
- "tokio",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "klynt_telemetry"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "chrono",
- "klynt_base",
- "klynt_domain",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
- "tracing-error",
- "tracing-subscriber",
- "uuid",
-]
-
-[[package]]
 name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1469,6 +1418,30 @@ name = "percent-encoding"
 version = "2.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9b4f627cb1b25917193a259e49bdad08f671f8d9708acfd5fe0a8c1455d87220"
+
+[[package]]
+name = "persistence"
+version = "0.1.0"
+dependencies = [
+ "argon2",
+ "async-trait",
+ "base",
+ "base64",
+ "chrono",
+ "config 0.1.0",
+ "domain",
+ "rand",
+ "rand_core",
+ "redis",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "telemetry",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "uuid",
+]
 
 [[package]]
 name = "pest"
@@ -1915,13 +1888,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "server"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "dotenvy",
+ "gateways",
+ "tokio",
+]
+
+[[package]]
 name = "session_service"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "base",
  "chrono",
- "klynt_base",
- "klynt_domain",
+ "domain",
  "thiserror",
  "tokio",
 ]
@@ -2305,6 +2288,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "telemetry"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "base",
+ "chrono",
+ "domain",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "tracing-error",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
 name = "thiserror"
 version = "2.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2658,12 +2658,12 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "axum",
+ "base",
  "chrono",
- "klynt_base",
- "klynt_domain",
- "klynt_persistence",
- "klynt_telemetry",
+ "domain",
+ "persistence",
  "sqlx",
+ "telemetry",
  "thiserror",
  "tokio",
  "uuid",

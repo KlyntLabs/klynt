@@ -5,12 +5,12 @@ edition = "2021"
 
 [dependencies]
 # === Phase 1 Foundation ===
-klynt_base = { path = "../../../crates/klynt_base" }
-klynt_domain = { path = "../../shared/klynt_domain" }
+base = { path = "../../../crates/base" }
+domain = { path = "../../shared/domain" }
 
 # === Storage and infrastructure adapters ===
-klynt_persistence = { path = "../../../crates/infrastructure/klynt_persistence" }
-klynt_telemetry = { path = "../../../crates/infrastructure/klynt_telemetry" }
+persistence = { path = "../../../crates/infra/persistence" }
+telemetry = { path = "../../../crates/infra/telemetry" }
 
 # === Async Runtime ===
 tokio = { workspace = true }
@@ -43,4 +43,4 @@ sha2 = { workspace = true }
 base64 = { workspace = true }
 
 [dev-dependencies]
-klynt_base = { path = "../../../crates/klynt_base", features = ["testkit"] }
+base = { path = "../../../crates/base", features = ["testkit"] }

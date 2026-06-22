@@ -1,19 +1,19 @@
 //! Test support utilities for user_service integration tests.
 //!
-//! Cross-cutting test doubles come from [`klynt_base::testkit`]; this module
+//! Cross-cutting test doubles come from [`base::testkit`]; this module
 //! keeps only the user-service-specific fakes.
 
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
 
-use klynt_base::ctx::ExecutionContext;
-use klynt_base::testkit::{sample_user as base_sample_user, FakeUserRepository};
-use klynt_domain::{User, UserId, UserStatus};
+use base::ctx::ExecutionContext;
+use base::testkit::{sample_user as base_sample_user, FakeUserRepository};
+use domain::{User, UserId, UserStatus};
 use user_service::application::ports::AuditLogger;
 use user_service::{Dependencies, UserConfig, UserService};
 
-pub use klynt_base::testkit::{test_ctx, TestClock, TestPasswordHasher};
+pub use base::testkit::{test_ctx, TestClock, TestPasswordHasher};
 
 /// Create an active sample user for tests.
 pub fn sample_user(email: &str, full_name: &str, password_hash: &str) -> User {

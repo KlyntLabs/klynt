@@ -13,11 +13,11 @@ pub use error::{SessionError, SessionResult};
 
 use std::sync::Arc;
 
+use base::ctx::ExecutionContext;
+use base::ports::session::{Session, SessionStore, SessionToken};
+use base::ports::{Clock, SystemClock};
 use chrono::Duration;
-use klynt_base::ctx::ExecutionContext;
-use klynt_base::ports::session::{Session, SessionStore, SessionToken};
-use klynt_base::ports::{Clock, SystemClock};
-use klynt_domain::UserId;
+use domain::UserId;
 
 /// Session service — small interface, deep implementation.
 pub struct SessionService {

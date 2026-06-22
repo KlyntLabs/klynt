@@ -2,9 +2,9 @@
 
 use async_trait::async_trait;
 
-use klynt_base::ports::{PasswordHashError, PasswordHasher};
+use base::ports::{PasswordHashError, PasswordHasher};
 
-/// Adapter wrapping a [`klynt_persistence::ports::PasswordHasher`].
+/// Adapter wrapping a [`persistence::ports::PasswordHasher`].
 pub struct PasswordHasherAdapter<T> {
     inner: T,
 }
@@ -18,7 +18,7 @@ impl<T> PasswordHasherAdapter<T> {
 #[async_trait]
 impl<T> PasswordHasher for PasswordHasherAdapter<T>
 where
-    T: klynt_persistence::ports::PasswordHasher,
+    T: persistence::ports::PasswordHasher,
 {
     async fn hash(&self, password: &str) -> Result<String, PasswordHashError> {
         self.inner
@@ -29,7 +29,7 @@ where
     }
 
     async fn verify(&self, password: &str, hash: &str) -> Result<bool, PasswordHashError> {
-        let hashed = klynt_persistence::ports::HashedPassword::new(hash);
+        let hashed = persistence::ports::HashedPassword::new(hash);
         self.inner
             .verify(password, &hashed)
             .await
@@ -43,7 +43,7 @@ mod tests {
 
     #[tokio::test]
     async fn hashes_and_verifies_password() {
-        let hasher = klynt_persistence::password_hasher::Argon2PasswordHasher::new();
+        let hasher = persistence::password_hasher::Argon2PasswordHasher::new();
         let adapter = PasswordHasherAdapter::new(hasher);
 
         let hash = adapter.hash("Str0ng!Pass#123").await.unwrap();

@@ -6,16 +6,14 @@ use std::sync::{Arc, Mutex};
 use async_trait::async_trait;
 use auth_service::{
     application::ports::{AuditLogger, EmailSender},
-    domain::{
-        Session, SessionError, SessionStore, SessionToken, TokenError, TokenKind, TokenStore,
-    },
+    core::{Session, SessionError, SessionStore, SessionToken, TokenError, TokenKind, TokenStore},
     AuthConfig, AuthService, Dependencies as AuthDependencies,
 };
+use base::ctx::ExecutionContext;
+use base::ports::email::EmailError;
+use base::ports::repository::{RepositoryError, UserRepository};
 use chrono::{DateTime, Utc};
-use klynt_base::ctx::ExecutionContext;
-use klynt_base::ports::email::EmailError;
-use klynt_base::ports::repository::{RepositoryError, UserRepository};
-use klynt_domain::{Email, PaginationRequest, User, UserId, UserRole, UserStatus};
+use domain::{Email, PaginationRequest, User, UserId, UserRole, UserStatus};
 
 use super::{FakePasswordHasher, FixedClock};
 

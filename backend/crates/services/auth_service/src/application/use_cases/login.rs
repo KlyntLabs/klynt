@@ -1,8 +1,8 @@
 //! Login use case - authenticate user and create session.
 
-use klynt_base::ctx::ExecutionContext;
-use klynt_domain::contracts::auth::{LoginRequest, LoginResponse};
-use klynt_domain::{DomainError, Email};
+use base::ctx::ExecutionContext;
+use domain::contracts::auth::{LoginRequest, LoginResponse};
+use domain::{DomainError, Email};
 use validator::Validate;
 
 use crate::error::AuthError;

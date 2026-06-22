@@ -65,14 +65,14 @@ pub struct SessionService {
 **DON'T** use when:
 - Authenticating credentials (use `auth_service`)
 - Managing user profiles (use `user_service`)
-- Pure persistence testing (use `klynt_base::testkit`)
+- Pure persistence testing (use `base::testkit`)
 
 ## Example Usage
 
 ```rust
 use session_service::SessionService;
-use klynt_base::ports::{SessionStore, Clock};
-use klynt_domain::UserId;
+use base::ports::{SessionStore, Clock};
+use domain::UserId;
 
 // Create session
 let session = session_service
@@ -111,11 +111,11 @@ session_service
 
 ## Testing
 
-Unit tests use `FakeSessionStore` from `klynt_base::testkit`:
+Unit tests use `FakeSessionStore` from `base::testkit`:
 
 ```rust
-use klynt_base::testkit::{FakeSessionStore, TestClock};
-use klynt_domain::UserId;
+use base::testkit::{FakeSessionStore, TestClock};
+use domain::UserId;
 
 #[tokio::test]
 async fn test_create_and_validate_session() {
@@ -137,13 +137,13 @@ async fn test_create_and_validate_session() {
 
 ## Dependencies
 
-- `klynt_base` — `SessionStore`, `Clock` ports
-- `klynt_domain` — `UserId`, `Session` types
+- `base` — `SessionStore`, `Clock` ports
+- `domain` — `UserId`, `Session` types
 - `chrono` — Time/duration handling
 - `thiserror` — Error derive
 
 ## Related Documentation
 
 - [Backend AGENTS.md](../../../AGENTS.md) — Overall architecture
-- [klynt_base AGENTS.md](../../klynt_base/AGENTS.md) — Port definitions
+- [base AGENTS.md](../../base/AGENTS.md) — Port definitions
 - [auth_service AGENTS.md](../auth_service/AGENTS.md) — Authentication flows

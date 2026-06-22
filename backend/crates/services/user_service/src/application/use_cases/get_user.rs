@@ -1,7 +1,7 @@
 //! Get user use case.
 
-use klynt_base::ctx::ExecutionContext;
-use klynt_domain::UserId;
+use base::ctx::ExecutionContext;
+use domain::UserId;
 
 use crate::error::UserError;
 use crate::models::UserProfile;

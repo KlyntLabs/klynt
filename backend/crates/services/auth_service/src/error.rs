@@ -2,12 +2,12 @@
 
 use axum::http::StatusCode;
 
-use klynt_base::ports::{
+use base::ports::{
     EmailError, HttpError, PasswordHashError, RepositoryError, SessionError, TokenError,
 };
-use klynt_domain::DomainError;
+use domain::DomainError;
 
-use crate::domain::PasswordPolicyError;
+use crate::core::PasswordPolicyError;
 
 /// Auth service-specific error type.
 #[derive(thiserror::Error, Debug)]

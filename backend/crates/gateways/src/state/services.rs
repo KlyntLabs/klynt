@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use auth_service::{AuthConfig, AuthService};
-use klynt_persistence::repositories::pg_session::PgSessionStore;
+use persistence::repositories::pg_session::PgSessionStore;
 use session_service::{SessionConfig, SessionService};
 use user_service::{UserConfig, UserService};
 
@@ -70,7 +70,7 @@ impl Services {
         _config: &Config,
         pool: sqlx::PgPool,
     ) -> Result<SessionService, crate::GatewayError> {
-        let session_store: Arc<dyn klynt_base::ports::session::SessionStore> =
+        let session_store: Arc<dyn base::ports::session::SessionStore> =
             Arc::new(PgSessionStore::new(pool));
 
         Ok(SessionService::new(

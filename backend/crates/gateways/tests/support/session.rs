@@ -4,10 +4,10 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 
 use async_trait::async_trait;
+use base::ctx::ExecutionContext;
+use base::ports::session::{Session, SessionError, SessionStore, SessionToken};
 use chrono::{DateTime, Utc};
-use klynt_base::ctx::ExecutionContext;
-use klynt_base::ports::session::{Session, SessionError, SessionStore, SessionToken};
-use klynt_domain::UserId;
+use domain::UserId;
 
 /// Fake persistence session store for middleware tests.
 #[derive(Default)]

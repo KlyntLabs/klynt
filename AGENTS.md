@@ -54,7 +54,7 @@ Run `just` to list recipes.
 
 Frontend-only: `bun run dev`, `bun run test:coverage`, `bun run lint`, `bun run typecheck`, `bun run build`.
 
-Backend-only: `cargo run --bin klynt-server`, `cargo nextest run --all-features`, `cargo clippy --workspace --all-targets --all-features -- -D warnings`, `cargo fmt`.
+Backend-only: `cargo run --bin server`, `cargo nextest run --all-features`, `cargo clippy --workspace --all-targets --all-features -- -D warnings`, `cargo fmt`.
 
 ## Agent Workflow
 

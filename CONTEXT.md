@@ -16,10 +16,10 @@ An authenticated user session. Created on login, expires after a configured dura
 Short-lived verification token for email verification or password reset.
 
 ### Repository
-Persistence interface port. Canonical definitions live in `klynt_base::ports`.
+Persistence interface port. Canonical definitions live in `base::ports`.
 
 ### Service
-Business logic layer. `auth_service`, `session_service`, and `user_service` provide deep interfaces and depend only on `klynt_base` ports and `klynt_domain` types.
+Business logic layer. `auth_service`, `session_service`, and `user_service` provide deep interfaces and depend only on `base` ports and `domain` types.
 
 ## Architecture Vocabulary
 
@@ -29,11 +29,11 @@ Business logic layer. `auth_service`, `session_service`, and `user_service` prov
 - **Seam** — Dependency boundary where implementations can be swapped
 - **Adapter** — Translates a canonical port into a concrete implementation (e.g., Postgres `UserRepository`)
 - **Leverage** — Value added per unit of interface complexity
-- **Locality** — Related concepts living together; the goal that led to replacing `klynt_common` with focused `klynt_domain` modules
+- **Locality** — Related concepts living together; the goal that led to replacing `klynt_common` with focused `domain` modules
 
 ## Canonical Ports
 
-All services use canonical ports from `klynt_base::ports`:
+All services use canonical ports from `base::ports`:
 
 | Port | File | Purpose |
 |---|---|---|
@@ -48,7 +48,7 @@ All services use canonical ports from `klynt_base::ports`:
 
 ## Test Support Fakes
 
-Use canonical fakes from `klynt_base::testkit`:
+Use canonical fakes from `base::testkit`:
 
 | Fake | File | Purpose |
 |---|---|---|
@@ -64,22 +64,22 @@ Use canonical fakes from `klynt_base::testkit`:
 
 ```
 backend/crates/
-├── klynt_base              # Canonical ports + testkit fakes
+├── base                    # Canonical ports + testkit fakes
 ├── shared/
-│   └── klynt_domain        # Domain types and contracts
-├── infrastructure/
-│   ├── klynt_persistence   # Postgres / Redis adapters
-│   ├── klynt_telemetry     # Tracing, audit, metrics, health
-│   └── klynt_config        # Configuration loading
+│   └── domain              # Domain types and contracts
+├── infra/
+│   ├── persistence         # Postgres / Redis adapters
+│   ├── telemetry           # Tracing, audit, metrics, health
+│   └── config              # Configuration loading
 ├── services/
 │   ├── auth_service        # Registration, login, email verification, password reset
 │   ├── session_service     # Session lifecycle
 │   └── user_service        # Profiles, password changes, user listing, soft delete
-├── gateways/gateways       # HTTP handlers, middleware, composition root
-└── klynt-server            # Binary entrypoint
+├── gateways/               # HTTP handlers, middleware, composition root
+└── server                  # Binary entrypoint
 ```
 
 ## Notes
 
-- `klynt_common` was removed. Its domain types moved to `klynt_domain`; ports and test fakes moved to `klynt_base`.
-- Dependency direction: services → `klynt_base` + `klynt_domain`; infrastructure → implements `klynt_base` ports.
+- `klynt_common` was removed. Its domain types moved to `domain`; ports and test fakes moved to `base`.
+- Dependency direction: services → `base` + `domain`; infrastructure → implements `base` ports.

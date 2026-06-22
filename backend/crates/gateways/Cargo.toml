@@ -10,12 +10,12 @@ user_service = { path = "../services/user_service" }
 session_service = { path = "../services/session_service" }
 
 # === Phase 1 Foundation ===
-klynt_base = { path = "../klynt_base" }
-klynt_domain = { path = "../shared/klynt_domain" }
+base = { path = "../base" }
+domain = { path = "../shared/domain" }
 
 # === Storage and infrastructure adapters ===
-klynt_persistence = { path = "../infrastructure/klynt_persistence" }
-klynt_telemetry = { path = "../infrastructure/klynt_telemetry" }
+persistence = { path = "../infra/persistence" }
+telemetry = { path = "../infra/telemetry" }
 
 # === Web Framework ===
 axum = { workspace = true }
@@ -38,8 +38,8 @@ anyhow = { workspace = true }
 tracing = { workspace = true }
 
 # === Configuration ===
+config_crate = { workspace = true }
 config = { workspace = true }
-klynt_config = { workspace = true }
 
 # === Time ===
 chrono = { workspace = true }
