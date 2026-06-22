@@ -11,10 +11,7 @@ use klynt_common::domain::{PaginationRequest, UserStatus};
 use klynt_common::util::UserId;
 use user_service::{
     application::ports::{AuditLogger, UserRepository},
-    infrastructure::{
-        repositories::UserRepositoryAdapter,
-        services::{AuditLoggerAdapter, PasswordHasherAdapter},
-    },
+    infrastructure::services::{AuditLoggerAdapter, PasswordHasherAdapter},
 };
 
 fn database_url() -> Option<String> {
@@ -36,13 +33,12 @@ fn test_ctx() -> ExecutionContext {
 }
 
 #[tokio::test]
-async fn user_repository_adapter_round_trips_with_postgres() {
+async fn user_repository_round_trips_with_postgres() {
     let Some(pool) = setup_pool().await else {
         return;
     };
 
     let repo = klynt_persistence::repositories::pg_user::PgUserRepository::new(pool.clone());
-    let adapter = UserRepositoryAdapter::new(repo);
     let ctx = test_ctx();
 
     let user_id = UserId::new();
@@ -74,7 +70,7 @@ async fn user_repository_adapter_round_trips_with_postgres() {
     .await
     .unwrap();
 
-    let found = adapter
+    let found = repo
         .find_by_id(&ctx, user_id)
         .await
         .unwrap()
@@ -85,16 +81,13 @@ async fn user_repository_adapter_round_trips_with_postgres() {
     assert_eq!(found.status, UserStatus::Active);
     assert!(found.deleted_at.is_none());
 
-    let (users, total) = adapter
-        .list(&ctx, PaginationRequest::first())
-        .await
-        .unwrap();
+    let (users, total) = repo.list(&ctx, PaginationRequest::first()).await.unwrap();
     assert!(total >= 1);
     assert!(!users.is_empty());
 
-    adapter.delete(&ctx, user_id).await.unwrap();
+    repo.delete(&ctx, user_id).await.unwrap();
 
-    let after_delete = adapter.find_by_id(&ctx, user_id).await.unwrap().unwrap();
+    let after_delete = repo.find_by_id(&ctx, user_id).await.unwrap().unwrap();
     assert!(after_delete.is_deleted());
 }
 

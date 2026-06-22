@@ -6,12 +6,9 @@ use klynt_base::ports::{Clock, PasswordHasher, SystemClock};
 
 use crate::application::ports::{AuditLogger, UserRepository};
 use crate::error::UserError;
-use crate::infrastructure::{
-    repositories::UserRepositoryAdapter as UserRepoAdapter,
-    services::{
-        AuditLoggerAdapter as UserAuditLoggerAdapter,
-        PasswordHasherAdapter as UserPasswordHasherAdapter,
-    },
+use crate::infrastructure::services::{
+    AuditLoggerAdapter as UserAuditLoggerAdapter,
+    PasswordHasherAdapter as UserPasswordHasherAdapter,
 };
 use crate::Dependencies;
 use crate::UserConfig;
@@ -86,9 +83,8 @@ impl UserBuilder {
         let config = self.config.unwrap_or_default();
 
         let user_repository = self.user_repository.unwrap_or_else(|| {
-            Arc::new(UserRepoAdapter::new(
-                klynt_persistence::repositories::pg_user::PgUserRepository::new(pool.clone()),
-            ))
+            Arc::new(klynt_persistence::repositories::pg_user::PgUserRepository::new(pool.clone()))
+                as Arc<dyn UserRepository>
         });
 
         let audit_logger = self.audit_logger.unwrap_or_else(|| {
