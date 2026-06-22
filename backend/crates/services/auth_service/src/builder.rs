@@ -8,10 +8,7 @@ use crate::application::ports::{AuditLogger, EmailSender, UserRepository};
 use crate::domain::{SessionStore, TokenStore};
 use crate::error::AuthError;
 use crate::infrastructure::{
-    repositories::{
-        SessionRepositoryAdapter, TokenRepositoryAdapter,
-        UserRepositoryAdapter as AuthUserRepositoryAdapter,
-    },
+    repositories::{SessionRepositoryAdapter, TokenRepositoryAdapter},
     services::{
         AuditLoggerAdapter as AuthAuditLoggerAdapter, EmailSenderAdapter,
         PasswordHasherAdapter as AuthPasswordHasherAdapter,
@@ -111,9 +108,8 @@ impl AuthBuilder {
         let config = self.config.unwrap_or_default();
 
         let user_repository = self.user_repository.unwrap_or_else(|| {
-            Arc::new(AuthUserRepositoryAdapter::new(
-                klynt_persistence::repositories::pg_user::PgUserRepository::new(pool.clone()),
-            ))
+            Arc::new(klynt_persistence::repositories::pg_user::PgUserRepository::new(pool.clone()))
+                as Arc<dyn UserRepository>
         });
 
         let session_store = self.session_store.unwrap_or_else(|| {
