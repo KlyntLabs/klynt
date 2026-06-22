@@ -78,9 +78,7 @@ async fn cached_store_populates_and_hits_cache() {
     let mut inspect_conn = setup_redis().await;
     let user_id = create_test_user(&pool).await;
     let postgres = PgSessionStore::new(pool);
-    let store = CachedSessionStore::connect(postgres, &redis_url())
-        .await
-        .unwrap();
+    let store = CachedSessionStore::connect(postgres, &redis_url()).await;
     let ctx = ExecutionContext::new(RequestContext::new());
     let expires_at = chrono::Utc::now() + chrono::Duration::hours(1);
 
@@ -113,9 +111,7 @@ async fn cached_store_falls_back_to_postgres_and_rehydrates_cache() {
     let mut inspect_conn = setup_redis().await;
     let user_id = create_test_user(&pool).await;
     let postgres = PgSessionStore::new(pool);
-    let store = CachedSessionStore::connect(postgres, &redis_url())
-        .await
-        .unwrap();
+    let store = CachedSessionStore::connect(postgres, &redis_url()).await;
     let ctx = ExecutionContext::new(RequestContext::new());
     let expires_at = chrono::Utc::now() + chrono::Duration::hours(1);
 
@@ -133,14 +129,31 @@ async fn cached_store_falls_back_to_postgres_and_rehydrates_cache() {
 }
 
 #[tokio::test]
+async fn cached_store_round_trips_through_postgres_when_redis_is_unreachable() {
+    let pool = setup_pool().await;
+    let user_id = create_test_user(&pool).await;
+    let postgres = PgSessionStore::new(pool);
+    // Use a port that is very unlikely to have a Redis listener.
+    let store = CachedSessionStore::connect(postgres, "redis://127.0.0.1:1").await;
+    let ctx = ExecutionContext::new(RequestContext::new());
+    let expires_at = chrono::Utc::now() + chrono::Duration::hours(1);
+
+    let token = store.create(&ctx, user_id, expires_at).await.unwrap();
+
+    let session = store.find_valid(&ctx, &token).await.unwrap().unwrap();
+    assert_eq!(session.user_id, user_id);
+
+    store.revoke(&ctx, &token).await.unwrap();
+    assert!(store.find_valid(&ctx, &token).await.unwrap().is_none());
+}
+
+#[tokio::test]
 async fn revoked_token_is_not_found_in_cache_or_postgres() {
     let pool = setup_pool().await;
     let mut inspect_conn = setup_redis().await;
     let user_id = create_test_user(&pool).await;
     let postgres = PgSessionStore::new(pool);
-    let store = CachedSessionStore::connect(postgres, &redis_url())
-        .await
-        .unwrap();
+    let store = CachedSessionStore::connect(postgres, &redis_url()).await;
     let ctx = ExecutionContext::new(RequestContext::new());
     let expires_at = chrono::Utc::now() + chrono::Duration::hours(1);
 
@@ -161,9 +174,7 @@ async fn revoked_token_is_not_found_in_cache_or_postgres() {
 async fn unknown_token_returns_none() {
     let pool = setup_pool().await;
     let postgres = PgSessionStore::new(pool);
-    let store = CachedSessionStore::connect(postgres, &redis_url())
-        .await
-        .unwrap();
+    let store = CachedSessionStore::connect(postgres, &redis_url()).await;
     let ctx = ExecutionContext::new(RequestContext::new());
     let token = SessionToken::new();
 

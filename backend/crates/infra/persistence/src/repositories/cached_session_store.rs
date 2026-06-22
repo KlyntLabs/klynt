@@ -11,15 +11,12 @@
 //! TTL expires (currently 15 minutes). Callers should ensure Redis is available
 //! for revocation to take immediate effect.
 
-use std::sync::Arc;
-
 use async_trait::async_trait;
 use base::ctx::ExecutionContext;
 use base::ports::session::{Session, SessionError, SessionStore, SessionToken};
 use chrono::{DateTime, Utc};
-use domain::{DomainError, UserId};
+use domain::UserId;
 use redis::aio::MultiplexedConnection;
-use tokio::sync::Mutex;
 
 use super::session::PgSessionStore;
 
@@ -31,7 +28,7 @@ const SESSION_TTL_SECONDS: u64 = 900; // 15 minutes
 /// invalidation during `revoke`.
 pub struct CachedSessionStore {
     postgres: PgSessionStore,
-    redis: Arc<Mutex<MultiplexedConnection>>,
+    redis: Option<MultiplexedConnection>,
 }
 
 impl CachedSessionStore {
@@ -41,20 +38,37 @@ impl CachedSessionStore {
     pub fn new(postgres: PgSessionStore, redis: MultiplexedConnection) -> Self {
         Self {
             postgres,
-            redis: Arc::new(Mutex::new(redis)),
+            redis: Some(redis),
         }
     }
 
     /// Connect to Redis at `redis_url` and return a new cached store.
-    pub async fn connect(postgres: PgSessionStore, redis_url: &str) -> Result<Self, DomainError> {
-        let client = redis::Client::open(redis_url)
-            .map_err(|e| DomainError::internal_msg(format!("invalid redis url: {e}")))?;
-        let conn = client
-            .get_multiplexed_async_connection()
-            .await
-            .map_err(|e| DomainError::internal_msg(format!("redis connection failed: {e}")))?;
+    ///
+    /// If the Redis connection cannot be established, the store is created
+    /// without a cache and all operations fall back to Postgres. The failure
+    /// is logged but does not fail the call.
+    pub async fn connect(postgres: PgSessionStore, redis_url: &str) -> Self {
+        let client = match redis::Client::open(redis_url) {
+            Ok(client) => client,
+            Err(e) => {
+                tracing::warn!(error = %e, "invalid redis session cache url; falling back to postgres");
+                return Self {
+                    postgres,
+                    redis: None,
+                };
+            }
+        };
 
-        Ok(Self::new(postgres, conn))
+        match client.get_multiplexed_async_connection().await {
+            Ok(conn) => Self::new(postgres, conn),
+            Err(e) => {
+                tracing::warn!(error = %e, "failed to connect to redis session cache; falling back to postgres");
+                Self {
+                    postgres,
+                    redis: None,
+                }
+            }
+        }
     }
 
     fn cache_key(token: &SessionToken) -> String {
@@ -62,11 +76,19 @@ impl CachedSessionStore {
     }
 
     async fn read_cache(&self, token: &SessionToken) -> Result<Option<Session>, SessionError> {
-        let mut conn = self.redis.lock().await;
+        let mut conn = match self.redis.as_ref() {
+            Some(conn) => conn.clone(),
+            None => {
+                return Err(SessionError::Internal(
+                    "redis session cache unavailable".to_string(),
+                ))
+            }
+        };
+
         let key = Self::cache_key(token);
         let value: Option<String> = redis::cmd("GET")
             .arg(&key)
-            .query_async(&mut *conn)
+            .query_async(&mut conn)
             .await
             .map_err(|e| SessionError::Internal(format!("redis get: {e}")))?;
 
@@ -91,7 +113,15 @@ impl CachedSessionStore {
         token: &SessionToken,
         session: &Session,
     ) -> Result<(), SessionError> {
-        let mut conn = self.redis.lock().await;
+        let mut conn = match self.redis.as_ref() {
+            Some(conn) => conn.clone(),
+            None => {
+                return Err(SessionError::Internal(
+                    "redis session cache unavailable".to_string(),
+                ))
+            }
+        };
+
         let key = Self::cache_key(token);
         let ttl = SESSION_TTL_SECONDS as usize;
         let cached = CachedSession {
@@ -105,18 +135,26 @@ impl CachedSessionStore {
             .arg(&key)
             .arg(ttl)
             .arg(json)
-            .query_async::<()>(&mut *conn)
+            .query_async::<()>(&mut conn)
             .await
             .map_err(|e| SessionError::Internal(format!("redis setex: {e}")))?;
         Ok(())
     }
 
     async fn invalidate_cache(&self, token: &SessionToken) -> Result<(), SessionError> {
-        let mut conn = self.redis.lock().await;
+        let mut conn = match self.redis.as_ref() {
+            Some(conn) => conn.clone(),
+            None => {
+                return Err(SessionError::Internal(
+                    "redis session cache unavailable".to_string(),
+                ))
+            }
+        };
+
         let key = Self::cache_key(token);
         redis::cmd("DEL")
             .arg(&key)
-            .query_async::<()>(&mut *conn)
+            .query_async::<()>(&mut conn)
             .await
             .map_err(|e| SessionError::Internal(format!("redis del: {e}")))?;
         Ok(())

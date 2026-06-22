@@ -75,11 +75,7 @@ impl Services {
 
         let store: Arc<dyn base::ports::session::SessionStore> =
             if let Some(redis_url) = &config.redis_url {
-                Arc::new(
-                    CachedSessionStore::connect(postgres, redis_url)
-                        .await
-                        .map_err(|e| crate::GatewayError::configuration(format!("Redis: {e}")))?,
-                )
+                Arc::new(CachedSessionStore::connect(postgres, redis_url).await)
             } else {
                 Arc::new(postgres)
             };
