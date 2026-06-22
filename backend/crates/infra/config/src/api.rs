@@ -46,16 +46,7 @@ impl Validated for ApiConfig {
             }
         }
 
-        for proxy in &self.trusted_proxies {
-            let is_valid =
-                proxy.parse::<ipnet::IpNet>().is_ok() || proxy.parse::<std::net::IpAddr>().is_ok();
-            if !is_valid {
-                return Err(ConfigError::InvalidTrustedProxy(format!(
-                    "'{}' is not a valid IP or CIDR",
-                    proxy
-                )));
-            }
-        }
+        crate::parse_trusted_proxies(&self.trusted_proxies)?;
 
         Ok(())
     }

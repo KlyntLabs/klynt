@@ -11,27 +11,33 @@ gateways/
 ├── src/
 │   ├── state/                  # Application state & wiring
 │   │   ├── services.rs         # Service wiring (composition root)
-│   │   ├── config.rs           # Gateway config
-│   │   └── mod.rs
+│   │   └── mod.rs              # Gateway config
 │   ├── routes/                 # HTTP route handlers
 │   │   ├── mod.rs
-│   │   ├── auth.rs            # Auth endpoints
-│   │   ├── users.rs           # User endpoints
-│   │   ├── health.rs          # Health check
-│   │   └── openapi.rs         # OpenAPI spec
+│   │   ├── auth.rs             # Auth endpoints
+│   │   ├── users.rs            # User endpoints
+│   │   ├── health.rs           # Health check
+│   │   └── openapi.rs          # OpenAPI spec
 │   ├── middleware/             # Axum middleware
-│   │   ├── auth.rs            # Authentication middleware
-│   │   ├── cors.rs            # CORS configuration
-│   │   ├── request_id.rs      # Request ID tracking
-│   │   └── error.rs           # Error handling
-│   ├── error.rs               # Gateway error types
+│   │   ├── auth.rs             # Bearer token authentication
+│   │   ├── cors.rs             # CORS configuration
+│   │   ├── error_handler.rs    # Error response formatting
+│   │   ├── rate_limit.rs       # Per-action rate limiting
+│   │   ├── request_id.rs       # Request ID generation/tracking
+│   │   └── security_headers.rs # Security headers
+│   ├── error.rs                # Gateway error types
 │   └── lib.rs
 ├── tests/                      # Integration tests
-│   ├── auth_tests.rs
-│   ├── user_tests.rs
+│   ├── config_from_env.rs
+│   ├── integration.rs
+│   ├── rate_limit.rs
+│   ├── real_services.rs
 │   └── support/
-│       └── mod.rs             # Test utilities
-├── openapi.yaml               # OpenAPI specification
+│       ├── auth.rs
+│       ├── rate_limiter.rs
+│       ├── session.rs
+│       └── user.rs
+├── openapi.yaml                # OpenAPI specification
 └── Cargo.toml
 ```
 
@@ -42,25 +48,29 @@ gateways/
 **This is the ONLY place where concrete implementations are wired:**
 
 ```rust
+use ipnet::IpNet;
+
 pub struct Services {
     pub auth: Arc<AuthService>,
-    pub session: Arc<SessionService>,
     pub user: Arc<UserService>,
+    pub session: Arc<SessionService>,
+    pub rate_limiter: Arc<dyn RateLimiter>,
+    pub trusted_proxies: Vec<IpNet>,
 }
 
-pub async fn build_services(config: &Config) -> Result<Services> {
-    // Wire repositories
-    let user_repo = Arc::new(PgUserRepository::new(pool.clone())) as Arc<dyn UserRepository>;
-    let session_store = Arc::new(RedisSessionStore::new(redis_conn)) as Arc<dyn SessionStore>;
-    
-    // Wire services
-    let auth = Arc::new(AuthService::builder()
-        .user_repository(user_repo.clone())
-        .session_store(session_store.clone())
-        // ... other dependencies
-        .build()?);
-    
-    Ok(Services { auth, session, user })
+pub async fn from_config(config: &Config) -> Result<Services, GatewayError> {
+    // ... connect pool, run migrations ...
+
+    let trusted_proxies = config::parse_trusted_proxies(&config.trusted_proxies)
+        .map_err(|e| GatewayError::configuration(e.to_string()))?;
+
+    Ok(Services {
+        auth: Arc::new(auth_service),
+        user: Arc::new(user_service),
+        session: Arc::new(session_service),
+        rate_limiter,
+        trusted_proxies,
+    })
 }
 ```
 
@@ -90,8 +100,10 @@ Cross-cutting HTTP concerns:
 |------------|---------|
 | `auth` | Bearer token authentication, injects user context |
 | `cors` | CORS headers |
+| `error_handler` | Error response formatting |
+| `rate_limit` | Per-action rate limiting on auth endpoints |
 | `request_id` | Request ID generation/tracking |
-| `error` | Error response formatting |
+| `security_headers` | Security headers (HSTS, CSP, etc.) |
 
 ### 4. OpenAPI (`openapi.yaml`)
 
@@ -115,10 +127,10 @@ API specification for all endpoints. Keep in sync with route handlers.
 ### Auth Routes (`routes/auth.rs`)
 
 ```
-POST /api/v1/auth/register          - Register new user
-POST /api/v1/auth/verify-email     - Verify email
-POST /api/v1/auth/login            - Create session (login)
-POST /api/v1/auth/logout           - End session (logout)
+POST /api/v1/auth/register              - Register new user
+POST /api/v1/auth/verify-email          - Verify email
+POST /api/v1/auth/login                 - Create session (login)
+POST /api/v1/auth/logout                - End session (logout)
 POST /api/v1/auth/request-password-reset
 POST /api/v1/auth/reset-password
 ```
@@ -126,38 +138,41 @@ POST /api/v1/auth/reset-password
 ### User Routes (`routes/users.rs`)
 
 ```
-GET  /api/v1/users/:id             - Get user profile
-PUT  /api/v1/users/:id             - Update profile
-POST /api/v1/users/:id/password     - Change password
-GET  /api/v1/users                 - List users
-DELETE /api/v1/users/:id           - Soft delete
+GET    /api/v1/users/me            - Get current user profile
+PATCH  /api/v1/users/me            - Update current user profile
+POST   /api/v1/users/me/password   - Change current user password
+GET    /api/v1/users               - List users
+GET    /api/v1/users/{id}          - Get user by ID
+DELETE /api/v1/users/{id}          - Soft delete user
 ```
 
 ### Health Routes (`routes/health.rs`)
 
 ```
-GET /health                         - Health check
-GET /health/db                     - Database health
-GET /health/redis                  - Redis health
+GET /health                         - Liveness check
 ```
 
 ## Error Handling
 
-Gateway errors implement `HttpError` from `base`:
+Gateway errors implement `IntoResponse` and expose stable error codes:
 
 ```rust
-impl HttpError for GatewayError {
-    fn to_http_status(&self) -> StatusCode {
-        match self {
-            Self::NotFound(_) => StatusCode::NOT_FOUND,
-            Self::Unauthorized => StatusCode::UNAUTHORIZED,
-            Self::Conflict(_) => StatusCode::CONFLICT,
-            Self::BadRequest(_) => StatusCode::BAD_REQUEST,
-            Self::Internal => StatusCode::INTERNAL_SERVER_ERROR,
-        }
-    }
+pub enum GatewayError {
+    BadRequest(String),
+    Unauthorized(String),
+    Forbidden(String),
+    NotFound(String),
+    Conflict(String),
+    Configuration(String),
+    ServiceUnavailable(String),
+    RateLimited(u32),
+    Internal(String),
+    Auth(auth_service::AuthError),
+    User(user_service::UserError),
 }
 ```
+
+`GatewayError::RateLimited(retry_after)` returns `429 Too Many Requests` with a `Retry-After` header.
 
 ## Middleware Pattern
 

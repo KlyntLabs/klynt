@@ -54,8 +54,8 @@ impl Services {
         let session_service = Self::create_session_service(session_store);
         let user_service = Self::create_user_service(config, pool).await?;
         let rate_limiter = Self::create_rate_limiter(config).await?;
-        let trusted_proxies = parse_trusted_proxies(&config.trusted_proxies)
-            .map_err(crate::GatewayError::configuration)?;
+        let trusted_proxies = config::parse_trusted_proxies(&config.trusted_proxies)
+            .map_err(|e| crate::GatewayError::configuration(e.to_string()))?;
 
         Ok(Self {
             auth: Arc::new(auth_service),
@@ -141,19 +141,4 @@ impl Services {
             .map_err(|e| crate::GatewayError::configuration(format!("Rate limiter: {e}")))?;
         Ok(Arc::new(limiter))
     }
-}
-
-fn parse_trusted_proxies(proxies: &[String]) -> Result<Vec<IpNet>, String> {
-    proxies
-        .iter()
-        .map(|entry| {
-            if let Ok(net) = entry.parse::<IpNet>() {
-                Ok(net)
-            } else if let Ok(ip) = entry.parse::<std::net::IpAddr>() {
-                Ok(IpNet::from(ip))
-            } else {
-                Err(format!("'{}' is not a valid IP or CIDR", entry))
-            }
-        })
-        .collect()
 }

@@ -37,6 +37,28 @@ pub trait Validated {
     fn validated(&self) -> Result<(), ConfigError>;
 }
 
+/// Parse a list of trusted proxy strings into `IpNet` values.
+///
+/// Accepts bare IP addresses (treated as host routes) and CIDR notation for
+/// both IPv4 and IPv6.
+pub fn parse_trusted_proxies(proxies: &[String]) -> Result<Vec<ipnet::IpNet>, ConfigError> {
+    proxies
+        .iter()
+        .map(|entry| {
+            if let Ok(net) = entry.parse::<ipnet::IpNet>() {
+                Ok(net)
+            } else if let Ok(ip) = entry.parse::<std::net::IpAddr>() {
+                Ok(ipnet::IpNet::from(ip))
+            } else {
+                Err(ConfigError::InvalidTrustedProxy(format!(
+                    "'{}' is not a valid IP or CIDR",
+                    entry
+                )))
+            }
+        })
+        .collect()
+}
+
 /// Load application configuration from files and environment.
 pub fn load_config() -> Result<AppConfig, LoaderConfigError> {
     let base_path = std::env::current_dir().expect("failed to determine current directory");
