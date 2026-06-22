@@ -17,6 +17,7 @@ pub mod routes;
 pub mod state;
 
 use axum::Router;
+use std::net::SocketAddr;
 
 pub use error::{GatewayError, GatewayResult};
 pub use state::{Config, Services};
@@ -49,9 +50,12 @@ pub async fn run(config: Config, services: Services) -> Result<(), GatewayError>
 
     tracing::info!("API Gateway listening on {}", config.bind_address);
 
-    axum::serve(listener, app)
-        .await
-        .map_err(|e| GatewayError::internal(format!("Server error: {e}")))?;
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await
+    .map_err(|e| GatewayError::internal(format!("Server error: {e}")))?;
 
     Ok(())
 }

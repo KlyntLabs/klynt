@@ -36,7 +36,7 @@ pub struct Config {
     pub allowed_origins: Vec<String>,
 
     /// Trusted proxy CIDRs or IPs used to resolve the real client IP from
-    /// `X-Forwarded-For` / `Forwarded` headers.
+    /// the `X-Forwarded-For` header.
     #[serde(default)]
     pub trusted_proxies: Vec<String>,
 
