@@ -287,40 +287,40 @@ async fn list_returns_paginated_users_with_total() {
     .await
     .unwrap();
 
+    let created_emails = [first_email.clone(), second_email.clone()];
+
+    // Verify the created users exist independently of the paginated list,
+    // which may also contain rows inserted by concurrently running tests.
+    for email in &created_emails {
+        assert!(
+            repo.find_by_email(&ctx, email).await.unwrap().is_some(),
+            "created user should be findable by email"
+        );
+    }
+
     let (users, total) = repo.list(&ctx, PaginationRequest::first()).await.unwrap();
     assert!(total >= 2);
-    assert!(!users.is_empty());
     assert!(users.iter().all(|u| !u.is_deleted()));
 
-    let (page_one, page_one_total) = repo.list(&ctx, PaginationRequest::new(1, 1)).await.unwrap();
+    let (page_one, _) = repo.list(&ctx, PaginationRequest::new(1, 1)).await.unwrap();
     assert_eq!(page_one.len(), 1);
-    assert!(page_one_total >= 2);
-    assert!(
-        page_one[0].email == first_email || page_one[0].email == second_email,
-        "page one email should be one of the created users"
-    );
-    assert!(page_one.iter().all(|u| !u.is_deleted()));
+    assert!(!page_one[0].is_deleted());
 
-    let (page_two, page_two_total) = repo.list(&ctx, PaginationRequest::new(2, 1)).await.unwrap();
+    let (page_two, _) = repo.list(&ctx, PaginationRequest::new(2, 1)).await.unwrap();
     assert_eq!(page_two.len(), 1);
-    assert_eq!(page_two_total, page_one_total);
-    assert!(
-        page_two[0].email != page_one[0].email,
-        "page two should contain the other created user"
+    assert!(!page_two[0].is_deleted());
+    assert_ne!(
+        page_two[0].email, page_one[0].email,
+        "page two should return a different user than page one"
     );
-    assert!(page_two.iter().all(|u| !u.is_deleted()));
 
-    let page_emails = [page_one[0].email.clone(), page_two[0].email.clone()];
-    assert!(page_emails.contains(&first_email));
-    assert!(page_emails.contains(&second_email));
-
-    let beyond_total_page = (page_one_total + 1) as u32;
-    let (empty, empty_total) = repo
-        .list(&ctx, PaginationRequest::new(beyond_total_page, 1))
+    // Use a page number far beyond any realistic total so the assertion stays
+    // robust even if concurrent tests insert rows after we read `total`.
+    let (empty, _) = repo
+        .list(&ctx, PaginationRequest::new(u32::MAX, 1))
         .await
         .unwrap();
     assert!(empty.is_empty());
-    assert_eq!(empty_total, page_one_total);
 }
 
 #[tokio::test]
