@@ -10,17 +10,24 @@ pub struct SessionConfig {
 impl SessionConfig {
     /// Standard access-session duration.
     pub fn session_duration(&self) -> Duration {
-        Duration::seconds(self.session_duration_secs as i64)
+        Duration::seconds(
+            i64::try_from(self.session_duration_secs).expect("session duration fits in i64"),
+        )
     }
 
     /// Extended access-session duration for "remember me" sessions.
     pub fn long_session_duration(&self) -> Duration {
-        Duration::seconds(self.long_session_duration_secs as i64)
+        Duration::seconds(
+            i64::try_from(self.long_session_duration_secs)
+                .expect("long session duration fits in i64"),
+        )
     }
 
     /// Refresh-token lifetime.
     pub fn refresh_duration(&self) -> Duration {
-        Duration::seconds(self.refresh_duration_secs as i64)
+        Duration::seconds(
+            i64::try_from(self.refresh_duration_secs).expect("refresh duration fits in i64"),
+        )
     }
 }
 

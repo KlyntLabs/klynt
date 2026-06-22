@@ -17,6 +17,9 @@ pub struct SessionConfig {
 impl SessionConfig {
     /// Minimum allowed session lifetime in seconds.
     const MIN_DURATION_SECS: u64 = 1;
+
+    /// Maximum allowed session lifetime in seconds (~100 years).
+    const MAX_DURATION_SECS: u64 = 100 * 365 * 24 * 60 * 60;
 }
 
 impl Default for SessionConfig {
@@ -43,6 +46,13 @@ impl Validated for SessionConfig {
                 return Err(ConfigError::InvalidSessionDuration(format!(
                     "{name} must be at least {} second",
                     Self::MIN_DURATION_SECS
+                )));
+            }
+
+            if value > Self::MAX_DURATION_SECS {
+                return Err(ConfigError::InvalidSessionDuration(format!(
+                    "{name} exceeds maximum of {} seconds",
+                    Self::MAX_DURATION_SECS
                 )));
             }
         }
@@ -82,6 +92,15 @@ mod tests {
             session_duration_secs: 3600,
             long_session_duration_secs: 60,
             refresh_duration_secs: 3600,
+        };
+        assert!(config.validated().is_err());
+    }
+
+    #[test]
+    fn duration_over_100_years_is_invalid() {
+        let config = SessionConfig {
+            session_duration_secs: 101 * 365 * 24 * 60 * 60,
+            ..Default::default()
         };
         assert!(config.validated().is_err());
     }

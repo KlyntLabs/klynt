@@ -25,13 +25,13 @@ impl PgSessionStore {
 
 #[async_trait]
 impl SessionStore for PgSessionStore {
-    async fn create(
+    async fn create_with_kind(
         &self,
         _ctx: &ExecutionContext,
         user_id: UserId,
+        expires_at: DateTime<Utc>,
         kind: SessionKind,
         pair_id: Option<Uuid>,
-        expires_at: DateTime<Utc>,
     ) -> Result<SessionToken, SessionError> {
         let token = SessionToken::new();
 

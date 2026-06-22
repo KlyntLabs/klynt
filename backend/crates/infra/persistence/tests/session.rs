@@ -53,7 +53,7 @@ async fn create_and_find_session() {
     let expires_at = Utc::now() + Duration::hours(1);
 
     let token = store
-        .create(&ctx, user_id, SessionKind::Access, None, expires_at)
+        .create_with_kind(&ctx, user_id, expires_at, SessionKind::Access, None)
         .await
         .unwrap();
     let session = store.find_valid(&ctx, &token).await.unwrap();
@@ -73,7 +73,7 @@ async fn expired_session_is_not_found() {
     let expires_at = Utc::now() - Duration::hours(1);
 
     let token = store
-        .create(&ctx, user_id, SessionKind::Access, None, expires_at)
+        .create_with_kind(&ctx, user_id, expires_at, SessionKind::Access, None)
         .await
         .unwrap();
     let session = store.find_valid(&ctx, &token).await.unwrap();
@@ -90,7 +90,7 @@ async fn revoked_session_is_not_found() {
     let expires_at = Utc::now() + Duration::hours(1);
 
     let token = store
-        .create(&ctx, user_id, SessionKind::Access, None, expires_at)
+        .create_with_kind(&ctx, user_id, expires_at, SessionKind::Access, None)
         .await
         .unwrap();
     store.revoke(&ctx, &token).await.unwrap();

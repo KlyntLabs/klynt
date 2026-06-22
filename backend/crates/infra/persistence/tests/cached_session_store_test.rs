@@ -83,7 +83,7 @@ async fn cached_store_populates_and_hits_cache() {
     let expires_at = chrono::Utc::now() + chrono::Duration::hours(1);
 
     let token = store
-        .create(&ctx, user_id, SessionKind::Access, None, expires_at)
+        .create_with_kind(&ctx, user_id, expires_at, SessionKind::Access, None)
         .await
         .unwrap();
     let key = cache_key(&token);
@@ -119,7 +119,7 @@ async fn cached_store_falls_back_to_postgres_and_rehydrates_cache() {
     let expires_at = chrono::Utc::now() + chrono::Duration::hours(1);
 
     let token = store
-        .create(&ctx, user_id, SessionKind::Access, None, expires_at)
+        .create_with_kind(&ctx, user_id, expires_at, SessionKind::Access, None)
         .await
         .unwrap();
     let key = cache_key(&token);
@@ -145,7 +145,7 @@ async fn cached_store_round_trips_through_postgres_when_redis_is_unreachable() {
     let expires_at = chrono::Utc::now() + chrono::Duration::hours(1);
 
     let token = store
-        .create(&ctx, user_id, SessionKind::Access, None, expires_at)
+        .create_with_kind(&ctx, user_id, expires_at, SessionKind::Access, None)
         .await
         .unwrap();
 
@@ -167,7 +167,7 @@ async fn revoked_token_is_not_found_in_cache_or_postgres() {
     let expires_at = chrono::Utc::now() + chrono::Duration::hours(1);
 
     let token = store
-        .create(&ctx, user_id, SessionKind::Access, None, expires_at)
+        .create_with_kind(&ctx, user_id, expires_at, SessionKind::Access, None)
         .await
         .unwrap();
     let key = cache_key(&token);

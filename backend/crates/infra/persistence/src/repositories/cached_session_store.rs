@@ -176,27 +176,33 @@ struct CachedSession {
 
 #[async_trait]
 impl SessionStore for CachedSessionStore {
-    async fn create(
+    async fn create_with_kind(
         &self,
         ctx: &ExecutionContext,
         user_id: UserId,
+        expires_at: DateTime<Utc>,
         kind: SessionKind,
         pair_id: Option<Uuid>,
-        expires_at: DateTime<Utc>,
     ) -> Result<SessionToken, SessionError> {
         let token = self
             .postgres
-            .create(ctx, user_id, kind, pair_id, expires_at)
+            .create_with_kind(ctx, user_id, expires_at, kind, pair_id)
             .await?;
-        let session = Session {
-            user_id,
-            expires_at,
-            kind,
-            pair_id,
-        };
-        // Best-effort cache write; don't fail the request if Redis is down.
-        if let Err(e) = self.write_cache(&token, &session).await {
-            tracing::warn!(error = %e, "failed to write session to cache");
+
+        // Only cache access tokens. Refresh tokens are security-sensitive and
+        // low-read; caching them would complicate invalidation (we can't
+        // enumerate cached tokens by pair_id). Long-lived access tokens are
+        // treated the same way here to keep invalidation simple.
+        if kind == SessionKind::Access {
+            let session = Session {
+                user_id,
+                expires_at,
+                kind,
+                pair_id,
+            };
+            if let Err(e) = self.write_cache(&token, &session).await {
+                tracing::warn!(error = %e, "failed to write session to cache");
+            }
         }
         Ok(token)
     }
@@ -216,8 +222,10 @@ impl SessionStore for CachedSessionStore {
 
         let session = self.postgres.find_valid(ctx, token).await?;
         if let Some(ref s) = session {
-            if let Err(e) = self.write_cache(token, s).await {
-                tracing::warn!(error = %e, "failed to write session back to cache");
+            if s.kind == SessionKind::Access {
+                if let Err(e) = self.write_cache(token, s).await {
+                    tracing::warn!(error = %e, "failed to write session back to cache");
+                }
             }
         }
         Ok(session)

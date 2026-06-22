@@ -99,13 +99,28 @@ impl Session {
 #[async_trait]
 pub trait SessionStore: Send + Sync {
     /// Create a new session for `user_id` and return its bearer token.
+    ///
+    /// Defaults to an access session with no pair. Implementations must override
+    /// [`create_with_kind`](Self::create_with_kind); this method exists for
+    /// backward-compatible callers.
     async fn create(
         &self,
         ctx: &ExecutionContext,
         user_id: UserId,
+        expires_at: DateTime<Utc>,
+    ) -> Result<SessionToken, SessionError> {
+        self.create_with_kind(ctx, user_id, expires_at, SessionKind::Access, None)
+            .await
+    }
+
+    /// Create a new session of a specific kind and return its bearer token.
+    async fn create_with_kind(
+        &self,
+        ctx: &ExecutionContext,
+        user_id: UserId,
+        expires_at: DateTime<Utc>,
         kind: SessionKind,
         pair_id: Option<Uuid>,
-        expires_at: DateTime<Utc>,
     ) -> Result<SessionToken, SessionError>;
 
     /// Find a non-expired session by token.

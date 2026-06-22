@@ -20,13 +20,13 @@ struct FakeSessionStore {
 
 #[async_trait]
 impl SessionStore for FakeSessionStore {
-    async fn create(
+    async fn create_with_kind(
         &self,
         _ctx: &ExecutionContext,
         user_id: UserId,
+        expires_at: DateTime<Utc>,
         kind: SessionKind,
         pair_id: Option<Uuid>,
-        expires_at: DateTime<Utc>,
     ) -> Result<SessionToken, StoreError> {
         let token = SessionToken::new();
         let session = Session {

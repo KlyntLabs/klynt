@@ -108,7 +108,7 @@ impl SessionService {
         let expires_at = self.clock.now() + duration;
         let token = self
             .session_store
-            .create(ctx, user_id, kind, pair_id, expires_at)
+            .create_with_kind(ctx, user_id, expires_at, kind, pair_id)
             .await
             .map_err(SessionError::from)?;
         Ok(CreatedSession { token, expires_at })

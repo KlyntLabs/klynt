@@ -26,13 +26,13 @@ impl FakeSessionStore {
 
 #[async_trait]
 impl SessionStore for FakeSessionStore {
-    async fn create(
+    async fn create_with_kind(
         &self,
         _ctx: &ExecutionContext,
         user_id: UserId,
+        expires_at: DateTime<Utc>,
         kind: SessionKind,
         pair_id: Option<Uuid>,
-        expires_at: DateTime<Utc>,
     ) -> Result<SessionToken, SessionError> {
         let token = SessionToken::new();
         let session = Session {
@@ -97,7 +97,7 @@ mod tests {
         let expires_at = Utc::now() + chrono::Duration::hours(1);
 
         let token = store
-            .create(&ctx(), user_id, SessionKind::Access, None, expires_at)
+            .create_with_kind(&ctx(), user_id, expires_at, SessionKind::Access, None)
             .await
             .unwrap();
         let session = store.find_valid(&ctx(), &token).await.unwrap().unwrap();
@@ -114,7 +114,7 @@ mod tests {
         let expires_at = Utc::now() + chrono::Duration::hours(1);
 
         let token = store
-            .create(&ctx(), user_id, SessionKind::Access, None, expires_at)
+            .create_with_kind(&ctx(), user_id, expires_at, SessionKind::Access, None)
             .await
             .unwrap();
         store.revoke(&ctx(), &token).await.unwrap();
@@ -129,7 +129,7 @@ mod tests {
         let expires_at = Utc::now() - chrono::Duration::hours(1);
 
         let token = store
-            .create(&ctx(), user_id, SessionKind::Access, None, expires_at)
+            .create_with_kind(&ctx(), user_id, expires_at, SessionKind::Access, None)
             .await
             .unwrap();
 
