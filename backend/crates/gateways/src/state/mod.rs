@@ -54,10 +54,23 @@ pub struct Config {
     /// Whether session cookies require HTTPS.
     #[serde(default)]
     pub cookie_secure: bool,
+
+    /// When true, serve the CSP in `Content-Security-Policy-Report-Only`
+    /// instead of enforcing it.
+    #[serde(default)]
+    pub csp_report_only: bool,
+
+    /// Content Security Policy directive string.
+    #[serde(default = "default_csp_directive")]
+    pub csp_directive: String,
 }
 
 fn default_log_level() -> String {
     "info".to_string()
+}
+
+fn default_csp_directive() -> String {
+    "default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'".to_string()
 }
 
 impl Default for Config {
@@ -76,6 +89,8 @@ impl Default for Config {
             log_level: default_log_level(),
             cookie_domain: default_cookie_domain(),
             cookie_secure: false,
+            csp_report_only: false,
+            csp_directive: default_csp_directive(),
         }
     }
 }
@@ -120,6 +135,8 @@ impl From<config::AppConfig> for Config {
             log_level: config.log_level,
             cookie_domain: config.cookie_domain,
             cookie_secure: config.cookie_secure,
+            csp_report_only: config.csp_report_only,
+            csp_directive: config.csp_directive,
         }
     }
 }

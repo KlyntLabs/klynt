@@ -1,8 +1,8 @@
 //! Update profile use case.
 
 use base::ctx::ExecutionContext;
+use base::ports::audit::ProfileUpdateSnapshot;
 use domain::UserId;
-use serde_json::json;
 use validator::Validate;
 
 use crate::core::UserExt;
@@ -27,18 +27,23 @@ pub(crate) async fn execute(
         .await?
         .ok_or(UserError::NotFound)?;
 
-    let before_json = json!({ "full_name": user.full_name });
+    let full_name_changed = user.full_name != updates.full_name;
 
     user.update_profile(updates.full_name)?;
 
     let user = service.internal().user_repository.update(ctx, user).await?;
 
-    let after_json = json!({ "full_name": user.full_name });
-
     service
         .internal()
         .audit_logger
-        .log_profile_updated(ctx, user_id, before_json, after_json)
+        .log_profile_updated(
+            ctx,
+            user_id,
+            ProfileUpdateSnapshot {
+                full_name_changed: false,
+            },
+            ProfileUpdateSnapshot { full_name_changed },
+        )
         .await;
 
     Ok(UserProfile::from(user))

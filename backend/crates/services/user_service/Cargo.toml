@@ -28,9 +28,6 @@ validator = { workspace = true }
 # === Error Handling ===
 thiserror = { workspace = true }
 
-# === Serialization ===
-serde_json = { workspace = true }
-
 # === Web framework (status-code mapping only) ===
 axum = { workspace = true }
 

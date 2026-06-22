@@ -2,9 +2,28 @@
 
 use async_trait::async_trait;
 use domain::UserId;
-use serde_json::Value;
+use serde::Serialize;
 
 use crate::ctx::ExecutionContext;
+
+/// Snapshot metadata for a password change audit event.
+///
+/// Never include password hashes, plaintext passwords, or other credential
+/// material in this snapshot. The audit event already records actor, action,
+/// and resource; this struct carries only non-sensitive change metadata.
+#[derive(Debug, Clone, Serialize)]
+pub struct PasswordChangeSnapshot {
+    pub changed: bool,
+}
+
+/// Snapshot metadata for a profile update audit event.
+///
+/// Avoid including PII or secrets in this snapshot. Use boolean flags or other
+/// non-sensitive indicators of what changed.
+#[derive(Debug, Clone, Serialize)]
+pub struct ProfileUpdateSnapshot {
+    pub full_name_changed: bool,
+}
 
 /// Canonical audit logging interface.
 ///
@@ -43,8 +62,8 @@ pub trait AuditLogger: Send + Sync {
         &self,
         ctx: &ExecutionContext,
         user_id: UserId,
-        before: Value,
-        after: Value,
+        before: ProfileUpdateSnapshot,
+        after: ProfileUpdateSnapshot,
     );
 
     /// Log a password change.
@@ -52,8 +71,8 @@ pub trait AuditLogger: Send + Sync {
         &self,
         ctx: &ExecutionContext,
         user_id: UserId,
-        before: Value,
-        after: Value,
+        before: PasswordChangeSnapshot,
+        after: PasswordChangeSnapshot,
     );
 
     /// Log user deletion.

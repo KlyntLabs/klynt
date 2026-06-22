@@ -14,6 +14,8 @@ use crate::state::{Config, Services};
 /// Create the complete router with all routes and middleware.
 pub fn create_router(config: Config, services: Services) -> Router {
     let hsts_enabled = config.hsts_enabled;
+    let csp_report_only = config.csp_report_only;
+    let csp_directive = config.csp_directive.clone();
     let allowed_origins = config.allowed_origins.clone();
 
     Router::new()
@@ -31,7 +33,13 @@ pub fn create_router(config: Config, services: Services) -> Router {
         .layer(crate::middleware::cors::cors_layer(&allowed_origins))
         // Security headers
         .layer(axum::middleware::from_fn(move |req, next| {
-            crate::middleware::security_headers::security_headers(hsts_enabled, req, next)
+            crate::middleware::security_headers::security_headers(
+                hsts_enabled,
+                csp_report_only,
+                csp_directive.clone(),
+                req,
+                next,
+            )
         }))
         // Request ID (applies to all routes)
         .layer(axum::middleware::from_fn(

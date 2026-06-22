@@ -8,6 +8,7 @@ use std::sync::{Arc, Mutex};
 use async_trait::async_trait;
 
 use base::ctx::ExecutionContext;
+use base::ports::audit::{PasswordChangeSnapshot, ProfileUpdateSnapshot};
 use base::testkit::{sample_user as base_sample_user, FakeUserRepository};
 use domain::{User, UserId, UserStatus};
 use user_service::application::ports::AuditLogger;
@@ -67,8 +68,8 @@ impl AuditLogger for TestAuditLogger {
         &self,
         _ctx: &ExecutionContext,
         _user_id: UserId,
-        _before: serde_json::Value,
-        _after: serde_json::Value,
+        _before: ProfileUpdateSnapshot,
+        _after: ProfileUpdateSnapshot,
     ) {
         self.events
             .lock()
@@ -80,8 +81,8 @@ impl AuditLogger for TestAuditLogger {
         &self,
         _ctx: &ExecutionContext,
         _user_id: UserId,
-        _before: serde_json::Value,
-        _after: serde_json::Value,
+        _before: PasswordChangeSnapshot,
+        _after: PasswordChangeSnapshot,
     ) {
         self.events
             .lock()

@@ -107,6 +107,11 @@ pub fn load_config() -> Result<AppConfig, LoaderConfigError> {
         .set_default("redis_url", None::<String>)?
         .set_default("cookie_domain", ".klynt.edu")?
         .set_default("cookie_secure", false)?
+        .set_default("csp_report_only", false)?
+        .set_default(
+            "csp_directive",
+            "default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
+        )?
         .build()?;
 
     let app_config: AppConfig = config.try_deserialize()?;

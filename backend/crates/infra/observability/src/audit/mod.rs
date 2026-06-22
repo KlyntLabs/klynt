@@ -5,10 +5,19 @@ use uuid::Uuid;
 
 use async_trait::async_trait;
 use base::ctx::ExecutionContext;
-use base::ports::audit::AuditLogger;
+use base::ports::audit::{AuditLogger, PasswordChangeSnapshot, ProfileUpdateSnapshot};
 use domain::{DomainError, UserId};
+use serde::Serialize;
 
 use crate::types::{AuditAction, AuditEvent, AuditEventRepository, ResourceType};
+
+/// Serialize an audit snapshot into a JSON value.
+///
+/// Audit snapshots are simple, derive-`Serialize` structs, so this should
+/// never fail in practice. The helper keeps callers concise.
+fn snapshot_to_value<T: Serialize>(snapshot: T) -> serde_json::Value {
+    serde_json::to_value(snapshot).expect("audit snapshot serialization should not fail")
+}
 
 /// Audit logging service.
 ///
@@ -98,15 +107,15 @@ impl AuditService {
         &self,
         ctx: &ExecutionContext,
         user_id: UserId,
-        before: serde_json::Value,
-        after: serde_json::Value,
+        before: ProfileUpdateSnapshot,
+        after: ProfileUpdateSnapshot,
     ) -> Result<(), DomainError> {
         let event = AuditEvent::new(AuditAction::UserProfileUpdated, ResourceType::User)
             .with_actor(user_id)
             .with_resource(user_id.inner())
             .with_request_id(ctx.request.request_id.0)
-            .with_before(before)
-            .with_after(after);
+            .with_before(snapshot_to_value(before))
+            .with_after(snapshot_to_value(after));
 
         self.repo.log(ctx, event).await
     }
@@ -116,15 +125,15 @@ impl AuditService {
         &self,
         ctx: &ExecutionContext,
         user_id: UserId,
-        before: serde_json::Value,
-        after: serde_json::Value,
+        before: PasswordChangeSnapshot,
+        after: PasswordChangeSnapshot,
     ) -> Result<(), DomainError> {
         let event = AuditEvent::new(AuditAction::UserPasswordChanged, ResourceType::User)
             .with_actor(user_id)
             .with_resource(user_id.inner())
             .with_request_id(ctx.request.request_id.0)
-            .with_before(before)
-            .with_after(after);
+            .with_before(snapshot_to_value(before))
+            .with_after(snapshot_to_value(after));
 
         self.repo.log(ctx, event).await
     }
@@ -252,8 +261,8 @@ impl AuditLogger for AuditService {
         &self,
         ctx: &ExecutionContext,
         user_id: UserId,
-        before: serde_json::Value,
-        after: serde_json::Value,
+        before: ProfileUpdateSnapshot,
+        after: ProfileUpdateSnapshot,
     ) {
         self.try_log(
             ctx,
@@ -267,8 +276,8 @@ impl AuditLogger for AuditService {
         &self,
         ctx: &ExecutionContext,
         user_id: UserId,
-        before: serde_json::Value,
-        after: serde_json::Value,
+        before: PasswordChangeSnapshot,
+        after: PasswordChangeSnapshot,
     ) {
         self.try_log(
             ctx,

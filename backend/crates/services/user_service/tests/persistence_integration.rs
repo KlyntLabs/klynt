@@ -5,7 +5,8 @@
 use std::sync::Arc;
 
 use base::ctx::{ExecutionContext, RequestContext};
-use base::ports::{audit::AuditLogger, PasswordHasher};
+use base::ports::audit::{AuditLogger, ProfileUpdateSnapshot};
+use base::ports::PasswordHasher;
 use chrono::Utc;
 use domain::{PaginationRequest, UserId, UserStatus};
 use user_service::{
@@ -113,7 +114,11 @@ async fn audit_service_creates_profile_updated_event() {
     let ctx = test_ctx();
     let user_id = UserId::new();
 
-    let before = serde_json::json!({ "full_name": "Before" });
-    let after = serde_json::json!({ "full_name": "After" });
+    let before = ProfileUpdateSnapshot {
+        full_name_changed: false,
+    };
+    let after = ProfileUpdateSnapshot {
+        full_name_changed: true,
+    };
     let _ = AuditLogger::log_profile_updated(&*audit_service, &ctx, user_id, before, after).await;
 }

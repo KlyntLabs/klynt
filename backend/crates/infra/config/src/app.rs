@@ -16,10 +16,18 @@ pub struct AppConfig {
     pub cookie_domain: String,
     #[serde(default)]
     pub cookie_secure: bool,
+    #[serde(default)]
+    pub csp_report_only: bool,
+    #[serde(default = "default_csp_directive")]
+    pub csp_directive: String,
 }
 
 fn default_cookie_domain() -> String {
     ".klynt.edu".to_string()
+}
+
+fn default_csp_directive() -> String {
+    "default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'".to_string()
 }
 
 impl Validated for AppConfig {
@@ -50,6 +58,8 @@ mod tests {
             redis_url: Some("redis://localhost".to_string()),
             cookie_domain: ".klynt.edu".to_string(),
             cookie_secure: false,
+            csp_report_only: false,
+            csp_directive: default_csp_directive(),
         };
         assert!(config.validated().is_ok());
     }
@@ -72,6 +82,8 @@ mod tests {
             redis_url: None,
             cookie_domain: ".klynt.edu".to_string(),
             cookie_secure: false,
+            csp_report_only: false,
+            csp_directive: default_csp_directive(),
         };
         assert!(config.validated().is_err());
     }

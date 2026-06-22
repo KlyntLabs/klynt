@@ -11,6 +11,7 @@ use async_trait::async_trait;
 use auth_service::application::ports::{AuditLogger, EmailSender};
 use auth_service::{AuthConfig, AuthService, Dependencies};
 use base::ctx::ExecutionContext;
+use base::ports::audit::{PasswordChangeSnapshot, ProfileUpdateSnapshot};
 use base::ports::email::EmailError;
 use base::ports::session::{
     Session, SessionError as BaseSessionError, SessionKind, SessionStore, SessionToken,
@@ -91,8 +92,8 @@ impl AuditLogger for StubAuditLogger {
         &self,
         _ctx: &ExecutionContext,
         _user_id: UserId,
-        _before: serde_json::Value,
-        _after: serde_json::Value,
+        _before: ProfileUpdateSnapshot,
+        _after: ProfileUpdateSnapshot,
     ) {
     }
 
@@ -100,8 +101,8 @@ impl AuditLogger for StubAuditLogger {
         &self,
         _ctx: &ExecutionContext,
         _user_id: UserId,
-        _before: serde_json::Value,
-        _after: serde_json::Value,
+        _before: PasswordChangeSnapshot,
+        _after: PasswordChangeSnapshot,
     ) {
     }
 

@@ -45,4 +45,3 @@ base64 = { workspace = true }
 
 [dev-dependencies]
 base = { path = "../../../crates/base", features = ["testkit"] }
-serde_json = { workspace = true }

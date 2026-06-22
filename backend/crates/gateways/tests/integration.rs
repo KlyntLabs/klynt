@@ -7,6 +7,7 @@ use axum::{
 use base::ctx::{ExecutionContext, RequestContext};
 use chrono::Utc;
 use domain::{Email, User, UserId, UserRole, UserStatus};
+use gateways::middleware::security_headers::DEFAULT_CONTENT_SECURITY_POLICY;
 use tower::ServiceExt;
 
 mod support;
@@ -14,6 +15,10 @@ mod support;
 fn app() -> axum::Router {
     let config = support::test_config();
     let services = support::build_test_services();
+    app_with_config(config, services)
+}
+
+fn app_with_config(config: gateways::Config, services: gateways::state::Services) -> axum::Router {
     gateways::create_router(config, services)
 }
 
@@ -145,8 +150,38 @@ async fn security_headers_are_present() {
             .unwrap()
             .to_str()
             .unwrap(),
-        "default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
+        DEFAULT_CONTENT_SECURITY_POLICY
     );
+}
+
+#[tokio::test]
+async fn csp_report_only_mode_uses_report_only_header() {
+    let mut config = support::test_config();
+    config.csp_report_only = true;
+    let services = support::build_test_services();
+    let app = app_with_config(config, services);
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/health")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(
+        response
+            .headers()
+            .get("Content-Security-Policy-Report-Only")
+            .unwrap()
+            .to_str()
+            .unwrap(),
+        DEFAULT_CONTENT_SECURITY_POLICY
+    );
+    assert!(response.headers().get("Content-Security-Policy").is_none());
 }
 
 #[tokio::test]

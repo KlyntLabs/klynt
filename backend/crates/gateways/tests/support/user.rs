@@ -5,6 +5,7 @@ use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
 use base::ctx::ExecutionContext;
+use base::ports::audit::{PasswordChangeSnapshot, ProfileUpdateSnapshot};
 use base::ports::repository::{RepositoryError, UserRepository};
 use base::ports::{Clock, PasswordHashError, PasswordHasher};
 use chrono::{DateTime, Utc};
@@ -150,8 +151,8 @@ impl UserAuditLogger for StubUserAuditLogger {
         &self,
         _ctx: &ExecutionContext,
         _user_id: UserId,
-        _before: serde_json::Value,
-        _after: serde_json::Value,
+        _before: ProfileUpdateSnapshot,
+        _after: ProfileUpdateSnapshot,
     ) {
     }
 
@@ -159,8 +160,8 @@ impl UserAuditLogger for StubUserAuditLogger {
         &self,
         _ctx: &ExecutionContext,
         _user_id: UserId,
-        _before: serde_json::Value,
-        _after: serde_json::Value,
+        _before: PasswordChangeSnapshot,
+        _after: PasswordChangeSnapshot,
     ) {
     }
 
