@@ -525,7 +525,7 @@ async fn add_update_remove_member_flow() {
             },
         )
         .await;
-    assert!(matches!(result, Err(TenantError::NotAdmin)));
+    assert!(matches!(result, Err(TenantError::NotMember)));
 
     service
         .delete_tenant(&owner_ctx, tenant.slug.as_str())

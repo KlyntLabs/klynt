@@ -290,13 +290,9 @@ dependencies = [
 name = "cleanup_job"
 version = "0.1.0"
 dependencies = [
- "async-trait",
- "base",
  "chrono",
- "persistence",
  "rand 0.8.6",
  "sqlx",
- "thiserror 2.0.18",
  "tokio",
  "tracing",
  "uuid",
@@ -2538,7 +2534,6 @@ dependencies = [
 name = "tenant_service"
 version = "0.1.0"
 dependencies = [
- "async-trait",
  "axum",
  "base",
  "chrono",
@@ -2548,7 +2543,6 @@ dependencies = [
  "sqlx",
  "thiserror 2.0.18",
  "tokio",
- "uuid",
 ]
 
 [[package]]
