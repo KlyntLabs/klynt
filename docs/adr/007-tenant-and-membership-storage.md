@@ -33,7 +33,8 @@ Phase 2/3 introduces multi-tenancy: users can create and belong to organizations
 
 - `user_tenant_memberships` has a composite primary key `(tenant_id, user_id)`.
 - `role VARCHAR(50)` stores the canonical role name (`owner`, `admin`, `member`, `guest`) for backward compatibility and fast display.
-- Migration `0010_tenant_invites_and_membership_status.sql` adds `tenant_role_id UUID REFERENCES tenant_roles(id) ON DELETE RESTRICT`, making the membership row point to the authoritative role aggregate.
+- Migration `0010_tenant_invites_and_membership_status.sql` adds `tenant_role_id UUID REFERENCES tenant_roles(id) ON DELETE RESTRICT`, allowing the membership row to point to the authoritative role aggregate.
+- The `tenant_role_id` column is nullable. The initial owner membership inserted during tenant creation sets `role = 'owner'` but leaves `tenant_role_id` NULL; invite acceptance and role-management flows populate the FK.
 - Memberships also carry a `status` (`pending`, `active`, `suspended`) for invite workflows.
 
 ### Default tenant limits

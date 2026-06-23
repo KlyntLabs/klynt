@@ -26,7 +26,7 @@ Permissions are grouped into categories defined by `PermissionCategory` in the d
 
 The migration currently seeds only Tenant, Content, and Platform permissions. Member and Role categories exist in the domain model for forward compatibility.
 
-Well-known permission names are constants in `domain::permission` and mirrored in `all_permission_names()` so tests can seed a deterministic catalog.
+Well-known permission names are constants in nested modules under `domain::permission` (`tenant`, `content`, `platform`) and mirrored in `all_permission_names()` so tests can seed a deterministic catalog.
 
 ### Global permission catalog in Postgres
 

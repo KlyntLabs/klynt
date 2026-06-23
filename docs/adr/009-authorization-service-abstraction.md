@@ -42,11 +42,12 @@ Missing membership, missing role, or missing permission all resolve to `false` (
 - `AuthorizationService` also queries `MembershipRepository` directly instead of trusting the session's `tenant_memberships` JSON snapshot.
 - This means role or permission changes take effect immediately; a compromised or stale session snapshot cannot bypass authorization.
 
-### Session snapshots are updated for performance, not authority
+### Session snapshots are kept in sync for UX/listing convenience
 
 - `SessionStore` stores `tenant_memberships` snapshots on active sessions.
-- When a user joins, changes role, or leaves a tenant, `add_membership` / `update_membership_for_user` update or invalidate snapshots across all active sessions.
-- These snapshots are used to populate lightweight request context only; authorization decisions still hit the repository.
+- When a user joins or changes role, `add_membership` / `update_membership_for_user` update the snapshot across all active sessions.
+- When a member is removed, the current implementation updates the snapshot to the `guest` role rather than deleting it from the snapshot array.
+- These snapshots are used for UX convenience (e.g., listing current tenants); they are never used for authorization decisions.
 
 ## Alternatives Considered
 
