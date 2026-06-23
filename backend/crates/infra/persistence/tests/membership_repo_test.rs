@@ -16,12 +16,40 @@ fn database_url() -> Option<String> {
 
 async fn setup_pool() -> Option<sqlx::PgPool> {
     let url = database_url()?;
-    let pool = sqlx::PgPool::connect(&url).await.ok()?;
+    let pool = sqlx::PgPool::connect(&url)
+        .await
+        .expect("DATABASE_URL is set but Postgres is unreachable");
     sqlx::migrate!("../../../migrations")
         .run(&pool)
         .await
-        .ok()?;
+        .expect("migrations failed");
     Some(pool)
+}
+
+async fn cleanup_test_data(
+    pool: &sqlx::PgPool,
+    user_ids: &[domain::UserId],
+    tenant_ids: &[domain::TenantId],
+) {
+    for tenant_id in tenant_ids {
+        sqlx::query("DELETE FROM user_tenant_memberships WHERE tenant_id = $1")
+            .bind(tenant_id.inner())
+            .execute(pool)
+            .await
+            .ok();
+        sqlx::query("DELETE FROM tenants WHERE id = $1")
+            .bind(tenant_id.inner())
+            .execute(pool)
+            .await
+            .ok();
+    }
+    for user_id in user_ids {
+        sqlx::query("DELETE FROM users WHERE id = $1")
+            .bind(user_id.inner())
+            .execute(pool)
+            .await
+            .ok();
+    }
 }
 
 fn test_ctx() -> ExecutionContext {
@@ -97,6 +125,8 @@ async fn create_find_and_list_membership() {
         .await
         .unwrap();
     assert_eq!(for_tenant.len(), 2); // owner + member
+
+    cleanup_test_data(&pool, &[owner_id, member_id], &[tenant.id]).await;
 }
 
 #[tokio::test]
@@ -130,6 +160,8 @@ async fn update_role_changes_membership_role() {
         .unwrap()
         .unwrap();
     assert_eq!(found.role, TenantRole::Admin);
+
+    cleanup_test_data(&pool, &[owner_id, member_id], &[tenant.id]).await;
 }
 
 #[tokio::test]
@@ -162,6 +194,8 @@ async fn delete_removes_membership() {
         .await
         .unwrap();
     assert!(found.is_none());
+
+    cleanup_test_data(&pool, &[owner_id, member_id], &[tenant.id]).await;
 }
 
 #[tokio::test]
@@ -192,6 +226,8 @@ async fn duplicate_create_returns_conflict() {
         .await;
 
     assert!(matches!(result, Err(DomainError::Conflict(_))));
+
+    cleanup_test_data(&pool, &[owner_id, member_id], &[tenant.id]).await;
 }
 
 #[tokio::test]
@@ -213,6 +249,8 @@ async fn create_for_missing_tenant_returns_not_found() {
         .await;
 
     assert!(matches!(result, Err(DomainError::NotFound(_))));
+
+    cleanup_test_data(&pool, &[user_id], &[]).await;
 }
 
 #[tokio::test]
@@ -235,6 +273,8 @@ async fn create_for_missing_user_returns_not_found() {
         .await;
 
     assert!(matches!(result, Err(DomainError::NotFound(_))));
+
+    cleanup_test_data(&pool, &[owner_id], &[tenant.id]).await;
 }
 
 #[tokio::test]

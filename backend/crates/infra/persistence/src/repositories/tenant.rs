@@ -1,7 +1,5 @@
 //! PostgreSQL implementation of the tenant repository.
 
-use std::str::FromStr;
-
 use async_trait::async_trait;
 use base::ctx::ExecutionContext;
 use base::ports::repository::TenantRepository;
@@ -25,6 +23,9 @@ impl PgTenantRepository {
     }
 }
 
+/// PostgreSQL check-violation SQLSTATE.
+const PG_CHECK_VIOLATION: &str = "23514";
+
 #[derive(sqlx::FromRow)]
 struct TenantRow {
     id: uuid::Uuid,
@@ -36,26 +37,23 @@ struct TenantRow {
     updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-impl From<TenantRow> for Tenant {
-    fn from(row: TenantRow) -> Self {
-        // A row stored by this repository is always valid; failures here are
-        // treated as internal corruption. We panic rather than propagate to keep
-        // the trait signature clean, matching the invariant that the database
-        // is the source of truth for valid tenant states.
-        let status = TenantStatus::from_str(&row.status)
-            .expect("database contains an invalid tenant status");
-        let slug = TenantSlug::parse(&row.slug).expect("database contains an invalid tenant slug");
+fn map_tenant_row(row: TenantRow) -> DomainResult<Tenant> {
+    use std::str::FromStr;
 
-        Self {
-            id: TenantId::from_uuid(row.id),
-            slug,
-            name: row.name,
-            owner_id: UserId::from_uuid(row.owner_id),
-            status,
-            created_at: row.created_at,
-            updated_at: row.updated_at,
-        }
-    }
+    let status = TenantStatus::from_str(&row.status)
+        .map_err(|e| DomainError::internal_msg(format!("invalid tenant status in DB: {e}")))?;
+    let slug = TenantSlug::parse(&row.slug)
+        .map_err(|e| DomainError::internal_msg(format!("invalid tenant slug in DB: {e}")))?;
+
+    Ok(Tenant {
+        id: TenantId::from_uuid(row.id),
+        slug,
+        name: row.name,
+        owner_id: UserId::from_uuid(row.owner_id),
+        status,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+    })
 }
 
 #[async_trait]
@@ -86,7 +84,7 @@ impl TenantRepository for PgTenantRepository {
                 if db_err.is_unique_violation() {
                     return Err(DomainError::conflict("tenant slug already exists"));
                 }
-                if db_err.code().as_deref() == Some("23514") {
+                if db_err.code().as_deref() == Some(PG_CHECK_VIOLATION) {
                     return Err(DomainError::TenantLimitReached);
                 }
                 return Err(DomainError::internal(db_err));
@@ -114,7 +112,7 @@ impl TenantRepository for PgTenantRepository {
         }
 
         tx.commit().await.map_err(DomainError::internal)?;
-        Ok(row.into())
+        Ok(map_tenant_row(row)?)
     }
 
     async fn find_by_id(
@@ -134,7 +132,7 @@ impl TenantRepository for PgTenantRepository {
         .await
         .map_err(DomainError::internal)?;
 
-        Ok(row.map(Tenant::from))
+        Ok(row.map(map_tenant_row).transpose()?)
     }
 
     async fn find_by_slug(
@@ -154,7 +152,7 @@ impl TenantRepository for PgTenantRepository {
         .await
         .map_err(DomainError::internal)?;
 
-        Ok(row.map(Tenant::from))
+        Ok(row.map(map_tenant_row).transpose()?)
     }
 
     async fn list_for_user(
@@ -176,7 +174,10 @@ impl TenantRepository for PgTenantRepository {
         .await
         .map_err(DomainError::internal)?;
 
-        Ok(rows.into_iter().map(Tenant::from).collect())
+        Ok(rows
+            .into_iter()
+            .map(map_tenant_row)
+            .collect::<Result<Vec<_>, _>>()?)
     }
 
     async fn update(&self, _ctx: &ExecutionContext, tenant: &Tenant) -> DomainResult<Tenant> {
@@ -200,7 +201,7 @@ impl TenantRepository for PgTenantRepository {
                 DomainError::conflict("tenant slug already exists")
             }
             SqlxError::Database(db_err) => {
-                if db_err.code().as_deref() == Some("23514") {
+                if db_err.code().as_deref() == Some(PG_CHECK_VIOLATION) {
                     DomainError::TenantLimitReached
                 } else {
                     DomainError::internal(db_err)

@@ -31,17 +31,16 @@ struct MembershipRow {
     joined_at: chrono::DateTime<chrono::Utc>,
 }
 
-impl From<MembershipRow> for Membership {
-    fn from(row: MembershipRow) -> Self {
-        let role = TenantRole::parse(&row.role).expect("database contains an invalid tenant role");
+fn map_membership_row(row: MembershipRow) -> DomainResult<Membership> {
+    let role = TenantRole::parse(&row.role)
+        .map_err(|e| DomainError::internal_msg(format!("invalid tenant role in DB: {e}")))?;
 
-        Self {
-            tenant_id: TenantId::from_uuid(row.tenant_id),
-            user_id: UserId::from_uuid(row.user_id),
-            role,
-            joined_at: row.joined_at,
-        }
-    }
+    Ok(Membership {
+        tenant_id: TenantId::from_uuid(row.tenant_id),
+        user_id: UserId::from_uuid(row.user_id),
+        role,
+        joined_at: row.joined_at,
+    })
 }
 
 #[async_trait]
@@ -83,7 +82,7 @@ impl MembershipRepository for PgMembershipRepository {
             Err(err) => return Err(DomainError::internal(err)),
         };
 
-        Ok(row.into())
+        Ok(map_membership_row(row)?)
     }
 
     async fn find(
@@ -105,7 +104,7 @@ impl MembershipRepository for PgMembershipRepository {
         .await
         .map_err(DomainError::internal)?;
 
-        Ok(row.map(Membership::from))
+        Ok(row.map(map_membership_row).transpose()?)
     }
 
     async fn list_for_user(
@@ -126,7 +125,10 @@ impl MembershipRepository for PgMembershipRepository {
         .await
         .map_err(DomainError::internal)?;
 
-        Ok(rows.into_iter().map(Membership::from).collect())
+        Ok(rows
+            .into_iter()
+            .map(map_membership_row)
+            .collect::<Result<Vec<_>, _>>()?)
     }
 
     async fn list_for_tenant(
@@ -147,7 +149,10 @@ impl MembershipRepository for PgMembershipRepository {
         .await
         .map_err(DomainError::internal)?;
 
-        Ok(rows.into_iter().map(Membership::from).collect())
+        Ok(rows
+            .into_iter()
+            .map(map_membership_row)
+            .collect::<Result<Vec<_>, _>>()?)
     }
 
     async fn update_role(

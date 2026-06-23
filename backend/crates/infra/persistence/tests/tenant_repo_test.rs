@@ -16,12 +16,40 @@ fn database_url() -> Option<String> {
 
 async fn setup_pool() -> Option<sqlx::PgPool> {
     let url = database_url()?;
-    let pool = sqlx::PgPool::connect(&url).await.ok()?;
+    let pool = sqlx::PgPool::connect(&url)
+        .await
+        .expect("DATABASE_URL is set but Postgres is unreachable");
     sqlx::migrate!("../../../migrations")
         .run(&pool)
         .await
-        .ok()?;
+        .expect("migrations failed");
     Some(pool)
+}
+
+async fn cleanup_test_data(
+    pool: &sqlx::PgPool,
+    user_ids: &[domain::UserId],
+    tenant_ids: &[domain::TenantId],
+) {
+    for tenant_id in tenant_ids {
+        sqlx::query("DELETE FROM user_tenant_memberships WHERE tenant_id = $1")
+            .bind(tenant_id.inner())
+            .execute(pool)
+            .await
+            .ok();
+        sqlx::query("DELETE FROM tenants WHERE id = $1")
+            .bind(tenant_id.inner())
+            .execute(pool)
+            .await
+            .ok();
+    }
+    for user_id in user_ids {
+        sqlx::query("DELETE FROM users WHERE id = $1")
+            .bind(user_id.inner())
+            .execute(pool)
+            .await
+            .ok();
+    }
 }
 
 fn test_ctx() -> ExecutionContext {
@@ -86,6 +114,8 @@ async fn create_makes_creator_an_owner_member() {
     assert_eq!(membership.tenant_id, tenant.id);
     assert_eq!(membership.user_id, owner_id);
     assert_eq!(membership.role, TenantRole::Owner);
+
+    cleanup_test_data(&pool, &[owner_id], &[tenant.id]).await;
 }
 
 #[tokio::test]
@@ -97,14 +127,16 @@ async fn user_can_own_at_most_two_active_tenants() {
     let tenant_repo = PgTenantRepository::new(pool.clone());
     let owner_id = create_test_user(&pool, "Limited Owner").await;
 
-    create_test_tenant(&tenant_repo, owner_id, "First").await;
-    create_test_tenant(&tenant_repo, owner_id, "Second").await;
+    let first = create_test_tenant(&tenant_repo, owner_id, "First").await;
+    let second = create_test_tenant(&tenant_repo, owner_id, "Second").await;
 
     let third_slug = unique_slug();
     let third = Tenant::create(third_slug, "Third".to_string(), owner_id).unwrap();
     let result = tenant_repo.create(&test_ctx(), &third).await;
 
     assert!(matches!(result, Err(DomainError::TenantLimitReached)));
+
+    cleanup_test_data(&pool, &[owner_id], &[first.id, second.id]).await;
 }
 
 #[tokio::test]
@@ -133,6 +165,8 @@ async fn find_by_id_and_slug_return_tenant() {
         .unwrap();
     assert_eq!(by_slug.id, tenant.id);
     assert_eq!(by_slug.name, tenant.name);
+
+    cleanup_test_data(&pool, &[owner_id], &[tenant.id]).await;
 }
 
 #[tokio::test]
@@ -181,6 +215,8 @@ async fn list_for_user_returns_tenants_where_user_is_member() {
     let other_tenants = tenant_repo.list_for_user(&ctx, other_id).await.unwrap();
     assert_eq!(other_tenants.len(), 1);
     assert_eq!(other_tenants[0].id, tenant.id);
+
+    cleanup_test_data(&pool, &[owner_id, other_id], &[tenant.id]).await;
 }
 
 #[tokio::test]
@@ -204,6 +240,8 @@ async fn update_renames_a_tenant() {
         .unwrap()
         .unwrap();
     assert_eq!(found.name, "New Name");
+
+    cleanup_test_data(&pool, &[owner_id], &[tenant.id]).await;
 }
 
 #[tokio::test]
@@ -242,6 +280,8 @@ async fn delete_removes_tenant_and_cascading_memberships() {
         .await
         .unwrap();
     assert!(member_membership.is_none());
+
+    cleanup_test_data(&pool, &[owner_id, member_id], &[tenant.id]).await;
 }
 
 #[tokio::test]
@@ -263,7 +303,7 @@ async fn count_owned_by_user_returns_correct_counts() {
         0
     );
 
-    create_test_tenant(&tenant_repo, owner_id, "First Counted").await;
+    let first = create_test_tenant(&tenant_repo, owner_id, "First Counted").await;
     assert_eq!(
         tenant_repo
             .count_owned_by_user(&ctx, owner_id)
@@ -299,6 +339,8 @@ async fn count_owned_by_user_returns_correct_counts() {
             .unwrap(),
         1
     );
+
+    cleanup_test_data(&pool, &[owner_id, other_id], &[first.id]).await;
 }
 
 #[tokio::test]
@@ -332,4 +374,6 @@ async fn duplicate_slug_returns_conflict() {
     let result = tenant_repo.create(&test_ctx(), &duplicate).await;
 
     assert!(matches!(result, Err(DomainError::Conflict(_))));
+
+    cleanup_test_data(&pool, &[owner_id, other_id], &[tenant.id]).await;
 }
