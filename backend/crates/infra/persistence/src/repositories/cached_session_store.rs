@@ -285,9 +285,13 @@ impl SessionStore for CachedSessionStore {
         user_id: UserId,
         session_id: Uuid,
     ) -> Result<(), SessionError> {
-        // Postgres performs the ownership check and deletes by token; cache
-        // invalidation happens inside revoke().
-        self.postgres.revoke_by_id(ctx, user_id, session_id).await
+        // Resolve the token with an ownership check in Postgres, then revoke by
+        // token so the Redis cache entry is also invalidated.
+        let token = self
+            .postgres
+            .resolve_active_token_by_id(ctx, user_id, session_id)
+            .await?;
+        self.revoke(ctx, &token).await
     }
 
     async fn update_memberships(

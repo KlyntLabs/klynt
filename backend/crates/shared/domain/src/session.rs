@@ -26,10 +26,4 @@ pub struct SessionSummary {
 
     /// When the session expires.
     pub expires_at: DateTime<Utc>,
-
-    /// Client user agent, if recorded.
-    pub user_agent: Option<String>,
-
-    /// Client IP address, if recorded.
-    pub ip_address: Option<String>,
 }

@@ -157,6 +157,38 @@ async fn cached_store_round_trips_through_postgres_when_redis_is_unreachable() {
 }
 
 #[tokio::test]
+async fn revoke_by_id_invalidates_cached_session() {
+    let pool = setup_pool().await;
+    let mut inspect_conn = setup_redis().await;
+    let user_id = create_test_user(&pool).await;
+    let postgres = PgSessionStore::new(pool);
+    let store = CachedSessionStore::connect(postgres, &redis_url()).await;
+    let ctx = ExecutionContext::new(RequestContext::new());
+    let expires_at = chrono::Utc::now() + chrono::Duration::hours(1);
+
+    let token = store
+        .create_with_kind(&ctx, user_id, expires_at, SessionKind::Access, None)
+        .await
+        .unwrap();
+    let key = cache_key(&token);
+
+    // Populate cache and resolve the public session id.
+    let _ = store.find_valid(&ctx, &token).await.unwrap();
+    assert!(redis_has_key(&mut inspect_conn, &key).await);
+    let summaries = store.list_active_by_user(&ctx, user_id).await.unwrap();
+    let session_id = summaries
+        .into_iter()
+        .find(|s| s.user_id == user_id)
+        .expect("session exists")
+        .id;
+
+    // Revoke by public id should delete both Postgres and Redis entries.
+    store.revoke_by_id(&ctx, user_id, session_id).await.unwrap();
+    assert!(!redis_has_key(&mut inspect_conn, &key).await);
+    assert!(store.find_valid(&ctx, &token).await.unwrap().is_none());
+}
+
+#[tokio::test]
 async fn revoked_token_is_not_found_in_cache_or_postgres() {
     let pool = setup_pool().await;
     let mut inspect_conn = setup_redis().await;

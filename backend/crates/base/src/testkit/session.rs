@@ -109,8 +109,6 @@ impl SessionStore for FakeSessionStore {
                 kind: stored.session.kind.as_str().to_string(),
                 created_at: Utc::now(),
                 expires_at: stored.session.expires_at,
-                user_agent: None,
-                ip_address: None,
             })
             .collect())
     }

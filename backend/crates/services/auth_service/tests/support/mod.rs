@@ -385,6 +385,13 @@ impl SessionStore for FailingSessionStore {
         _user_id: UserId,
         _session_id: Uuid,
     ) -> Result<(), BaseSessionError> {
+        let mut inner = self.inner.lock().unwrap();
+        if inner.remaining_successes == 0 {
+            return Err(BaseSessionError::Internal(
+                "revoke_by_id failed".to_string(),
+            ));
+        }
+        inner.remaining_successes -= 1;
         Ok(())
     }
 }

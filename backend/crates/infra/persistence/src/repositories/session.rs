@@ -42,6 +42,34 @@ impl PgSessionStore {
             .map(|(token,)| SessionToken(token))
             .collect())
     }
+
+    /// Resolve the bearer token for an active session owned by `user_id`.
+    ///
+    /// Returns `SessionError::Forbidden` if the session does not exist, is
+    /// expired, or does not belong to the user.
+    pub(crate) async fn resolve_active_token_by_id(
+        &self,
+        _ctx: &ExecutionContext,
+        user_id: UserId,
+        session_id: Uuid,
+    ) -> Result<SessionToken, SessionError> {
+        let row: Option<(Uuid,)> = sqlx::query_as(
+            r#"
+            SELECT token
+            FROM sessions
+            WHERE id = $1
+              AND user_id = $2
+              AND expires_at > NOW()
+            "#,
+        )
+        .bind(session_id)
+        .bind(user_id.inner())
+        .fetch_optional(&self.pool)
+        .await?;
+
+        row.map(|(token,)| SessionToken(token))
+            .ok_or(SessionError::Forbidden)
+    }
 }
 
 #[async_trait]
@@ -175,8 +203,6 @@ impl SessionStore for PgSessionStore {
                     kind,
                     created_at,
                     expires_at,
-                    user_agent: None,
-                    ip_address: None,
                 },
             )
             .collect())
@@ -188,22 +214,10 @@ impl SessionStore for PgSessionStore {
         user_id: UserId,
         session_id: Uuid,
     ) -> Result<(), SessionError> {
-        let row: Option<(Uuid,)> = sqlx::query_as(
-            r#"
-            SELECT token
-            FROM sessions
-            WHERE id = $1
-              AND user_id = $2
-              AND expires_at > NOW()
-            "#,
-        )
-        .bind(session_id)
-        .bind(user_id.inner())
-        .fetch_optional(&self.pool)
-        .await?;
-
-        let token = row.ok_or(SessionError::Forbidden)?.0;
-        self.revoke(ctx, &SessionToken(token)).await
+        let token = self
+            .resolve_active_token_by_id(ctx, user_id, session_id)
+            .await?;
+        self.revoke(ctx, &token).await
     }
 
     async fn update_memberships(
