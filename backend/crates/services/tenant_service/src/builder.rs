@@ -1,0 +1,100 @@
+//! Builder for constructing a [`TenantService`] with sensible defaults.
+
+use std::sync::Arc;
+
+use base::ports::audit::AuditLogger;
+use base::ports::repository::{MembershipRepository, TenantRepository};
+
+use crate::error::TenantError;
+use crate::{Dependencies, TenantConfig, TenantService};
+
+/// Builder for [`TenantService`].
+///
+/// Provides a fluent API for wiring production dependencies while
+/// allowing test-specific overrides.
+#[derive(Default)]
+pub struct TenantBuilder {
+    config: Option<TenantConfig>,
+    pool: Option<sqlx::PgPool>,
+    tenant_repository: Option<Arc<dyn TenantRepository>>,
+    membership_repository: Option<Arc<dyn MembershipRepository>>,
+    audit_logger: Option<Arc<dyn AuditLogger>>,
+}
+
+impl TenantBuilder {
+    /// Create a new builder with no overrides.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set service configuration.
+    pub fn with_config(mut self, config: TenantConfig) -> Self {
+        self.config = Some(config);
+        self
+    }
+
+    /// Set the PostgreSQL connection pool used to create default adapters.
+    pub fn with_pool(mut self, pool: sqlx::PgPool) -> Self {
+        self.pool = Some(pool);
+        self
+    }
+
+    /// Override the tenant repository.
+    pub fn with_tenant_repository(mut self, repo: Arc<dyn TenantRepository>) -> Self {
+        self.tenant_repository = Some(repo);
+        self
+    }
+
+    /// Override the membership repository.
+    pub fn with_membership_repository(mut self, repo: Arc<dyn MembershipRepository>) -> Self {
+        self.membership_repository = Some(repo);
+        self
+    }
+
+    /// Override the audit logger.
+    pub fn with_audit_logger(mut self, logger: Arc<dyn AuditLogger>) -> Self {
+        self.audit_logger = Some(logger);
+        self
+    }
+
+    /// Build the service, creating default adapters for any unwired dependency.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if no pool was provided and a default adapter is needed.
+    pub async fn build(self) -> Result<TenantService, TenantError> {
+        let pool = self
+            .pool
+            .ok_or_else(|| TenantError::internal("TenantBuilder requires a PostgreSQL pool"))?;
+
+        let config = self.config.unwrap_or_default();
+
+        let tenant_repository = self.tenant_repository.unwrap_or_else(|| {
+            Arc::new(persistence::repositories::tenant::PgTenantRepository::new(
+                pool.clone(),
+            )) as Arc<dyn TenantRepository>
+        });
+
+        let membership_repository = self.membership_repository.unwrap_or_else(|| {
+            Arc::new(
+                persistence::repositories::membership::PgMembershipRepository::new(pool.clone()),
+            ) as Arc<dyn MembershipRepository>
+        });
+
+        let audit_logger = self.audit_logger.unwrap_or_else(|| {
+            let audit_repo = Arc::new(
+                persistence::repositories::audit_event::PgAuditEventRepository::new(pool.clone()),
+            );
+            Arc::new(observability::audit::AuditService::new(audit_repo)) as Arc<dyn AuditLogger>
+        });
+
+        TenantService::new(
+            config,
+            Dependencies {
+                tenant_repository,
+                membership_repository,
+                audit_logger,
+            },
+        )
+    }
+}

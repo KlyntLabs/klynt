@@ -6,7 +6,7 @@ use uuid::Uuid;
 use async_trait::async_trait;
 use base::ctx::ExecutionContext;
 use base::ports::audit::{AuditLogger, PasswordChangeSnapshot, ProfileUpdateSnapshot};
-use domain::{DomainError, UserId};
+use domain::{DomainError, TenantId, UserId};
 use serde::Serialize;
 
 use crate::types::{AuditAction, AuditEvent, AuditEventRepository, ResourceType};
@@ -152,6 +152,45 @@ impl AuditService {
         self.repo.log(ctx, event).await
     }
 
+    /// Log tenant creation.
+    pub async fn log_tenant_created(
+        &self,
+        ctx: &ExecutionContext,
+        tenant_id: domain::TenantId,
+    ) -> Result<(), DomainError> {
+        let event = AuditEvent::new(AuditAction::TenantCreated, ResourceType::Tenant)
+            .with_resource(tenant_id.inner())
+            .with_request_id(ctx.request.request_id.0);
+
+        self.repo.log(ctx, event).await
+    }
+
+    /// Log tenant update.
+    pub async fn log_tenant_updated(
+        &self,
+        ctx: &ExecutionContext,
+        tenant_id: domain::TenantId,
+    ) -> Result<(), DomainError> {
+        let event = AuditEvent::new(AuditAction::TenantUpdated, ResourceType::Tenant)
+            .with_resource(tenant_id.inner())
+            .with_request_id(ctx.request.request_id.0);
+
+        self.repo.log(ctx, event).await
+    }
+
+    /// Log tenant deletion.
+    pub async fn log_tenant_deleted(
+        &self,
+        ctx: &ExecutionContext,
+        tenant_id: domain::TenantId,
+    ) -> Result<(), DomainError> {
+        let event = AuditEvent::new(AuditAction::TenantDeleted, ResourceType::Tenant)
+            .with_resource(tenant_id.inner())
+            .with_request_id(ctx.request.request_id.0);
+
+        self.repo.log(ctx, event).await
+    }
+
     /// Log failed authentication attempt.
     pub async fn log_login_failed(
         &self,
@@ -290,6 +329,33 @@ impl AuditLogger for AuditService {
     async fn log_user_deleted(&self, ctx: &ExecutionContext, user_id: UserId) {
         self.try_log(ctx, "user_deleted", self.log_user_deleted(ctx, user_id))
             .await;
+    }
+
+    async fn log_tenant_created(&self, ctx: &ExecutionContext, tenant_id: TenantId) {
+        self.try_log(
+            ctx,
+            "tenant_created",
+            self.log_tenant_created(ctx, tenant_id),
+        )
+        .await;
+    }
+
+    async fn log_tenant_updated(&self, ctx: &ExecutionContext, tenant_id: TenantId) {
+        self.try_log(
+            ctx,
+            "tenant_updated",
+            self.log_tenant_updated(ctx, tenant_id),
+        )
+        .await;
+    }
+
+    async fn log_tenant_deleted(&self, ctx: &ExecutionContext, tenant_id: TenantId) {
+        self.try_log(
+            ctx,
+            "tenant_deleted",
+            self.log_tenant_deleted(ctx, tenant_id),
+        )
+        .await;
     }
 }
 

@@ -810,6 +810,7 @@ dependencies = [
  "serde_json",
  "session_service",
  "sqlx",
+ "tenant_service",
  "thiserror 2.0.18",
  "tokio",
  "tower",
@@ -2513,6 +2514,23 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "tenant_service"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "axum",
+ "base",
+ "chrono",
+ "domain",
+ "observability",
+ "persistence",
+ "sqlx",
+ "thiserror 2.0.18",
+ "tokio",
+ "uuid",
 ]
 
 [[package]]

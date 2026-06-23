@@ -1,0 +1,20 @@
+[package]
+name = "tenant_service"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+async-trait = { workspace = true }
+axum = { workspace = true }
+base = { path = "../../../crates/base" }
+domain = { path = "../../shared/domain" }
+observability = { path = "../../../crates/infra/observability" }
+persistence = { path = "../../../crates/infra/persistence" }
+chrono = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+sqlx = { workspace = true }
+uuid = { workspace = true }
+
+[dev-dependencies]
+sqlx = { workspace = true }

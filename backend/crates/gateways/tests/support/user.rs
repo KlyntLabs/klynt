@@ -9,7 +9,7 @@ use base::ports::audit::{PasswordChangeSnapshot, ProfileUpdateSnapshot};
 use base::ports::repository::{RepositoryError, UserRepository};
 use base::ports::{Clock, PasswordHashError, PasswordHasher};
 use chrono::{DateTime, Utc};
-use domain::{Email, PaginationRequest, User, UserId, UserRole};
+use domain::{Email, PaginationRequest, TenantId, User, UserId, UserRole};
 use user_service::{
     application::ports::AuditLogger as UserAuditLogger, Dependencies as UserDependencies,
     UserConfig, UserService,
@@ -166,6 +166,12 @@ impl UserAuditLogger for StubUserAuditLogger {
     }
 
     async fn log_user_deleted(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
+
+    async fn log_tenant_created(&self, _ctx: &ExecutionContext, _tenant_id: TenantId) {}
+
+    async fn log_tenant_updated(&self, _ctx: &ExecutionContext, _tenant_id: TenantId) {}
+
+    async fn log_tenant_deleted(&self, _ctx: &ExecutionContext, _tenant_id: TenantId) {}
 }
 
 /// Fake password hasher for user_service tests.

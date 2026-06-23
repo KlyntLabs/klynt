@@ -10,7 +10,7 @@ use async_trait::async_trait;
 use base::ctx::ExecutionContext;
 use base::ports::audit::{PasswordChangeSnapshot, ProfileUpdateSnapshot};
 use base::testkit::{sample_user as base_sample_user, FakeUserRepository};
-use domain::{User, UserId, UserStatus};
+use domain::{TenantId, User, UserId, UserStatus};
 use user_service::application::ports::AuditLogger;
 use user_service::{Dependencies, UserConfig, UserService};
 
@@ -93,6 +93,12 @@ impl AuditLogger for TestAuditLogger {
     async fn log_user_deleted(&self, _ctx: &ExecutionContext, _user_id: UserId) {
         self.events.lock().unwrap().push("user_deleted".to_string());
     }
+
+    async fn log_tenant_created(&self, _ctx: &ExecutionContext, _tenant_id: TenantId) {}
+
+    async fn log_tenant_updated(&self, _ctx: &ExecutionContext, _tenant_id: TenantId) {}
+
+    async fn log_tenant_deleted(&self, _ctx: &ExecutionContext, _tenant_id: TenantId) {}
 }
 
 /// Build a user service and its backing test repository.

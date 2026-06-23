@@ -15,7 +15,7 @@ use base::ports::email::EmailError;
 use base::ports::repository::{RepositoryError, UserRepository};
 use base::ports::session::{Session, SessionError, SessionKind, SessionStore, SessionToken};
 use chrono::{DateTime, Utc};
-use domain::{Email, PaginationRequest, User, UserId, UserRole, UserStatus};
+use domain::{Email, PaginationRequest, TenantId, User, UserId, UserRole, UserStatus};
 use uuid::Uuid;
 
 use super::{FakePasswordHasher, FixedClock};
@@ -375,6 +375,12 @@ impl AuditLogger for StubAuditLogger {
     }
 
     async fn log_user_deleted(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
+
+    async fn log_tenant_created(&self, _ctx: &ExecutionContext, _tenant_id: TenantId) {}
+
+    async fn log_tenant_updated(&self, _ctx: &ExecutionContext, _tenant_id: TenantId) {}
+
+    async fn log_tenant_deleted(&self, _ctx: &ExecutionContext, _tenant_id: TenantId) {}
 }
 
 /// Build a fake auth service for tests.

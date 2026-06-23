@@ -14,6 +14,7 @@ use persistence::ports::RateLimiter;
 use persistence::rate_limiter::{NoOpRateLimiter, RedisRateLimiter};
 use persistence::repositories::cached_session_store::CachedSessionStore;
 use persistence::repositories::session::PgSessionStore;
+use tenant_service::TenantService;
 
 use super::Config;
 
@@ -22,6 +23,8 @@ use super::Config;
 pub struct Services {
     pub auth: Arc<AuthService>,
     pub user: Arc<user_service::UserService>,
+    /// Tenant service exposed for tenant management endpoints.
+    pub tenant: Arc<TenantService>,
     /// Session service exposed for HTTP authentication middleware.
     pub session: Arc<session_service::SessionService>,
     /// Rate limiter shared across auth endpoints.
@@ -63,6 +66,7 @@ impl Services {
         let auth_service =
             Self::create_auth_service(config, pool.clone(), session_service.clone()).await?;
         let user_service = Self::create_user_service(config, pool.clone()).await?;
+        let tenant_service = Self::create_tenant_service(pool.clone()).await?;
         let rate_limiter = Self::create_rate_limiter(config).await?;
         let trusted_proxies = Arc::new(
             config::parse_trusted_proxies(&config.trusted_proxies)
@@ -74,6 +78,7 @@ impl Services {
         Ok(Self {
             auth: Arc::new(auth_service),
             user: Arc::new(user_service),
+            tenant: Arc::new(tenant_service),
             session: session_service,
             rate_limiter,
             trusted_proxies,
@@ -136,6 +141,17 @@ impl Services {
             .build()
             .await
             .map_err(|e| crate::GatewayError::configuration(format!("User service: {e}")))
+    }
+
+    async fn create_tenant_service(
+        pool: sqlx::PgPool,
+    ) -> Result<TenantService, crate::GatewayError> {
+        TenantService::builder()
+            .with_config(tenant_service::TenantConfig::default())
+            .with_pool(pool)
+            .build()
+            .await
+            .map_err(|e| crate::GatewayError::configuration(format!("Tenant service: {e}")))
     }
 
     async fn create_rate_limiter(

@@ -9,6 +9,7 @@ members = [
     "crates/services/auth_service",
     "crates/services/user_service",
     "crates/services/session_service",
+    "crates/services/tenant_service",
     "crates/gateways",
     "crates/server",
 ]

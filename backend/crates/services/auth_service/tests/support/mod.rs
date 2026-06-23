@@ -18,7 +18,7 @@ use base::ports::session::{
 };
 use base::testkit::{sample_user, FakeSessionStore, FakeTokenStore, FakeUserRepository};
 use chrono::{DateTime, Utc};
-use domain::{Email, User, UserId, UserStatus};
+use domain::{Email, TenantId, User, UserId, UserStatus};
 use uuid::Uuid;
 
 pub use session_service::SessionConfig as TestSessionConfig;
@@ -107,6 +107,12 @@ impl AuditLogger for StubAuditLogger {
     }
 
     async fn log_user_deleted(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
+
+    async fn log_tenant_created(&self, _ctx: &ExecutionContext, _tenant_id: TenantId) {}
+
+    async fn log_tenant_updated(&self, _ctx: &ExecutionContext, _tenant_id: TenantId) {}
+
+    async fn log_tenant_deleted(&self, _ctx: &ExecutionContext, _tenant_id: TenantId) {}
 }
 
 /// Build a test auth service with default fake dependencies.

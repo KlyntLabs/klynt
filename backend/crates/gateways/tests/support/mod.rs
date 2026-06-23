@@ -14,6 +14,7 @@ use persistence::rate_limiter::NoOpRateLimiter;
 pub mod auth;
 pub mod rate_limiter;
 pub mod session;
+pub mod tenant;
 pub mod user;
 
 pub use auth::{
@@ -74,6 +75,7 @@ pub fn build_test_services_with_fakes() -> (
     let services = gateways::state::Services {
         auth: Arc::new(auth_service),
         user: Arc::new(user_service),
+        tenant: Arc::new(tenant::build_test_tenant_service()),
         session: session_service.clone(),
         rate_limiter: Arc::new(NoOpRateLimiter),
         trusted_proxies: Arc::new(Vec::new()),
@@ -139,6 +141,7 @@ pub fn build_test_services_with_auth_fakes() -> (
     let services = gateways::state::Services {
         auth: Arc::new(auth_service),
         user: Arc::new(user_service),
+        tenant: Arc::new(tenant::build_test_tenant_service()),
         session: session_service.clone(),
         rate_limiter: Arc::new(NoOpRateLimiter),
         trusted_proxies: Arc::new(Vec::new()),

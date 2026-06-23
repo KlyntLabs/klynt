@@ -1,6 +1,7 @@
 //! Canonical audit logging interface.
 
 use async_trait::async_trait;
+use domain::tenant::TenantId;
 use domain::UserId;
 use serde::Serialize;
 
@@ -77,4 +78,15 @@ pub trait AuditLogger: Send + Sync {
 
     /// Log user deletion.
     async fn log_user_deleted(&self, ctx: &ExecutionContext, user_id: UserId);
+
+    // Tenant management events
+
+    /// Log tenant creation.
+    async fn log_tenant_created(&self, ctx: &ExecutionContext, tenant_id: TenantId);
+
+    /// Log tenant update.
+    async fn log_tenant_updated(&self, ctx: &ExecutionContext, tenant_id: TenantId);
+
+    /// Log tenant deletion.
+    async fn log_tenant_deleted(&self, ctx: &ExecutionContext, tenant_id: TenantId);
 }
