@@ -24,7 +24,7 @@ pub use builder::TenantBuilder;
 pub use config::TenantConfig;
 pub use error::{TenantError, TenantResult};
 
-use application::ports::{AuditLogger, MembershipRepository, TenantRepository};
+use application::ports::{AuditLogger, MembershipRepository, TenantRepository, UserRepository};
 use base::ports::session::SessionStore;
 
 /// Request to create a new tenant.
@@ -34,6 +34,31 @@ pub struct CreateTenantRequest {
     pub slug: String,
     /// Human-readable tenant name.
     pub name: String,
+}
+
+/// Request to add a member to a tenant.
+#[derive(Debug, Clone)]
+pub struct AddMemberRequest {
+    /// Email address of the user to add.
+    pub email: String,
+    /// Role to assign within the tenant.
+    pub role: domain::membership::TenantRole,
+}
+
+/// Request to update a member's role.
+#[derive(Debug, Clone)]
+pub struct UpdateMemberRoleRequest {
+    /// Email address of the member whose role is changing.
+    pub email: String,
+    /// New role to assign.
+    pub role: domain::membership::TenantRole,
+}
+
+/// Request to remove a member from a tenant.
+#[derive(Debug, Clone)]
+pub struct RemoveMemberRequest {
+    /// Email address of the member to remove.
+    pub email: String,
 }
 
 /// Tenant service — deep module with small interface.
@@ -77,6 +102,7 @@ impl TenantService {
             internal_state: InternalState {
                 tenant_repository: dependencies.tenant_repository,
                 membership_repository: dependencies.membership_repository,
+                user_repository: dependencies.user_repository,
                 session_store: dependencies.session_store,
                 audit_logger: dependencies.audit_logger,
             },
@@ -128,6 +154,45 @@ impl TenantService {
         application::use_cases::delete_tenant::execute(self, ctx, slug).await
     }
 
+    /// List members of a tenant. Requires membership.
+    pub async fn list_members(
+        &self,
+        ctx: &ExecutionContext,
+        slug: &str,
+    ) -> Result<Vec<domain::membership::TenantMember>, TenantError> {
+        application::use_cases::list_members::execute(self, ctx, slug).await
+    }
+
+    /// Add a member to a tenant by email. Requires owner or admin role.
+    pub async fn add_member(
+        &self,
+        ctx: &ExecutionContext,
+        slug: &str,
+        request: AddMemberRequest,
+    ) -> Result<domain::membership::Membership, TenantError> {
+        application::use_cases::add_member::execute(self, ctx, slug, request).await
+    }
+
+    /// Update a member's role by email. Requires owner or admin role.
+    pub async fn update_member_role(
+        &self,
+        ctx: &ExecutionContext,
+        slug: &str,
+        request: UpdateMemberRoleRequest,
+    ) -> Result<(), TenantError> {
+        application::use_cases::update_member_role::execute(self, ctx, slug, request).await
+    }
+
+    /// Remove a member from a tenant by email. Requires owner or admin role.
+    pub async fn remove_member(
+        &self,
+        ctx: &ExecutionContext,
+        slug: &str,
+        request: RemoveMemberRequest,
+    ) -> Result<(), TenantError> {
+        application::use_cases::remove_member::execute(self, ctx, slug, request).await
+    }
+
     /// Look up a tenant by its canonical slug.
     pub async fn get_by_slug(
         &self,
@@ -175,6 +240,7 @@ impl TenantService {
 pub struct Dependencies {
     pub tenant_repository: Arc<dyn TenantRepository>,
     pub membership_repository: Arc<dyn MembershipRepository>,
+    pub user_repository: Arc<dyn UserRepository>,
     pub session_store: Arc<dyn SessionStore>,
     pub audit_logger: Arc<dyn AuditLogger>,
 }
@@ -183,6 +249,7 @@ pub struct Dependencies {
 pub(crate) struct InternalState {
     pub tenant_repository: Arc<dyn TenantRepository>,
     pub membership_repository: Arc<dyn MembershipRepository>,
+    pub user_repository: Arc<dyn UserRepository>,
     pub session_store: Arc<dyn SessionStore>,
     pub audit_logger: Arc<dyn AuditLogger>,
 }

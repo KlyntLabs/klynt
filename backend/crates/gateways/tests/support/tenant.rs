@@ -8,7 +8,8 @@ use base::ctx::ExecutionContext;
 use base::ports::repository::{MembershipRepository, TenantRepository};
 use base::testkit::FakeSessionStore;
 use domain::{
-    DomainError, DomainResult, Membership, Tenant, TenantId, TenantRole, TenantSlug, UserId,
+    DomainError, DomainResult, Membership, Tenant, TenantId, TenantMember, TenantRole, TenantSlug,
+    UserId,
 };
 
 /// Stub tenant repository that returns empty results.
@@ -219,6 +220,14 @@ impl MembershipRepository for FakeMembershipRepository {
         Ok(Vec::new())
     }
 
+    async fn list_members(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+    ) -> DomainResult<Vec<TenantMember>> {
+        Ok(Vec::new())
+    }
+
     async fn update_role(
         &self,
         _ctx: &ExecutionContext,
@@ -310,6 +319,14 @@ impl MembershipRepository for StatefulFakeMembershipRepository {
             .collect())
     }
 
+    async fn list_members(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+    ) -> DomainResult<Vec<TenantMember>> {
+        Ok(Vec::new())
+    }
+
     async fn update_role(
         &self,
         _ctx: &ExecutionContext,
@@ -348,6 +365,7 @@ pub fn build_test_tenant_service() -> tenant_service::TenantService {
         tenant_service::Dependencies {
             tenant_repository: Arc::new(FakeTenantRepository),
             membership_repository: Arc::new(FakeMembershipRepository),
+            user_repository: Arc::new(super::user::FakeUserServiceRepository::default()),
             session_store: Arc::new(FakeSessionStore::new()),
             audit_logger: Arc::new(super::user::StubUserAuditLogger),
         },
@@ -359,12 +377,14 @@ pub fn build_test_tenant_service() -> tenant_service::TenantService {
 pub fn build_stateful_test_tenant_service(
     tenant_repo: Arc<StatefulFakeTenantRepository>,
     membership_repo: Arc<StatefulFakeMembershipRepository>,
+    user_repo: Arc<super::user::FakeUserServiceRepository>,
 ) -> tenant_service::TenantService {
     tenant_service::TenantService::new(
         tenant_service::TenantConfig::default(),
         tenant_service::Dependencies {
             tenant_repository: tenant_repo,
             membership_repository: membership_repo,
+            user_repository: user_repo,
             session_store: Arc::new(FakeSessionStore::new()),
             audit_logger: Arc::new(super::user::StubUserAuditLogger),
         },

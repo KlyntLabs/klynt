@@ -310,4 +310,30 @@ impl SessionStore for CachedSessionStore {
 
         Ok(())
     }
+
+    async fn update_membership_for_user(
+        &self,
+        ctx: &ExecutionContext,
+        user_id: UserId,
+        membership: MembershipSnapshot,
+    ) -> Result<(), SessionError> {
+        self.postgres
+            .update_membership_for_user(ctx, user_id, membership)
+            .await?;
+
+        match self.postgres.active_tokens_for_user(ctx, user_id).await {
+            Ok(tokens) => {
+                for token in tokens {
+                    if let Err(e) = self.invalidate_cache(&token).await {
+                        tracing::warn!(error = %e, "failed to invalidate cached session after membership update");
+                    }
+                }
+            }
+            Err(e) => {
+                tracing::warn!(error = %e, "failed to list active tokens for cache invalidation");
+            }
+        }
+
+        Ok(())
+    }
 }

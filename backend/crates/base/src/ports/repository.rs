@@ -6,7 +6,7 @@
 
 use crate::ctx::ExecutionContext;
 use async_trait::async_trait;
-use domain::membership::{Membership, TenantRole};
+use domain::membership::{Membership, TenantMember, TenantRole};
 use domain::tenant::{Tenant, TenantId, TenantSlug};
 use domain::{DomainResult, Email, PaginationRequest, User, UserId, UserRole};
 use uuid::Uuid;
@@ -155,6 +155,13 @@ pub trait MembershipRepository: Send + Sync {
         ctx: &ExecutionContext,
         tenant_id: TenantId,
     ) -> DomainResult<Vec<Membership>>;
+
+    /// List all members of a tenant with their user details.
+    async fn list_members(
+        &self,
+        ctx: &ExecutionContext,
+        tenant_id: TenantId,
+    ) -> DomainResult<Vec<TenantMember>>;
 
     /// Update the role for a membership.
     async fn update_role(

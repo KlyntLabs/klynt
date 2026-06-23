@@ -176,4 +176,34 @@ impl SessionStore for PgSessionStore {
         .await?;
         Ok(())
     }
+
+    async fn update_membership_for_user(
+        &self,
+        _ctx: &ExecutionContext,
+        user_id: UserId,
+        membership: MembershipSnapshot,
+    ) -> Result<(), SessionError> {
+        sqlx::query(
+            r#"
+            UPDATE sessions
+            SET tenant_memberships = (
+                SELECT COALESCE(jsonb_agg(
+                    CASE
+                        WHEN (elem->>'tenant_id')::uuid = $1
+                        THEN jsonb_set(elem, '{role}', to_jsonb($2::text))
+                        ELSE elem
+                    END
+                ), '[]'::jsonb)
+                FROM jsonb_array_elements(tenant_memberships) AS elem
+            )
+            WHERE user_id = $3 AND expires_at > NOW()
+            "#,
+        )
+        .bind(membership.tenant_id)
+        .bind(membership.role.as_str())
+        .bind(user_id.inner())
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
 }

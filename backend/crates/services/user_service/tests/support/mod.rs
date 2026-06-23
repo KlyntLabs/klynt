@@ -99,6 +99,32 @@ impl AuditLogger for TestAuditLogger {
     async fn log_tenant_updated(&self, _ctx: &ExecutionContext, _tenant_id: TenantId) {}
 
     async fn log_tenant_deleted(&self, _ctx: &ExecutionContext, _tenant_id: TenantId) {}
+
+    async fn log_member_added(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _user_id: UserId,
+    ) {
+    }
+
+    async fn log_member_role_changed(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _user_id: UserId,
+        _old_role: &str,
+        _new_role: &str,
+    ) {
+    }
+
+    async fn log_member_removed(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _user_id: UserId,
+    ) {
+    }
 }
 
 /// Build a user service and its backing test repository.

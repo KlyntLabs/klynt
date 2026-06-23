@@ -5,7 +5,7 @@ import type { AuthState, User } from "./types";
 
 interface AuthStore extends AuthState {
   activeTenant: Tenant | null;
-  setSession: (user: User, token: string) => void;
+  setSession: (user: User) => void;
   clearSession: () => void;
   setLoading: (isLoading: boolean) => void;
   setActiveTenant: (tenant: Tenant | null) => void;
@@ -14,9 +14,8 @@ interface AuthStore extends AuthState {
 
 const initialState: AuthState = {
   user: null,
-  token: null,
   isAuthenticated: false,
-  isLoading: false,
+  isLoading: true,
 };
 
 export const useAuthStore = create<AuthStore>()(
@@ -24,7 +23,7 @@ export const useAuthStore = create<AuthStore>()(
     (set) => ({
       ...initialState,
       activeTenant: null,
-      setSession: (user, token) => set({ user, token, isAuthenticated: true, isLoading: false }),
+      setSession: (user) => set({ user, isAuthenticated: true, isLoading: false }),
       clearSession: () => set({ ...initialState, activeTenant: null, isLoading: false }),
       setLoading: (isLoading) => set({ isLoading }),
       setActiveTenant: (activeTenant) => set({ activeTenant }),

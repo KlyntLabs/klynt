@@ -60,7 +60,7 @@ impl std::str::FromStr for TenantRole {
 }
 
 /// Membership links a user to a tenant with a specific role.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct Membership {
     pub tenant_id: TenantId,
     pub user_id: UserId,
@@ -83,6 +83,19 @@ impl Membership {
     pub fn set_role(&mut self, role: TenantRole) {
         self.role = role;
     }
+}
+
+/// A tenant member with their user details and role.
+///
+/// This is a read-model intended for member-list queries; it is not an
+/// aggregate root.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct TenantMember {
+    pub user_id: UserId,
+    pub email: String,
+    pub full_name: Option<String>,
+    pub role: TenantRole,
+    pub joined_at: DateTime<Utc>,
 }
 
 #[cfg(test)]

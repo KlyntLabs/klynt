@@ -383,3 +383,212 @@ async fn enforce_two_tenant_ownership_limit() {
     }
     delete_test_user(&pool, owner_id).await;
 }
+
+#[tokio::test]
+async fn list_members_requires_membership() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let service = build_service(pool.clone()).await;
+    let owner_id = create_test_user(&pool, "owner-members").await;
+    let stranger_id = create_test_user(&pool, "stranger-members").await;
+
+    let owner_ctx = test_ctx(owner_id);
+    let stranger_ctx = test_ctx(stranger_id);
+
+    let tenant = service
+        .create_tenant(
+            &owner_ctx,
+            CreateTenantRequest {
+                slug: format!("members-{}", owner_id.inner()),
+                name: "Members Tenant".to_string(),
+            },
+        )
+        .await
+        .unwrap();
+
+    let members = service
+        .list_members(&owner_ctx, tenant.slug.as_str())
+        .await
+        .unwrap();
+    assert_eq!(members.len(), 1);
+    assert_eq!(members[0].user_id, owner_id);
+
+    let result = service
+        .list_members(&stranger_ctx, tenant.slug.as_str())
+        .await;
+    assert!(matches!(result, Err(TenantError::NotMember)));
+
+    service
+        .delete_tenant(&owner_ctx, tenant.slug.as_str())
+        .await
+        .unwrap();
+    delete_test_user(&pool, owner_id).await;
+    delete_test_user(&pool, stranger_id).await;
+}
+
+#[tokio::test]
+async fn add_update_remove_member_flow() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let service = build_service(pool.clone()).await;
+    let owner_id = create_test_user(&pool, "owner-mgmt").await;
+    let member_user_id = create_test_user(&pool, "member-mgmt").await;
+    let guest_user_id = create_test_user(&pool, "guest-mgmt").await;
+
+    let owner_ctx = test_ctx(owner_id);
+
+    let tenant = service
+        .create_tenant(
+            &owner_ctx,
+            CreateTenantRequest {
+                slug: format!("mgmt-{}", owner_id.inner()),
+                name: "Management Tenant".to_string(),
+            },
+        )
+        .await
+        .unwrap();
+
+    let member_email = format!("member-mgmt-{}@example.com", member_user_id.inner());
+
+    let membership = service
+        .add_member(
+            &owner_ctx,
+            tenant.slug.as_str(),
+            tenant_service::AddMemberRequest {
+                email: member_email.clone(),
+                role: TenantRole::Member,
+            },
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(membership.user_id, member_user_id);
+    assert_eq!(membership.role, TenantRole::Member);
+
+    let members = service
+        .list_members(&owner_ctx, tenant.slug.as_str())
+        .await
+        .unwrap();
+    assert_eq!(members.len(), 2);
+
+    service
+        .update_member_role(
+            &owner_ctx,
+            tenant.slug.as_str(),
+            tenant_service::UpdateMemberRoleRequest {
+                email: member_email.clone(),
+                role: TenantRole::Admin,
+            },
+        )
+        .await
+        .unwrap();
+
+    let members = service
+        .list_members(&owner_ctx, tenant.slug.as_str())
+        .await
+        .unwrap();
+    let member = members
+        .iter()
+        .find(|m| m.user_id == member_user_id)
+        .expect("member should exist");
+    assert_eq!(member.role, TenantRole::Admin);
+
+    service
+        .remove_member(
+            &owner_ctx,
+            tenant.slug.as_str(),
+            tenant_service::RemoveMemberRequest {
+                email: member_email,
+            },
+        )
+        .await
+        .unwrap();
+
+    let members = service
+        .list_members(&owner_ctx, tenant.slug.as_str())
+        .await
+        .unwrap();
+    assert_eq!(members.len(), 1);
+
+    let guest_email = format!("guest-mgmt-{}@example.com", guest_user_id.inner());
+    let result = service
+        .add_member(
+            &test_ctx(member_user_id),
+            tenant.slug.as_str(),
+            tenant_service::AddMemberRequest {
+                email: guest_email.clone(),
+                role: TenantRole::Guest,
+            },
+        )
+        .await;
+    assert!(matches!(result, Err(TenantError::NotAdmin)));
+
+    service
+        .delete_tenant(&owner_ctx, tenant.slug.as_str())
+        .await
+        .unwrap();
+    delete_test_user(&pool, owner_id).await;
+    delete_test_user(&pool, member_user_id).await;
+    delete_test_user(&pool, guest_user_id).await;
+}
+
+#[tokio::test]
+async fn cannot_modify_owner_membership() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let service = build_service(pool.clone()).await;
+    let owner_id = create_test_user(&pool, "owner-protected").await;
+    let admin_id = create_test_user(&pool, "admin-protected").await;
+
+    let owner_ctx = test_ctx(owner_id);
+    let admin_ctx = test_ctx(admin_id);
+
+    let tenant = service
+        .create_tenant(
+            &owner_ctx,
+            CreateTenantRequest {
+                slug: format!("protected-{}", owner_id.inner()),
+                name: "Protected Tenant".to_string(),
+            },
+        )
+        .await
+        .unwrap();
+
+    add_member(&pool, tenant.id, admin_id, TenantRole::Admin).await;
+
+    let owner_email = format!("owner-protected-{}@example.com", owner_id.inner());
+
+    let result = service
+        .update_member_role(
+            &admin_ctx,
+            tenant.slug.as_str(),
+            tenant_service::UpdateMemberRoleRequest {
+                email: owner_email.clone(),
+                role: TenantRole::Member,
+            },
+        )
+        .await;
+    assert!(matches!(result, Err(TenantError::Internal(_))));
+
+    let result = service
+        .remove_member(
+            &admin_ctx,
+            tenant.slug.as_str(),
+            tenant_service::RemoveMemberRequest { email: owner_email },
+        )
+        .await;
+    assert!(matches!(result, Err(TenantError::Internal(_))));
+
+    service
+        .delete_tenant(&owner_ctx, tenant.slug.as_str())
+        .await
+        .unwrap();
+    delete_test_user(&pool, owner_id).await;
+    delete_test_user(&pool, admin_id).await;
+}

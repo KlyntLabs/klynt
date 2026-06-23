@@ -9,11 +9,23 @@ import { MarketingShell } from "@/features/marketing/components/MarketingShell";
 import { routePaths } from "./route-paths";
 
 const DesktopEnvironment = lazy(() => import("@/features/desktop/components/DesktopEnvironment"));
+const LoginPage = lazy(() =>
+  import("@/features/auth").then((module) => ({ default: module.LoginPage }))
+);
 const RegisterPage = lazy(() =>
   import("@/features/auth").then((module) => ({ default: module.RegisterPage }))
 );
 const RegisterSuccessPage = lazy(() =>
   import("@/features/auth").then((module) => ({ default: module.RegisterSuccessPage }))
+);
+const VerifyEmailPage = lazy(() =>
+  import("@/features/auth").then((module) => ({ default: module.VerifyEmailPage }))
+);
+const ForgotPasswordPage = lazy(() =>
+  import("@/features/auth").then((module) => ({ default: module.ForgotPasswordPage }))
+);
+const ResetPasswordPage = lazy(() =>
+  import("@/features/auth").then((module) => ({ default: module.ResetPasswordPage }))
 );
 const DashboardPage = lazy(() => import("@/features/dashboard/pages/dashboard-page"));
 const CreateTenantPage = lazy(() =>
@@ -84,8 +96,12 @@ export const router = createBrowserRouter([
       {
         element: <GuestLayout />,
         children: [
+          { path: routePaths.login, element: <LoginPage /> },
           { path: routePaths.register, element: <RegisterPage /> },
           { path: routePaths.registerSuccess, element: <RegisterSuccessPage /> },
+          { path: routePaths.verifyEmail, element: <VerifyEmailPage /> },
+          { path: routePaths.forgotPassword, element: <ForgotPasswordPage /> },
+          { path: routePaths.resetPassword, element: <ResetPasswordPage /> },
         ],
       },
       {

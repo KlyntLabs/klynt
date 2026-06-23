@@ -2,10 +2,10 @@
   "nameRequired": "Name is required",
   "nameMax": "Name must be 200 characters or less",
   "emailInvalid": "Enter a valid email",
-  "passwordMin": "Password must be at least 12 characters",
-  "roleRequired": "Select a role",
-  "institutionIdInvalid": "Enter a valid institution ID",
-  "institutionIdRequired": "Institution is required for this role",
-  "termsRequired": "You must accept the terms",
-  "termsVersionRequired": "Terms version is required"
+  "passwordMin": "Password must be at least 8 characters",
+  "passwordUppercase": "Password must contain an uppercase letter",
+  "passwordLowercase": "Password must contain a lowercase letter",
+  "passwordNumber": "Password must contain a number",
+  "confirmPasswordRequired": "Please confirm your password",
+  "passwordsMismatch": "Passwords do not match"
 }

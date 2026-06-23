@@ -16,8 +16,8 @@ use base::ports::repository::{RepositoryError, UserRepository};
 use base::ports::session::{Session, SessionError, SessionKind, SessionStore, SessionToken};
 use chrono::{DateTime, Utc};
 use domain::{
-    DomainResult, Email, Membership, PaginationRequest, TenantId, User, UserId, UserRole,
-    UserStatus,
+    DomainResult, Email, Membership, PaginationRequest, TenantId, TenantMember, User, UserId,
+    UserRole, UserStatus,
 };
 use uuid::Uuid;
 
@@ -385,6 +385,32 @@ impl AuditLogger for StubAuditLogger {
     async fn log_tenant_updated(&self, _ctx: &ExecutionContext, _tenant_id: TenantId) {}
 
     async fn log_tenant_deleted(&self, _ctx: &ExecutionContext, _tenant_id: TenantId) {}
+
+    async fn log_member_added(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _user_id: UserId,
+    ) {
+    }
+
+    async fn log_member_role_changed(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _user_id: UserId,
+        _old_role: &str,
+        _new_role: &str,
+    ) {
+    }
+
+    async fn log_member_removed(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _user_id: UserId,
+    ) {
+    }
 }
 
 /// Stub membership repository that returns empty lists and NotFound errors.
@@ -423,6 +449,14 @@ impl MembershipRepository for StubMembershipRepository {
         _ctx: &ExecutionContext,
         _tenant_id: TenantId,
     ) -> DomainResult<Vec<Membership>> {
+        Ok(Vec::new())
+    }
+
+    async fn list_members(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+    ) -> DomainResult<Vec<TenantMember>> {
         Ok(Vec::new())
     }
 

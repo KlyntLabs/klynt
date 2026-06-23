@@ -6,7 +6,6 @@ import { type AuthInterceptorDeps, registerAuthInterceptor } from "./auth-interc
 
 function createFakeDeps(overrides?: Partial<AuthInterceptorDeps>): AuthInterceptorDeps {
   return {
-    getToken: vi.fn(() => null),
     clearSession: vi.fn(),
     logger: { info: vi.fn(), error: vi.fn() },
     ...overrides,
@@ -18,26 +17,6 @@ function createTestClient() {
 }
 
 describe("authInterceptor", () => {
-  it("attaches the current token to outgoing requests", async () => {
-    const token = "token-123";
-    const deps = createFakeDeps({ getToken: vi.fn(() => token) });
-    const client = createTestClient();
-    registerAuthInterceptor(client, deps);
-
-    let capturedToken: string | null = null;
-    server.use(
-      http.get("/api/v1/protected", ({ request }) => {
-        capturedToken = request.headers.get("Authorization");
-        return HttpResponse.json({ ok: true });
-      })
-    );
-
-    await client.get("/protected");
-
-    expect(deps.getToken).toHaveBeenCalled();
-    expect(capturedToken).toBe(`Bearer ${token}`);
-  });
-
   it("clears session on 401 for protected endpoint", async () => {
     const deps = createFakeDeps();
     const client = createTestClient();

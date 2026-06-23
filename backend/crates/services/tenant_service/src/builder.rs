@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use base::ports::audit::AuditLogger;
-use base::ports::repository::{MembershipRepository, TenantRepository};
+use base::ports::repository::{MembershipRepository, TenantRepository, UserRepository};
 use base::ports::session::SessionStore;
 
 use crate::error::TenantError;
@@ -19,6 +19,7 @@ pub struct TenantBuilder {
     pool: Option<sqlx::PgPool>,
     tenant_repository: Option<Arc<dyn TenantRepository>>,
     membership_repository: Option<Arc<dyn MembershipRepository>>,
+    user_repository: Option<Arc<dyn UserRepository>>,
     session_store: Option<Arc<dyn SessionStore>>,
     audit_logger: Option<Arc<dyn AuditLogger>>,
 }
@@ -50,6 +51,12 @@ impl TenantBuilder {
     /// Override the membership repository.
     pub fn with_membership_repository(mut self, repo: Arc<dyn MembershipRepository>) -> Self {
         self.membership_repository = Some(repo);
+        self
+    }
+
+    /// Override the user repository.
+    pub fn with_user_repository(mut self, repo: Arc<dyn UserRepository>) -> Self {
+        self.user_repository = Some(repo);
         self
     }
 
@@ -89,6 +96,12 @@ impl TenantBuilder {
             ) as Arc<dyn MembershipRepository>
         });
 
+        let user_repository = self.user_repository.unwrap_or_else(|| {
+            Arc::new(persistence::repositories::user::PgUserRepository::new(
+                pool.clone(),
+            )) as Arc<dyn UserRepository>
+        });
+
         let session_store = self.session_store.unwrap_or_else(|| {
             Arc::new(persistence::repositories::session::PgSessionStore::new(
                 pool.clone(),
@@ -107,6 +120,7 @@ impl TenantBuilder {
             Dependencies {
                 tenant_repository,
                 membership_repository,
+                user_repository,
                 session_store,
                 audit_logger,
             },

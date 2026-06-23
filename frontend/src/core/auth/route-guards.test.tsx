@@ -7,14 +7,26 @@ import { useAuthStore } from "./auth-store";
 
 function setup() {
   useAuthStore.getState().reset();
+  useAuthStore.getState().setLoading(false);
+}
+
+function setAuthenticated(role: "admin" | "instructor" | "student" = "student") {
+  useAuthStore.getState().setSession({
+    id: "u-1",
+    email: "a@b.com",
+    name: "A",
+    role,
+    status: "active",
+    createdAt: "2024-01-01T00:00:00Z",
+  });
 }
 
 describe("route guards", () => {
-  it("ProtectedRoute redirects when unauthenticated", () => {
+  it("ProtectedRoute redirects to login when unauthenticated", () => {
     setup();
     render(
       <Routes>
-        <Route path="/register" element={<div>Register page</div>} />
+        <Route path="/login" element={<div>Login page</div>} />
         <Route
           path="/dashboard"
           element={
@@ -26,14 +38,12 @@ describe("route guards", () => {
       </Routes>,
       { initialEntries: ["/dashboard"] }
     );
-    expect(screen.getByText("Register page")).toBeInTheDocument();
+    expect(screen.getByText("Login page")).toBeInTheDocument();
   });
 
-  it("GuestRoute redirects when authenticated", () => {
+  it("GuestRoute redirects to dashboard when authenticated", () => {
     setup();
-    useAuthStore
-      .getState()
-      .setSession({ id: "u-1", email: "a@b.com", name: "A", role: "student" }, "token");
+    setAuthenticated();
     render(
       <Routes>
         <Route path="/dashboard" element={<div>Dashboard</div>} />
@@ -53,9 +63,7 @@ describe("route guards", () => {
 
   it("RoleGuard blocks non-admins from admin route", () => {
     setup();
-    useAuthStore
-      .getState()
-      .setSession({ id: "u-1", email: "a@b.com", name: "A", role: "student" }, "token");
+    setAuthenticated("student");
     render(
       <Routes>
         <Route path="/dashboard" element={<div>Dashboard</div>} />
@@ -94,9 +102,7 @@ describe("route guards", () => {
 
   it("ProtectedRoute renders children when authenticated", () => {
     setup();
-    useAuthStore
-      .getState()
-      .setSession({ id: "u-1", email: "a@b.com", name: "A", role: "student" }, "token");
+    setAuthenticated();
     render(
       <Routes>
         <Route
@@ -133,9 +139,7 @@ describe("route guards", () => {
 
   it("RoleGuard renders children for allowed role", () => {
     setup();
-    useAuthStore
-      .getState()
-      .setSession({ id: "u-1", email: "a@b.com", name: "A", role: "admin" }, "token");
+    setAuthenticated("admin");
     render(
       <Routes>
         <Route

@@ -2,20 +2,18 @@ import { useMemo } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuthStore } from "./auth-store";
-import type { Role, User } from "./types";
+import type { UserRole } from "./types";
 
 export interface UseAuthResult {
-  user: User | null;
-  token: string | null;
+  user: import("./types").User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  setSession: (user: User, token: string) => void;
+  setSession: (user: import("./types").User) => void;
   clearSession: () => void;
 }
 
 export function useAuth(): UseAuthResult {
   const user = useAuthStore((state) => state.user);
-  const token = useAuthStore((state) => state.token);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isLoading = useAuthStore((state) => state.isLoading);
   const setSession = useAuthStore((state) => state.setSession);
@@ -24,13 +22,12 @@ export function useAuth(): UseAuthResult {
   return useMemo(
     () => ({
       user,
-      token,
       isAuthenticated,
       isLoading,
       setSession,
       clearSession,
     }),
-    [user, token, isAuthenticated, isLoading, setSession, clearSession]
+    [user, isAuthenticated, isLoading, setSession, clearSession]
   );
 }
 
@@ -41,9 +38,9 @@ export function useRole() {
   return {
     role,
     isAdmin: role === "admin",
-    isTeacher: role === "teacher" || role === "admin",
-    isParent: role === "parent",
-    hasRole: (allowedRoles: Role[]) => (role ? allowedRoles.includes(role) : false),
+    isInstructor: role === "instructor" || role === "admin",
+    isStudent: role === "student",
+    hasRole: (allowedRoles: UserRole[]) => (role ? allowedRoles.includes(role) : false),
   };
 }
 
@@ -64,7 +61,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/register" state={{ from: location }} replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;
@@ -75,7 +72,15 @@ interface GuestRouteProps {
 }
 
 export function GuestRoute({ children }: GuestRouteProps) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Spinner />
+      </div>
+    );
+  }
 
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
@@ -85,7 +90,7 @@ export function GuestRoute({ children }: GuestRouteProps) {
 }
 
 interface RoleGuardProps {
-  allowedRoles: Role[];
+  allowedRoles: UserRole[];
   children: React.ReactNode;
 }
 

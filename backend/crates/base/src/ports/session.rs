@@ -180,6 +180,23 @@ pub trait SessionStore: Send + Sync {
     ) -> Result<(), SessionError> {
         Ok(())
     }
+
+    /// Update a membership snapshot across all active sessions for a user.
+    ///
+    /// This is used when a user's role within a tenant changes. The snapshot
+    /// for the matching tenant is replaced and any cached sessions are
+    /// invalidated so the next request re-hydrates from Postgres.
+    ///
+    /// Default implementation is a no-op for fakes that do not need to track
+    /// tenant memberships.
+    async fn update_membership_for_user(
+        &self,
+        _ctx: &ExecutionContext,
+        _user_id: UserId,
+        _membership: MembershipSnapshot,
+    ) -> Result<(), SessionError> {
+        Ok(())
+    }
 }
 
 /// Errors that can occur when interacting with a session store.

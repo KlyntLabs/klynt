@@ -115,6 +115,7 @@ pub fn build_test_services_with_tenant_fakes(
         tenant: Arc::new(tenant::build_stateful_test_tenant_service(
             tenant_repo,
             membership_repo,
+            user_repo.clone(),
         )),
         session: session_service.clone(),
         pool: dummy_pool(),

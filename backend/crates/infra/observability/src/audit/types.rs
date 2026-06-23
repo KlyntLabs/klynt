@@ -55,6 +55,7 @@ pub enum AuditAction {
     TenantDeleted,
 
     // Membership actions (Phase 2+)
+    MemberAdded,
     MemberInvited,
     MemberRoleChanged,
     MemberRemoved,
@@ -165,6 +166,7 @@ impl FromStr for AuditAction {
             "tenant_created" => Ok(AuditAction::TenantCreated),
             "tenant_updated" => Ok(AuditAction::TenantUpdated),
             "tenant_deleted" => Ok(AuditAction::TenantDeleted),
+            "member_added" => Ok(AuditAction::MemberAdded),
             "member_invited" => Ok(AuditAction::MemberInvited),
             "member_role_changed" => Ok(AuditAction::MemberRoleChanged),
             "member_removed" => Ok(AuditAction::MemberRemoved),
@@ -192,6 +194,7 @@ impl Display for AuditAction {
             AuditAction::TenantCreated => "tenant_created",
             AuditAction::TenantUpdated => "tenant_updated",
             AuditAction::TenantDeleted => "tenant_deleted",
+            AuditAction::MemberAdded => "member_added",
             AuditAction::MemberInvited => "member_invited",
             AuditAction::MemberRoleChanged => "member_role_changed",
             AuditAction::MemberRemoved => "member_removed",

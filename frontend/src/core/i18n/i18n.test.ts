@@ -8,11 +8,10 @@ describe("i18n", () => {
 
   it("interpolates variables", () => {
     expect(
-      i18n.t("auth:register.success.messageWithName", {
-        name: "Ada",
+      i18n.t("auth:register.success.messageWithEmail", {
         email: "ada@example.com",
       })
-    ).toBe("Welcome, Ada. A verification link has been sent to ada@example.com.");
+    ).toBe("A verification link has been sent to ada@example.com.");
   });
 
   it("changes language", async () => {

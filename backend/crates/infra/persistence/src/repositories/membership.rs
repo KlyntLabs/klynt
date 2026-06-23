@@ -3,7 +3,7 @@
 use async_trait::async_trait;
 use base::ctx::ExecutionContext;
 use base::ports::repository::MembershipRepository;
-use domain::{DomainError, DomainResult, Membership, TenantId, TenantRole, UserId};
+use domain::{DomainError, DomainResult, Membership, TenantId, TenantMember, TenantRole, UserId};
 use sqlx::{Error as SqlxError, PgPool};
 
 /// PostgreSQL implementation of the membership repository.
@@ -31,6 +31,15 @@ struct MembershipRow {
     joined_at: chrono::DateTime<chrono::Utc>,
 }
 
+#[derive(sqlx::FromRow)]
+struct TenantMemberRow {
+    user_id: uuid::Uuid,
+    email: String,
+    name: String,
+    role: String,
+    joined_at: chrono::DateTime<chrono::Utc>,
+}
+
 fn map_membership_row(row: MembershipRow) -> DomainResult<Membership> {
     let role = TenantRole::parse(&row.role)
         .map_err(|e| DomainError::internal_msg(format!("invalid tenant role in DB: {e}")))?;
@@ -38,6 +47,23 @@ fn map_membership_row(row: MembershipRow) -> DomainResult<Membership> {
     Ok(Membership {
         tenant_id: TenantId::from_uuid(row.tenant_id),
         user_id: UserId::from_uuid(row.user_id),
+        role,
+        joined_at: row.joined_at,
+    })
+}
+
+fn map_tenant_member_row(row: TenantMemberRow) -> DomainResult<TenantMember> {
+    let role = TenantRole::parse(&row.role)
+        .map_err(|e| DomainError::internal_msg(format!("invalid tenant role in DB: {e}")))?;
+
+    Ok(TenantMember {
+        user_id: UserId::from_uuid(row.user_id),
+        email: row.email,
+        full_name: if row.name.is_empty() {
+            None
+        } else {
+            Some(row.name)
+        },
         role,
         joined_at: row.joined_at,
     })
@@ -152,6 +178,31 @@ impl MembershipRepository for PgMembershipRepository {
         Ok(rows
             .into_iter()
             .map(map_membership_row)
+            .collect::<Result<Vec<_>, _>>()?)
+    }
+
+    async fn list_members(
+        &self,
+        _ctx: &ExecutionContext,
+        tenant_id: TenantId,
+    ) -> DomainResult<Vec<TenantMember>> {
+        let rows: Vec<TenantMemberRow> = sqlx::query_as(
+            r#"
+            SELECT m.user_id, u.email, u.name, m.role, m.joined_at
+            FROM user_tenant_memberships m
+            JOIN users u ON u.id = m.user_id
+            WHERE m.tenant_id = $1
+            ORDER BY m.joined_at DESC
+            "#,
+        )
+        .bind(tenant_id.inner())
+        .fetch_all(&self.pool)
+        .await
+        .map_err(DomainError::internal)?;
+
+        Ok(rows
+            .into_iter()
+            .map(map_tenant_member_row)
             .collect::<Result<Vec<_>, _>>()?)
     }
 
