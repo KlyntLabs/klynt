@@ -36,9 +36,7 @@ const RolesPage = lazy(() =>
 );
 const AdminPage = lazy(() => import("@/features/admin/pages/admin-page"));
 const SessionsPage = lazy(() =>
-  import("@/features/auth/sessions/pages/sessions-page").then((module) => ({
-    default: module.default,
-  }))
+  import("@/features/auth").then((module) => ({ default: module.SessionsPage }))
 );
 const NotFoundPage = lazy(() => import("./not-found-page"));
 

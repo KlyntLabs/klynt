@@ -1,5 +1,7 @@
 import { format } from "date-fns";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { createApiError } from "@/core/api/api-error";
 import { type Session } from "../api/session-api";
 import { useRevokeSession } from "../hooks/use-revoke-session";
 import { useSessions } from "../hooks/use-sessions";
@@ -41,10 +44,18 @@ function SessionsTableSkeleton() {
 export default function SessionsPage() {
   const { t } = useTranslation("auth");
 
-  const { data: sessions, isLoading } = useSessions();
+  const { data: sessions, isLoading, isError, error, refetch } = useSessions();
   const revoke = useRevokeSession();
+  const [revokingId, setRevokingId] = useState<string | null>(null);
 
   const currentSessionId = sessions ? resolveCurrentSessionId(sessions) : undefined;
+
+  function handleRevoke(id: string) {
+    setRevokingId(id);
+    revoke.mutate(id, {
+      onSettled: () => setRevokingId(null),
+    });
+  }
 
   return (
     <Card>
@@ -52,12 +63,23 @@ export default function SessionsPage() {
         <CardTitle>{t("sessions.title")}</CardTitle>
         <CardDescription>{t("sessions.description")}</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         {isLoading && <SessionsTableSkeleton />}
-        {!isLoading && sessions?.length === 0 && (
+        {isError && (
+          <Alert variant="destructive">
+            <AlertTitle>{t("sessions.loadErrorTitle")}</AlertTitle>
+            <AlertDescription>
+              {createApiError(error).message}
+              <Button variant="outline" size="sm" className="mt-2" onClick={() => refetch()}>
+                {t("sessions.retry")}
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+        {!isLoading && !isError && sessions?.length === 0 && (
           <p className="text-muted-foreground text-sm">{t("sessions.empty")}</p>
         )}
-        {!isLoading && sessions && sessions.length > 0 && (
+        {!isLoading && !isError && sessions && sessions.length > 0 && (
           <Table>
             <TableHeader>
               <TableRow>
@@ -72,11 +94,11 @@ export default function SessionsPage() {
             <TableBody>
               {sessions.map((session) => {
                 const isCurrent = session.id === currentSessionId;
+                const isRevoking = revokingId === session.id;
+                const deviceLabel = session.userAgent || session.kind;
                 return (
                   <TableRow key={session.id} data-testid={`session-row-${session.id}`}>
-                    <TableCell className="font-medium">
-                      {session.userAgent || session.kind}
-                    </TableCell>
+                    <TableCell className="font-medium">{deviceLabel}</TableCell>
                     <TableCell>{session.ipAddress || "—"}</TableCell>
                     <TableCell>{formatDate(session.createdAt)}</TableCell>
                     <TableCell>{formatDate(session.expiresAt)}</TableCell>
@@ -87,10 +109,11 @@ export default function SessionsPage() {
                       <Button
                         variant="destructive"
                         size="sm"
-                        disabled={revoke.isPending}
-                        onClick={() => revoke.mutate(session.id)}
+                        disabled={isCurrent || isRevoking}
+                        aria-label={t("sessions.revokeAriaLabel", { device: deviceLabel })}
+                        onClick={() => handleRevoke(session.id)}
                       >
-                        {revoke.isPending ? t("sessions.revoking") : t("sessions.revoke")}
+                        {isRevoking ? t("sessions.revoking") : t("sessions.revoke")}
                       </Button>
                     </TableCell>
                   </TableRow>
