@@ -40,6 +40,10 @@ pub fn routes(services: Services) -> axum::Router<Services> {
     axum::Router::new()
         .route("/", axum::routing::post(create_tenant))
         .route("/", axum::routing::get(list_my_tenants))
+        .route(
+            "/invites/{token}/accept",
+            axum::routing::post(accept_invite),
+        )
         .merge(member_required_routes)
 }
 
@@ -181,6 +185,15 @@ async fn remove_member(
     Ok(Json(SuccessResponse::message(
         "Member removed successfully",
     )))
+}
+
+async fn accept_invite(
+    State(services): State<Services>,
+    AuthContext(ctx): AuthContext,
+    Path(token): Path<String>,
+) -> Result<impl IntoResponse, crate::GatewayError> {
+    let tenant = services.tenant.accept_invite(&ctx, &token).await?;
+    Ok(Json(SuccessResponse::ok(tenant)))
 }
 
 #[derive(serde::Deserialize)]

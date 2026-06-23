@@ -23,14 +23,16 @@ fn app_with_tenant_fakes(
 ) -> (
     axum::Router,
     Arc<session_service::SessionService>,
+    Arc<support::FakeTenantInviteRepository>,
     Arc<support::FakeUserServiceRepository>,
 ) {
-    let (services, session_service, user_repo) =
+    let (services, session_service, invite_repo, user_repo) =
         support::build_test_services_with_tenant_fakes(tenant_repo, membership_repo);
     let config = support::test_config();
     (
         gateways::create_router(config, services),
         session_service,
+        invite_repo,
         user_repo,
     )
 }
@@ -93,7 +95,7 @@ fn create_owned_tenant(
 async fn non_member_cannot_access_tenant() {
     let tenant_repo = Arc::new(support::StatefulFakeTenantRepository::default());
     let membership_repo = Arc::new(support::StatefulFakeMembershipRepository::default());
-    let (app, session_service, user_repo) =
+    let (app, session_service, _invite_repo, user_repo) =
         app_with_tenant_fakes(tenant_repo.clone(), membership_repo.clone());
 
     let (owner_id, _owner_token) =
@@ -128,7 +130,7 @@ async fn non_member_cannot_access_tenant() {
 async fn member_can_list_their_tenants() {
     let tenant_repo = Arc::new(support::StatefulFakeTenantRepository::default());
     let membership_repo = Arc::new(support::StatefulFakeMembershipRepository::default());
-    let (app, session_service, user_repo) =
+    let (app, session_service, _invite_repo, user_repo) =
         app_with_tenant_fakes(tenant_repo.clone(), membership_repo.clone());
 
     let (owner_id, owner_token) =
@@ -172,7 +174,7 @@ async fn member_can_list_their_tenants() {
 async fn get_tenant_returns_full_payload() {
     let tenant_repo = Arc::new(support::StatefulFakeTenantRepository::default());
     let membership_repo = Arc::new(support::StatefulFakeMembershipRepository::default());
-    let (app, session_service, user_repo) =
+    let (app, session_service, _invite_repo, user_repo) =
         app_with_tenant_fakes(tenant_repo.clone(), membership_repo.clone());
 
     let (owner_id, owner_token) =
@@ -216,7 +218,7 @@ async fn get_tenant_returns_full_payload() {
 async fn owner_can_update_and_delete_tenant() {
     let tenant_repo = Arc::new(support::StatefulFakeTenantRepository::default());
     let membership_repo = Arc::new(support::StatefulFakeMembershipRepository::default());
-    let (app, session_service, user_repo) =
+    let (app, session_service, _invite_repo, user_repo) =
         app_with_tenant_fakes(tenant_repo.clone(), membership_repo.clone());
 
     let (owner_id, owner_token) =
@@ -272,7 +274,7 @@ async fn owner_can_update_and_delete_tenant() {
 async fn creating_more_than_two_active_tenants_fails() {
     let tenant_repo = Arc::new(support::StatefulFakeTenantRepository::default());
     let membership_repo = Arc::new(support::StatefulFakeMembershipRepository::default());
-    let (app, session_service, user_repo) =
+    let (app, session_service, _invite_repo, user_repo) =
         app_with_tenant_fakes(tenant_repo.clone(), membership_repo.clone());
 
     let (owner_id, owner_token) =

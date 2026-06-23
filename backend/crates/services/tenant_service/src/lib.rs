@@ -27,8 +27,8 @@ pub use config::TenantConfig;
 pub use error::{TenantError, TenantResult};
 
 use application::ports::{
-    AuditLogger, MembershipRepository, PermissionRepository, RoleRepository, TenantRepository,
-    UserRepository,
+    AuditLogger, MembershipRepository, PermissionRepository, RoleRepository,
+    TenantInviteRepository, TenantRepository, UserRepository,
 };
 use application::AuthorizationService;
 use base::ports::session::SessionStore;
@@ -133,6 +133,7 @@ impl TenantService {
                 tenant_repository: dependencies.tenant_repository,
                 membership_repository: dependencies.membership_repository,
                 user_repository: dependencies.user_repository,
+                invite_repository: dependencies.invite_repository,
                 permission_repository: dependencies.permission_repository,
                 role_repository: dependencies.role_repository,
                 session_store: dependencies.session_store,
@@ -204,6 +205,15 @@ impl TenantService {
         request: AddMemberRequest,
     ) -> Result<domain::membership::Membership, TenantError> {
         application::use_cases::add_member::execute(self, ctx, slug, request).await
+    }
+
+    /// Accept a tenant invite and add the authenticated user as a member.
+    pub async fn accept_invite(
+        &self,
+        ctx: &ExecutionContext,
+        token: &str,
+    ) -> Result<domain::Tenant, TenantError> {
+        application::use_cases::accept_invite::execute(self, ctx, token).await
     }
 
     /// Update a member's role by email. Requires owner or admin role.
@@ -336,6 +346,7 @@ pub struct Dependencies {
     pub tenant_repository: Arc<dyn TenantRepository>,
     pub membership_repository: Arc<dyn MembershipRepository>,
     pub user_repository: Arc<dyn UserRepository>,
+    pub invite_repository: Arc<dyn TenantInviteRepository>,
     pub permission_repository: Arc<dyn PermissionRepository>,
     pub role_repository: Arc<dyn RoleRepository>,
     pub session_store: Arc<dyn SessionStore>,
@@ -347,6 +358,7 @@ pub(crate) struct InternalState {
     pub tenant_repository: Arc<dyn TenantRepository>,
     pub membership_repository: Arc<dyn MembershipRepository>,
     pub user_repository: Arc<dyn UserRepository>,
+    pub invite_repository: Arc<dyn TenantInviteRepository>,
     pub permission_repository: Arc<dyn PermissionRepository>,
     pub role_repository: Arc<dyn RoleRepository>,
     pub session_store: Arc<dyn SessionStore>,

@@ -3,8 +3,9 @@ use std::sync::Arc;
 use base::testkit::FakeSessionStore;
 
 use super::{
-    FakeMembershipRepository, FakePermissionRepository, FakeRoleRepository, FakeTenantRepository,
-    StatefulFakeMembershipRepository, StatefulFakeRoleRepository, StatefulFakeTenantRepository,
+    FakeMembershipRepository, FakePermissionRepository, FakeRoleRepository,
+    FakeTenantInviteRepository, FakeTenantRepository, StatefulFakeMembershipRepository,
+    StatefulFakeRoleRepository, StatefulFakeTenantRepository,
 };
 use crate::support::user::{FakeUserServiceRepository, StubUserAuditLogger};
 
@@ -16,6 +17,7 @@ pub fn build_test_tenant_service() -> tenant_service::TenantService {
             tenant_repository: Arc::new(FakeTenantRepository),
             membership_repository: Arc::new(FakeMembershipRepository),
             user_repository: Arc::new(FakeUserServiceRepository::default()),
+            invite_repository: Arc::new(FakeTenantInviteRepository::default()),
             permission_repository: Arc::new(FakePermissionRepository::default()),
             role_repository: Arc::new(FakeRoleRepository),
             session_store: Arc::new(FakeSessionStore::new()),
@@ -29,6 +31,7 @@ pub fn build_test_tenant_service() -> tenant_service::TenantService {
 pub fn build_stateful_test_tenant_service(
     tenant_repo: Arc<StatefulFakeTenantRepository>,
     membership_repo: Arc<StatefulFakeMembershipRepository>,
+    invite_repo: Arc<FakeTenantInviteRepository>,
     user_repo: Arc<FakeUserServiceRepository>,
 ) -> tenant_service::TenantService {
     tenant_service::TenantService::new(
@@ -37,6 +40,7 @@ pub fn build_stateful_test_tenant_service(
             tenant_repository: tenant_repo,
             membership_repository: membership_repo,
             user_repository: user_repo,
+            invite_repository: invite_repo,
             permission_repository: Arc::new(FakePermissionRepository::default()),
             role_repository: Arc::new(StatefulFakeRoleRepository::default()),
             session_store: Arc::new(FakeSessionStore::new()),

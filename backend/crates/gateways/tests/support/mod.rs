@@ -24,7 +24,7 @@ pub use auth::{
 pub use rate_limiter::FakeRateLimiter;
 pub use session::FakePersistenceSessionStore;
 pub use tenant::{
-    build_stateful_test_tenant_service, build_test_tenant_service,
+    build_stateful_test_tenant_service, build_test_tenant_service, FakeTenantInviteRepository,
     StatefulFakeMembershipRepository, StatefulFakeTenantRepository,
 };
 pub use user::{build_test_user_service, FakeUserServiceRepository};
@@ -99,6 +99,7 @@ pub fn build_test_services_with_tenant_fakes(
 ) -> (
     gateways::state::Services,
     Arc<session_service::SessionService>,
+    Arc<FakeTenantInviteRepository>,
     Arc<FakeUserServiceRepository>,
 ) {
     let (auth_service, _, _) = build_test_auth_service();
@@ -108,6 +109,7 @@ pub fn build_test_services_with_tenant_fakes(
         session_store,
     ));
     let (user_service, user_repo) = build_test_user_service();
+    let invite_repo = Arc::new(FakeTenantInviteRepository::default());
 
     let services = gateways::state::Services {
         auth: Arc::new(auth_service),
@@ -115,6 +117,7 @@ pub fn build_test_services_with_tenant_fakes(
         tenant: Arc::new(tenant::build_stateful_test_tenant_service(
             tenant_repo,
             membership_repo,
+            invite_repo.clone(),
             user_repo.clone(),
         )),
         session: session_service.clone(),
@@ -126,7 +129,7 @@ pub fn build_test_services_with_tenant_fakes(
         config: test_config(),
     };
 
-    (services, session_service, user_repo)
+    (services, session_service, invite_repo, user_repo)
 }
 
 /// Build test gateway services.

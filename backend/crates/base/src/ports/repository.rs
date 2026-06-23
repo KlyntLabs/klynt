@@ -8,7 +8,9 @@ use crate::ctx::ExecutionContext;
 use async_trait::async_trait;
 use domain::membership::{Membership, TenantMember, TenantRole};
 use domain::tenant::{Tenant, TenantId, TenantSlug};
-use domain::{DomainResult, Email, PaginationRequest, User, UserId, UserRole};
+use domain::{
+    DomainResult, Email, PaginationRequest, RoleId, TenantInvite, User, UserId, UserRole,
+};
 use uuid::Uuid;
 
 /// Canonical User repository interface.
@@ -136,6 +138,20 @@ pub trait MembershipRepository: Send + Sync {
         membership: &Membership,
     ) -> DomainResult<Membership>;
 
+    /// Create a new membership and associate it with a tenant role.
+    ///
+    /// The default implementation ignores the role ID and delegates to
+    /// [`Self::create`]; real persistence adapters should override it to
+    /// populate `tenant_role_id`.
+    async fn create_with_role_id(
+        &self,
+        ctx: &ExecutionContext,
+        membership: &Membership,
+        _tenant_role_id: RoleId,
+    ) -> DomainResult<Membership> {
+        self.create(ctx, membership).await
+    }
+
     /// Find a membership by tenant and user.
     async fn find(
         &self,
@@ -181,6 +197,24 @@ pub trait MembershipRepository: Send + Sync {
         tenant_id: TenantId,
         user_id: UserId,
     ) -> DomainResult<()>;
+}
+
+/// Canonical tenant invite repository interface.
+#[async_trait]
+pub trait TenantInviteRepository: Send + Sync {
+    /// Find an invite by its opaque token.
+    async fn find_by_token(
+        &self,
+        ctx: &ExecutionContext,
+        token: &str,
+    ) -> Result<Option<TenantInvite>, RepositoryError>;
+
+    /// Mark an invite as accepted now.
+    async fn mark_accepted(
+        &self,
+        ctx: &ExecutionContext,
+        invite_id: Uuid,
+    ) -> Result<(), RepositoryError>;
 }
 
 /// Canonical repository error type.

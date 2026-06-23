@@ -1,5 +1,6 @@
 //! Tenant service use cases.
 
+pub mod accept_invite;
 pub mod add_member;
 pub mod create_tenant;
 pub mod delete_tenant;

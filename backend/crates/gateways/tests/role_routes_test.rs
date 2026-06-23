@@ -20,14 +20,16 @@ fn app_with_tenant_fakes(
 ) -> (
     axum::Router,
     Arc<session_service::SessionService>,
+    Arc<support::FakeTenantInviteRepository>,
     Arc<support::FakeUserServiceRepository>,
 ) {
-    let (services, session_service, user_repo) =
+    let (services, session_service, invite_repo, user_repo) =
         support::build_test_services_with_tenant_fakes(tenant_repo, membership_repo);
     let config = support::test_config();
     (
         gateways::create_router(config, services),
         session_service,
+        invite_repo,
         user_repo,
     )
 }
@@ -90,7 +92,7 @@ fn create_owned_tenant(
 async fn lists_permission_catalog() {
     let tenant_repo = Arc::new(support::StatefulFakeTenantRepository::default());
     let membership_repo = Arc::new(support::StatefulFakeMembershipRepository::default());
-    let (app, session_service, user_repo) =
+    let (app, session_service, _invite_repo, user_repo) =
         app_with_tenant_fakes(tenant_repo.clone(), membership_repo.clone());
 
     let (_owner_id, owner_token) =
@@ -122,7 +124,7 @@ async fn lists_permission_catalog() {
 async fn owner_can_create_and_list_roles() {
     let tenant_repo = Arc::new(support::StatefulFakeTenantRepository::default());
     let membership_repo = Arc::new(support::StatefulFakeMembershipRepository::default());
-    let (app, session_service, user_repo) =
+    let (app, session_service, _invite_repo, user_repo) =
         app_with_tenant_fakes(tenant_repo.clone(), membership_repo.clone());
 
     let (owner_id, owner_token) =
@@ -177,7 +179,7 @@ async fn owner_can_create_and_list_roles() {
 async fn owner_can_attempt_role_lifecycle() {
     let tenant_repo = Arc::new(support::StatefulFakeTenantRepository::default());
     let membership_repo = Arc::new(support::StatefulFakeMembershipRepository::default());
-    let (app, session_service, user_repo) =
+    let (app, session_service, _invite_repo, user_repo) =
         app_with_tenant_fakes(tenant_repo.clone(), membership_repo.clone());
 
     let (owner_id, owner_token) =
@@ -284,7 +286,7 @@ async fn owner_can_attempt_role_lifecycle() {
 async fn non_member_cannot_access_roles() {
     let tenant_repo = Arc::new(support::StatefulFakeTenantRepository::default());
     let membership_repo = Arc::new(support::StatefulFakeMembershipRepository::default());
-    let (app, session_service, user_repo) =
+    let (app, session_service, _invite_repo, user_repo) =
         app_with_tenant_fakes(tenant_repo.clone(), membership_repo.clone());
 
     let (owner_id, _owner_token) =

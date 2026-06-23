@@ -4,7 +4,9 @@ use std::sync::Arc;
 
 use base::ports::audit::AuditLogger;
 use base::ports::permission::{PermissionRepository, RoleRepository};
-use base::ports::repository::{MembershipRepository, TenantRepository, UserRepository};
+use base::ports::repository::{
+    MembershipRepository, TenantInviteRepository, TenantRepository, UserRepository,
+};
 use base::ports::session::SessionStore;
 
 use crate::error::TenantError;
@@ -21,6 +23,7 @@ pub struct TenantBuilder {
     tenant_repository: Option<Arc<dyn TenantRepository>>,
     membership_repository: Option<Arc<dyn MembershipRepository>>,
     user_repository: Option<Arc<dyn UserRepository>>,
+    invite_repository: Option<Arc<dyn TenantInviteRepository>>,
     permission_repository: Option<Arc<dyn PermissionRepository>>,
     role_repository: Option<Arc<dyn RoleRepository>>,
     session_store: Option<Arc<dyn SessionStore>>,
@@ -60,6 +63,12 @@ impl TenantBuilder {
     /// Override the user repository.
     pub fn with_user_repository(mut self, repo: Arc<dyn UserRepository>) -> Self {
         self.user_repository = Some(repo);
+        self
+    }
+
+    /// Override the tenant invite repository.
+    pub fn with_invite_repository(mut self, repo: Arc<dyn TenantInviteRepository>) -> Self {
+        self.invite_repository = Some(repo);
         self
     }
 
@@ -117,6 +126,14 @@ impl TenantBuilder {
             )) as Arc<dyn UserRepository>
         });
 
+        let invite_repository = self.invite_repository.unwrap_or_else(|| {
+            Arc::new(
+                persistence::repositories::tenant_invite::PgTenantInviteRepository::new(
+                    pool.clone(),
+                ),
+            ) as Arc<dyn TenantInviteRepository>
+        });
+
         let permission_repository = self.permission_repository.unwrap_or_else(|| {
             Arc::new(
                 persistence::repositories::permission::PgPermissionRepository::new(pool.clone()),
@@ -148,6 +165,7 @@ impl TenantBuilder {
                 tenant_repository,
                 membership_repository,
                 user_repository,
+                invite_repository,
                 permission_repository,
                 role_repository,
                 session_store,

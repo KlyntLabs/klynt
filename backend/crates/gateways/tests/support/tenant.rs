@@ -2,8 +2,8 @@
 
 pub use permission_repo::FakePermissionRepository;
 pub use repos::{
-    FakeMembershipRepository, FakeTenantRepository, StatefulFakeMembershipRepository,
-    StatefulFakeTenantRepository,
+    FakeMembershipRepository, FakeTenantInviteRepository, FakeTenantRepository,
+    StatefulFakeMembershipRepository, StatefulFakeTenantRepository,
 };
 pub use role_repo::{FakeRoleRepository, StatefulFakeRoleRepository};
 pub use service_builder::{build_stateful_test_tenant_service, build_test_tenant_service};

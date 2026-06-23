@@ -85,16 +85,36 @@ pub(crate) async fn register(
 
 /// POST /api/v1/auth/verify-email
 ///
-/// Verify email with token.
+/// Verify email with token and establish an authenticated session.
 pub(crate) async fn verify_email(
     State(services): State<Services>,
+    cookies: Cookies,
     Json(request): Json<VerifyEmailRequest>,
 ) -> Result<impl IntoResponse, crate::GatewayError> {
-    services
+    let user_id = services
         .auth
         .verify_email(&execution_context(), &request.token)
         .await
         .map_err(crate::GatewayError::from)?;
+
+    let ctx = execution_context();
+    let session = services
+        .session
+        .create(&ctx, user_id)
+        .await
+        .map_err(|e| crate::GatewayError::Internal(format!("Failed to create session: {e}")))?;
+
+    let mut cookie = Cookie::new(SESSION_TOKEN_COOKIE, session.token.to_string());
+    apply_cookie_attributes(&mut cookie, &services);
+
+    let ttl_seconds = session
+        .expires_at
+        .signed_duration_since(Utc::now())
+        .num_seconds()
+        .max(0);
+    cookie.set_max_age(tower_cookies::cookie::time::Duration::seconds(ttl_seconds));
+
+    cookies.add(cookie);
 
     Ok(Json(SuccessResponse::message(
         "Email verified successfully",

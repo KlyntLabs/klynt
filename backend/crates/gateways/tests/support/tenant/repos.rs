@@ -3,9 +3,13 @@ use std::sync::Mutex;
 
 use async_trait::async_trait;
 use base::ctx::ExecutionContext;
-use base::ports::repository::{MembershipRepository, TenantRepository};
+use base::ports::repository::{
+    MembershipRepository, RepositoryError, TenantInviteRepository, TenantRepository,
+};
+use chrono::Utc;
 use domain::{
-    DomainError, DomainResult, Membership, Tenant, TenantId, TenantMember, TenantSlug, UserId,
+    DomainError, DomainResult, Membership, Tenant, TenantId, TenantInvite, TenantMember,
+    TenantSlug, UserId,
 };
 
 /// Stub tenant repository that returns empty results.
@@ -350,6 +354,47 @@ impl MembershipRepository for StatefulFakeMembershipRepository {
             .lock()
             .unwrap()
             .remove(&(tenant_id, user_id));
+        Ok(())
+    }
+}
+
+/// In-memory tenant invite repository for gateway tests.
+#[derive(Default)]
+pub struct FakeTenantInviteRepository {
+    invites: Mutex<HashMap<String, TenantInvite>>,
+}
+
+impl FakeTenantInviteRepository {
+    /// Insert an invite into the fake repository.
+    pub fn insert(&self, invite: TenantInvite) {
+        self.invites
+            .lock()
+            .unwrap()
+            .insert(invite.token.clone(), invite);
+    }
+}
+
+#[async_trait]
+impl TenantInviteRepository for FakeTenantInviteRepository {
+    async fn find_by_token(
+        &self,
+        _ctx: &ExecutionContext,
+        token: &str,
+    ) -> Result<Option<TenantInvite>, RepositoryError> {
+        Ok(self.invites.lock().unwrap().get(token).cloned())
+    }
+
+    async fn mark_accepted(
+        &self,
+        _ctx: &ExecutionContext,
+        invite_id: uuid::Uuid,
+    ) -> Result<(), RepositoryError> {
+        let mut invites = self.invites.lock().unwrap();
+        let invite = invites
+            .values_mut()
+            .find(|i| i.id == invite_id)
+            .ok_or(RepositoryError::NotFound)?;
+        invite.accepted_at = Some(Utc::now());
         Ok(())
     }
 }

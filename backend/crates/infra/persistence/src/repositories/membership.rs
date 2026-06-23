@@ -3,7 +3,9 @@
 use async_trait::async_trait;
 use base::ctx::ExecutionContext;
 use base::ports::repository::MembershipRepository;
-use domain::{DomainError, DomainResult, Membership, TenantId, TenantMember, TenantRole, UserId};
+use domain::{
+    DomainError, DomainResult, Membership, RoleId, TenantId, TenantMember, TenantRole, UserId,
+};
 use sqlx::{Error as SqlxError, PgPool};
 
 /// PostgreSQL implementation of the membership repository.
@@ -99,6 +101,45 @@ impl MembershipRepository for PgMembershipRepository {
                     // The FK constraint tells us whether the missing entity is a
                     // tenant or a user. We surface a generic not-found error so
                     // callers can handle a missing reference uniformly.
+                    return Err(DomainError::not_found(
+                        db_err.constraint().unwrap_or("tenant or user"),
+                    ));
+                }
+                return Err(DomainError::internal(db_err));
+            }
+            Err(err) => return Err(DomainError::internal(err)),
+        };
+
+        Ok(map_membership_row(row)?)
+    }
+
+    async fn create_with_role_id(
+        &self,
+        _ctx: &ExecutionContext,
+        membership: &Membership,
+        tenant_role_id: RoleId,
+    ) -> DomainResult<Membership> {
+        let row: MembershipRow = match sqlx::query_as(
+            r#"
+            INSERT INTO user_tenant_memberships (tenant_id, user_id, role, joined_at, tenant_role_id, status)
+            VALUES ($1, $2, $3, $4, $5, 'active')
+            RETURNING tenant_id, user_id, role, joined_at
+            "#,
+        )
+        .bind(membership.tenant_id.inner())
+        .bind(membership.user_id.inner())
+        .bind(membership.role.as_str())
+        .bind(membership.joined_at)
+        .bind(tenant_role_id.0)
+        .fetch_one(&self.pool)
+        .await
+        {
+            Ok(row) => row,
+            Err(SqlxError::Database(db_err)) => {
+                if db_err.is_unique_violation() {
+                    return Err(DomainError::conflict("membership already exists"));
+                }
+                if db_err.is_foreign_key_violation() {
                     return Err(DomainError::not_found(
                         db_err.constraint().unwrap_or("tenant or user"),
                     ));
