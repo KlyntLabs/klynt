@@ -11,6 +11,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import {
   Table,
@@ -26,12 +33,14 @@ import { useInviteMember } from "../hooks/use-invite-member";
 import { useMembers } from "../hooks/use-members";
 import { useRemoveMember } from "../hooks/use-remove-member";
 import { useUpdateMemberRole } from "../hooks/use-update-member-role";
-import type { TenantRole } from "../types";
+import { ROLE_OPTIONS, type TenantRole } from "../types";
 
-const ROLE_OPTIONS: TenantRole[] = ["owner", "admin", "member", "guest"];
+function formatJoinedDate(value: string, locale: string): string {
+  return new Date(value).toLocaleDateString(locale);
+}
 
 export default function MembersPage() {
-  const { t } = useTranslation(["tenant", "ui"]);
+  const { t, i18n } = useTranslation(["tenant", "ui"]);
   const { slug } = useParams<{ slug: string }>();
   const tenantSlug = slug ?? "";
 
@@ -68,7 +77,7 @@ export default function MembersPage() {
       <PermissionGuard
         tenantSlug={tenantSlug}
         permission="tenant.manage_members"
-        fallback={<p>{t("ui:queryError.message")}</p>}
+        fallback={<p>{t("members.accessDenied")}</p>}
       >
         <Table>
           <TableHeader>
@@ -87,34 +96,42 @@ export default function MembersPage() {
               </TableRow>
             )}
             {members?.map((member) => (
-              <TableRow key={member.email}>
+              <TableRow key={member.email} data-testid={`member-row-${member.email}`}>
                 <TableCell className="font-medium">{member.email}</TableCell>
                 <TableCell>{member.fullName ?? "—"}</TableCell>
                 <TableCell>
-                  <select
+                  <Select
                     value={member.role}
-                    onChange={(event) =>
+                    onValueChange={(value) =>
                       updateRoleMutation.mutate({
                         email: member.email,
-                        role: event.target.value as TenantRole,
+                        role: value as TenantRole,
                       })
                     }
                     disabled={updateRoleMutation.isPending}
-                    aria-label={t("members.roleLabel")}
-                    className="border-input h-9 w-32 rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs disabled:opacity-50"
                   >
-                    {ROLE_OPTIONS.map((role) => (
-                      <option key={role} value={role}>
-                        {t(`members.roles.${role}`)}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger
+                      className="w-32"
+                      aria-label={t("members.roleLabel")}
+                      data-testid={`role-select-${member.email}`}
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ROLE_OPTIONS.map((role) => (
+                        <SelectItem key={role} value={role}>
+                          {t(`members.roles.${role}`)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </TableCell>
-                <TableCell>{new Date(member.joinedAt).toLocaleDateString()}</TableCell>
+                <TableCell>{formatJoinedDate(member.joinedAt, i18n.language)}</TableCell>
                 <TableCell>
                   <Button
                     variant="destructive"
                     size="sm"
+                    data-testid={`remove-member-${member.email}`}
                     onClick={() => setRemovingEmail(member.email)}
                     disabled={removeMutation.isPending}
                   >
@@ -129,10 +146,9 @@ export default function MembersPage() {
 
       <InviteMemberDialog
         open={isInviteOpen}
+        isPending={inviteMutation.isPending}
         onOpenChange={setIsInviteOpen}
-        onSubmit={(input) =>
-          inviteMutation.mutate(input, { onSuccess: () => setIsInviteOpen(false) })
-        }
+        onInvite={async (input) => inviteMutation.mutateAsync(input)}
       />
 
       <Dialog
@@ -152,6 +168,7 @@ export default function MembersPage() {
             </Button>
             <Button
               variant="destructive"
+              data-testid="confirm-remove-member"
               onClick={() => {
                 if (removingEmail) {
                   removeMutation.mutate(removingEmail, {

@@ -52,13 +52,13 @@ describe("MembersPage", () => {
 
     expect(await screen.findByText("member@acme.test")).toBeInTheDocument();
 
-    const row = screen.getByText("member@acme.test").closest("tr");
-    const roleSelect = row?.querySelector("select");
-    expect(roleSelect).toBeInstanceOf(HTMLSelectElement);
-    await user.selectOptions(roleSelect as HTMLSelectElement, "admin");
+    const roleSelect = screen.getByTestId("role-select-member@acme.test");
+    roleSelect.focus();
+    await user.keyboard("{Enter}");
+    await user.click(screen.getByRole("option", { name: /admin/i }));
 
     await waitFor(() => {
-      expect((roleSelect as HTMLSelectElement).value).toBe("admin");
+      expect(screen.getByTestId("role-select-member@acme.test")).toHaveTextContent("Admin");
     });
   });
 
@@ -75,15 +75,11 @@ describe("MembersPage", () => {
 
     expect(await screen.findByText("member@acme.test")).toBeInTheDocument();
 
-    const row = screen.getByText("member@acme.test").closest("tr");
-    const removeButton = row?.querySelector("button");
-    expect(removeButton).toBeInstanceOf(HTMLButtonElement);
-    await user.click(removeButton as HTMLButtonElement);
+    await user.click(screen.getByTestId("remove-member-member@acme.test"));
 
     expect(await screen.findByText(/are you sure/i)).toBeInTheDocument();
 
-    const confirmButtons = screen.getAllByRole("button", { name: /^remove$/i });
-    await user.click(confirmButtons[confirmButtons.length - 1]);
+    await user.click(screen.getByTestId("confirm-remove-member"));
 
     await waitFor(() => {
       expect(screen.queryByText("member@acme.test")).not.toBeInTheDocument();

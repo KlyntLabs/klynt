@@ -1,5 +1,7 @@
 export type TenantRole = "owner" | "admin" | "member" | "guest";
 
+export const ROLE_OPTIONS: TenantRole[] = ["owner", "admin", "member", "guest"];
+
 export interface Member {
   userId: string;
   email: string;
