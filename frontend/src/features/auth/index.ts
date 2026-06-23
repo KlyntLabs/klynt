@@ -4,6 +4,7 @@ export { RegisterForm } from "./components/register-form";
 export { ResetPasswordForm } from "./components/reset-password-form";
 export { default as ForgotPasswordPage } from "./pages/forgot-password-page";
 export { default as LoginPage } from "./pages/login-page";
+export { default as OnboardingPage } from "./pages/onboarding-page";
 export { default as RegisterPage } from "./pages/register-page";
 export { default as RegisterSuccessPage } from "./pages/register-success-page";
 export { default as ResetPasswordPage } from "./pages/reset-password-page";

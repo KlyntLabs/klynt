@@ -7,5 +7,6 @@
   "passwordLowercase": "密码必须包含小写字母",
   "passwordNumber": "密码必须包含数字",
   "confirmPasswordRequired": "请确认密码",
-  "passwordsMismatch": "密码不一致"
+  "passwordsMismatch": "密码不一致",
+  "inviteCodeRequired": "邀请码是必填项"
 }

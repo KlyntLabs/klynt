@@ -21,6 +21,9 @@ const RegisterSuccessPage = lazy(() =>
 const VerifyEmailPage = lazy(() =>
   import("@/features/auth").then((module) => ({ default: module.VerifyEmailPage }))
 );
+const OnboardingPage = lazy(() =>
+  import("@/features/auth").then((module) => ({ default: module.OnboardingPage }))
+);
 const ForgotPasswordPage = lazy(() =>
   import("@/features/auth").then((module) => ({ default: module.ForgotPasswordPage }))
 );
@@ -120,6 +123,7 @@ export const router = createBrowserRouter([
         element: <ProtectedLayout />,
         children: [
           { path: routePaths.dashboard, element: <DashboardPage /> },
+          { path: routePaths.onboarding, element: <OnboardingPage /> },
           { path: routePaths.tenantsNew, element: <CreateTenantPage /> },
           { path: routePaths.tenantRoles, element: <RolesPage /> },
           { path: routePaths.tenantMembers, element: <MembersPage /> },

@@ -25,10 +25,16 @@ export async function removeTenant(slug: string): Promise<void> {
   await apiClient.delete(`/tenants/${slug}`);
 }
 
+export async function acceptTenantInvite(token: string): Promise<Tenant> {
+  const { data } = await apiClient.post<{ data: Tenant }>(`/tenants/invites/${token}/accept`);
+  return data.data;
+}
+
 export const tenantApi = {
   create: createTenant,
   list: listMyTenants,
   get: getTenant,
   update: updateTenant,
   remove: removeTenant,
+  acceptInvite: acceptTenantInvite,
 };

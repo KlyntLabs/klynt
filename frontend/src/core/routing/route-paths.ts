@@ -4,6 +4,7 @@ export const routePaths = {
   register: "/register",
   registerSuccess: "/register/success",
   verifyEmail: "/verify-email",
+  onboarding: "/onboarding",
   forgotPassword: "/forgot-password",
   resetPassword: "/reset-password",
   dashboard: "/dashboard",

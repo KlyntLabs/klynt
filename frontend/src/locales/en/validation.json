@@ -7,5 +7,6 @@
   "passwordLowercase": "Password must contain a lowercase letter",
   "passwordNumber": "Password must contain a number",
   "confirmPasswordRequired": "Please confirm your password",
-  "passwordsMismatch": "Passwords do not match"
+  "passwordsMismatch": "Passwords do not match",
+  "inviteCodeRequired": "Invite code is required"
 }

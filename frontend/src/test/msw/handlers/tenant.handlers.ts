@@ -76,4 +76,19 @@ export const tenantHandlers = [
     tenants.delete(slug);
     return new HttpResponse(null, { status: 204 });
   }),
+  http.post("/api/v1/tenants/invites/:token/accept", ({ params }) => {
+    const token = params.token as string;
+    if (token === "invalid") {
+      return HttpResponse.json({ message: "Invalid or expired invite" }, { status: 400 });
+    }
+    const tenant = {
+      id: String(tenants.size + 1),
+      slug: `invited-${token}`,
+      name: `Invited ${token}`,
+      role: "member",
+      joined_at: "2026-06-22T00:00:00Z",
+    };
+    tenants.set(tenant.slug, tenant);
+    return HttpResponse.json({ data: tenant }, { status: 201 });
+  }),
 ];

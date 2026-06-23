@@ -7,5 +7,6 @@
   "passwordLowercase": "Mật khẩu phải chứa chữ thường",
   "passwordNumber": "Mật khẩu phải chứa số",
   "confirmPasswordRequired": "Vui lòng xác nhận mật khẩu",
-  "passwordsMismatch": "Mật khẩu không khớp"
+  "passwordsMismatch": "Mật khẩu không khớp",
+  "inviteCodeRequired": "Mã mời là bắt buộc"
 }
