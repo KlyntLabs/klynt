@@ -94,7 +94,7 @@ fn api_v1_routes(services: Services) -> Router<Services> {
 
 /// Auth routes with per-route rate limiting.
 fn auth_routes(services: Services) -> Router<Services> {
-    Router::new()
+    let unprotected = Router::new()
         .route(
             "/login",
             axum::routing::post(auth::login).layer(middleware::from_fn_with_state(
@@ -115,5 +115,18 @@ fn auth_routes(services: Services) -> Router<Services> {
             axum::routing::post(auth::request_password_reset),
         )
         .route("/reset-password", axum::routing::post(auth::reset_password))
-        .route("/logout", axum::routing::post(auth::logout))
+        .route("/logout", axum::routing::post(auth::logout));
+
+    let protected = Router::new()
+        .route("/sessions", axum::routing::get(auth::list_sessions))
+        .route(
+            "/sessions/{session_id}",
+            axum::routing::delete(auth::revoke_session),
+        )
+        .layer(middleware::from_fn_with_state(
+            services.clone(),
+            crate::middleware::auth::require_auth,
+        ));
+
+    Router::new().merge(unprotected).merge(protected)
 }

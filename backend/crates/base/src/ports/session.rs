@@ -6,6 +6,7 @@
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
+use domain::session::SessionSummary;
 use domain::UserId;
 use uuid::Uuid;
 
@@ -154,6 +155,18 @@ pub trait SessionStore: Send + Sync {
         pair_id: Uuid,
         except_token: &SessionToken,
     ) -> Result<(), SessionError>;
+
+    /// List all active sessions for a user.
+    ///
+    /// Default implementation returns an empty vector for fakes that do not
+    /// track sessions by user.
+    async fn list_active_by_user(
+        &self,
+        _ctx: &ExecutionContext,
+        _user_id: UserId,
+    ) -> Result<Vec<SessionSummary>, SessionError> {
+        Ok(Vec::new())
+    }
 
     /// Replace the membership snapshot on a single session.
     ///

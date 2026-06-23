@@ -17,6 +17,7 @@ use base::ports::session::{
     MembershipSnapshot, Session, SessionError, SessionKind, SessionStore, SessionToken,
 };
 use chrono::{DateTime, Utc};
+use domain::session::SessionSummary;
 use domain::UserId;
 use redis::aio::MultiplexedConnection;
 use uuid::Uuid;
@@ -268,6 +269,14 @@ impl SessionStore for CachedSessionStore {
         // cached tokens by pair_id in Redis without a secondary index, so we
         // rely on the 15-minute TTL to expire any stale cached pair entries.
         Ok(())
+    }
+
+    async fn list_active_by_user(
+        &self,
+        ctx: &ExecutionContext,
+        user_id: UserId,
+    ) -> Result<Vec<SessionSummary>, SessionError> {
+        self.postgres.list_active_by_user(ctx, user_id).await
     }
 
     async fn update_memberships(

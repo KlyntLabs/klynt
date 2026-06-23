@@ -36,6 +36,9 @@ pub enum AuthError {
     #[error("Too many attempts")]
     RateLimited,
 
+    #[error("Forbidden")]
+    Forbidden,
+
     #[error("Internal error: {0}")]
     Internal(String),
 
@@ -131,6 +134,7 @@ impl HttpError for AuthError {
             Self::InvalidToken | Self::PasswordPolicy(_) => StatusCode::BAD_REQUEST,
             Self::UserNotFound => StatusCode::NOT_FOUND,
             Self::RateLimited => StatusCode::TOO_MANY_REQUESTS,
+            Self::Forbidden => StatusCode::FORBIDDEN,
             Self::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Self::Domain(err) => err.status_code(),
         }
@@ -146,6 +150,7 @@ impl HttpError for AuthError {
             Self::PasswordPolicy(_) => "PASSWORD_POLICY_VIOLATION",
             Self::UserNotFound => "USER_NOT_FOUND",
             Self::RateLimited => "RATE_LIMITED",
+            Self::Forbidden => "FORBIDDEN",
             Self::Internal(_) => "INTERNAL_SERVER_ERROR",
             Self::Domain(err) => err.error_code(),
         }

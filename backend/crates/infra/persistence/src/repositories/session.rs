@@ -4,6 +4,7 @@ use base::ports::session::{
     MembershipSnapshot, Session, SessionError, SessionKind, SessionStore, SessionToken,
 };
 use chrono::{DateTime, Utc};
+use domain::session::SessionSummary;
 use domain::UserId;
 use sqlx::types::Json;
 use sqlx::PgPool;
@@ -145,6 +146,40 @@ impl SessionStore for PgSessionStore {
         .await?;
 
         Ok(())
+    }
+
+    async fn list_active_by_user(
+        &self,
+        _ctx: &ExecutionContext,
+        user_id: UserId,
+    ) -> Result<Vec<SessionSummary>, SessionError> {
+        let rows: Vec<(Uuid, Uuid, String, DateTime<Utc>, DateTime<Utc>)> = sqlx::query_as(
+            r#"
+            SELECT token, user_id, kind, created_at, expires_at
+            FROM sessions
+            WHERE user_id = $1
+              AND expires_at > NOW()
+            ORDER BY created_at DESC
+            "#,
+        )
+        .bind(user_id.inner())
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows
+            .into_iter()
+            .map(
+                |(token, user_id, kind, created_at, expires_at)| SessionSummary {
+                    id: token,
+                    user_id: UserId(user_id),
+                    kind,
+                    created_at,
+                    expires_at,
+                    user_agent: None,
+                    ip_address: None,
+                },
+            )
+            .collect())
     }
 
     async fn update_memberships(

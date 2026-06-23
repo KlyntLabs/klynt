@@ -2,17 +2,20 @@
 
 use axum::{
     body::Bytes,
-    extract::{FromRequest, Request, State},
+    extract::{FromRequest, Path, Request, State},
     http::{header, StatusCode},
     response::{IntoResponse, Json},
 };
-use chrono::Utc;
-use tower_cookies::{Cookie, Cookies};
-
 use base::ctx::{ExecutionContext, RequestContext};
+use base::ports::session::SessionToken;
+use chrono::Utc;
 use domain::contracts::auth::{LoginRequest, RegistrationRequest};
+use domain::session::SessionSummary;
+use tower_cookies::{Cookie, Cookies};
+use uuid::Uuid;
 
 use crate::constants::SESSION_TOKEN_COOKIE;
+use crate::middleware::auth::AuthContext;
 use crate::response::SuccessResponse;
 use crate::state::Services;
 
@@ -187,6 +190,52 @@ pub(crate) async fn logout(
 #[derive(serde::Deserialize)]
 pub(crate) struct LogoutRequest {
     session_token: Option<String>,
+}
+
+/// GET /api/v1/auth/sessions
+///
+/// List active sessions for the authenticated user.
+pub(crate) async fn list_sessions(
+    State(services): State<Services>,
+    AuthContext(ctx): AuthContext,
+) -> Result<impl IntoResponse, crate::GatewayError> {
+    let user_id = ctx
+        .actor_id
+        .ok_or_else(|| crate::GatewayError::Unauthorized("Authentication required".to_string()))?;
+
+    let sessions = services
+        .auth
+        .list_sessions(&ctx, domain::UserId(user_id))
+        .await
+        .map_err(crate::GatewayError::from)?;
+
+    Ok(Json(SuccessResponse::ok(ListSessionsResponse { sessions })))
+}
+
+#[derive(serde::Serialize)]
+struct ListSessionsResponse {
+    sessions: Vec<SessionSummary>,
+}
+
+/// DELETE /api/v1/auth/sessions/:session_id
+///
+/// Revoke a single session belonging to the authenticated user.
+pub(crate) async fn revoke_session(
+    State(services): State<Services>,
+    AuthContext(ctx): AuthContext,
+    Path(session_id): Path<Uuid>,
+) -> Result<impl IntoResponse, crate::GatewayError> {
+    let user_id = ctx
+        .actor_id
+        .ok_or_else(|| crate::GatewayError::Unauthorized("Authentication required".to_string()))?;
+
+    services
+        .auth
+        .revoke_session(&ctx, domain::UserId(user_id), SessionToken(session_id))
+        .await
+        .map_err(crate::GatewayError::from)?;
+
+    Ok(Json(SuccessResponse::message("Session revoked")))
 }
 
 /// JSON body extractor that returns `None` when the body is missing, empty, or

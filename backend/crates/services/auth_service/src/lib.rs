@@ -22,6 +22,7 @@ use std::sync::Arc;
 use base::ctx::ExecutionContext;
 use base::ports::{Clock, PasswordHasher};
 use domain::contracts::auth::{LoginRequest, LoginResponse, RegistrationRequest};
+use domain::session::SessionSummary;
 use domain::UserId;
 
 // Public exports
@@ -148,6 +149,25 @@ impl AuthService {
         session_token: &str,
     ) -> Result<(), AuthError> {
         application::use_cases::logout::execute(self, ctx, session_token).await
+    }
+
+    /// List active sessions for a user.
+    pub async fn list_sessions(
+        &self,
+        ctx: &ExecutionContext,
+        user_id: UserId,
+    ) -> Result<Vec<SessionSummary>, AuthError> {
+        application::use_cases::list_sessions::execute(self, ctx, user_id).await
+    }
+
+    /// Revoke a session after verifying it belongs to the user.
+    pub async fn revoke_session(
+        &self,
+        ctx: &ExecutionContext,
+        user_id: UserId,
+        session_id: crate::core::SessionToken,
+    ) -> Result<(), AuthError> {
+        application::use_cases::revoke_session::execute(self, ctx, user_id, session_id).await
     }
 
     pub(crate) fn internal(&self) -> &InternalState {

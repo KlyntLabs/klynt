@@ -7,6 +7,7 @@ use async_trait::async_trait;
 use base::ctx::ExecutionContext;
 use base::ports::session::{Session, SessionError, SessionKind, SessionStore, SessionToken};
 use chrono::{DateTime, Utc};
+use domain::session::SessionSummary;
 use domain::UserId;
 use uuid::Uuid;
 
@@ -71,5 +72,26 @@ impl SessionStore for FakePersistenceSessionStore {
         sessions
             .retain(|token, session| !(session.pair_id == Some(pair_id) && token != except_token));
         Ok(())
+    }
+
+    async fn list_active_by_user(
+        &self,
+        _ctx: &ExecutionContext,
+        user_id: UserId,
+    ) -> Result<Vec<SessionSummary>, SessionError> {
+        let sessions = self.sessions.lock().unwrap();
+        Ok(sessions
+            .iter()
+            .filter(|(_, s)| s.user_id == user_id && !s.is_expired())
+            .map(|(token, s)| SessionSummary {
+                id: token.0,
+                user_id: s.user_id,
+                kind: s.kind.as_str().to_string(),
+                created_at: Utc::now(),
+                expires_at: s.expires_at,
+                user_agent: None,
+                ip_address: None,
+            })
+            .collect())
     }
 }
