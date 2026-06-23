@@ -23,6 +23,7 @@ impl PgUserRepository {
 pub(crate) struct UserRow {
     id: Uuid,
     email: String,
+    username: String,
     name: String,
     password_hash: String,
     status: String,
@@ -56,6 +57,7 @@ impl UserRow {
         Ok(User {
             id: UserId(self.id),
             email: Email::parse(&self.email)?,
+            username: self.username,
             full_name: if self.name.is_empty() {
                 None
             } else {

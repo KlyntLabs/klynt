@@ -44,10 +44,12 @@ pub trait UserRepository: Send + Sync {
     /// Create a new pending user (registration flow).
     ///
     /// Returns the ID of the created user.
+    #[allow(clippy::too_many_arguments)]
     async fn create_pending_user(
         &self,
         ctx: &ExecutionContext,
         full_name: String,
+        username: String,
         email: Email,
         password_hash: String,
         role: UserRole,

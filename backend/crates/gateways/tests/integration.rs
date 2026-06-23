@@ -223,6 +223,7 @@ async fn authenticated_app() -> (axum::Router, UserId, String) {
     user_repo.insert(User {
         id: user_id,
         email: Email::new("ada@example.com".to_string()),
+        username: "ada".to_string(),
         full_name: Some("Ada Lovelace".to_string()),
         password_hash: "old-password".to_string(),
         status: UserStatus::Active,

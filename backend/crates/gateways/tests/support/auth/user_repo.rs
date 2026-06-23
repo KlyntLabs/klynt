@@ -60,14 +60,21 @@ impl UserRepository for FakeUserRepository {
         &self,
         _ctx: &ExecutionContext,
         full_name: String,
+        username: String,
         email: Email,
         password_hash: String,
         role: UserRole,
         institution_id: Option<uuid::Uuid>,
     ) -> Result<UserId, RepositoryError> {
-        if self.users.lock().unwrap().contains_key(email.as_str()) {
+        let mut users = self.users.lock().unwrap();
+        if users.contains_key(email.as_str()) {
             return Err(RepositoryError::Conflict(format!(
                 "email already registered: {email}"
+            )));
+        }
+        if users.values().any(|u| u.username == username) {
+            return Err(RepositoryError::Conflict(format!(
+                "username already taken: {username}"
             )));
         }
 
@@ -76,6 +83,7 @@ impl UserRepository for FakeUserRepository {
         let user = User {
             id: user_id,
             email,
+            username,
             password_hash,
             full_name: Some(full_name).filter(|n| !n.is_empty()),
             status: UserStatus::Pending,
@@ -89,10 +97,7 @@ impl UserRepository for FakeUserRepository {
             updated_at: now,
             deleted_at: None,
         };
-        self.users
-            .lock()
-            .unwrap()
-            .insert(user.email.as_str().to_string(), user);
+        users.insert(user.email.as_str().to_string(), user);
         Ok(user_id)
     }
 

@@ -5,6 +5,7 @@ fn sample_user() -> User {
     User {
         id: UserId::new(),
         email: Email::new("ada@example.com".to_string()),
+        username: "ada".to_string(),
         full_name: Some("Ada".to_string()),
         password_hash: "hash".to_string(),
         status: UserStatus::Active,
@@ -137,7 +138,13 @@ fn admin_cannot_be_deleted() {
 #[test]
 fn new_user_defaults_to_pending() {
     let email = Email::new("new@example.com".to_string());
-    let user = User::new(email, "hash".to_string(), None, UserRole::Student);
+    let user = User::new(
+        email,
+        "newuser".to_string(),
+        "hash".to_string(),
+        None,
+        UserRole::Student,
+    );
     assert_eq!(user.status, UserStatus::Pending);
     assert!(!user.is_active());
 }
@@ -178,7 +185,13 @@ fn user_role_and_status_serialize() {
 #[test]
 fn new_user_includes_schema_aligned_fields() {
     let email = Email::new("new@example.com".to_string());
-    let user = User::new(email, "hash".to_string(), None, UserRole::Student);
+    let user = User::new(
+        email,
+        "newuser".to_string(),
+        "hash".to_string(),
+        None,
+        UserRole::Student,
+    );
 
     assert_eq!(user.status, UserStatus::Pending);
     assert_eq!(user.role, UserRole::Student);

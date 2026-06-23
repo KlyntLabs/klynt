@@ -77,6 +77,7 @@ async fn register_rate_limit_returns_429_with_retry_after() {
     let addr = SocketAddr::from(([127, 0, 0, 1], 1234));
     let register_request = serde_json::json!({
         "email": "not-an-email",
+        "username": "testuser",
         "password": "short"
     });
     let body_bytes = serde_json::to_vec(&register_request).unwrap();

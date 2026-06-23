@@ -127,14 +127,17 @@ mod tests {
 
     async fn seed_user(pool: &PgPool) -> UserId {
         let user_id = UserId::new();
+        let email = format!("test-{}@example.com", user_id.0);
+        let username = format!("test-{}", user_id.0);
         sqlx::query(
             r#"
-            INSERT INTO users (id, email, name, password_hash, status, terms_accepted_at, terms_version, role)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            INSERT INTO users (id, email, username, name, password_hash, status, terms_accepted_at, terms_version, role)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             "#,
         )
         .bind(user_id.0)
-        .bind(format!("test-{}@example.com", user_id.0))
+        .bind(&email)
+        .bind(&username)
         .bind("Test User")
         .bind("hash")
         .bind("active")

@@ -191,6 +191,7 @@ impl std::fmt::Display for UserStatus {
 pub struct User {
     pub id: UserId,
     pub email: Email,
+    pub username: String,
     pub full_name: Option<String>,
     pub password_hash: String,
     pub status: UserStatus,
@@ -209,6 +210,7 @@ impl User {
     /// Create a new user.
     pub fn new(
         email: Email,
+        username: String,
         password_hash: String,
         full_name: Option<String>,
         role: UserRole,
@@ -217,6 +219,7 @@ impl User {
         Self {
             id: UserId::new(),
             email,
+            username,
             full_name,
             password_hash,
             status: UserStatus::default(),

@@ -45,6 +45,7 @@ async fn create_pending_user_creates_user_and_returns_id() {
         .create_pending_user(
             &ctx,
             "Ada Lovelace".to_string(),
+            domain::UserId::new().inner().to_string(),
             email.clone(),
             "hash".to_string(),
             UserRole::Student,
@@ -75,6 +76,7 @@ async fn create_pending_user_persists_institution_id_for_instructor() {
         .create_pending_user(
             &ctx,
             "Teacher".to_string(),
+            domain::UserId::new().inner().to_string(),
             email.clone(),
             "hash".to_string(),
             UserRole::Instructor,
@@ -102,6 +104,7 @@ async fn create_pending_user_stores_none_institution_id_when_not_provided() {
         .create_pending_user(
             &ctx,
             "Student".to_string(),
+            domain::UserId::new().inner().to_string(),
             email.clone(),
             "hash".to_string(),
             UserRole::Student,
@@ -128,6 +131,7 @@ async fn create_pending_user_twice_with_same_email_returns_conflict() {
     repo.create_pending_user(
         &ctx,
         "First".to_string(),
+        domain::UserId::new().inner().to_string(),
         email.clone(),
         "hash".to_string(),
         UserRole::Student,
@@ -140,7 +144,50 @@ async fn create_pending_user_twice_with_same_email_returns_conflict() {
         .create_pending_user(
             &ctx,
             "Second".to_string(),
+            domain::UserId::new().inner().to_string(),
             email.clone(),
+            "other".to_string(),
+            UserRole::Student,
+            None,
+        )
+        .await;
+
+    assert!(matches!(
+        result,
+        Err(base::ports::repository::RepositoryError::Conflict(_))
+    ));
+}
+
+#[tokio::test]
+async fn create_pending_user_twice_with_same_username_returns_conflict() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let repo = PgUserRepository::new(pool);
+    let ctx = test_ctx();
+    let first_email = unique_email();
+    let second_email = unique_email();
+    let username = domain::UserId::new().inner().to_string();
+
+    repo.create_pending_user(
+        &ctx,
+        "First".to_string(),
+        username.clone(),
+        first_email.clone(),
+        "hash".to_string(),
+        UserRole::Student,
+        None,
+    )
+    .await
+    .unwrap();
+
+    let result = repo
+        .create_pending_user(
+            &ctx,
+            "Second".to_string(),
+            username,
+            second_email.clone(),
             "other".to_string(),
             UserRole::Student,
             None,
@@ -167,6 +214,7 @@ async fn find_by_email_returns_matching_user() {
         .create_pending_user(
             &ctx,
             "Grace Hopper".to_string(),
+            domain::UserId::new().inner().to_string(),
             email.clone(),
             "hash".to_string(),
             UserRole::Student,
@@ -194,6 +242,7 @@ async fn find_by_id_returns_matching_user() {
         .create_pending_user(
             &ctx,
             "Alan Turing".to_string(),
+            domain::UserId::new().inner().to_string(),
             email.clone(),
             "hash".to_string(),
             UserRole::Student,
@@ -221,6 +270,7 @@ async fn activate_user_changes_status_from_pending_to_active() {
         .create_pending_user(
             &ctx,
             "Marie Curie".to_string(),
+            domain::UserId::new().inner().to_string(),
             email.clone(),
             "hash".to_string(),
             UserRole::Student,
@@ -249,6 +299,7 @@ async fn update_password_changes_password_hash() {
         .create_pending_user(
             &ctx,
             "User".to_string(),
+            domain::UserId::new().inner().to_string(),
             email.clone(),
             "old-hash".to_string(),
             UserRole::Student,
@@ -279,6 +330,7 @@ async fn update_updates_mutable_fields_and_returns_user() {
         .create_pending_user(
             &ctx,
             "Original".to_string(),
+            domain::UserId::new().inner().to_string(),
             email.clone(),
             "hash".to_string(),
             UserRole::Student,
@@ -322,6 +374,7 @@ async fn update_persists_schema_aligned_fields() {
         .create_pending_user(
             &ctx,
             "Original".to_string(),
+            domain::UserId::new().inner().to_string(),
             email.clone(),
             "hash".to_string(),
             UserRole::Student,
@@ -370,6 +423,7 @@ async fn delete_soft_deletes_user() {
         .create_pending_user(
             &ctx,
             "To Delete".to_string(),
+            domain::UserId::new().inner().to_string(),
             email.clone(),
             "hash".to_string(),
             UserRole::Student,
@@ -399,6 +453,7 @@ async fn list_returns_paginated_users_with_total() {
     repo.create_pending_user(
         &ctx,
         "First Listed".to_string(),
+        domain::UserId::new().inner().to_string(),
         first_email.clone(),
         "hash".to_string(),
         UserRole::Student,
@@ -410,6 +465,7 @@ async fn list_returns_paginated_users_with_total() {
     repo.create_pending_user(
         &ctx,
         "Second Listed".to_string(),
+        domain::UserId::new().inner().to_string(),
         second_email.clone(),
         "hash".to_string(),
         UserRole::Student,
@@ -499,6 +555,7 @@ async fn update_returns_not_found_for_missing_user() {
     let user = User {
         id: missing_id,
         email: Email::new("missing@example.com".to_string()),
+        username: "missing".to_string(),
         full_name: None,
         password_hash: "hash".to_string(),
         status: UserStatus::Pending,

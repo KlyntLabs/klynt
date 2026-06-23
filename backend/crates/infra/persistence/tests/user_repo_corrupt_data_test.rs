@@ -42,21 +42,23 @@ async fn find_by_id_returns_error_for_invalid_role_in_db() {
     let ctx = test_ctx();
     let user_id = UserId::new();
     let email = unique_email();
+    let username = domain::UserId::new().inner().to_string();
     let now = Utc::now();
 
     sqlx::query(
         r#"
         INSERT INTO users (
-            id, email, name, password_hash,
+            id, email, username, name, password_hash,
             status, email_verified_at, global_role,
             created_at, updated_at, terms_accepted_at, terms_version,
             role, institution_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         "#,
     )
     .bind(user_id.inner())
     .bind(email.as_str())
+    .bind(&username)
     .bind("Name")
     .bind("hash")
     .bind("pending_verification")
@@ -92,21 +94,23 @@ async fn find_by_id_returns_error_for_invalid_global_role_in_db() {
     let ctx = test_ctx();
     let user_id = UserId::new();
     let email = unique_email();
+    let username = domain::UserId::new().inner().to_string();
     let now = Utc::now();
 
     sqlx::query(
         r#"
         INSERT INTO users (
-            id, email, name, password_hash,
+            id, email, username, name, password_hash,
             status, email_verified_at, global_role,
             created_at, updated_at, terms_accepted_at, terms_version,
             role, institution_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         "#,
     )
     .bind(user_id.inner())
     .bind(email.as_str())
+    .bind(&username)
     .bind("Name")
     .bind("hash")
     .bind("pending_verification")
@@ -144,21 +148,23 @@ async fn find_by_id_returns_error_for_invalid_email_in_db() {
     // Use a unique invalid email so repeated test runs on a persistent database
     // do not collide on the UNIQUE constraint.
     let email = format!("not-an-email-{}", user_id.inner());
+    let username = domain::UserId::new().inner().to_string();
     let now = Utc::now();
 
     sqlx::query(
         r#"
         INSERT INTO users (
-            id, email, name, password_hash,
+            id, email, username, name, password_hash,
             status, email_verified_at, global_role,
             created_at, updated_at, terms_accepted_at, terms_version,
             role, institution_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         "#,
     )
     .bind(user_id.inner())
     .bind(&email)
+    .bind(&username)
     .bind("Name")
     .bind("hash")
     .bind("pending_verification")

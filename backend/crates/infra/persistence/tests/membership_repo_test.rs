@@ -69,11 +69,14 @@ fn unique_slug() -> TenantSlug {
 
 async fn create_test_user(pool: &sqlx::PgPool, name: &str) -> domain::UserId {
     let user_repo = PgUserRepository::new(pool.clone());
+    let email = unique_email();
+    let username = domain::UserId::new().inner().to_string();
     user_repo
         .create_pending_user(
             &test_ctx(),
             name.to_string(),
-            unique_email(),
+            username,
+            email,
             "hash".to_string(),
             UserRole::Student,
             None,

@@ -57,6 +57,7 @@ impl UserRepository for FakeUserServiceRepository {
         &self,
         _ctx: &ExecutionContext,
         _full_name: String,
+        _username: String,
         _email: Email,
         _password_hash: String,
         _role: UserRole,

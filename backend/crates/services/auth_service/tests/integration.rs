@@ -19,6 +19,7 @@ async fn full_registration_flow() {
             &ctx,
             RegistrationRequest {
                 email: "ada@example.com".to_string(),
+                username: "ada".to_string(),
                 password: "Str0ng!Pass#123".to_string(),
                 full_name: Some("Ada Lovelace".to_string()),
                 role: UserRole::Student,
@@ -76,6 +77,7 @@ async fn registration_persists_institution_id_for_instructor() {
             &ctx,
             RegistrationRequest {
                 email: "teacher@example.com".to_string(),
+                username: "teacher".to_string(),
                 password: "Str0ng!Pass#123".to_string(),
                 full_name: Some("Teacher".to_string()),
                 role: UserRole::Instructor,
@@ -101,6 +103,7 @@ async fn registration_ignores_institution_id_for_student() {
             &ctx,
             RegistrationRequest {
                 email: "student@example.com".to_string(),
+                username: "student".to_string(),
                 password: "Str0ng!Pass#123".to_string(),
                 full_name: Some("Student".to_string()),
                 role: UserRole::Student,
@@ -116,6 +119,43 @@ async fn registration_ignores_institution_id_for_student() {
 }
 
 #[tokio::test]
+async fn registration_rejects_duplicate_username() {
+    let (service, _user_repo, _) = support::build_test_service();
+    let ctx = support::test_ctx();
+
+    service
+        .register(
+            &ctx,
+            RegistrationRequest {
+                email: "first@example.com".to_string(),
+                username: "taken".to_string(),
+                password: "Str0ng!Pass#123".to_string(),
+                full_name: Some("First".to_string()),
+                role: UserRole::Student,
+                institution_id: None,
+            },
+        )
+        .await
+        .unwrap();
+
+    let result = service
+        .register(
+            &ctx,
+            RegistrationRequest {
+                email: "second@example.com".to_string(),
+                username: "taken".to_string(),
+                password: "Str0ng!Pass#123".to_string(),
+                full_name: Some("Second".to_string()),
+                role: UserRole::Student,
+                institution_id: None,
+            },
+        )
+        .await;
+
+    assert!(result.is_err());
+}
+
+#[tokio::test]
 async fn registration_rejects_instructor_without_institution_id() {
     let (service, user_repo, _) = support::build_test_service();
     let ctx = support::test_ctx();
@@ -125,6 +165,7 @@ async fn registration_rejects_instructor_without_institution_id() {
             &ctx,
             RegistrationRequest {
                 email: "teacher@example.com".to_string(),
+                username: "teacher".to_string(),
                 password: "Str0ng!Pass#123".to_string(),
                 full_name: Some("Teacher".to_string()),
                 role: UserRole::Instructor,

@@ -7,9 +7,11 @@ use domain::{Email, User, UserId, UserRole, UserStatus};
 /// Create a sample user for tests with full control over fields.
 pub fn sample_user(email: &str, full_name: &str, password_hash: &str, status: UserStatus) -> User {
     let now = Utc::now();
+    let username = email.split('@').next().unwrap_or(email).to_lowercase();
     User {
         id: UserId::new(),
         email: Email::new(email.to_string()),
+        username,
         full_name: Some(full_name.to_string()),
         password_hash: password_hash.to_string(),
         status,

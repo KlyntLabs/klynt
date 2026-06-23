@@ -71,6 +71,7 @@ impl UserRepository for FakeUserRepository {
         &self,
         _ctx: &ExecutionContext,
         full_name: String,
+        username: String,
         email: Email,
         password_hash: String,
         role: UserRole,
@@ -82,12 +83,18 @@ impl UserRepository for FakeUserRepository {
                 "email already registered: {email}"
             )));
         }
+        if inner.users.values().any(|u| u.username == username) {
+            return Err(RepositoryError::Conflict(format!(
+                "username already taken: {username}"
+            )));
+        }
 
         let now = Utc::now();
         let user_id = UserId::new();
         let user = User {
             id: user_id,
             email: Email::new(email.as_str().to_string()),
+            username,
             password_hash,
             full_name: Some(full_name).filter(|n| !n.is_empty()),
             status: UserStatus::Pending,
@@ -252,6 +259,7 @@ mod tests {
         repo.create_pending_user(
             &ctx,
             "Ada".to_string(),
+            "ada".to_string(),
             Email::new("ada@example.com".to_string()),
             "hash".to_string(),
             UserRole::Student,
@@ -264,6 +272,7 @@ mod tests {
             .create_pending_user(
                 &ctx,
                 "Ada".to_string(),
+                "ada".to_string(),
                 Email::new("ada@example.com".to_string()),
                 "hash".to_string(),
                 UserRole::Student,

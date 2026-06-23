@@ -43,6 +43,7 @@ mod tests {
         User {
             id: UserId::new(),
             email: Email::new("ada@example.com".to_string()),
+            username: "ada".to_string(),
             full_name: Some("Ada".to_string()),
             password_hash: "hash".to_string(),
             status: UserStatus::Active,

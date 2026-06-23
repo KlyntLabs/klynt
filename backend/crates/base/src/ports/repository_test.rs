@@ -153,6 +153,7 @@ mod tests {
             &self,
             _ctx: &ExecutionContext,
             _full_name: String,
+            _username: String,
             _email: Email,
             _password_hash: String,
             _role: UserRole,
@@ -225,6 +226,7 @@ mod tests {
             .create_pending_user(
                 &ctx,
                 "Ada".to_string(),
+                "ada".to_string(),
                 email.clone(),
                 "hash".to_string(),
                 UserRole::Student,
@@ -248,6 +250,7 @@ mod tests {
         let user = User {
             id: user_id,
             email,
+            username: "ada".to_string(),
             full_name: Some("Ada".to_string()),
             password_hash: "hash".to_string(),
             status: UserStatus::Active,

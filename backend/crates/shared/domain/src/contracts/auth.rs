@@ -51,6 +51,8 @@ impl From<crate::user::User> for UserSessionInfo {
 pub struct RegistrationRequest {
     #[validate(email(message = "Must be a valid email"))]
     pub email: String,
+    #[validate(length(min = 1, max = 50, message = "Username must be 1 to 50 characters"))]
+    pub username: String,
     #[validate(length(min = 8, message = "Password must be at least 8 characters"))]
     pub password: String,
     pub full_name: Option<String>,

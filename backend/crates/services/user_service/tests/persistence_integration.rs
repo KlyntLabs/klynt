@@ -43,19 +43,22 @@ async fn user_repository_round_trips_with_postgres() {
     let user_id = UserId::new();
     let email = format!("adapter-{}@example.com", user_id.inner());
 
+    let username = email.split('@').next().unwrap().to_string();
+
     sqlx::query(
         r#"
         INSERT INTO users (
-            id, email, name, password_hash,
+            id, email, username, name, password_hash,
             status, email_verified_at, global_role,
             terms_accepted_at, terms_version,
             role, institution_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         "#,
     )
     .bind(user_id.inner())
     .bind(&email)
+    .bind(&username)
     .bind("Ada")
     .bind("hash")
     .bind("active")

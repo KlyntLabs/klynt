@@ -23,17 +23,20 @@ async fn create_test_user(pool: &sqlx::PgPool, prefix: &str) -> uuid::Uuid {
     let user_id = uuid::Uuid::new_v4();
     let email = format!("{}-{}@example.com", prefix, user_id);
 
+    let username = format!("{}-{}", prefix, user_id);
+
     sqlx::query(
         r#"
         INSERT INTO users (
-            id, email, name, password_hash,
+            id, email, username, name, password_hash,
             status, terms_accepted_at, terms_version
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         "#,
     )
     .bind(user_id)
     .bind(&email)
+    .bind(&username)
     .bind(prefix)
     .bind("hash")
     .bind("active")

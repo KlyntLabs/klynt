@@ -30,6 +30,13 @@ pub(crate) async fn execute(
     let email = Email::parse(&request.email)
         .map_err(|e| AuthError::Domain(DomainError::InvalidInput(e.to_string())))?;
 
+    let username = request.username.trim().to_lowercase();
+    if username.is_empty() {
+        return Err(AuthError::Domain(DomainError::InvalidInput(
+            "username is required".to_string(),
+        )));
+    }
+
     let institution_id = if request.role.requires_institution() {
         request.institution_id
     } else {
@@ -49,6 +56,7 @@ pub(crate) async fn execute(
         .create_pending_user(
             ctx,
             request.full_name.unwrap_or_default(),
+            username,
             email.clone(),
             password_hash,
             request.role,

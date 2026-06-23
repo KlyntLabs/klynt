@@ -20,7 +20,7 @@ impl UserRepository for PgUserRepository {
         let row: Option<UserRow> = sqlx::query_as(
             r#"
             SELECT
-                id, email, name, password_hash,
+                id, email, username, name, password_hash,
                 status, email_verified_at, global_role,
                 created_at, updated_at, terms_accepted_at, terms_version,
                 role, institution_id
@@ -43,7 +43,7 @@ impl UserRepository for PgUserRepository {
         let row: Option<UserRow> = sqlx::query_as(
             r#"
             SELECT
-                id, email, name, password_hash,
+                id, email, username, name, password_hash,
                 status, email_verified_at, global_role,
                 created_at, updated_at, terms_accepted_at, terms_version,
                 role, institution_id,
@@ -63,6 +63,7 @@ impl UserRepository for PgUserRepository {
         &self,
         _ctx: &ExecutionContext,
         full_name: String,
+        username: String,
         email: Email,
         password_hash: String,
         role: UserRole,
@@ -73,6 +74,7 @@ impl UserRepository for PgUserRepository {
         let user = User {
             id: user_id,
             email,
+            username: username.clone(),
             full_name: Some(full_name).filter(|n| !n.is_empty()),
             password_hash,
             status: UserStatus::Pending,
@@ -90,18 +92,19 @@ impl UserRepository for PgUserRepository {
         let inserted = sqlx::query_scalar::<_, uuid::Uuid>(
             r#"
             INSERT INTO users (
-                id, email, name, password_hash,
+                id, email, username, name, password_hash,
                 status, email_verified_at, global_role,
                 created_at, updated_at, terms_accepted_at, terms_version,
                 role, institution_id
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
             ON CONFLICT (email) DO NOTHING
             RETURNING id
             "#,
         )
         .bind(user.id.0)
         .bind(user.email.as_str())
+        .bind(&user.username)
         .bind(user.full_name.as_deref().unwrap_or(""))
         .bind(&user.password_hash)
         .bind(status_to_db(user.status).as_str())
@@ -177,19 +180,21 @@ impl UserRepository for PgUserRepository {
             r#"
             UPDATE users
             SET
-                name = $1,
-                status = $2,
-                role = $3,
-                password_hash = $4,
-                global_role = $5,
-                email_verified_at = $6,
-                institution_id = $7,
-                terms_accepted_at = $8,
-                terms_version = $9,
+                username = $1,
+                name = $2,
+                status = $3,
+                role = $4,
+                password_hash = $5,
+                global_role = $6,
+                email_verified_at = $7,
+                institution_id = $8,
+                terms_accepted_at = $9,
+                terms_version = $10,
                 updated_at = NOW()
-            WHERE id = $10
+            WHERE id = $11
             "#,
         )
+        .bind(&user.username)
         .bind(user.full_name.as_deref().unwrap_or(""))
         .bind(status_to_db(user.status).as_str())
         .bind(role_to_db(user.role).as_str())
@@ -239,7 +244,7 @@ impl UserRepository for PgUserRepository {
         let rows: Vec<UserRow> = sqlx::query_as(
             r#"
             SELECT
-                id, email, name, password_hash,
+                id, email, username, name, password_hash,
                 status, email_verified_at, global_role,
                 created_at, updated_at, terms_accepted_at, terms_version,
                 role, institution_id,

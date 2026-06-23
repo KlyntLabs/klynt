@@ -49,6 +49,7 @@ async fn login_with_invalid_credentials_returns_unauthorized() {
 async fn register_with_invalid_email_returns_bad_request() {
     let register_request = serde_json::json!({
         "email": "not-an-email",
+        "username": "testuser",
         "password": "short"
     });
     let addr = SocketAddr::from(([127, 0, 0, 1], 1234));
@@ -130,6 +131,7 @@ async fn sso_cookie_authenticates_across_subdomains() {
     let user = User {
         id: user_id,
         email: Email::new("ada@example.com".to_string()),
+        username: "ada".to_string(),
         full_name: Some("Ada Lovelace".to_string()),
         password_hash: "hash-password".to_string(),
         status: UserStatus::Active,
@@ -229,6 +231,7 @@ async fn empty_cookie_domain_omits_domain_attribute() {
     let user = User {
         id: user_id,
         email: Email::new("localhost@example.com".to_string()),
+        username: "localhost".to_string(),
         full_name: Some("Local Dev".to_string()),
         password_hash: "hash-password".to_string(),
         status: UserStatus::Active,
@@ -306,6 +309,7 @@ async fn login_with_remember_me(remember_me: Option<bool>) -> (axum::Router, Str
     let user = User {
         id: user_id,
         email: Email::new("remember-me@example.com".to_string()),
+        username: "remember-me".to_string(),
         full_name: Some("Remember Me".to_string()),
         password_hash: "hash-password".to_string(),
         status: UserStatus::Active,
@@ -392,6 +396,7 @@ async fn cookie_authenticated_app() -> (axum::Router, String) {
     let user = User {
         id: user_id,
         email: Email::new("ada@example.com".to_string()),
+        username: "ada".to_string(),
         full_name: Some("Ada Lovelace".to_string()),
         password_hash: "hash-password".to_string(),
         status: UserStatus::Active,
@@ -526,6 +531,7 @@ async fn refresh_token_cannot_access_protected_route() {
     let user = User {
         id: user_id,
         email: Email::new("ada@example.com".to_string()),
+        username: "ada".to_string(),
         full_name: Some("Ada Lovelace".to_string()),
         password_hash: "hash-password".to_string(),
         status: UserStatus::Active,

@@ -24,6 +24,7 @@ fn make_user(email: &str) -> User {
     User {
         id: UserId::new(),
         email: Email::new(email.to_string()),
+        username: email.split('@').next().unwrap().to_string(),
         full_name: Some("Session Tester".to_string()),
         password_hash: format!("hash-{}", "Password123"),
         status: UserStatus::Active,

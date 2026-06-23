@@ -55,7 +55,7 @@ paths:
         '400':
           description: Invalid input
         '409':
-          description: Email already registered
+          description: Email or username already registered
         '429':
           $ref: '#/components/responses/TooManyRequests'
 
@@ -173,11 +173,16 @@ components:
       type: object
       required:
         - email
+        - username
         - password
       properties:
         email:
           type: string
           format: email
+        username:
+          type: string
+          minLength: 1
+          maxLength: 50
         password:
           type: string
           minLength: 8

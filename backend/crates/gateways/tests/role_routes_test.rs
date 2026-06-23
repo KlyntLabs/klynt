@@ -42,6 +42,7 @@ async fn create_active_user(
     let user = User {
         id: user_id,
         email: Email::new(email.to_string()),
+        username: email.split('@').next().unwrap().to_string(),
         full_name: Some("Test User".to_string()),
         password_hash: "hash-password".to_string(),
         status: UserStatus::Active,
