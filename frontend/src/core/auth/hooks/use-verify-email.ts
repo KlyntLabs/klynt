@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { ApiError } from "@/core/api/api-error";
 import { useToastStore } from "@/core/notifications/toast-store";
+import { routePaths } from "@/core/routing/route-paths";
 import { verifyEmail } from "../api/auth-api";
 import type { VerifyEmailInput } from "../types";
 
@@ -15,7 +16,7 @@ export function useVerifyEmail(): UseMutationResult<void, Error, VerifyEmailInpu
     mutationFn: verifyEmail,
     meta: { suppressToast: true },
     onSuccess: () => {
-      navigate("/onboarding", { replace: true });
+      navigate(routePaths.onboarding, { replace: true });
       addToast({
         message: t("verifyEmail.success"),
         type: "success",
