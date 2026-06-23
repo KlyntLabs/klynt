@@ -111,6 +111,11 @@ impl TenantRepository for PgTenantRepository {
             return Err(DomainError::internal(err));
         }
 
+        if let Err(err) = seed_system_roles(&mut tx, tenant.id.inner()).await {
+            tx.rollback().await.ok();
+            return Err(err);
+        }
+
         tx.commit().await.map_err(DomainError::internal)?;
         Ok(map_tenant_row(row)?)
     }
@@ -255,4 +260,48 @@ impl TenantRepository for PgTenantRepository {
 
         Ok(count)
     }
+}
+
+async fn seed_system_roles(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    tenant_id: uuid::Uuid,
+) -> DomainResult<()> {
+    sqlx::query(
+        r#"
+        INSERT INTO tenant_roles (tenant_id, name, description, is_system)
+        VALUES
+            ($1, 'owner', 'Full control over the tenant', TRUE),
+            ($1, 'admin', 'Can manage tenant settings, members, and roles', TRUE),
+            ($1, 'member', 'Base tenant access', TRUE),
+            ($1, 'guest', 'Limited read-only access', TRUE)
+        ON CONFLICT (tenant_id, name) DO NOTHING
+        "#,
+    )
+    .bind(tenant_id)
+    .execute(&mut **tx)
+    .await
+    .map_err(DomainError::internal)?;
+
+    sqlx::query(
+        r#"
+        INSERT INTO role_permissions (role_id, permission_id)
+        SELECT r.id, p.id
+        FROM tenant_roles r
+        CROSS JOIN permissions p
+        WHERE r.tenant_id = $1 AND r.is_system = TRUE
+          AND (
+              (r.name = 'owner')
+              OR (r.name = 'admin' AND p.name NOT IN ('tenant.delete'))
+              OR (r.name = 'member' AND p.name IN ('tenant.view', 'content.view', 'content.create', 'content.edit'))
+              OR (r.name = 'guest' AND p.name IN ('tenant.view', 'content.view'))
+          )
+        ON CONFLICT (role_id, permission_id) DO NOTHING
+        "#,
+    )
+    .bind(tenant_id)
+    .execute(&mut **tx)
+    .await
+    .map_err(DomainError::internal)?;
+
+    Ok(())
 }
