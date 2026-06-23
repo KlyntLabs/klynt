@@ -235,7 +235,12 @@ async fn owner_can_attempt_role_lifecycle() {
         )
         .await
         .unwrap();
-    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(json["data"]["id"], role_id);
 
     let response = app
         .clone()
@@ -255,7 +260,7 @@ async fn owner_can_attempt_role_lifecycle() {
         )
         .await
         .unwrap();
-    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+    assert_eq!(response.status(), StatusCode::OK);
 
     let response = app
         .oneshot(

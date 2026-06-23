@@ -49,5 +49,18 @@ pub(crate) async fn execute(
         .await
         .map_err(TenantError::Domain)?;
 
+    service
+        .internal()
+        .audit_logger
+        .log_role_created(
+            ctx,
+            tenant.id,
+            role.id,
+            &role.name,
+            &role.description,
+            role.permission_ids.clone(),
+        )
+        .await;
+
     Ok(role)
 }

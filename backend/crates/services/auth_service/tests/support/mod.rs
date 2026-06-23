@@ -11,14 +11,17 @@ use async_trait::async_trait;
 use auth_service::application::ports::{AuditLogger, EmailSender, MembershipRepository};
 use auth_service::{AuthConfig, AuthService, Dependencies};
 use base::ctx::ExecutionContext;
-use base::ports::audit::{PasswordChangeSnapshot, ProfileUpdateSnapshot};
+use base::ports::audit::{PasswordChangeSnapshot, ProfileUpdateSnapshot, RoleMetadataSnapshot};
 use base::ports::email::EmailError;
 use base::ports::session::{
     Session, SessionError as BaseSessionError, SessionKind, SessionStore, SessionToken,
 };
 use base::testkit::{sample_user, FakeSessionStore, FakeTokenStore, FakeUserRepository};
 use chrono::{DateTime, Utc};
-use domain::{DomainResult, Email, Membership, TenantId, TenantMember, User, UserId, UserStatus};
+use domain::{
+    DomainResult, Email, Membership, PermissionId, RoleId, TenantId, TenantMember, User, UserId,
+    UserStatus,
+};
 use uuid::Uuid;
 
 pub use session_service::SessionConfig as TestSessionConfig;
@@ -137,6 +140,48 @@ impl AuditLogger for StubAuditLogger {
         _ctx: &ExecutionContext,
         _tenant_id: TenantId,
         _user_id: UserId,
+    ) {
+    }
+
+    async fn log_role_created(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _role_id: RoleId,
+        _name: &str,
+        _description: &str,
+        _permission_ids: Vec<PermissionId>,
+    ) {
+    }
+
+    async fn log_role_updated(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _role_id: RoleId,
+        _before: RoleMetadataSnapshot,
+        _after: RoleMetadataSnapshot,
+    ) {
+    }
+
+    async fn log_role_permissions_updated(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _role_id: RoleId,
+        _before_permission_ids: Vec<PermissionId>,
+        _after_permission_ids: Vec<PermissionId>,
+    ) {
+    }
+
+    async fn log_role_deleted(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _role_id: RoleId,
+        _before_name: &str,
+        _before_description: &str,
+        _before_permission_ids: Vec<PermissionId>,
     ) {
     }
 }

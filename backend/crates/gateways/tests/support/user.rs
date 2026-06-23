@@ -5,11 +5,11 @@ use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
 use base::ctx::ExecutionContext;
-use base::ports::audit::{PasswordChangeSnapshot, ProfileUpdateSnapshot};
+use base::ports::audit::{PasswordChangeSnapshot, ProfileUpdateSnapshot, RoleMetadataSnapshot};
 use base::ports::repository::{RepositoryError, UserRepository};
 use base::ports::{Clock, PasswordHashError, PasswordHasher};
 use chrono::{DateTime, Utc};
-use domain::{Email, PaginationRequest, TenantId, User, UserId, UserRole};
+use domain::{Email, PaginationRequest, PermissionId, RoleId, TenantId, User, UserId, UserRole};
 use user_service::{
     application::ports::AuditLogger as UserAuditLogger, Dependencies as UserDependencies,
     UserConfig, UserService,
@@ -196,6 +196,48 @@ impl UserAuditLogger for StubUserAuditLogger {
         _ctx: &ExecutionContext,
         _tenant_id: TenantId,
         _user_id: UserId,
+    ) {
+    }
+
+    async fn log_role_created(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _role_id: RoleId,
+        _name: &str,
+        _description: &str,
+        _permission_ids: Vec<PermissionId>,
+    ) {
+    }
+
+    async fn log_role_updated(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _role_id: RoleId,
+        _before: RoleMetadataSnapshot,
+        _after: RoleMetadataSnapshot,
+    ) {
+    }
+
+    async fn log_role_permissions_updated(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _role_id: RoleId,
+        _before_permission_ids: Vec<PermissionId>,
+        _after_permission_ids: Vec<PermissionId>,
+    ) {
+    }
+
+    async fn log_role_deleted(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _role_id: RoleId,
+        _before_name: &str,
+        _before_description: &str,
+        _before_permission_ids: Vec<PermissionId>,
     ) {
     }
 }

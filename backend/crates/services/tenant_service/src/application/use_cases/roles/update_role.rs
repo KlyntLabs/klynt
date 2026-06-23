@@ -29,18 +29,40 @@ pub(crate) async fn execute(
     )
     .await?;
 
-    service
-        .internal()
-        .role_repository
-        .update_role_permissions(ctx, tenant.id, role_id, request.permission_ids)
-        .await
-        .map_err(TenantError::Domain)?;
-
-    service
+    let old_role = service
         .internal()
         .role_repository
         .find_role_by_id(ctx, tenant.id, role_id)
         .await
         .map_err(TenantError::Domain)?
-        .ok_or(TenantError::NotFound)
+        .ok_or(TenantError::NotFound)?;
+
+    service
+        .internal()
+        .role_repository
+        .update_role_permissions(ctx, tenant.id, role_id, request.permission_ids.clone())
+        .await
+        .map_err(TenantError::Domain)?;
+
+    let updated_role = service
+        .internal()
+        .role_repository
+        .find_role_by_id(ctx, tenant.id, role_id)
+        .await
+        .map_err(TenantError::Domain)?
+        .ok_or(TenantError::NotFound)?;
+
+    service
+        .internal()
+        .audit_logger
+        .log_role_permissions_updated(
+            ctx,
+            tenant.id,
+            role_id,
+            old_role.permission_ids,
+            updated_role.permission_ids.clone(),
+        )
+        .await;
+
+    Ok(updated_role)
 }

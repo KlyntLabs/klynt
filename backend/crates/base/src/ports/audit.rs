@@ -2,7 +2,7 @@
 
 use async_trait::async_trait;
 use domain::tenant::TenantId;
-use domain::UserId;
+use domain::{PermissionId, RoleId, UserId};
 use serde::Serialize;
 
 use crate::ctx::ExecutionContext;
@@ -24,6 +24,16 @@ pub struct PasswordChangeSnapshot {
 #[derive(Debug, Clone, Serialize)]
 pub struct ProfileUpdateSnapshot {
     pub full_name_changed: bool,
+}
+
+/// Snapshot metadata for a role name/description change audit event.
+///
+/// Carries only non-sensitive role metadata; permission changes are logged
+/// separately via [`AuditLogger::log_role_permissions_updated`].
+#[derive(Debug, Clone, Serialize)]
+pub struct RoleMetadataSnapshot {
+    pub name: String,
+    pub description: String,
 }
 
 /// Canonical audit logging interface.
@@ -109,5 +119,49 @@ pub trait AuditLogger: Send + Sync {
         ctx: &ExecutionContext,
         tenant_id: TenantId,
         user_id: UserId,
+    );
+
+    // Role management events
+
+    /// Log a custom role being created within a tenant.
+    async fn log_role_created(
+        &self,
+        ctx: &ExecutionContext,
+        tenant_id: TenantId,
+        role_id: RoleId,
+        name: &str,
+        description: &str,
+        permission_ids: Vec<PermissionId>,
+    );
+
+    /// Log a role's name or description being changed.
+    async fn log_role_updated(
+        &self,
+        ctx: &ExecutionContext,
+        tenant_id: TenantId,
+        role_id: RoleId,
+        before: RoleMetadataSnapshot,
+        after: RoleMetadataSnapshot,
+    );
+
+    /// Log a role's permission set being changed.
+    async fn log_role_permissions_updated(
+        &self,
+        ctx: &ExecutionContext,
+        tenant_id: TenantId,
+        role_id: RoleId,
+        before_permission_ids: Vec<PermissionId>,
+        after_permission_ids: Vec<PermissionId>,
+    );
+
+    /// Log a custom role being deleted.
+    async fn log_role_deleted(
+        &self,
+        ctx: &ExecutionContext,
+        tenant_id: TenantId,
+        role_id: RoleId,
+        before_name: &str,
+        before_description: &str,
+        before_permission_ids: Vec<PermissionId>,
     );
 }

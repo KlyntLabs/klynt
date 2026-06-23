@@ -60,6 +60,12 @@ pub enum AuditAction {
     MemberRoleChanged,
     MemberRemoved,
 
+    // Role actions (Phase 3+)
+    RoleCreated,
+    RoleUpdated,
+    RoleDeleted,
+    RolePermissionsUpdated,
+
     // Permission actions (Phase 3+)
     PermissionGranted,
     PermissionRevoked,
@@ -170,6 +176,10 @@ impl FromStr for AuditAction {
             "member_invited" => Ok(AuditAction::MemberInvited),
             "member_role_changed" => Ok(AuditAction::MemberRoleChanged),
             "member_removed" => Ok(AuditAction::MemberRemoved),
+            "role_created" => Ok(AuditAction::RoleCreated),
+            "role_updated" => Ok(AuditAction::RoleUpdated),
+            "role_deleted" => Ok(AuditAction::RoleDeleted),
+            "role_permissions_updated" => Ok(AuditAction::RolePermissionsUpdated),
             "permission_granted" => Ok(AuditAction::PermissionGranted),
             "permission_revoked" => Ok(AuditAction::PermissionRevoked),
             _ => Err(format!("Unknown action: {s}")),
@@ -198,6 +208,10 @@ impl Display for AuditAction {
             AuditAction::MemberInvited => "member_invited",
             AuditAction::MemberRoleChanged => "member_role_changed",
             AuditAction::MemberRemoved => "member_removed",
+            AuditAction::RoleCreated => "role_created",
+            AuditAction::RoleUpdated => "role_updated",
+            AuditAction::RoleDeleted => "role_deleted",
+            AuditAction::RolePermissionsUpdated => "role_permissions_updated",
             AuditAction::PermissionGranted => "permission_granted",
             AuditAction::PermissionRevoked => "permission_revoked",
         };

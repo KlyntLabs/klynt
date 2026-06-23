@@ -28,10 +28,33 @@ pub(crate) async fn execute(
     )
     .await?;
 
+    let role = service
+        .internal()
+        .role_repository
+        .find_role_by_id(ctx, tenant.id, role_id)
+        .await
+        .map_err(TenantError::Domain)?
+        .ok_or(TenantError::NotFound)?;
+
     service
         .internal()
         .role_repository
         .delete_role(ctx, tenant.id, role_id)
         .await
-        .map_err(TenantError::Domain)
+        .map_err(TenantError::Domain)?;
+
+    service
+        .internal()
+        .audit_logger
+        .log_role_deleted(
+            ctx,
+            tenant.id,
+            role_id,
+            &role.name,
+            &role.description,
+            role.permission_ids,
+        )
+        .await;
+
+    Ok(())
 }

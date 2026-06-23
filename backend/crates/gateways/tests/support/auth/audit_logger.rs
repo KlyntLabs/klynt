@@ -1,51 +1,15 @@
-//! Test support utilities for user_service integration tests.
-//!
-//! Cross-cutting test doubles come from [`base::testkit`]; this module
-//! keeps only the user-service-specific fakes.
-
-use std::sync::{Arc, Mutex};
-
 use async_trait::async_trait;
-
+use auth_service::application::ports::{AuditLogger, MembershipRepository};
 use base::ctx::ExecutionContext;
 use base::ports::audit::{PasswordChangeSnapshot, ProfileUpdateSnapshot, RoleMetadataSnapshot};
-use base::testkit::{sample_user as base_sample_user, FakeUserRepository};
-use domain::{PermissionId, RoleId, TenantId, User, UserId, UserStatus};
-use user_service::application::ports::AuditLogger;
-use user_service::{Dependencies, UserConfig, UserService};
+use domain::{DomainResult, Membership, PermissionId, RoleId, TenantId, TenantMember, UserId};
 
-pub use base::testkit::{test_ctx, TestClock, TestPasswordHasher};
-
-/// Create an active sample user for tests.
-pub fn sample_user(email: &str, full_name: &str, password_hash: &str) -> User {
-    base_sample_user(email, full_name, password_hash, UserStatus::Active)
-}
-
-/// In-memory audit logger that captures event names.
-pub struct TestAuditLogger {
-    events: Mutex<Vec<String>>,
-}
-
-impl TestAuditLogger {
-    pub fn new() -> Self {
-        Self {
-            events: Mutex::new(Vec::new()),
-        }
-    }
-
-    pub fn events(&self) -> Vec<String> {
-        self.events.lock().unwrap().clone()
-    }
-}
-
-impl Default for TestAuditLogger {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+/// Stub audit logger that does nothing.
+#[derive(Default, Clone)]
+pub struct StubAuditLogger;
 
 #[async_trait]
-impl AuditLogger for TestAuditLogger {
+impl AuditLogger for StubAuditLogger {
     async fn log_login_success(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
 
     async fn log_login_failed(&self, _ctx: &ExecutionContext, _email: &str, _error: &str) {}
@@ -71,10 +35,6 @@ impl AuditLogger for TestAuditLogger {
         _before: ProfileUpdateSnapshot,
         _after: ProfileUpdateSnapshot,
     ) {
-        self.events
-            .lock()
-            .unwrap()
-            .push("profile_updated".to_string());
     }
 
     async fn log_password_changed(
@@ -84,15 +44,9 @@ impl AuditLogger for TestAuditLogger {
         _before: PasswordChangeSnapshot,
         _after: PasswordChangeSnapshot,
     ) {
-        self.events
-            .lock()
-            .unwrap()
-            .push("password_changed".to_string());
     }
 
-    async fn log_user_deleted(&self, _ctx: &ExecutionContext, _user_id: UserId) {
-        self.events.lock().unwrap().push("user_deleted".to_string());
-    }
+    async fn log_user_deleted(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
 
     async fn log_tenant_created(&self, _ctx: &ExecutionContext, _tenant_id: TenantId) {}
 
@@ -169,20 +123,69 @@ impl AuditLogger for TestAuditLogger {
     }
 }
 
-/// Build a user service and its backing test repository.
-pub fn build_test_service() -> (UserService, Arc<FakeUserRepository>, Arc<TestAuditLogger>) {
-    let repo = Arc::new(FakeUserRepository::new());
-    let audit = Arc::new(TestAuditLogger::new());
-    let service = UserService::new(
-        UserConfig::default(),
-        Dependencies {
-            user_repository: repo.clone(),
-            audit_logger: audit.clone(),
-            password_hasher: Arc::new(TestPasswordHasher::with_prefix("")),
-            clock: Arc::new(TestClock::new()),
-        },
-    )
-    .expect("service construction should succeed");
+/// Stub membership repository that returns empty lists and NotFound errors.
+#[derive(Default, Clone)]
+pub struct StubMembershipRepository;
 
-    (service, repo, audit)
+#[async_trait]
+impl MembershipRepository for StubMembershipRepository {
+    async fn create(
+        &self,
+        _ctx: &ExecutionContext,
+        _membership: &Membership,
+    ) -> DomainResult<Membership> {
+        Err(domain::DomainError::not_found("membership"))
+    }
+
+    async fn find(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _user_id: UserId,
+    ) -> DomainResult<Option<Membership>> {
+        Ok(None)
+    }
+
+    async fn list_for_user(
+        &self,
+        _ctx: &ExecutionContext,
+        _user_id: UserId,
+    ) -> DomainResult<Vec<Membership>> {
+        Ok(Vec::new())
+    }
+
+    async fn list_for_tenant(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+    ) -> DomainResult<Vec<Membership>> {
+        Ok(Vec::new())
+    }
+
+    async fn list_members(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+    ) -> DomainResult<Vec<TenantMember>> {
+        Ok(Vec::new())
+    }
+
+    async fn update_role(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _user_id: UserId,
+        _role: domain::membership::TenantRole,
+    ) -> DomainResult<()> {
+        Err(domain::DomainError::not_found("membership"))
+    }
+
+    async fn delete(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _user_id: UserId,
+    ) -> DomainResult<()> {
+        Err(domain::DomainError::not_found("membership"))
+    }
 }
