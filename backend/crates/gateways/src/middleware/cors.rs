@@ -17,14 +17,23 @@ pub fn cors_layer(allowed_origins: &[String]) -> CorsLayer {
         .filter_map(|origin| HeaderValue::from_str(origin).ok())
         .collect();
 
+    let methods = [
+        Method::GET,
+        Method::POST,
+        Method::PUT,
+        Method::PATCH,
+        Method::DELETE,
+        Method::OPTIONS,
+    ];
+
     if origins.is_empty() {
         CorsLayer::new()
-            .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
+            .allow_methods(methods)
             .allow_headers([AUTHORIZATION, CONTENT_TYPE, ACCEPT, ORIGIN])
             .allow_origin(tower_http::cors::Any)
     } else {
         CorsLayer::new()
-            .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
+            .allow_methods(methods)
             .allow_headers([AUTHORIZATION, CONTENT_TYPE, ACCEPT, ORIGIN])
             .allow_origin(origins)
             .allow_credentials(true)
