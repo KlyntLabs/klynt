@@ -10,10 +10,11 @@ CREATE TABLE IF NOT EXISTS tenants (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_tenants_slug ON tenants(slug);
-CREATE INDEX idx_tenants_owner_id ON tenants(owner_id);
-CREATE INDEX idx_tenants_status ON tenants(status);
+CREATE INDEX IF NOT EXISTS idx_tenants_slug ON tenants(slug);
+CREATE INDEX IF NOT EXISTS idx_tenants_owner_id ON tenants(owner_id);
+CREATE INDEX IF NOT EXISTS idx_tenants_status ON tenants(status);
 
+DROP TRIGGER IF EXISTS update_tenants_updated_at ON tenants;
 CREATE TRIGGER update_tenants_updated_at BEFORE UPDATE ON tenants
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -25,8 +26,8 @@ CREATE TABLE IF NOT EXISTS user_tenant_memberships (
     PRIMARY KEY (tenant_id, user_id)
 );
 
-CREATE INDEX idx_memberships_user_id ON user_tenant_memberships(user_id);
-CREATE INDEX idx_memberships_tenant_id ON user_tenant_memberships(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_memberships_user_id ON user_tenant_memberships(user_id);
+CREATE INDEX IF NOT EXISTS idx_memberships_tenant_id ON user_tenant_memberships(tenant_id);
 
 -- Atomic ownership limit: a user may own at most 2 tenants.
 CREATE OR REPLACE FUNCTION enforce_tenant_ownership_limit()
