@@ -18,7 +18,9 @@ pub mod error;
 use std::sync::Arc;
 
 use base::ctx::ExecutionContext;
-use domain::{Tenant, TenantId, TenantSlug, UserId};
+use domain::{
+    Permission, PermissionId, RoleId, Tenant, TenantId, TenantRoleAggregate, TenantSlug, UserId,
+};
 
 pub use builder::TenantBuilder;
 pub use config::TenantConfig;
@@ -63,6 +65,24 @@ pub struct UpdateMemberRoleRequest {
 pub struct RemoveMemberRequest {
     /// Email address of the member to remove.
     pub email: String,
+}
+
+/// Request to create a custom tenant role.
+#[derive(Debug, Clone)]
+pub struct CreateRoleRequest {
+    /// Display name for the role.
+    pub name: String,
+    /// Optional description.
+    pub description: String,
+    /// Permission IDs to grant to the role.
+    pub permission_ids: Vec<PermissionId>,
+}
+
+/// Request to update a custom tenant role.
+#[derive(Debug, Clone)]
+pub struct UpdateRoleRequest {
+    /// Permission IDs to grant to the role.
+    pub permission_ids: Vec<PermissionId>,
 }
 
 /// Tenant service — deep module with small interface.
@@ -113,6 +133,8 @@ impl TenantService {
                 tenant_repository: dependencies.tenant_repository,
                 membership_repository: dependencies.membership_repository,
                 user_repository: dependencies.user_repository,
+                permission_repository: dependencies.permission_repository,
+                role_repository: dependencies.role_repository,
                 session_store: dependencies.session_store,
                 audit_logger: dependencies.audit_logger,
                 authorization_service,
@@ -204,6 +226,64 @@ impl TenantService {
         application::use_cases::remove_member::execute(self, ctx, slug, request).await
     }
 
+    /// List all roles within a tenant. Requires `tenant.manage_roles`.
+    pub async fn list_roles(
+        &self,
+        ctx: &ExecutionContext,
+        slug: &str,
+    ) -> Result<Vec<TenantRoleAggregate>, TenantError> {
+        application::use_cases::roles::list_roles::execute(self, ctx, slug).await
+    }
+
+    /// Create a custom role within a tenant. Requires `tenant.manage_roles`.
+    pub async fn create_role(
+        &self,
+        ctx: &ExecutionContext,
+        slug: &str,
+        request: CreateRoleRequest,
+    ) -> Result<TenantRoleAggregate, TenantError> {
+        application::use_cases::roles::create_role::execute(self, ctx, slug, request).await
+    }
+
+    /// Get a role by ID. Requires `tenant.manage_roles`.
+    pub async fn get_role(
+        &self,
+        ctx: &ExecutionContext,
+        slug: &str,
+        role_id: RoleId,
+    ) -> Result<TenantRoleAggregate, TenantError> {
+        application::use_cases::roles::get_role::execute(self, ctx, slug, role_id).await
+    }
+
+    /// Update a custom role's permissions. Requires `tenant.manage_roles`.
+    pub async fn update_role(
+        &self,
+        ctx: &ExecutionContext,
+        slug: &str,
+        role_id: RoleId,
+        request: UpdateRoleRequest,
+    ) -> Result<TenantRoleAggregate, TenantError> {
+        application::use_cases::roles::update_role::execute(self, ctx, slug, role_id, request).await
+    }
+
+    /// Delete a custom role. Requires `tenant.manage_roles`.
+    pub async fn delete_role(
+        &self,
+        ctx: &ExecutionContext,
+        slug: &str,
+        role_id: RoleId,
+    ) -> Result<(), TenantError> {
+        application::use_cases::roles::delete_role::execute(self, ctx, slug, role_id).await
+    }
+
+    /// List the global permission catalog. Requires authentication.
+    pub async fn list_permissions(
+        &self,
+        ctx: &ExecutionContext,
+    ) -> Result<Vec<Permission>, TenantError> {
+        application::use_cases::permissions::list_permissions::execute(self, ctx).await
+    }
+
     /// Look up a tenant by its canonical slug.
     pub async fn get_by_slug(
         &self,
@@ -267,6 +347,8 @@ pub(crate) struct InternalState {
     pub tenant_repository: Arc<dyn TenantRepository>,
     pub membership_repository: Arc<dyn MembershipRepository>,
     pub user_repository: Arc<dyn UserRepository>,
+    pub permission_repository: Arc<dyn PermissionRepository>,
+    pub role_repository: Arc<dyn RoleRepository>,
     pub session_store: Arc<dyn SessionStore>,
     pub audit_logger: Arc<dyn AuditLogger>,
     pub authorization_service: AuthorizationService,

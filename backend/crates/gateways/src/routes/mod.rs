@@ -4,6 +4,8 @@ pub mod auth;
 pub mod health;
 pub mod metrics;
 pub mod openapi;
+pub mod permissions;
+pub mod roles;
 pub mod tenants;
 pub mod users;
 
@@ -66,9 +68,19 @@ fn api_v1_routes(services: Services) -> Router<Services> {
     ));
 
     let tenant_routes = tenants::routes(services.clone()).layer(middleware::from_fn_with_state(
-        services,
+        services.clone(),
         crate::middleware::auth::require_auth,
     ));
+
+    let permissions_routes = Router::new()
+        .route(
+            "/permissions",
+            axum::routing::get(permissions::list_permissions),
+        )
+        .layer(middleware::from_fn_with_state(
+            services,
+            crate::middleware::auth::require_auth,
+        ));
 
     Router::new()
         // Auth routes (no authentication required)
@@ -76,6 +88,7 @@ fn api_v1_routes(services: Services) -> Router<Services> {
         // Protected routes (require authentication)
         .nest("/users", protected_user_routes)
         .nest("/tenants", tenant_routes)
+        .merge(permissions_routes)
         .layer(CookieManagerLayer::new())
 }
 

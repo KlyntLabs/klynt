@@ -13,6 +13,8 @@ use crate::middleware::tenant_context::require_tenant_membership;
 use crate::response::SuccessResponse;
 use crate::state::Services;
 
+use super::roles;
+
 /// Tenant router — handles tenant management endpoints.
 pub fn routes(services: Services) -> axum::Router<Services> {
     let member_required_routes = axum::Router::new()
@@ -29,6 +31,7 @@ pub fn routes(services: Services) -> axum::Router<Services> {
             "/{tenant_slug}/members",
             axum::routing::delete(remove_member),
         )
+        .nest("/{tenant_slug}/roles", roles::routes())
         .layer(axum::middleware::from_fn_with_state(
             services,
             require_tenant_membership,

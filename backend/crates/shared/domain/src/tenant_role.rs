@@ -79,4 +79,9 @@ impl TenantRoleAggregate {
         self.permission_ids = permission_ids;
         self.updated_at = Utc::now();
     }
+
+    pub fn with_permissions(mut self, permission_ids: Vec<PermissionId>) -> Self {
+        self.set_permissions(permission_ids);
+        self
+    }
 }
