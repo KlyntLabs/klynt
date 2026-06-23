@@ -8,7 +8,7 @@ use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
 
-use auth_service::application::ports::{AuditLogger, EmailSender};
+use auth_service::application::ports::{AuditLogger, EmailSender, MembershipRepository};
 use auth_service::{AuthConfig, AuthService, Dependencies};
 use base::ctx::ExecutionContext;
 use base::ports::audit::{PasswordChangeSnapshot, ProfileUpdateSnapshot};
@@ -18,7 +18,7 @@ use base::ports::session::{
 };
 use base::testkit::{sample_user, FakeSessionStore, FakeTokenStore, FakeUserRepository};
 use chrono::{DateTime, Utc};
-use domain::{Email, TenantId, User, UserId, UserStatus};
+use domain::{DomainResult, Email, Membership, TenantId, User, UserId, UserStatus};
 use uuid::Uuid;
 
 pub use session_service::SessionConfig as TestSessionConfig;
@@ -115,6 +115,65 @@ impl AuditLogger for StubAuditLogger {
     async fn log_tenant_deleted(&self, _ctx: &ExecutionContext, _tenant_id: TenantId) {}
 }
 
+/// Stub membership repository that returns empty lists and NotFound errors.
+#[derive(Default, Clone)]
+pub struct StubMembershipRepository;
+
+#[async_trait]
+impl MembershipRepository for StubMembershipRepository {
+    async fn create(
+        &self,
+        _ctx: &ExecutionContext,
+        _membership: &Membership,
+    ) -> DomainResult<Membership> {
+        Err(domain::DomainError::not_found("membership"))
+    }
+
+    async fn find(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _user_id: UserId,
+    ) -> DomainResult<Option<Membership>> {
+        Ok(None)
+    }
+
+    async fn list_for_user(
+        &self,
+        _ctx: &ExecutionContext,
+        _user_id: UserId,
+    ) -> DomainResult<Vec<Membership>> {
+        Ok(Vec::new())
+    }
+
+    async fn list_for_tenant(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+    ) -> DomainResult<Vec<Membership>> {
+        Ok(Vec::new())
+    }
+
+    async fn update_role(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _user_id: UserId,
+        _role: domain::membership::TenantRole,
+    ) -> DomainResult<()> {
+        Err(domain::DomainError::not_found("membership"))
+    }
+
+    async fn delete(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _user_id: UserId,
+    ) -> DomainResult<()> {
+        Err(domain::DomainError::not_found("membership"))
+    }
+}
+
 /// Build a test auth service with default fake dependencies.
 pub fn build_test_service() -> (AuthService, Arc<FakeUserRepository>, Arc<FakeEmailSender>) {
     let (service, user_repository, email_sender, _) = build_test_service_with_clock();
@@ -131,9 +190,10 @@ pub fn build_test_service_with_clock() -> (
     let email_sender = Arc::new(FakeEmailSender::default());
     let user_repository = Arc::new(FakeUserRepository::new());
     let clock = Arc::new(TestClock::new());
+    let session_store: Arc<dyn SessionStore> = Arc::new(FakeSessionStore::new());
     let session_service = Arc::new(session_service::SessionService::with_clock(
         TestSessionConfig::default(),
-        Arc::new(FakeSessionStore::new()),
+        session_store.clone(),
         clock.clone(),
     ));
     let service = AuthService::new(
@@ -141,10 +201,12 @@ pub fn build_test_service_with_clock() -> (
         Dependencies {
             user_repository: user_repository.clone(),
             session_service,
+            session_store,
             token_store: Arc::new(FakeTokenStore::new()),
             email_sender: email_sender.clone(),
             audit_logger: Arc::new(StubAuditLogger),
             password_hasher: Arc::new(TestPasswordHasher::new()),
+            membership_repository: Arc::new(StubMembershipRepository),
             clock: clock.clone(),
         },
     )
@@ -167,7 +229,7 @@ pub fn build_test_service_with_session_store(
     let clock = Arc::new(TestClock::new());
     let session_service = Arc::new(session_service::SessionService::with_clock(
         TestSessionConfig::default(),
-        session_store,
+        session_store.clone(),
         clock.clone(),
     ));
     let service = AuthService::new(
@@ -175,10 +237,12 @@ pub fn build_test_service_with_session_store(
         Dependencies {
             user_repository: user_repository.clone(),
             session_service,
+            session_store,
             token_store: Arc::new(FakeTokenStore::new()),
             email_sender: email_sender.clone(),
             audit_logger: Arc::new(StubAuditLogger),
             password_hasher: Arc::new(TestPasswordHasher::new()),
+            membership_repository: Arc::new(StubMembershipRepository),
             clock: clock.clone(),
         },
     )
@@ -239,6 +303,7 @@ impl SessionStore for FailingSessionStore {
                 expires_at,
                 kind,
                 pair_id,
+                tenant_memberships: Vec::new(),
             },
         );
         Ok(token)

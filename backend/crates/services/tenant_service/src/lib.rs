@@ -25,6 +25,7 @@ pub use config::TenantConfig;
 pub use error::{TenantError, TenantResult};
 
 use application::ports::{AuditLogger, MembershipRepository, TenantRepository};
+use base::ports::session::SessionStore;
 
 /// Request to create a new tenant.
 #[derive(Debug, Clone)]
@@ -76,6 +77,7 @@ impl TenantService {
             internal_state: InternalState {
                 tenant_repository: dependencies.tenant_repository,
                 membership_repository: dependencies.membership_repository,
+                session_store: dependencies.session_store,
                 audit_logger: dependencies.audit_logger,
             },
         })
@@ -162,6 +164,10 @@ impl TenantService {
     pub(crate) fn internal(&self) -> &InternalState {
         &self.internal_state
     }
+
+    pub(crate) fn session_store(&self) -> &Arc<dyn SessionStore> {
+        &self.internal_state.session_store
+    }
 }
 
 /// Dependencies wired into the tenant service.
@@ -169,6 +175,7 @@ impl TenantService {
 pub struct Dependencies {
     pub tenant_repository: Arc<dyn TenantRepository>,
     pub membership_repository: Arc<dyn MembershipRepository>,
+    pub session_store: Arc<dyn SessionStore>,
     pub audit_logger: Arc<dyn AuditLogger>,
 }
 
@@ -176,5 +183,6 @@ pub struct Dependencies {
 pub(crate) struct InternalState {
     pub tenant_repository: Arc<dyn TenantRepository>,
     pub membership_repository: Arc<dyn MembershipRepository>,
+    pub session_store: Arc<dyn SessionStore>,
     pub audit_logger: Arc<dyn AuditLogger>,
 }

@@ -79,6 +79,15 @@ impl TryFrom<&str> for SessionKind {
     }
 }
 
+/// Snapshot of a tenant membership stored on a session.
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
+pub struct MembershipSnapshot {
+    /// Tenant the user belongs to.
+    pub tenant_id: Uuid,
+    /// Role the user has within the tenant.
+    pub role: domain::membership::TenantRole,
+}
+
 /// An authenticated session.
 #[derive(Clone, Debug)]
 pub struct Session {
@@ -86,6 +95,7 @@ pub struct Session {
     pub expires_at: DateTime<Utc>,
     pub kind: SessionKind,
     pub pair_id: Option<Uuid>,
+    pub tenant_memberships: Vec<MembershipSnapshot>,
 }
 
 impl Session {
@@ -144,6 +154,32 @@ pub trait SessionStore: Send + Sync {
         pair_id: Uuid,
         except_token: &SessionToken,
     ) -> Result<(), SessionError>;
+
+    /// Replace the membership snapshot on a single session.
+    ///
+    /// Default implementation is a no-op for fakes that do not need to track
+    /// tenant memberships.
+    async fn update_memberships(
+        &self,
+        _ctx: &ExecutionContext,
+        _token: &SessionToken,
+        _memberships: Vec<MembershipSnapshot>,
+    ) -> Result<(), SessionError> {
+        Ok(())
+    }
+
+    /// Append a membership snapshot to all active sessions for a user.
+    ///
+    /// Default implementation is a no-op for fakes that do not need to track
+    /// tenant memberships.
+    async fn add_membership(
+        &self,
+        _ctx: &ExecutionContext,
+        _user_id: UserId,
+        _membership: MembershipSnapshot,
+    ) -> Result<(), SessionError> {
+        Ok(())
+    }
 }
 
 /// Errors that can occur when interacting with a session store.

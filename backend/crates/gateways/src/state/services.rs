@@ -61,10 +61,15 @@ impl Services {
             .map_err(|e| crate::GatewayError::configuration(format!("Migrations: {e}")))?;
 
         let session_store = Self::create_session_store(config, pool.clone()).await;
-        let session_service = Arc::new(Self::create_session_service(config, session_store));
+        let session_service = Arc::new(Self::create_session_service(config, session_store.clone()));
 
-        let auth_service =
-            Self::create_auth_service(config, pool.clone(), session_service.clone()).await?;
+        let auth_service = Self::create_auth_service(
+            config,
+            pool.clone(),
+            session_store.clone(),
+            session_service.clone(),
+        )
+        .await?;
         let user_service = Self::create_user_service(config, pool.clone()).await?;
         let tenant_service = Self::create_tenant_service(pool.clone()).await?;
         let rate_limiter = Self::create_rate_limiter(config).await?;
@@ -104,6 +109,7 @@ impl Services {
     async fn create_auth_service(
         config: &Config,
         pool: sqlx::PgPool,
+        session_store: Arc<dyn base::ports::session::SessionStore>,
         session_service: Arc<session_service::SessionService>,
     ) -> Result<AuthService, crate::GatewayError> {
         AuthService::builder()
@@ -113,6 +119,7 @@ impl Services {
                 password_policy: None,
             })
             .with_pool(pool)
+            .with_session_store(session_store)
             .with_session_service(session_service)
             .build()
             .await

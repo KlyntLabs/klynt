@@ -13,7 +13,9 @@
 
 use async_trait::async_trait;
 use base::ctx::ExecutionContext;
-use base::ports::session::{Session, SessionError, SessionKind, SessionStore, SessionToken};
+use base::ports::session::{
+    MembershipSnapshot, Session, SessionError, SessionKind, SessionStore, SessionToken,
+};
 use chrono::{DateTime, Utc};
 use domain::UserId;
 use redis::aio::MultiplexedConnection;
@@ -105,6 +107,7 @@ impl CachedSessionStore {
                     expires_at: cached.expires_at,
                     kind: cached.kind,
                     pair_id: cached.pair_id,
+                    tenant_memberships: cached.tenant_memberships,
                 }))
             }
             None => Ok(None),
@@ -132,6 +135,7 @@ impl CachedSessionStore {
             expires_at: session.expires_at,
             kind: session.kind,
             pair_id: session.pair_id,
+            tenant_memberships: session.tenant_memberships.clone(),
         };
         let json = serde_json::to_string(&cached)
             .map_err(|e| SessionError::Internal(format!("serialize: {e}")))?;
@@ -172,6 +176,7 @@ struct CachedSession {
     expires_at: DateTime<Utc>,
     kind: SessionKind,
     pair_id: Option<Uuid>,
+    tenant_memberships: Vec<MembershipSnapshot>,
 }
 
 #[async_trait]
@@ -199,6 +204,7 @@ impl SessionStore for CachedSessionStore {
                 expires_at,
                 kind,
                 pair_id,
+                tenant_memberships: Vec::new(),
             };
             if let Err(e) = self.write_cache(&token, &session).await {
                 tracing::warn!(error = %e, "failed to write session to cache");
@@ -262,5 +268,29 @@ impl SessionStore for CachedSessionStore {
         // cached tokens by pair_id in Redis without a secondary index, so we
         // rely on the 15-minute TTL to expire any stale cached pair entries.
         Ok(())
+    }
+
+    async fn update_memberships(
+        &self,
+        ctx: &ExecutionContext,
+        token: &SessionToken,
+        memberships: Vec<MembershipSnapshot>,
+    ) -> Result<(), SessionError> {
+        self.postgres
+            .update_memberships(ctx, token, memberships)
+            .await?;
+        if let Err(e) = self.invalidate_cache(token).await {
+            tracing::warn!(error = %e, "failed to invalidate session cache after membership update");
+        }
+        Ok(())
+    }
+
+    async fn add_membership(
+        &self,
+        ctx: &ExecutionContext,
+        user_id: UserId,
+        membership: MembershipSnapshot,
+    ) -> Result<(), SessionError> {
+        self.postgres.add_membership(ctx, user_id, membership).await
     }
 }

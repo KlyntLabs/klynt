@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use base::ports::{AuditLogger, Clock, EmailSender, PasswordHasher, SystemClock};
 
-use crate::application::ports::UserRepository;
+use crate::application::ports::{MembershipRepository, UserRepository};
 use crate::core::TokenStore;
 use crate::error::AuthError;
 use crate::infrastructure::services::PasswordHasherAdapter as AuthPasswordHasherAdapter;
@@ -22,10 +22,12 @@ pub struct AuthBuilder {
     pool: Option<sqlx::PgPool>,
     user_repository: Option<Arc<dyn UserRepository>>,
     session_service: Option<Arc<session_service::SessionService>>,
+    session_store: Option<Arc<dyn base::ports::session::SessionStore>>,
     token_store: Option<Arc<dyn TokenStore>>,
     email_sender: Option<Arc<dyn EmailSender>>,
     audit_logger: Option<Arc<dyn AuditLogger>>,
     password_hasher: Option<Arc<dyn PasswordHasher>>,
+    membership_repository: Option<Arc<dyn MembershipRepository>>,
     clock: Option<Arc<dyn Clock>>,
 }
 
@@ -59,6 +61,15 @@ impl AuthBuilder {
         self
     }
 
+    /// Override the session store.
+    pub fn with_session_store(
+        mut self,
+        store: Arc<dyn base::ports::session::SessionStore>,
+    ) -> Self {
+        self.session_store = Some(store);
+        self
+    }
+
     /// Override the token store.
     pub fn with_token_store(mut self, store: Arc<dyn TokenStore>) -> Self {
         self.token_store = Some(store);
@@ -80,6 +91,12 @@ impl AuthBuilder {
     /// Override the password hasher.
     pub fn with_password_hasher(mut self, hasher: Arc<dyn PasswordHasher>) -> Self {
         self.password_hasher = Some(hasher);
+        self
+    }
+
+    /// Override the membership repository.
+    pub fn with_membership_repository(mut self, repo: Arc<dyn MembershipRepository>) -> Self {
+        self.membership_repository = Some(repo);
         self
     }
 
@@ -107,13 +124,16 @@ impl AuthBuilder {
             )) as Arc<dyn UserRepository>
         });
 
-        let session_service = self.session_service.unwrap_or_else(|| {
-            let session_store = Arc::new(persistence::repositories::session::PgSessionStore::new(
+        let session_store = self.session_store.unwrap_or_else(|| {
+            Arc::new(persistence::repositories::session::PgSessionStore::new(
                 pool.clone(),
-            )) as Arc<dyn base::ports::session::SessionStore>;
+            )) as Arc<dyn base::ports::session::SessionStore>
+        });
+
+        let session_service = self.session_service.unwrap_or_else(|| {
             Arc::new(session_service::SessionService::new(
                 session_service::SessionConfig::default(),
-                session_store,
+                session_store.clone(),
             ))
         });
 
@@ -140,6 +160,12 @@ impl AuthBuilder {
             ))
         });
 
+        let membership_repository = self.membership_repository.unwrap_or_else(|| {
+            Arc::new(
+                persistence::repositories::membership::PgMembershipRepository::new(pool.clone()),
+            ) as Arc<dyn MembershipRepository>
+        });
+
         let clock = self.clock.unwrap_or_else(|| Arc::new(SystemClock));
 
         AuthService::new(
@@ -147,10 +173,12 @@ impl AuthBuilder {
             Dependencies {
                 user_repository,
                 session_service,
+                session_store,
                 token_store,
                 email_sender,
                 audit_logger,
                 password_hasher,
+                membership_repository,
                 clock,
             },
         )

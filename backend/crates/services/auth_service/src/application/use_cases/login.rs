@@ -1,6 +1,7 @@
 //! Login use case - authenticate user and create session.
 
 use base::ctx::ExecutionContext;
+use base::ports::session::MembershipSnapshot;
 use domain::contracts::auth::{LoginRequest, LoginResponse};
 use domain::{DomainError, Email};
 use uuid::Uuid;
@@ -90,6 +91,26 @@ pub(crate) async fn execute(
             return Err(err.into());
         }
     };
+
+    let memberships = service
+        .internal()
+        .membership_repository
+        .list_for_user(ctx, user.id)
+        .await?;
+
+    let snapshots: Vec<MembershipSnapshot> = memberships
+        .into_iter()
+        .map(|m| MembershipSnapshot {
+            tenant_id: m.tenant_id.inner(),
+            role: m.role,
+        })
+        .collect();
+
+    service
+        .internal()
+        .session_store
+        .update_memberships(ctx, &access.token, snapshots)
+        .await?;
 
     service
         .internal()

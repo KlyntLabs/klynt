@@ -6,6 +6,7 @@ use std::sync::{Arc, Mutex};
 use async_trait::async_trait;
 use base::ctx::ExecutionContext;
 use base::ports::repository::{MembershipRepository, TenantRepository};
+use base::testkit::FakeSessionStore;
 use domain::{
     DomainError, DomainResult, Membership, Tenant, TenantId, TenantRole, TenantSlug, UserId,
 };
@@ -347,6 +348,7 @@ pub fn build_test_tenant_service() -> tenant_service::TenantService {
         tenant_service::Dependencies {
             tenant_repository: Arc::new(FakeTenantRepository),
             membership_repository: Arc::new(FakeMembershipRepository),
+            session_store: Arc::new(FakeSessionStore::new()),
             audit_logger: Arc::new(super::user::StubUserAuditLogger),
         },
     )
@@ -363,6 +365,7 @@ pub fn build_stateful_test_tenant_service(
         tenant_service::Dependencies {
             tenant_repository: tenant_repo,
             membership_repository: membership_repo,
+            session_store: Arc::new(FakeSessionStore::new()),
             audit_logger: Arc::new(super::user::StubUserAuditLogger),
         },
     )

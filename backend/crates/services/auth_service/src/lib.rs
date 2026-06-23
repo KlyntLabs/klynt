@@ -29,7 +29,8 @@ pub use builder::AuthBuilder;
 pub use core::{PasswordPolicy, SessionToken};
 pub use error::{AuthError, AuthResult};
 
-use application::ports::{AuditLogger, EmailSender, UserRepository};
+use application::ports::{AuditLogger, EmailSender, MembershipRepository, UserRepository};
+use base::ports::session::SessionStore;
 use core::TokenStore;
 
 /// Authentication service — deep module with small interface.
@@ -81,10 +82,12 @@ impl AuthService {
             internal_state: InternalState {
                 user_repository: dependencies.user_repository,
                 session_service: dependencies.session_service,
+                session_store: dependencies.session_store,
                 token_store: dependencies.token_store,
                 email_sender: dependencies.email_sender,
                 audit_logger: dependencies.audit_logger,
                 password_hasher: dependencies.password_hasher,
+                membership_repository: dependencies.membership_repository,
                 clock: dependencies.clock,
             },
         })
@@ -193,10 +196,12 @@ impl Default for AuthConfig {
 pub struct Dependencies {
     pub user_repository: Arc<dyn UserRepository>,
     pub session_service: Arc<session_service::SessionService>,
+    pub session_store: Arc<dyn SessionStore>,
     pub token_store: Arc<dyn TokenStore>,
     pub email_sender: Arc<dyn EmailSender>,
     pub audit_logger: Arc<dyn AuditLogger>,
     pub password_hasher: Arc<dyn PasswordHasher>,
+    pub membership_repository: Arc<dyn MembershipRepository>,
     pub clock: Arc<dyn Clock>,
 }
 
@@ -204,10 +209,12 @@ pub struct Dependencies {
 pub(crate) struct InternalState {
     pub user_repository: Arc<dyn UserRepository>,
     pub session_service: Arc<session_service::SessionService>,
+    pub session_store: Arc<dyn SessionStore>,
     pub token_store: Arc<dyn TokenStore>,
     pub email_sender: Arc<dyn EmailSender>,
     pub audit_logger: Arc<dyn AuditLogger>,
     pub password_hasher: Arc<dyn PasswordHasher>,
+    pub membership_repository: Arc<dyn MembershipRepository>,
     /// Retained for dependency injection and future token/time-sensitive logic.
     /// The session service owns the clock used for session expiry.
     #[allow(dead_code)]

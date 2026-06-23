@@ -3,4 +3,4 @@
 // Canonical ports from base.
 pub use base::ports::audit::AuditLogger;
 pub use base::ports::email::EmailSender;
-pub use base::ports::repository::UserRepository;
+pub use base::ports::repository::{MembershipRepository, UserRepository};

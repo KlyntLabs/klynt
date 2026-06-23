@@ -34,6 +34,7 @@ impl SessionStore for FakeSessionStore {
             expires_at,
             kind,
             pair_id,
+            tenant_memberships: Vec::new(),
         };
         self.sessions.lock().unwrap().insert(token, session);
         Ok(token)

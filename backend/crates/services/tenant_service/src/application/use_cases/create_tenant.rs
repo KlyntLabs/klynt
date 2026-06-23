@@ -1,6 +1,7 @@
 //! Create tenant use case.
 
 use base::ctx::ExecutionContext;
+use base::ports::session::MembershipSnapshot;
 use domain::Tenant;
 
 use crate::error::TenantError;
@@ -30,6 +31,19 @@ pub(crate) async fn execute(
         .audit_logger
         .log_tenant_created(ctx, created.id)
         .await;
+
+    service
+        .session_store()
+        .add_membership(
+            ctx,
+            owner_id,
+            MembershipSnapshot {
+                tenant_id: created.id.inner(),
+                role: domain::membership::TenantRole::Owner,
+            },
+        )
+        .await
+        .map_err(TenantError::Session)?;
 
     Ok(created)
 }

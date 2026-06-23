@@ -62,3 +62,4 @@ ipnet = { workspace = true }
 sqlx = { workspace = true }
 
 [dev-dependencies]
+base = { path = "../base", features = ["testkit"] }

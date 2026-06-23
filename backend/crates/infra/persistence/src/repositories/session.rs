@@ -1,8 +1,11 @@
 use async_trait::async_trait;
 use base::ctx::ExecutionContext;
-use base::ports::session::{Session, SessionError, SessionKind, SessionStore, SessionToken};
+use base::ports::session::{
+    MembershipSnapshot, Session, SessionError, SessionKind, SessionStore, SessionToken,
+};
 use chrono::{DateTime, Utc};
 use domain::UserId;
+use sqlx::types::Json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -57,9 +60,15 @@ impl SessionStore for PgSessionStore {
         _ctx: &ExecutionContext,
         token: &SessionToken,
     ) -> Result<Option<Session>, SessionError> {
-        let row: Option<(Uuid, String, Option<Uuid>, DateTime<Utc>)> = sqlx::query_as(
+        let row: Option<(
+            Uuid,
+            String,
+            Option<Uuid>,
+            DateTime<Utc>,
+            Json<Vec<MembershipSnapshot>>,
+        )> = sqlx::query_as(
             r#"
-            SELECT user_id, kind, pair_id, expires_at
+            SELECT user_id, kind, pair_id, expires_at, tenant_memberships
             FROM sessions
             WHERE token = $1
               AND expires_at > NOW()
@@ -69,12 +78,15 @@ impl SessionStore for PgSessionStore {
         .fetch_optional(&self.pool)
         .await?;
 
-        Ok(row.map(|(user_id, kind, pair_id, expires_at)| Session {
-            user_id: UserId(user_id),
-            expires_at,
-            kind: SessionKind::try_from(kind.as_str()).unwrap_or(SessionKind::Access),
-            pair_id,
-        }))
+        Ok(row.map(
+            |(user_id, kind, pair_id, expires_at, memberships)| Session {
+                user_id: UserId(user_id),
+                expires_at,
+                kind: SessionKind::try_from(kind.as_str()).unwrap_or(SessionKind::Access),
+                pair_id,
+                tenant_memberships: memberships.0,
+            },
+        ))
     }
 
     async fn revoke(
@@ -113,6 +125,36 @@ impl SessionStore for PgSessionStore {
         .execute(&self.pool)
         .await?;
 
+        Ok(())
+    }
+
+    async fn update_memberships(
+        &self,
+        _ctx: &ExecutionContext,
+        token: &SessionToken,
+        memberships: Vec<MembershipSnapshot>,
+    ) -> Result<(), SessionError> {
+        sqlx::query("UPDATE sessions SET tenant_memberships = $1 WHERE token = $2")
+            .bind(Json(memberships))
+            .bind(token.0)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    async fn add_membership(
+        &self,
+        _ctx: &ExecutionContext,
+        user_id: UserId,
+        membership: MembershipSnapshot,
+    ) -> Result<(), SessionError> {
+        sqlx::query(
+            "UPDATE sessions SET tenant_memberships = tenant_memberships || $1::jsonb WHERE user_id = $2 AND expires_at > NOW()",
+        )
+        .bind(Json(vec![membership]))
+        .bind(user_id.inner())
+        .execute(&self.pool)
+        .await?;
         Ok(())
     }
 }

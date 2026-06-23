@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
 use auth_service::{
-    application::ports::{AuditLogger, EmailSender},
+    application::ports::{AuditLogger, EmailSender, MembershipRepository},
     core::{TokenError, TokenKind, TokenStore},
     AuthConfig, AuthService, Dependencies as AuthDependencies,
 };
@@ -15,7 +15,10 @@ use base::ports::email::EmailError;
 use base::ports::repository::{RepositoryError, UserRepository};
 use base::ports::session::{Session, SessionError, SessionKind, SessionStore, SessionToken};
 use chrono::{DateTime, Utc};
-use domain::{Email, PaginationRequest, TenantId, User, UserId, UserRole, UserStatus};
+use domain::{
+    DomainResult, Email, Membership, PaginationRequest, TenantId, User, UserId, UserRole,
+    UserStatus,
+};
 use uuid::Uuid;
 
 use super::{FakePasswordHasher, FixedClock};
@@ -207,6 +210,7 @@ impl SessionStore for FakeSessionStore {
             expires_at,
             kind,
             pair_id,
+            tenant_memberships: Vec::new(),
         };
         self.sessions.lock().unwrap().insert(token, session);
         Ok(token)
@@ -383,6 +387,65 @@ impl AuditLogger for StubAuditLogger {
     async fn log_tenant_deleted(&self, _ctx: &ExecutionContext, _tenant_id: TenantId) {}
 }
 
+/// Stub membership repository that returns empty lists and NotFound errors.
+#[derive(Default, Clone)]
+pub struct StubMembershipRepository;
+
+#[async_trait]
+impl MembershipRepository for StubMembershipRepository {
+    async fn create(
+        &self,
+        _ctx: &ExecutionContext,
+        _membership: &Membership,
+    ) -> DomainResult<Membership> {
+        Err(domain::DomainError::not_found("membership"))
+    }
+
+    async fn find(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _user_id: UserId,
+    ) -> DomainResult<Option<Membership>> {
+        Ok(None)
+    }
+
+    async fn list_for_user(
+        &self,
+        _ctx: &ExecutionContext,
+        _user_id: UserId,
+    ) -> DomainResult<Vec<Membership>> {
+        Ok(Vec::new())
+    }
+
+    async fn list_for_tenant(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+    ) -> DomainResult<Vec<Membership>> {
+        Ok(Vec::new())
+    }
+
+    async fn update_role(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _user_id: UserId,
+        _role: domain::membership::TenantRole,
+    ) -> DomainResult<()> {
+        Err(domain::DomainError::not_found("membership"))
+    }
+
+    async fn delete(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _user_id: UserId,
+    ) -> DomainResult<()> {
+        Err(domain::DomainError::not_found("membership"))
+    }
+}
+
 /// Build a fake auth service for tests.
 pub fn build_test_auth_service() -> (AuthService, Arc<FakeUserRepository>, Arc<FakeEmailSender>) {
     build_test_auth_service_with_session_store(Arc::new(FakeSessionStore::default()))
@@ -396,17 +459,19 @@ pub fn build_test_auth_service_with_session_store(
     let user_repository = Arc::new(FakeUserRepository::default());
     let session_service = Arc::new(session_service::SessionService::new(
         session_service::SessionConfig::default(),
-        session_store,
+        session_store.clone(),
     ));
     let service = AuthService::new(
         AuthConfig::default(),
         AuthDependencies {
             user_repository: user_repository.clone(),
             session_service,
+            session_store,
             token_store: Arc::new(FakeTokenStore::default()),
             email_sender: email_sender.clone(),
             audit_logger: Arc::new(StubAuditLogger),
             password_hasher: Arc::new(FakePasswordHasher),
+            membership_repository: Arc::new(StubMembershipRepository),
             clock: Arc::new(FixedClock::new(Utc::now())),
         },
     )
