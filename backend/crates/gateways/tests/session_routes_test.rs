@@ -84,6 +84,60 @@ async fn register_and_login_user(email: &str) -> (axum::Router, String) {
     (app, access_token)
 }
 
+async fn login_user_on_app(app: &axum::Router, email: &str) -> String {
+    let login_request = serde_json::json!({
+        "email": email,
+        "password": "Password123"
+    });
+    let addr = SocketAddr::from(([127, 0, 0, 1], 1234));
+
+    let response = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/api/v1/auth/login")
+                .header("content-type", "application/json")
+                .extension(ConnectInfo(addr))
+                .body(Body::from(serde_json::to_vec(&login_request).unwrap()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    json["data"]["access_token"]
+        .as_str()
+        .expect("login response should contain access_token")
+        .to_string()
+}
+
+async fn register_users_on_shared_app(emails: &[&str]) -> (axum::Router, Vec<String>) {
+    let (mut services, _, auth_user_repo, user_service_repo) =
+        support::build_test_services_with_auth_fakes();
+    services.config.cookie_domain = String::new();
+    let config = support::test_config();
+    let app = gateways::create_router(config, services);
+
+    for email in emails {
+        let user = make_user(email);
+        auth_user_repo.insert(user.clone());
+        user_service_repo.insert(user.clone());
+    }
+
+    let mut tokens = Vec::new();
+    for email in emails {
+        tokens.push(login_user_on_app(&app, email).await);
+    }
+
+    (app, tokens)
+}
+
 #[tokio::test]
 async fn list_and_revoke_sessions() {
     let email = "session-user@example.com";
@@ -117,11 +171,12 @@ async fn list_and_revoke_sessions() {
         "user should have at least one session"
     );
 
-    // Revoke the first listed session so the follow-up list call is rejected.
+    // Revoke the access session so the follow-up list call is rejected.
     let session_id = sessions
-        .first()
+        .iter()
+        .find(|s| s["kind"].as_str() == Some("access"))
         .map(|s| s["id"].as_str().unwrap().to_string())
-        .expect("at least one session should be listed");
+        .expect("access session should be listed");
 
     let revoke_response = app
         .clone()
@@ -184,4 +239,57 @@ async fn revoke_session_requires_authentication() {
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+}
+
+#[tokio::test]
+async fn cannot_revoke_another_users_session() {
+    let (app, tokens) = register_users_on_shared_app(&[
+        "session-owner-a@example.com",
+        "session-owner-b@example.com",
+    ])
+    .await;
+
+    // List user B's sessions while authenticated as user B.
+    let list_response = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/api/v1/auth/sessions")
+                .header("authorization", format!("Bearer {}", tokens[1]))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(list_response.status(), StatusCode::OK);
+
+    let list_body = axum::body::to_bytes(list_response.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let list_json: serde_json::Value = serde_json::from_slice(&list_body).unwrap();
+    let sessions = list_json["data"]["sessions"]
+        .as_array()
+        .expect("response should contain sessions array");
+    let b_session_id = sessions
+        .iter()
+        .find(|s| s["kind"].as_str() == Some("access"))
+        .map(|s| s["id"].as_str().unwrap().to_string())
+        .expect("user B should have an access session");
+
+    // User A attempts to revoke user B's session.
+    let revoke_response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::DELETE)
+                .uri(format!("/api/v1/auth/sessions/{}", b_session_id))
+                .header("authorization", format!("Bearer {}", tokens[0]))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(revoke_response.status(), StatusCode::FORBIDDEN);
 }
