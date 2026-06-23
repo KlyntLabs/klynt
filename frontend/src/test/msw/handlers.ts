@@ -1,3 +1,4 @@
+import { tenantHandlers } from "./handlers/tenant.handlers";
 import { usersHandlers } from "./handlers/users.handlers";
 
-export const handlers = [...usersHandlers];
+export const handlers = [...usersHandlers, ...tenantHandlers];

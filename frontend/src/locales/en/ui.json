@@ -18,6 +18,15 @@
     "welcome": "Welcome back.",
     "placeholder": "Your dashboard content will appear here."
   },
+  "tenant": {
+    "loading": "Loading...",
+    "noTenant": "No tenant",
+    "nameLabel": "Tenant name",
+    "slugLabel": "Tenant slug",
+    "createTitle": "Create tenant",
+    "createButton": "Create tenant",
+    "createError": "Failed to create tenant. Please try again."
+  },
   "admin": {
     "title": "Admin",
     "description": "Administrator overview",

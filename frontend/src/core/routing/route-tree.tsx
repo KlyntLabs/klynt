@@ -16,6 +16,9 @@ const RegisterSuccessPage = lazy(() =>
   import("@/features/auth").then((module) => ({ default: module.RegisterSuccessPage }))
 );
 const DashboardPage = lazy(() => import("@/features/dashboard/pages/dashboard-page"));
+const CreateTenantPage = lazy(() =>
+  import("@/features/tenant").then((module) => ({ default: module.CreateTenantPage }))
+);
 const AdminPage = lazy(() => import("@/features/admin/pages/admin-page"));
 const NotFoundPage = lazy(() => import("./not-found-page"));
 
@@ -87,7 +90,10 @@ export const router = createBrowserRouter([
       },
       {
         element: <ProtectedLayout />,
-        children: [{ path: routePaths.dashboard, element: <DashboardPage /> }],
+        children: [
+          { path: routePaths.dashboard, element: <DashboardPage /> },
+          { path: "/tenants/new", element: <CreateTenantPage /> },
+        ],
       },
       {
         element: <AdminLayout />,
