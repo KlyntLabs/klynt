@@ -123,6 +123,14 @@ async fn delete_test_user(pool: &sqlx::PgPool, user_id: UserId) {
         .ok();
 }
 
+async fn delete_tenant(pool: &sqlx::PgPool, tenant_id: domain::TenantId) {
+    sqlx::query("DELETE FROM tenants WHERE id = $1")
+        .bind(tenant_id.inner())
+        .execute(pool)
+        .await
+        .ok();
+}
+
 #[tokio::test]
 async fn accept_invite_adds_user_as_member() {
     let Some(pool) = setup_pool().await else {
@@ -146,24 +154,26 @@ async fn accept_invite_adds_user_as_member() {
         .unwrap();
 
     let role_id = find_role_id(&pool, tenant.id, "member").await;
+    let token = format!("valid-token-{}", Uuid::new_v4());
     create_invite(
         &pool,
         tenant.id,
         role_id,
         owner_id,
         &new_email,
-        "valid-token",
+        &token,
         Duration::hours(1),
         false,
     )
     .await;
 
-    let accepted = service.accept_invite(&ctx, "valid-token").await.unwrap();
+    let accepted = service.accept_invite(&ctx, &token).await.unwrap();
     assert_eq!(accepted.id, tenant.id);
 
     let tenants = service.list_my_tenants(&ctx).await.unwrap();
     assert!(tenants.iter().any(|t| t.id == tenant.id));
 
+    delete_tenant(&pool, tenant.id).await;
     delete_test_user(&pool, owner_id).await;
     delete_test_user(&pool, new_user_id).await;
 }
@@ -210,24 +220,26 @@ async fn accept_invite_fails_when_expired() {
         .unwrap();
 
     let role_id = find_role_id(&pool, tenant.id, "member").await;
+    let token = format!("expired-token-{}", Uuid::new_v4());
     create_invite(
         &pool,
         tenant.id,
         role_id,
         owner_id,
         &new_email,
-        "expired-token",
+        &token,
         Duration::hours(-1),
         false,
     )
     .await;
 
-    let result = service.accept_invite(&ctx, "expired-token").await;
+    let result = service.accept_invite(&ctx, &token).await;
     assert!(matches!(
         result,
         Err(TenantError::Domain(domain::DomainError::Validation(_)))
     ));
 
+    delete_tenant(&pool, tenant.id).await;
     delete_test_user(&pool, owner_id).await;
     delete_test_user(&pool, new_user_id).await;
 }
@@ -255,24 +267,26 @@ async fn accept_invite_fails_for_wrong_email() {
         .unwrap();
 
     let role_id = find_role_id(&pool, tenant.id, "member").await;
+    let token = format!("wrong-email-token-{}", Uuid::new_v4());
     create_invite(
         &pool,
         tenant.id,
         role_id,
         owner_id,
         "someone-else@example.com",
-        "wrong-email-token",
+        &token,
         Duration::hours(1),
         false,
     )
     .await;
 
-    let result = service.accept_invite(&ctx, "wrong-email-token").await;
+    let result = service.accept_invite(&ctx, &token).await;
     assert!(matches!(
         result,
         Err(TenantError::Domain(domain::DomainError::NotPermitted(_)))
     ));
 
+    delete_tenant(&pool, tenant.id).await;
     delete_test_user(&pool, owner_id).await;
     delete_test_user(&pool, new_user_id).await;
 }
@@ -300,24 +314,26 @@ async fn accept_invite_fails_when_already_accepted() {
         .unwrap();
 
     let role_id = find_role_id(&pool, tenant.id, "member").await;
+    let token = format!("accepted-token-{}", Uuid::new_v4());
     create_invite(
         &pool,
         tenant.id,
         role_id,
         owner_id,
         &new_email,
-        "accepted-token",
+        &token,
         Duration::hours(1),
         true,
     )
     .await;
 
-    let result = service.accept_invite(&ctx, "accepted-token").await;
+    let result = service.accept_invite(&ctx, &token).await;
     assert!(matches!(
         result,
         Err(TenantError::Domain(domain::DomainError::Validation(_)))
     ));
 
+    delete_tenant(&pool, tenant.id).await;
     delete_test_user(&pool, owner_id).await;
     delete_test_user(&pool, new_user_id).await;
 }
