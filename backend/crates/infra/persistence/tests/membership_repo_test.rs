@@ -1,0 +1,274 @@
+//! Postgres-backed integration tests for the canonical MembershipRepository.
+//!
+//! These tests require `DATABASE_URL` to point at a running PostgreSQL instance.
+//! If `DATABASE_URL` is unset, the tests are skipped.
+
+use base::ctx::{ExecutionContext, RequestContext};
+use base::ports::repository::{MembershipRepository, TenantRepository, UserRepository};
+use domain::{DomainError, Email, Membership, Tenant, TenantRole, TenantSlug, UserRole};
+use persistence::repositories::membership::PgMembershipRepository;
+use persistence::repositories::tenant::PgTenantRepository;
+use persistence::repositories::user::PgUserRepository;
+
+fn database_url() -> Option<String> {
+    std::env::var("DATABASE_URL").ok()
+}
+
+async fn setup_pool() -> Option<sqlx::PgPool> {
+    let url = database_url()?;
+    let pool = sqlx::PgPool::connect(&url).await.ok()?;
+    sqlx::migrate!("../../../migrations")
+        .run(&pool)
+        .await
+        .ok()?;
+    Some(pool)
+}
+
+fn test_ctx() -> ExecutionContext {
+    ExecutionContext::new(RequestContext::new())
+}
+
+fn unique_email() -> Email {
+    Email::new(format!(
+        "membership-repo-test-{}@example.com",
+        domain::UserId::new().inner()
+    ))
+}
+
+fn unique_slug() -> TenantSlug {
+    TenantSlug::parse(&format!("member-{}-slug", domain::UserId::new().inner())).unwrap()
+}
+
+async fn create_test_user(pool: &sqlx::PgPool, name: &str) -> domain::UserId {
+    let user_repo = PgUserRepository::new(pool.clone());
+    user_repo
+        .create_pending_user(
+            &test_ctx(),
+            name.to_string(),
+            unique_email(),
+            "hash".to_string(),
+            UserRole::Student,
+            None,
+        )
+        .await
+        .unwrap()
+}
+
+async fn create_test_tenant(pool: &sqlx::PgPool, owner_id: domain::UserId) -> Tenant {
+    let tenant_repo = PgTenantRepository::new(pool.clone());
+    let slug = unique_slug();
+    let tenant = Tenant::create(slug, "Test Tenant".to_string(), owner_id).unwrap();
+    tenant_repo.create(&test_ctx(), &tenant).await.unwrap()
+}
+
+#[tokio::test]
+async fn create_find_and_list_membership() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let membership_repo = PgMembershipRepository::new(pool.clone());
+    let ctx = test_ctx();
+    let owner_id = create_test_user(&pool, "MembershipOwner").await;
+    let tenant = create_test_tenant(&pool, owner_id).await;
+    let member_id = create_test_user(&pool, "Member").await;
+
+    let membership = Membership::new(tenant.id, member_id, TenantRole::Member);
+    membership_repo.create(&ctx, &membership).await.unwrap();
+
+    let found = membership_repo
+        .find(&ctx, tenant.id, member_id)
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(found.tenant_id, tenant.id);
+    assert_eq!(found.user_id, member_id);
+    assert_eq!(found.role, TenantRole::Member);
+
+    let for_user = membership_repo
+        .list_for_user(&ctx, member_id)
+        .await
+        .unwrap();
+    assert_eq!(for_user.len(), 1);
+    assert_eq!(for_user[0].tenant_id, tenant.id);
+
+    let for_tenant = membership_repo
+        .list_for_tenant(&ctx, tenant.id)
+        .await
+        .unwrap();
+    assert_eq!(for_tenant.len(), 2); // owner + member
+}
+
+#[tokio::test]
+async fn update_role_changes_membership_role() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let membership_repo = PgMembershipRepository::new(pool.clone());
+    let ctx = test_ctx();
+    let owner_id = create_test_user(&pool, "RoleOwner").await;
+    let tenant = create_test_tenant(&pool, owner_id).await;
+    let member_id = create_test_user(&pool, "RoleMember").await;
+
+    membership_repo
+        .create(
+            &ctx,
+            &Membership::new(tenant.id, member_id, TenantRole::Member),
+        )
+        .await
+        .unwrap();
+
+    membership_repo
+        .update_role(&ctx, tenant.id, member_id, TenantRole::Admin)
+        .await
+        .unwrap();
+
+    let found = membership_repo
+        .find(&ctx, tenant.id, member_id)
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(found.role, TenantRole::Admin);
+}
+
+#[tokio::test]
+async fn delete_removes_membership() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let membership_repo = PgMembershipRepository::new(pool.clone());
+    let ctx = test_ctx();
+    let owner_id = create_test_user(&pool, "DeleteOwner").await;
+    let tenant = create_test_tenant(&pool, owner_id).await;
+    let member_id = create_test_user(&pool, "DeleteMember").await;
+
+    membership_repo
+        .create(
+            &ctx,
+            &Membership::new(tenant.id, member_id, TenantRole::Member),
+        )
+        .await
+        .unwrap();
+
+    membership_repo
+        .delete(&ctx, tenant.id, member_id)
+        .await
+        .unwrap();
+
+    let found = membership_repo
+        .find(&ctx, tenant.id, member_id)
+        .await
+        .unwrap();
+    assert!(found.is_none());
+}
+
+#[tokio::test]
+async fn duplicate_create_returns_conflict() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let membership_repo = PgMembershipRepository::new(pool.clone());
+    let ctx = test_ctx();
+    let owner_id = create_test_user(&pool, "DupOwner").await;
+    let tenant = create_test_tenant(&pool, owner_id).await;
+    let member_id = create_test_user(&pool, "DupMember").await;
+
+    membership_repo
+        .create(
+            &ctx,
+            &Membership::new(tenant.id, member_id, TenantRole::Member),
+        )
+        .await
+        .unwrap();
+
+    let result = membership_repo
+        .create(
+            &ctx,
+            &Membership::new(tenant.id, member_id, TenantRole::Admin),
+        )
+        .await;
+
+    assert!(matches!(result, Err(DomainError::Conflict(_))));
+}
+
+#[tokio::test]
+async fn create_for_missing_tenant_returns_not_found() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let membership_repo = PgMembershipRepository::new(pool.clone());
+    let ctx = test_ctx();
+    let user_id = create_test_user(&pool, "OrphanUser").await;
+    let missing_tenant_id = domain::TenantId::new();
+
+    let result = membership_repo
+        .create(
+            &ctx,
+            &Membership::new(missing_tenant_id, user_id, TenantRole::Member),
+        )
+        .await;
+
+    assert!(matches!(result, Err(DomainError::NotFound(_))));
+}
+
+#[tokio::test]
+async fn create_for_missing_user_returns_not_found() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let membership_repo = PgMembershipRepository::new(pool.clone());
+    let ctx = test_ctx();
+    let owner_id = create_test_user(&pool, "MissingUserOwner").await;
+    let tenant = create_test_tenant(&pool, owner_id).await;
+    let missing_user_id = domain::UserId::new();
+
+    let result = membership_repo
+        .create(
+            &ctx,
+            &Membership::new(tenant.id, missing_user_id, TenantRole::Member),
+        )
+        .await;
+
+    assert!(matches!(result, Err(DomainError::NotFound(_))));
+}
+
+#[tokio::test]
+async fn update_role_for_missing_membership_returns_not_found() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let membership_repo = PgMembershipRepository::new(pool);
+    let ctx = test_ctx();
+    let missing_tenant_id = domain::TenantId::new();
+    let missing_user_id = domain::UserId::new();
+
+    let result = membership_repo
+        .update_role(&ctx, missing_tenant_id, missing_user_id, TenantRole::Member)
+        .await;
+
+    assert!(matches!(result, Err(DomainError::NotFound(_))));
+}
+
+#[tokio::test]
+async fn delete_for_missing_membership_returns_not_found() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let membership_repo = PgMembershipRepository::new(pool);
+    let ctx = test_ctx();
+    let missing_tenant_id = domain::TenantId::new();
+    let missing_user_id = domain::UserId::new();
+
+    let result = membership_repo
+        .delete(&ctx, missing_tenant_id, missing_user_id)
+        .await;
+
+    assert!(matches!(result, Err(DomainError::NotFound(_))));
+}

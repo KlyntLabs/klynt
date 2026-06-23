@@ -6,7 +6,9 @@
 
 use crate::ctx::ExecutionContext;
 use async_trait::async_trait;
-use domain::{Email, PaginationRequest, User, UserId, UserRole};
+use domain::membership::{Membership, TenantRole};
+use domain::tenant::{Tenant, TenantId, TenantSlug};
+use domain::{DomainResult, Email, PaginationRequest, User, UserId, UserRole};
 use uuid::Uuid;
 
 /// Canonical User repository interface.
@@ -79,6 +81,97 @@ pub trait UserRepository: Send + Sync {
         ctx: &ExecutionContext,
         pagination: PaginationRequest,
     ) -> Result<(Vec<User>, u64), RepositoryError>;
+}
+
+/// Canonical Tenant repository interface.
+#[async_trait]
+pub trait TenantRepository: Send + Sync {
+    /// Create a new tenant.
+    async fn create(&self, ctx: &ExecutionContext, tenant: &Tenant) -> DomainResult<Tenant>;
+
+    /// Find a tenant by ID.
+    async fn find_by_id(
+        &self,
+        ctx: &ExecutionContext,
+        id: TenantId,
+    ) -> DomainResult<Option<Tenant>>;
+
+    /// Find a tenant by slug.
+    async fn find_by_slug(
+        &self,
+        ctx: &ExecutionContext,
+        slug: &TenantSlug,
+    ) -> DomainResult<Option<Tenant>>;
+
+    /// List all tenants where the user has a membership.
+    async fn list_for_user(
+        &self,
+        ctx: &ExecutionContext,
+        user_id: UserId,
+    ) -> DomainResult<Vec<Tenant>>;
+
+    /// Update a tenant.
+    async fn update(&self, ctx: &ExecutionContext, tenant: &Tenant) -> DomainResult<Tenant>;
+
+    /// Delete a tenant.
+    async fn delete(&self, ctx: &ExecutionContext, id: TenantId) -> DomainResult<()>;
+
+    /// Count active tenants owned by a user.
+    async fn count_owned_by_user(
+        &self,
+        ctx: &ExecutionContext,
+        user_id: UserId,
+    ) -> DomainResult<i64>;
+}
+
+/// Canonical Membership repository interface.
+#[async_trait]
+pub trait MembershipRepository: Send + Sync {
+    /// Create a new membership.
+    async fn create(
+        &self,
+        ctx: &ExecutionContext,
+        membership: &Membership,
+    ) -> DomainResult<Membership>;
+
+    /// Find a membership by tenant and user.
+    async fn find(
+        &self,
+        ctx: &ExecutionContext,
+        tenant_id: TenantId,
+        user_id: UserId,
+    ) -> DomainResult<Option<Membership>>;
+
+    /// List all memberships for a user.
+    async fn list_for_user(
+        &self,
+        ctx: &ExecutionContext,
+        user_id: UserId,
+    ) -> DomainResult<Vec<Membership>>;
+
+    /// List all memberships within a tenant.
+    async fn list_for_tenant(
+        &self,
+        ctx: &ExecutionContext,
+        tenant_id: TenantId,
+    ) -> DomainResult<Vec<Membership>>;
+
+    /// Update the role for a membership.
+    async fn update_role(
+        &self,
+        ctx: &ExecutionContext,
+        tenant_id: TenantId,
+        user_id: UserId,
+        role: TenantRole,
+    ) -> DomainResult<()>;
+
+    /// Delete a membership.
+    async fn delete(
+        &self,
+        ctx: &ExecutionContext,
+        tenant_id: TenantId,
+        user_id: UserId,
+    ) -> DomainResult<()>;
 }
 
 /// Canonical repository error type.
