@@ -4,6 +4,7 @@ pub mod auth;
 pub mod health;
 pub mod metrics;
 pub mod openapi;
+pub mod tenants;
 pub mod users;
 
 use axum::{http::HeaderValue, middleware, Router};
@@ -60,6 +61,11 @@ fn api_v1_routes(services: Services) -> Router<Services> {
     let auth_routes = auth_routes(services.clone());
 
     let protected_user_routes = users::routes().layer(middleware::from_fn_with_state(
+        services.clone(),
+        crate::middleware::auth::require_auth,
+    ));
+
+    let tenant_routes = tenants::routes(services.clone()).layer(middleware::from_fn_with_state(
         services,
         crate::middleware::auth::require_auth,
     ));
@@ -69,6 +75,7 @@ fn api_v1_routes(services: Services) -> Router<Services> {
         .nest("/auth", auth_routes)
         // Protected routes (require authentication)
         .nest("/users", protected_user_routes)
+        .nest("/tenants", tenant_routes)
         .layer(CookieManagerLayer::new())
 }
 

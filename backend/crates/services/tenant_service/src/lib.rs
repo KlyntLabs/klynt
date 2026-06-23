@@ -18,7 +18,7 @@ pub mod error;
 use std::sync::Arc;
 
 use base::ctx::ExecutionContext;
-use domain::Tenant;
+use domain::{Tenant, TenantId, TenantSlug, UserId};
 
 pub use builder::TenantBuilder;
 pub use config::TenantConfig;
@@ -124,6 +124,39 @@ impl TenantService {
         slug: &str,
     ) -> Result<(), TenantError> {
         application::use_cases::delete_tenant::execute(self, ctx, slug).await
+    }
+
+    /// Look up a tenant by its canonical slug.
+    pub async fn get_by_slug(
+        &self,
+        ctx: &ExecutionContext,
+        slug: &TenantSlug,
+    ) -> Result<Option<Tenant>, TenantError> {
+        self.internal()
+            .tenant_repository
+            .find_by_slug(ctx, slug)
+            .await
+            .map_err(TenantError::Domain)
+    }
+
+    /// Ensure the given user is a member of the tenant.
+    pub async fn ensure_member(
+        &self,
+        ctx: &ExecutionContext,
+        tenant_id: TenantId,
+        user_id: UserId,
+    ) -> Result<(), TenantError> {
+        let membership = self
+            .internal()
+            .membership_repository
+            .find(ctx, tenant_id, user_id)
+            .await?;
+
+        if membership.is_some() {
+            Ok(())
+        } else {
+            Err(TenantError::NotMember)
+        }
     }
 
     pub(crate) fn internal(&self) -> &InternalState {

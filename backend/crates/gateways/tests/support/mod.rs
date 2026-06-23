@@ -23,6 +23,10 @@ pub use auth::{
 };
 pub use rate_limiter::FakeRateLimiter;
 pub use session::FakePersistenceSessionStore;
+pub use tenant::{
+    build_stateful_test_tenant_service, build_test_tenant_service,
+    StatefulFakeMembershipRepository, StatefulFakeTenantRepository,
+};
 pub use user::{build_test_user_service, FakeUserServiceRepository};
 
 /// Fixed clock for deterministic tests.
@@ -76,6 +80,41 @@ pub fn build_test_services_with_fakes() -> (
         auth: Arc::new(auth_service),
         user: Arc::new(user_service),
         tenant: Arc::new(tenant::build_test_tenant_service()),
+        session: session_service.clone(),
+        rate_limiter: Arc::new(NoOpRateLimiter),
+        trusted_proxies: Arc::new(Vec::new()),
+        health_reporter: Arc::new(observability::health::AlwaysReadyHealthReporter),
+        metrics_handle: observability::metrics::install_recorder(),
+        config: test_config(),
+    };
+
+    (services, session_service, user_repo)
+}
+
+/// Build test gateway services with stateful tenant fakes for tenant route tests.
+pub fn build_test_services_with_tenant_fakes(
+    tenant_repo: Arc<StatefulFakeTenantRepository>,
+    membership_repo: Arc<StatefulFakeMembershipRepository>,
+) -> (
+    gateways::state::Services,
+    Arc<session_service::SessionService>,
+    Arc<FakeUserServiceRepository>,
+) {
+    let (auth_service, _, _) = build_test_auth_service();
+    let session_store = Arc::new(FakePersistenceSessionStore::default());
+    let session_service = Arc::new(session_service::SessionService::new(
+        session_service::SessionConfig::default(),
+        session_store,
+    ));
+    let (user_service, user_repo) = build_test_user_service();
+
+    let services = gateways::state::Services {
+        auth: Arc::new(auth_service),
+        user: Arc::new(user_service),
+        tenant: Arc::new(tenant::build_stateful_test_tenant_service(
+            tenant_repo,
+            membership_repo,
+        )),
         session: session_service.clone(),
         rate_limiter: Arc::new(NoOpRateLimiter),
         trusted_proxies: Arc::new(Vec::new()),

@@ -2,6 +2,8 @@
 
 use std::fmt;
 
+use domain::tenant::TenantId;
+
 /// Unique request ID
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct RequestId(pub uuid::Uuid);
@@ -103,6 +105,7 @@ pub struct ExecutionContext {
     pub request: RequestContext,
     pub actor_id: Option<uuid::Uuid>,
     pub actor_type: Option<ActorType>,
+    pub tenant_id: Option<TenantId>,
 }
 
 impl ExecutionContext {
@@ -112,7 +115,19 @@ impl ExecutionContext {
             request,
             actor_id: None,
             actor_type: None,
+            tenant_id: None,
         }
+    }
+
+    /// Set the active tenant for this request.
+    pub fn with_tenant(mut self, tenant_id: TenantId) -> Self {
+        self.tenant_id = Some(tenant_id);
+        self
+    }
+
+    /// Get the active tenant ID, if any.
+    pub fn tenant_id(&self) -> Option<TenantId> {
+        self.tenant_id
     }
 
     /// Set the actor (authenticated user/system)

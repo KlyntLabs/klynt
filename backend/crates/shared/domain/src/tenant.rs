@@ -131,7 +131,7 @@ impl std::str::FromStr for TenantStatus {
 }
 
 /// A tenant / organization in the platform.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Tenant {
     pub id: TenantId,
     pub slug: TenantSlug,

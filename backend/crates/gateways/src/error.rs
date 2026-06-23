@@ -43,6 +43,10 @@ pub enum GatewayError {
     /// User service errors.
     #[error("User error: {0}")]
     User(#[from] user_service::UserError),
+
+    /// Tenant service errors.
+    #[error("Tenant error: {0}")]
+    Tenant(#[from] tenant_service::TenantError),
 }
 
 impl GatewayError {
@@ -74,6 +78,7 @@ impl GatewayError {
             Self::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Self::Auth(auth_error) => auth_error.status_code(),
             Self::User(user_error) => user_error.status_code(),
+            Self::Tenant(tenant_error) => tenant_error.status_code(),
         }
     }
 
@@ -90,6 +95,7 @@ impl GatewayError {
             Self::Internal(_) => "INTERNAL_SERVER_ERROR",
             Self::Auth(auth_error) => auth_error.error_code(),
             Self::User(user_error) => user_error.error_code(),
+            Self::Tenant(tenant_error) => tenant_error.error_code(),
         }
     }
 }
