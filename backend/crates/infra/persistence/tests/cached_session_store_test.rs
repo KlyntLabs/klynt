@@ -230,3 +230,52 @@ async fn update_memberships_invalidates_cached_session() {
     let session = store.find_valid(&ctx, &token).await.unwrap().unwrap();
     assert_eq!(session.tenant_memberships, vec![snapshot]);
 }
+
+#[tokio::test]
+async fn add_membership_invalidates_all_cached_sessions_for_user() {
+    let pool = setup_pool().await;
+    let mut inspect_conn = setup_redis().await;
+    let user_id = create_test_user(&pool).await;
+    let postgres = PgSessionStore::new(pool);
+    let store = CachedSessionStore::connect(postgres, &redis_url()).await;
+    let ctx = ExecutionContext::new(RequestContext::new());
+    let expires_at = chrono::Utc::now() + chrono::Duration::hours(1);
+    let tenant_id = Uuid::new_v4();
+    let snapshot = MembershipSnapshot {
+        tenant_id,
+        role: TenantRole::Member,
+    };
+
+    let token_a = store
+        .create_with_kind(&ctx, user_id, expires_at, SessionKind::Access, None)
+        .await
+        .unwrap();
+    let token_b = store
+        .create_with_kind(&ctx, user_id, expires_at, SessionKind::Access, None)
+        .await
+        .unwrap();
+    let key_a = cache_key(&token_a);
+    let key_b = cache_key(&token_b);
+
+    // Populate the cache by reading both sessions.
+    let _ = store.find_valid(&ctx, &token_a).await.unwrap();
+    let _ = store.find_valid(&ctx, &token_b).await.unwrap();
+    assert!(redis_has_key(&mut inspect_conn, &key_a).await);
+    assert!(redis_has_key(&mut inspect_conn, &key_b).await);
+
+    store
+        .add_membership(&ctx, user_id, snapshot.clone())
+        .await
+        .unwrap();
+
+    // All cached session entries for the user should be invalidated.
+    assert!(!redis_has_key(&mut inspect_conn, &key_a).await);
+    assert!(!redis_has_key(&mut inspect_conn, &key_b).await);
+
+    // Subsequent reads should reflect the added membership from Postgres.
+    let session_a = store.find_valid(&ctx, &token_a).await.unwrap().unwrap();
+    assert_eq!(session_a.tenant_memberships, vec![snapshot.clone()]);
+
+    let session_b = store.find_valid(&ctx, &token_b).await.unwrap().unwrap();
+    assert_eq!(session_b.tenant_memberships, vec![snapshot]);
+}
