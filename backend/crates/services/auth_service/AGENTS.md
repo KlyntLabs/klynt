@@ -137,8 +137,9 @@ let auth_service = AuthService::builder()
 
 Default requirements (configurable):
 - Minimum 8 characters
-- At least one letter
-- At least one number
+- At least one uppercase letter
+- At least one lowercase letter
+- At least one digit
 - Not in common password list
 
 ## Testing

@@ -2,8 +2,8 @@ use super::*;
 
 #[test]
 fn too_short_displays_min_length() {
-    let err = PasswordPolicyError::TooShort { min_length: 12 };
-    assert!(err.to_string().contains("12"));
+    let err = PasswordPolicyError::TooShort { min_length: 8 };
+    assert!(err.to_string().contains("8"));
     assert!(err.to_string().contains("too short"));
 }
 
@@ -20,13 +20,16 @@ fn default_policy_accepts_strong_password() {
 }
 
 #[test]
+fn default_policy_accepts_password_without_special_char() {
+    let policy = PasswordPolicy::default();
+    assert!(policy.validate("ValidPass123").is_ok());
+}
+
+#[test]
 fn default_policy_rejects_short_password() {
     let policy = PasswordPolicy::default();
-    let result = policy.validate("Short1!");
-    assert_eq!(
-        result,
-        Err(PasswordPolicyError::TooShort { min_length: 12 })
-    );
+    let result = policy.validate("Short1");
+    assert_eq!(result, Err(PasswordPolicyError::TooShort { min_length: 8 }));
 }
 
 #[test]
@@ -51,8 +54,8 @@ fn default_policy_requires_digit() {
 }
 
 #[test]
-fn default_policy_requires_special() {
-    let policy = PasswordPolicy::default();
+fn custom_policy_can_require_special() {
+    let policy = PasswordPolicy::builder().require_special(true).build();
     let result = policy.validate("NoSpecialChars123");
     assert_eq!(result, Err(PasswordPolicyError::MissingSpecial));
 }

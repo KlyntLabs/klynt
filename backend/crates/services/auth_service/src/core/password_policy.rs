@@ -46,12 +46,12 @@ pub struct PasswordPolicy {
 impl Default for PasswordPolicy {
     fn default() -> Self {
         Self {
-            min_length: 12,
+            min_length: 8,
             max_length: 128,
             require_uppercase: true,
             require_lowercase: true,
             require_digit: true,
-            require_special: true,
+            require_special: false,
             forbidden_chars: vec![' ', '\t', '\n', '\r'],
         }
     }
@@ -147,12 +147,12 @@ pub struct PasswordPolicyBuilder {
 impl Default for PasswordPolicyBuilder {
     fn default() -> Self {
         Self {
-            min_length: 12,
+            min_length: 8,
             max_length: 128,
             require_uppercase: true,
             require_lowercase: true,
             require_digit: true,
-            require_special: true,
+            require_special: false,
             forbidden_chars: vec![' ', '\t', '\n', '\r'],
         }
     }
