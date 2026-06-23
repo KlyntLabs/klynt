@@ -10,6 +10,5 @@
   "passwordsMismatch": "Mật khẩu không khớp",
   "inviteCodeRequired": "Mã mời là bắt buộc",
   "emailRequired": "Vui lòng nhập email",
-  "passwordRequired": "Vui lòng nhập mật khẩu",
-  "usernameRequired": "Vui lòng nhập tên người dùng"
+  "passwordRequired": "Vui lòng nhập mật khẩu"
 }

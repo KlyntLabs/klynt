@@ -1,7 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import type { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -15,12 +14,14 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { ApiError } from "@/core/api/api-error";
 import { useForgotPassword } from "@/core/auth/hooks/use-forgot-password";
-import { forgotPasswordSchema } from "@/features/auth/schemas/forgot-password-schema";
+import type { ForgotPasswordSchema } from "@/features/auth/schemas/use-forgot-password-schema";
+import { useForgotPasswordSchema } from "@/features/auth/schemas/use-forgot-password-schema";
 
 export function ForgotPasswordForm() {
   const { t } = useTranslation(["auth", "validation"]);
   const forgot = useForgotPassword();
-  const form = useForm<z.infer<typeof forgotPasswordSchema>>({
+  const forgotPasswordSchema = useForgotPasswordSchema();
+  const form = useForm<ForgotPasswordSchema>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: { email: "" },
   });

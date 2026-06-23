@@ -9,8 +9,11 @@ export { default as RegisterPage } from "./pages/register-page";
 export { default as RegisterSuccessPage } from "./pages/register-success-page";
 export { default as ResetPasswordPage } from "./pages/reset-password-page";
 export { default as VerifyEmailPage } from "./pages/verify-email-page";
-export { type ForgotPasswordSchema, forgotPasswordSchema } from "./schemas/forgot-password-schema";
-export { type LoginSchema, loginSchema } from "./schemas/login-schema";
 export { type RegisterSchema, useRegisterSchema } from "./schemas/register-schema";
 export { type ResetPasswordSchema, useResetPasswordSchema } from "./schemas/reset-password-schema";
+export {
+  type ForgotPasswordSchema,
+  useForgotPasswordSchema,
+} from "./schemas/use-forgot-password-schema";
+export { type LoginSchema, useLoginSchema } from "./schemas/use-login-schema";
 export { default as SessionsPage } from "./sessions/pages/sessions-page";

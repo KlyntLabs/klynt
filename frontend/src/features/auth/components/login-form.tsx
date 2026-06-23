@@ -14,12 +14,13 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { ApiError } from "@/core/api/api-error";
 import { useLogin } from "@/core/auth/hooks/use-login";
-import type { LoginSchema } from "@/features/auth/schemas/login-schema";
-import { loginSchema } from "@/features/auth/schemas/login-schema";
+import type { LoginSchema } from "@/features/auth/schemas/use-login-schema";
+import { useLoginSchema } from "@/features/auth/schemas/use-login-schema";
 
 export function LoginForm() {
   const { t } = useTranslation(["auth", "validation"]);
   const login = useLogin();
+  const loginSchema = useLoginSchema();
   const form = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
     defaultValues: {

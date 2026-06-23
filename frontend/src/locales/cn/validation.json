@@ -10,6 +10,5 @@
   "passwordRequired": "请输入密码",
   "confirmPasswordRequired": "请确认密码",
   "passwordsMismatch": "密码不一致",
-  "inviteCodeRequired": "邀请码是必填项",
-  "usernameRequired": "请输入用户名"
+  "inviteCodeRequired": "邀请码是必填项"
 }

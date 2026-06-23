@@ -10,6 +10,5 @@
   "passwordRequired": "Password is required",
   "confirmPasswordRequired": "Please confirm your password",
   "passwordsMismatch": "Passwords do not match",
-  "inviteCodeRequired": "Invite code is required",
-  "usernameRequired": "Username is required"
+  "inviteCodeRequired": "Invite code is required"
 }
