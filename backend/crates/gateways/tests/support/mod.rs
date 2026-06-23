@@ -81,6 +81,7 @@ pub fn build_test_services_with_fakes() -> (
         user: Arc::new(user_service),
         tenant: Arc::new(tenant::build_test_tenant_service()),
         session: session_service.clone(),
+        pool: dummy_pool(),
         rate_limiter: Arc::new(NoOpRateLimiter),
         trusted_proxies: Arc::new(Vec::new()),
         health_reporter: Arc::new(observability::health::AlwaysReadyHealthReporter),
@@ -116,6 +117,7 @@ pub fn build_test_services_with_tenant_fakes(
             membership_repo,
         )),
         session: session_service.clone(),
+        pool: dummy_pool(),
         rate_limiter: Arc::new(NoOpRateLimiter),
         trusted_proxies: Arc::new(Vec::new()),
         health_reporter: Arc::new(observability::health::AlwaysReadyHealthReporter),
@@ -182,6 +184,7 @@ pub fn build_test_services_with_auth_fakes() -> (
         user: Arc::new(user_service),
         tenant: Arc::new(tenant::build_test_tenant_service()),
         session: session_service.clone(),
+        pool: dummy_pool(),
         rate_limiter: Arc::new(NoOpRateLimiter),
         trusted_proxies: Arc::new(Vec::new()),
         health_reporter: Arc::new(observability::health::AlwaysReadyHealthReporter),
@@ -200,4 +203,11 @@ pub fn build_test_services_with_auth_fakes() -> (
 /// Default test configuration.
 pub fn test_config() -> gateways::Config {
     gateways::Config::default()
+}
+
+/// Lazy, never-connected pool for tests that construct `Services` but do not
+/// touch the database.
+fn dummy_pool() -> sqlx::PgPool {
+    sqlx::PgPool::connect_lazy("postgres://localhost:1/dummy")
+        .expect("lazy pool construction should succeed")
 }

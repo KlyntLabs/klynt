@@ -27,6 +27,8 @@ pub struct Services {
     pub tenant: Arc<TenantService>,
     /// Session service exposed for HTTP authentication middleware.
     pub session: Arc<session_service::SessionService>,
+    /// Database pool used by background jobs and direct DB operations.
+    pub pool: sqlx::PgPool,
     /// Rate limiter shared across auth endpoints.
     pub rate_limiter: Arc<dyn RateLimiter>,
     /// Trusted proxy networks used to resolve the real client IP from
@@ -86,6 +88,7 @@ impl Services {
             user: Arc::new(user_service),
             tenant: Arc::new(tenant_service),
             session: session_service,
+            pool,
             rate_limiter,
             trusted_proxies,
             health_reporter,

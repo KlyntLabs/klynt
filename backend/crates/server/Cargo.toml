@@ -14,7 +14,9 @@ workspace = true
 
 [dependencies]
 gateways = { workspace = true }
+cleanup_job = { workspace = true }
 
 tokio = { workspace = true }
 dotenvy = { workspace = true }
 anyhow = { workspace = true }
+tracing = { workspace = true }

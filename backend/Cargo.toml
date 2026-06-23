@@ -10,6 +10,7 @@ members = [
     "crates/services/user_service",
     "crates/services/session_service",
     "crates/services/tenant_service",
+    "crates/services/cleanup_job",
     "crates/gateways",
     "crates/server",
 ]
@@ -93,6 +94,7 @@ config = { path = "crates/infra/config" }
 auth_service = { path = "crates/services/auth_service" }
 user_service = { path = "crates/services/user_service" }
 session_service = { path = "crates/services/session_service" }
+cleanup_job = { path = "crates/services/cleanup_job" }
 
 # Gateway
 gateways = { path = "crates/gateways" }
