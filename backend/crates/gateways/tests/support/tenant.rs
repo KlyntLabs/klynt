@@ -1,15 +1,17 @@
 //! Fake tenant service dependencies for gateway tests.
 
 use std::collections::HashMap;
+use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
 use base::ctx::ExecutionContext;
+use base::ports::permission::{PermissionRepository, RoleRepository};
 use base::ports::repository::{MembershipRepository, TenantRepository};
 use base::testkit::FakeSessionStore;
 use domain::{
-    DomainError, DomainResult, Membership, Tenant, TenantId, TenantMember, TenantRole, TenantSlug,
-    UserId,
+    DomainError, DomainResult, Membership, Permission, PermissionCategory, PermissionId, RoleId,
+    Tenant, TenantId, TenantMember, TenantRole, TenantRoleAggregate, TenantSlug, UserId,
 };
 
 /// Stub tenant repository that returns empty results.
@@ -358,6 +360,129 @@ impl MembershipRepository for StatefulFakeMembershipRepository {
     }
 }
 
+/// In-memory permission repository for gateway tests.
+///
+/// Returns a deterministic catalog seeded from the well-known permission names.
+#[derive(Clone)]
+pub struct FakePermissionRepository {
+    permissions: std::collections::HashMap<String, Permission>,
+}
+
+impl Default for FakePermissionRepository {
+    fn default() -> Self {
+        use domain::all_permission_names;
+
+        let mut permissions = std::collections::HashMap::new();
+        for (index, name) in all_permission_names().into_iter().enumerate() {
+            let category = name.split('.').next().unwrap_or("tenant");
+            let category =
+                PermissionCategory::from_str(category).unwrap_or(PermissionCategory::Tenant);
+            let permission = Permission {
+                id: PermissionId::from_uuid(uuid::Uuid::from_u128(index as u128 + 1)),
+                name: name.to_string(),
+                description: String::new(),
+                category,
+            };
+            permissions.insert(name.to_string(), permission);
+        }
+        Self { permissions }
+    }
+}
+
+#[async_trait]
+impl PermissionRepository for FakePermissionRepository {
+    async fn list_permissions(&self, _ctx: &ExecutionContext) -> DomainResult<Vec<Permission>> {
+        Ok(self.permissions.values().cloned().collect())
+    }
+
+    async fn find_permission_by_name(
+        &self,
+        _ctx: &ExecutionContext,
+        name: &str,
+    ) -> DomainResult<Option<Permission>> {
+        Ok(self.permissions.get(name).cloned())
+    }
+}
+
+/// Permissive role repository for gateway tests.
+///
+/// Every membership role is treated as having all known permissions, which is
+/// sufficient for the existing gateway route tests that only exercise owners.
+#[derive(Default, Clone)]
+pub struct FakeRoleRepository;
+
+#[async_trait]
+impl RoleRepository for FakeRoleRepository {
+    async fn list_roles_for_tenant(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+    ) -> DomainResult<Vec<TenantRoleAggregate>> {
+        Ok(Vec::new())
+    }
+
+    async fn find_role_by_name(
+        &self,
+        ctx: &ExecutionContext,
+        tenant_id: TenantId,
+        name: &str,
+    ) -> DomainResult<Option<TenantRoleAggregate>> {
+        let permission_ids = FakePermissionRepository::default()
+            .list_permissions(ctx)
+            .await?
+            .into_iter()
+            .map(|p| p.id)
+            .collect();
+
+        Ok(Some(TenantRoleAggregate {
+            id: RoleId::from_uuid(uuid::Uuid::from_u128(1)),
+            tenant_id,
+            name: name.to_string(),
+            description: String::new(),
+            is_system: true,
+            permission_ids,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        }))
+    }
+
+    async fn find_role_by_id(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _role_id: RoleId,
+    ) -> DomainResult<Option<TenantRoleAggregate>> {
+        Ok(None)
+    }
+
+    async fn create_role(
+        &self,
+        _ctx: &ExecutionContext,
+        _role: TenantRoleAggregate,
+    ) -> DomainResult<()> {
+        Ok(())
+    }
+
+    async fn update_role_permissions(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _role_id: RoleId,
+        _permission_ids: Vec<PermissionId>,
+    ) -> DomainResult<()> {
+        Ok(())
+    }
+
+    async fn delete_role(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _role_id: RoleId,
+    ) -> DomainResult<()> {
+        Ok(())
+    }
+}
+
 /// Build a fake tenant service for gateway tests.
 pub fn build_test_tenant_service() -> tenant_service::TenantService {
     tenant_service::TenantService::new(
@@ -366,6 +491,8 @@ pub fn build_test_tenant_service() -> tenant_service::TenantService {
             tenant_repository: Arc::new(FakeTenantRepository),
             membership_repository: Arc::new(FakeMembershipRepository),
             user_repository: Arc::new(super::user::FakeUserServiceRepository::default()),
+            permission_repository: Arc::new(FakePermissionRepository::default()),
+            role_repository: Arc::new(FakeRoleRepository),
             session_store: Arc::new(FakeSessionStore::new()),
             audit_logger: Arc::new(super::user::StubUserAuditLogger),
         },
@@ -385,6 +512,8 @@ pub fn build_stateful_test_tenant_service(
             tenant_repository: tenant_repo,
             membership_repository: membership_repo,
             user_repository: user_repo,
+            permission_repository: Arc::new(FakePermissionRepository::default()),
+            role_repository: Arc::new(FakeRoleRepository),
             session_store: Arc::new(FakeSessionStore::new()),
             audit_logger: Arc::new(super::user::StubUserAuditLogger),
         },

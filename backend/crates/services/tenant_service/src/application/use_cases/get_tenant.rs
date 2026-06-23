@@ -6,7 +6,9 @@ use domain::Tenant;
 use crate::error::TenantError;
 use crate::TenantService;
 
-use super::shared::{fetch_tenant, require_actor};
+use domain::permission;
+
+use super::shared::{fetch_tenant, require_actor, require_member_permission};
 
 pub(crate) async fn execute(
     service: &TenantService,
@@ -16,15 +18,15 @@ pub(crate) async fn execute(
     let user_id = require_actor(ctx)?;
     let tenant = fetch_tenant(service, ctx, slug).await?;
 
-    let membership = service
-        .internal()
-        .membership_repository
-        .find(ctx, tenant.id, user_id)
-        .await?;
-
-    if membership.is_none() {
-        return Err(TenantError::NotMember);
-    }
+    require_member_permission(
+        service,
+        ctx,
+        tenant.id,
+        user_id,
+        permission::tenant::VIEW,
+        TenantError::NotMember,
+    )
+    .await?;
 
     Ok(tenant)
 }

@@ -24,7 +24,11 @@ pub use builder::TenantBuilder;
 pub use config::TenantConfig;
 pub use error::{TenantError, TenantResult};
 
-use application::ports::{AuditLogger, MembershipRepository, TenantRepository, UserRepository};
+use application::ports::{
+    AuditLogger, MembershipRepository, PermissionRepository, RoleRepository, TenantRepository,
+    UserRepository,
+};
+use application::AuthorizationService;
 use base::ports::session::SessionStore;
 
 /// Request to create a new tenant.
@@ -98,6 +102,12 @@ impl TenantService {
     /// Prefer [`TenantService::builder`] for production wiring; this constructor
     /// remains available for tests and custom dependency injection.
     pub fn new(_config: TenantConfig, dependencies: Dependencies) -> Result<Self, TenantError> {
+        let authorization_service = AuthorizationService::new(
+            dependencies.membership_repository.clone(),
+            dependencies.permission_repository.clone(),
+            dependencies.role_repository.clone(),
+        );
+
         Ok(Self {
             internal_state: InternalState {
                 tenant_repository: dependencies.tenant_repository,
@@ -105,6 +115,7 @@ impl TenantService {
                 user_repository: dependencies.user_repository,
                 session_store: dependencies.session_store,
                 audit_logger: dependencies.audit_logger,
+                authorization_service,
             },
         })
     }
@@ -233,6 +244,10 @@ impl TenantService {
     pub(crate) fn session_store(&self) -> &Arc<dyn SessionStore> {
         &self.internal_state.session_store
     }
+
+    pub(crate) fn authorization(&self) -> &AuthorizationService {
+        &self.internal_state.authorization_service
+    }
 }
 
 /// Dependencies wired into the tenant service.
@@ -241,6 +256,8 @@ pub struct Dependencies {
     pub tenant_repository: Arc<dyn TenantRepository>,
     pub membership_repository: Arc<dyn MembershipRepository>,
     pub user_repository: Arc<dyn UserRepository>,
+    pub permission_repository: Arc<dyn PermissionRepository>,
+    pub role_repository: Arc<dyn RoleRepository>,
     pub session_store: Arc<dyn SessionStore>,
     pub audit_logger: Arc<dyn AuditLogger>,
 }
@@ -252,4 +269,5 @@ pub(crate) struct InternalState {
     pub user_repository: Arc<dyn UserRepository>,
     pub session_store: Arc<dyn SessionStore>,
     pub audit_logger: Arc<dyn AuditLogger>,
+    pub authorization_service: AuthorizationService,
 }

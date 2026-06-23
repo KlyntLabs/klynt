@@ -1,12 +1,13 @@
 //! Update tenant use case.
 
 use base::ctx::ExecutionContext;
+use domain::permission;
 use domain::Tenant;
 
 use crate::error::TenantError;
 use crate::TenantService;
 
-use super::shared::{fetch_tenant, require_actor};
+use super::shared::{fetch_tenant, require_actor, require_member_permission};
 
 pub(crate) async fn execute(
     service: &TenantService,
@@ -17,17 +18,15 @@ pub(crate) async fn execute(
     let user_id = require_actor(ctx)?;
     let mut tenant = fetch_tenant(service, ctx, slug).await?;
 
-    let membership = service
-        .internal()
-        .membership_repository
-        .find(ctx, tenant.id, user_id)
-        .await?;
-
-    match membership {
-        Some(m) if m.role.can_administer() => {}
-        Some(_) => return Err(TenantError::NotAdmin),
-        None => return Err(TenantError::NotMember),
-    }
+    require_member_permission(
+        service,
+        ctx,
+        tenant.id,
+        user_id,
+        permission::tenant::MANAGE_SETTINGS,
+        TenantError::NotAdmin,
+    )
+    .await?;
 
     tenant.rename(name)?;
 

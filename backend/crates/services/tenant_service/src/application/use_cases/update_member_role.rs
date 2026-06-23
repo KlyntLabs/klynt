@@ -2,12 +2,13 @@
 
 use base::ctx::ExecutionContext;
 use base::ports::session::MembershipSnapshot;
+use domain::permission;
 use domain::{DomainError, Email};
 
 use crate::error::TenantError;
 use crate::{TenantService, UpdateMemberRoleRequest};
 
-use super::shared::{fetch_tenant, require_actor};
+use super::shared::{fetch_tenant, require_actor, require_member_permission};
 
 pub(crate) async fn execute(
     service: &TenantService,
@@ -18,17 +19,15 @@ pub(crate) async fn execute(
     let actor_id = require_actor(ctx)?;
     let tenant = fetch_tenant(service, ctx, slug).await?;
 
-    let actor_membership = service
-        .internal()
-        .membership_repository
-        .find(ctx, tenant.id, actor_id)
-        .await?;
-
-    match actor_membership {
-        Some(m) if m.role.can_administer() => {}
-        Some(_) => return Err(TenantError::NotAdmin),
-        None => return Err(TenantError::NotMember),
-    }
+    require_member_permission(
+        service,
+        ctx,
+        tenant.id,
+        actor_id,
+        permission::tenant::MANAGE_MEMBERS,
+        TenantError::NotAdmin,
+    )
+    .await?;
 
     let email = Email::parse(&request.email).map_err(DomainError::from)?;
     let target_user = service

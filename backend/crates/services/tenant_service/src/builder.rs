@@ -3,6 +3,7 @@
 use std::sync::Arc;
 
 use base::ports::audit::AuditLogger;
+use base::ports::permission::{PermissionRepository, RoleRepository};
 use base::ports::repository::{MembershipRepository, TenantRepository, UserRepository};
 use base::ports::session::SessionStore;
 
@@ -20,6 +21,8 @@ pub struct TenantBuilder {
     tenant_repository: Option<Arc<dyn TenantRepository>>,
     membership_repository: Option<Arc<dyn MembershipRepository>>,
     user_repository: Option<Arc<dyn UserRepository>>,
+    permission_repository: Option<Arc<dyn PermissionRepository>>,
+    role_repository: Option<Arc<dyn RoleRepository>>,
     session_store: Option<Arc<dyn SessionStore>>,
     audit_logger: Option<Arc<dyn AuditLogger>>,
 }
@@ -57,6 +60,18 @@ impl TenantBuilder {
     /// Override the user repository.
     pub fn with_user_repository(mut self, repo: Arc<dyn UserRepository>) -> Self {
         self.user_repository = Some(repo);
+        self
+    }
+
+    /// Override the permission repository.
+    pub fn with_permission_repository(mut self, repo: Arc<dyn PermissionRepository>) -> Self {
+        self.permission_repository = Some(repo);
+        self
+    }
+
+    /// Override the role repository.
+    pub fn with_role_repository(mut self, repo: Arc<dyn RoleRepository>) -> Self {
+        self.role_repository = Some(repo);
         self
     }
 
@@ -102,6 +117,18 @@ impl TenantBuilder {
             )) as Arc<dyn UserRepository>
         });
 
+        let permission_repository = self.permission_repository.unwrap_or_else(|| {
+            Arc::new(
+                persistence::repositories::permission::PgPermissionRepository::new(pool.clone()),
+            ) as Arc<dyn PermissionRepository>
+        });
+
+        let role_repository = self.role_repository.unwrap_or_else(|| {
+            Arc::new(persistence::repositories::role::PgRoleRepository::new(
+                pool.clone(),
+            )) as Arc<dyn RoleRepository>
+        });
+
         let session_store = self.session_store.unwrap_or_else(|| {
             Arc::new(persistence::repositories::session::PgSessionStore::new(
                 pool.clone(),
@@ -121,6 +148,8 @@ impl TenantBuilder {
                 tenant_repository,
                 membership_repository,
                 user_repository,
+                permission_repository,
+                role_repository,
                 session_store,
                 audit_logger,
             },
