@@ -16,7 +16,10 @@ use crate::types::{AuditAction, AuditEvent, AuditEventRepository, ResourceType};
 /// Audit snapshots are simple, derive-`Serialize` structs, so this should
 /// never fail in practice. The helper keeps callers concise.
 fn snapshot_to_value<T: Serialize>(snapshot: T) -> serde_json::Value {
-    serde_json::to_value(snapshot).expect("audit snapshot serialization should not fail")
+    serde_json::to_value(snapshot).unwrap_or_else(|e| {
+        tracing::warn!(error = %e, "failed to serialize audit snapshot");
+        serde_json::Value::Null
+    })
 }
 
 /// Audit logging service.
@@ -158,9 +161,14 @@ impl AuditService {
         ctx: &ExecutionContext,
         tenant_id: domain::TenantId,
     ) -> Result<(), DomainError> {
-        let event = AuditEvent::new(AuditAction::TenantCreated, ResourceType::Tenant)
+        let mut event = AuditEvent::new(AuditAction::TenantCreated, ResourceType::Tenant)
             .with_resource(tenant_id.inner())
+            .with_tenant(tenant_id.inner())
             .with_request_id(ctx.request.request_id.0);
+
+        if let Some(actor_id) = ctx.actor_id {
+            event = event.with_actor(UserId::from_uuid(actor_id));
+        }
 
         self.repo.log(ctx, event).await
     }
@@ -171,9 +179,14 @@ impl AuditService {
         ctx: &ExecutionContext,
         tenant_id: domain::TenantId,
     ) -> Result<(), DomainError> {
-        let event = AuditEvent::new(AuditAction::TenantUpdated, ResourceType::Tenant)
+        let mut event = AuditEvent::new(AuditAction::TenantUpdated, ResourceType::Tenant)
             .with_resource(tenant_id.inner())
+            .with_tenant(tenant_id.inner())
             .with_request_id(ctx.request.request_id.0);
+
+        if let Some(actor_id) = ctx.actor_id {
+            event = event.with_actor(UserId::from_uuid(actor_id));
+        }
 
         self.repo.log(ctx, event).await
     }
@@ -184,9 +197,14 @@ impl AuditService {
         ctx: &ExecutionContext,
         tenant_id: domain::TenantId,
     ) -> Result<(), DomainError> {
-        let event = AuditEvent::new(AuditAction::TenantDeleted, ResourceType::Tenant)
+        let mut event = AuditEvent::new(AuditAction::TenantDeleted, ResourceType::Tenant)
             .with_resource(tenant_id.inner())
+            .with_tenant(tenant_id.inner())
             .with_request_id(ctx.request.request_id.0);
+
+        if let Some(actor_id) = ctx.actor_id {
+            event = event.with_actor(UserId::from_uuid(actor_id));
+        }
 
         self.repo.log(ctx, event).await
     }
