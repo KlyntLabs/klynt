@@ -1,3 +1,4 @@
+import { decamelizeKeys } from "humps";
 import { HttpResponse, http } from "msw";
 import { describe, expect, it } from "vitest";
 import { server } from "@/test/msw/server";
@@ -13,22 +14,24 @@ import {
 
 const mockUser = {
   id: "550e8400-e29b-41d4-a716-446655440000",
-  full_name: "Ada Lovelace",
+  fullName: "Ada Lovelace",
   email: "ada@example.com",
   role: "student" as const,
   status: "active" as const,
-  created_at: "2024-01-01T00:00:00Z",
+  createdAt: "2024-01-01T00:00:00Z",
 };
+
+const backendUser = decamelizeKeys(mockUser);
 
 describe("auth-api", () => {
   it("login returns mapped user", async () => {
     server.use(
-      http.post("/api/v1/auth/login", () => HttpResponse.json({ data: { user: mockUser } }))
+      http.post("/api/v1/auth/login", () => HttpResponse.json({ data: { user: backendUser } }))
     );
 
     const user = await login({ email: mockUser.email, password: "password" });
     expect(user.id).toBe(mockUser.id);
-    expect(user.name).toBe(mockUser.full_name);
+    expect(user.name).toBe(mockUser.fullName);
     expect(user.role).toBe(mockUser.role);
   });
 
@@ -49,7 +52,7 @@ describe("auth-api", () => {
   });
 
   it("getMe returns mapped user", async () => {
-    server.use(http.get("/api/v1/users/me", () => HttpResponse.json({ data: mockUser })));
+    server.use(http.get("/api/v1/users/me", () => HttpResponse.json({ data: backendUser })));
 
     const user = await getMe();
     expect(user.email).toBe(mockUser.email);

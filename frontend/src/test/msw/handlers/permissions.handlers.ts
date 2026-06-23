@@ -1,5 +1,4 @@
 import { HttpResponse, http } from "msw";
-import type { Role } from "@/features/tenant/permissions/types";
 
 const permissionCatalog = [
   { id: "perm-1", name: "tenant.view", description: "", category: "tenant" as const },
@@ -9,39 +8,50 @@ const permissionCatalog = [
   { id: "perm-5", name: "tenant.delete", description: "", category: "tenant" as const },
 ];
 
-const baseRolesBySlug = new Map<string, Role[]>();
+interface BackendRole {
+  id: string;
+  tenant_id: string;
+  name: string;
+  description: string;
+  is_system: boolean;
+  permission_ids: string[];
+  created_at: string;
+  updated_at: string;
+}
 
-function getBaseRoles(slug: string): Role[] {
+const baseRolesBySlug = new Map<string, BackendRole[]>();
+
+function getBaseRoles(slug: string): BackendRole[] {
   if (!baseRolesBySlug.has(slug)) {
     baseRolesBySlug.set(slug, [
       {
         id: "role-owner",
-        tenantId: `tenant-${slug}`,
+        tenant_id: `tenant-${slug}`,
         name: "owner",
         description: "",
-        isSystem: true,
-        permissionIds: permissionCatalog.map((p) => p.id),
-        createdAt: "2026-06-22T00:00:00Z",
-        updatedAt: "2026-06-22T00:00:00Z",
+        is_system: true,
+        permission_ids: permissionCatalog.map((p) => p.id),
+        created_at: "2026-06-22T00:00:00Z",
+        updated_at: "2026-06-22T00:00:00Z",
       },
       {
         id: "role-member",
-        tenantId: `tenant-${slug}`,
+        tenant_id: `tenant-${slug}`,
         name: "member",
         description: "",
-        isSystem: true,
-        permissionIds: ["perm-1"],
-        createdAt: "2026-06-22T00:00:00Z",
-        updatedAt: "2026-06-22T00:00:00Z",
+        is_system: true,
+        permission_ids: ["perm-1"],
+        created_at: "2026-06-22T00:00:00Z",
+        updated_at: "2026-06-22T00:00:00Z",
       },
     ]);
   }
-  return baseRolesBySlug.get(slug) as Role[];
+  return baseRolesBySlug.get(slug) ?? [];
 }
 
-const createdRolesBySlug = new Map<string, Role[]>();
+const createdRolesBySlug = new Map<string, BackendRole[]>();
 
-function getCreatedRoles(slug: string): Role[] {
+function getCreatedRoles(slug: string): BackendRole[] {
   return createdRolesBySlug.get(slug) ?? [];
 }
 
@@ -60,36 +70,35 @@ export const permissionsHandlers = [
     const body = (await request.json()) as {
       name?: string;
       description?: string;
-      permissionIds?: string[];
+      permission_ids?: string[];
     };
-    const role: Role = {
+    const role: BackendRole = {
       id: `role-new-${Date.now()}`,
-      tenantId: `tenant-${slug}`,
+      tenant_id: `tenant-${slug}`,
       name: body.name ?? "New Role",
       description: body.description ?? "",
-      isSystem: false,
-      permissionIds: body.permissionIds ?? [],
-      createdAt: "2026-06-22T00:00:00Z",
-      updatedAt: "2026-06-22T00:00:00Z",
+      is_system: false,
+      permission_ids: body.permission_ids ?? [],
+      created_at: "2026-06-22T00:00:00Z",
+      updated_at: "2026-06-22T00:00:00Z",
     };
     createdRolesBySlug.set(slug, [...getCreatedRoles(slug), role]);
     return HttpResponse.json({ data: role }, { status: 201 });
   }),
 
   http.patch("/api/v1/tenants/:slug/roles/:roleId", async ({ request, params }) => {
-    const body = (await request.json()) as { permissionIds?: string[] };
-    return HttpResponse.json({
-      data: {
-        id: params.roleId,
-        tenantId: `tenant-${params.slug as string}`,
-        name: "Custom Role",
-        description: "",
-        isSystem: false,
-        permissionIds: body.permissionIds ?? [],
-        createdAt: "2026-06-22T00:00:00Z",
-        updatedAt: "2026-06-22T00:00:00Z",
-      },
-    });
+    const body = (await request.json()) as { permission_ids?: string[] };
+    const role: BackendRole = {
+      id: params.roleId as string,
+      tenant_id: `tenant-${params.slug as string}`,
+      name: "Custom Role",
+      description: "",
+      is_system: false,
+      permission_ids: body.permission_ids ?? [],
+      created_at: "2026-06-22T00:00:00Z",
+      updated_at: "2026-06-22T00:00:00Z",
+    };
+    return HttpResponse.json({ data: role });
   }),
 
   http.delete("/api/v1/tenants/:slug/roles/:roleId", () => new HttpResponse(null, { status: 204 })),

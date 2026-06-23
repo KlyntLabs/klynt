@@ -9,7 +9,7 @@ export const tenantHandlers = [
           slug: "acme",
           name: "Acme",
           role: "owner",
-          joinedAt: "2026-06-22T00:00:00Z",
+          joined_at: "2026-06-22T00:00:00Z",
         },
       ],
     })
@@ -23,7 +23,7 @@ export const tenantHandlers = [
           slug: body.slug ?? "new-tenant",
           name: body.name ?? "New Tenant",
           role: "owner",
-          joinedAt: "2026-06-22T00:00:00Z",
+          joined_at: "2026-06-22T00:00:00Z",
         },
       },
       { status: 201 }

@@ -20,20 +20,20 @@ interface MessageResponse {
 interface BackendUser {
   id: string;
   email: string;
-  full_name?: string | null;
+  fullName?: string | null;
   role: "admin" | "instructor" | "student";
   status?: "pending" | "active" | "suspended" | "deleted";
-  created_at?: string;
+  createdAt?: string;
 }
 
 function mapUser(backend: BackendUser): User {
   return {
     id: backend.id,
     email: backend.email,
-    name: backend.full_name ?? backend.email,
+    name: backend.fullName ?? backend.email,
     role: backend.role,
     status: backend.status ?? "pending",
-    createdAt: backend.created_at ?? new Date().toISOString(),
+    createdAt: backend.createdAt ?? new Date().toISOString(),
   };
 }
 
@@ -49,7 +49,7 @@ export async function register(input: RegisterInput): Promise<{ userId: string }
   const { data } = await apiClient.post<SuccessResponse<string>>("/auth/register", {
     email: input.email,
     password: input.password,
-    full_name: input.name,
+    fullName: input.name,
   });
   return { userId: data.data };
 }
@@ -74,6 +74,6 @@ export async function requestPasswordReset(input: ForgotPasswordInput): Promise<
 export async function resetPassword(input: ResetPasswordInput): Promise<void> {
   await apiClient.post<MessageResponse>("/auth/reset-password", {
     token: input.token,
-    new_password: input.password,
+    newPassword: input.password,
   });
 }
