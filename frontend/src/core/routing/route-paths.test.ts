@@ -8,5 +8,6 @@ describe("routePaths", () => {
     expect(routePaths.registerSuccess).toBe("/register/success");
     expect(routePaths.dashboard).toBe("/dashboard");
     expect(routePaths.tenantsNew).toBe("/tenants/new");
+    expect(routePaths.settingsSessions).toBe("/settings/sessions");
   });
 });

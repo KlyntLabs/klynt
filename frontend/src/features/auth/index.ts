@@ -12,3 +12,4 @@ export { type ForgotPasswordSchema, forgotPasswordSchema } from "./schemas/forgo
 export { type LoginSchema, loginSchema } from "./schemas/login-schema";
 export { type RegisterSchema, useRegisterSchema } from "./schemas/register-schema";
 export { type ResetPasswordSchema, useResetPasswordSchema } from "./schemas/reset-password-schema";
+export { default as SessionsPage } from "./sessions/pages/sessions-page";
