@@ -25,6 +25,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { createApiError } from "@/core/api/api-error";
 import { routePaths } from "@/core/routing/route-paths";
@@ -59,6 +60,7 @@ export default function TenantSettingsPage() {
   async function handleSubmit(data: UpdateTenantInput) {
     if (data.name === tenant?.name) return;
     await updateMutation.mutateAsync(data);
+    form.reset(data);
   }
 
   async function handleRemove() {
@@ -109,8 +111,14 @@ export default function TenantSettingsPage() {
                 )}
               />
               <div className="grid gap-2">
-                <FormLabel>{t("settings.slugLabel")}</FormLabel>
-                <Input value={tenantSlug} disabled readOnly data-testid="tenant-slug-input" />
+                <Label htmlFor="tenant-slug">{t("settings.slugLabel")}</Label>
+                <Input
+                  id="tenant-slug"
+                  value={tenantSlug}
+                  disabled
+                  readOnly
+                  data-testid="tenant-slug-input"
+                />
               </div>
               {updateMutation.error && (
                 <Alert variant="destructive">
