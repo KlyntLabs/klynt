@@ -31,6 +31,9 @@ const DashboardPage = lazy(() => import("@/features/dashboard/pages/dashboard-pa
 const CreateTenantPage = lazy(() =>
   import("@/features/tenant").then((module) => ({ default: module.CreateTenantPage }))
 );
+const RolesPage = lazy(() =>
+  import("@/features/tenant").then((module) => ({ default: module.RolesPage }))
+);
 const AdminPage = lazy(() => import("@/features/admin/pages/admin-page"));
 const NotFoundPage = lazy(() => import("./not-found-page"));
 
@@ -109,6 +112,7 @@ export const router = createBrowserRouter([
         children: [
           { path: routePaths.dashboard, element: <DashboardPage /> },
           { path: routePaths.tenantsNew, element: <CreateTenantPage /> },
+          { path: routePaths.tenantRoles, element: <RolesPage /> },
         ],
       },
       {

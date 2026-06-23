@@ -27,6 +27,19 @@
     "createButton": "Create tenant",
     "createError": "Failed to create tenant. Please try again."
   },
+  "roles": {
+    "title": "Roles",
+    "createTitle": "Create role",
+    "editTitle": "Edit role",
+    "nameLabel": "Role name",
+    "descriptionLabel": "Description",
+    "permissionsLabel": "Permissions",
+    "systemBadge": "System",
+    "createButton": "Create role",
+    "saveButton": "Save",
+    "deleteButton": "Delete",
+    "noRoles": "No roles found."
+  },
   "admin": {
     "title": "Admin",
     "description": "Administrator overview",

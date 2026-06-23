@@ -8,5 +8,6 @@ export const routePaths = {
   resetPassword: "/reset-password",
   dashboard: "/dashboard",
   tenantsNew: "/tenants/new",
+  tenantRoles: "/tenants/:slug/roles",
   admin: "/admin",
 } as const;
