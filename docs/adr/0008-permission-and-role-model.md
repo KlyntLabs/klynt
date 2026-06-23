@@ -14,13 +14,17 @@ Tenant-level authorization requires a flexible permission system. Different tena
 
 ## Decision
 
-### Three-tier permission model
+### Five-category permission model
 
-Permissions are grouped into categories that match the product surface area:
+Permissions are grouped into categories defined by `PermissionCategory` in the domain model:
 
 1. **Tenant** — manage the tenant itself (`tenant.view`, `tenant.manage_settings`, `tenant.manage_members`, `tenant.manage_roles`, `tenant.delete`).
-2. **Content** — create and curate learning material (`content.view`, `content.create`, `content.edit`, `content.delete`, `content.publish`).
-3. **Platform** — super-admin capabilities (`platform.manage_users`, `platform.manage_tenants`, `platform.view_analytics`, `platform.manage_billing`).
+2. **Member** — reserved for future fine-grained membership permissions (no seeded permissions yet).
+3. **Role** — reserved for future fine-grained role-management permissions (no seeded permissions yet).
+4. **Content** — create and curate learning material (`content.view`, `content.create`, `content.edit`, `content.delete`, `content.publish`).
+5. **Platform** — super-admin capabilities (`platform.manage_users`, `platform.manage_tenants`, `platform.view_analytics`, `platform.manage_billing`).
+
+The migration currently seeds only Tenant, Content, and Platform permissions. Member and Role categories exist in the domain model for forward compatibility.
 
 Well-known permission names are constants in `domain::permission` and mirrored in `all_permission_names()` so tests can seed a deterministic catalog.
 
