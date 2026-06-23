@@ -6,13 +6,13 @@ edition = "2021"
 [dependencies]
 base = { path = "../../../crates/base" }
 domain = { path = "../../shared/domain" }
-observability = { path = "../../../crates/infra/observability" }
-persistence = { path = "../../../crates/infra/persistence" }
 chrono = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
 
 [dev-dependencies]
+observability = { path = "../../../crates/infra/observability" }
+persistence = { path = "../../../crates/infra/persistence" }
 sqlx = { workspace = true }
 serde_json = { workspace = true }
 uuid = { workspace = true }

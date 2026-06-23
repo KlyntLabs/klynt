@@ -2,60 +2,12 @@
 //!
 //! These tests require `DATABASE_URL` to point at a running PostgreSQL instance.
 
-use base::ctx::{ActorType, ExecutionContext, RequestContext};
+use base::ctx::{ExecutionContext, RequestContext};
 use base::ports::repository::MembershipRepository;
 use domain::{Membership, TenantRole, UserId};
 use tenant_service::{CreateTenantRequest, TenantError};
 
 mod support;
-
-fn database_url() -> Option<String> {
-    std::env::var("DATABASE_URL").ok()
-}
-
-async fn setup_pool() -> Option<sqlx::PgPool> {
-    let url = database_url()?;
-    let pool = sqlx::PgPool::connect(&url).await.ok()?;
-    sqlx::migrate!("../../../migrations")
-        .run(&pool)
-        .await
-        .ok()?;
-    Some(pool)
-}
-
-fn test_ctx(user_id: UserId) -> ExecutionContext {
-    ExecutionContext::new(RequestContext::new()).with_actor(user_id.inner(), ActorType::User)
-}
-
-async fn create_test_user(pool: &sqlx::PgPool, prefix: &str) -> UserId {
-    let user_id = UserId::new();
-    let email = format!("{}-{}@example.com", prefix, user_id.inner());
-
-    let username = user_id.inner().to_string();
-
-    sqlx::query(
-        r#"
-        INSERT INTO users (
-            id, email, username, name, password_hash,
-            status, terms_accepted_at, terms_version
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        "#,
-    )
-    .bind(user_id.inner())
-    .bind(&email)
-    .bind(&username)
-    .bind(prefix)
-    .bind("hash")
-    .bind("active")
-    .bind(chrono::Utc::now())
-    .bind("1.0")
-    .execute(pool)
-    .await
-    .expect("user should insert");
-
-    user_id
-}
 
 async fn add_member(
     pool: &sqlx::PgPool,
@@ -64,7 +16,7 @@ async fn add_member(
     role: TenantRole,
 ) {
     let repo = persistence::repositories::membership::PgMembershipRepository::new(pool.clone());
-    let ctx = test_ctx(user_id);
+    let ctx = support::test_ctx(user_id);
     let membership = Membership::new(tenant_id, user_id, role);
 
     repo.create(&ctx, &membership)
@@ -72,23 +24,15 @@ async fn add_member(
         .expect("membership should insert");
 }
 
-async fn delete_test_user(pool: &sqlx::PgPool, user_id: UserId) {
-    sqlx::query("DELETE FROM users WHERE id = $1")
-        .bind(user_id.inner())
-        .execute(pool)
-        .await
-        .ok();
-}
-
 #[tokio::test]
 async fn create_tenant_as_authenticated_user() {
-    let Some(pool) = setup_pool().await else {
+    let Some(pool) = support::setup_pool().await else {
         return;
     };
 
     let service = support::build_service(pool.clone()).await;
-    let owner_id = create_test_user(&pool, "owner-create").await;
-    let ctx = test_ctx(owner_id);
+    let owner_id = support::create_test_user(&pool, "owner-create").await;
+    let ctx = support::test_ctx(owner_id);
 
     let request = CreateTenantRequest {
         slug: format!("create-{}", owner_id.inner()),
@@ -105,21 +49,21 @@ async fn create_tenant_as_authenticated_user() {
         .delete_tenant(&ctx, tenant.slug.as_str())
         .await
         .unwrap();
-    delete_test_user(&pool, owner_id).await;
+    support::delete_test_user(&pool, owner_id).await;
 }
 
 #[tokio::test]
 async fn list_my_tenants() {
-    let Some(pool) = setup_pool().await else {
+    let Some(pool) = support::setup_pool().await else {
         return;
     };
 
     let service = support::build_service(pool.clone()).await;
-    let owner_id = create_test_user(&pool, "owner-list").await;
-    let other_id = create_test_user(&pool, "other-list").await;
+    let owner_id = support::create_test_user(&pool, "owner-list").await;
+    let other_id = support::create_test_user(&pool, "other-list").await;
 
-    let owner_ctx = test_ctx(owner_id);
-    let other_ctx = test_ctx(other_id);
+    let owner_ctx = support::test_ctx(owner_id);
+    let other_ctx = support::test_ctx(other_id);
 
     let owner_tenant = service
         .create_tenant(
@@ -155,22 +99,22 @@ async fn list_my_tenants() {
         .delete_tenant(&other_ctx, other_tenant.slug.as_str())
         .await
         .unwrap();
-    delete_test_user(&pool, owner_id).await;
-    delete_test_user(&pool, other_id).await;
+    support::delete_test_user(&pool, owner_id).await;
+    support::delete_test_user(&pool, other_id).await;
 }
 
 #[tokio::test]
 async fn get_tenant_by_slug() {
-    let Some(pool) = setup_pool().await else {
+    let Some(pool) = support::setup_pool().await else {
         return;
     };
 
     let service = support::build_service(pool.clone()).await;
-    let owner_id = create_test_user(&pool, "owner-get").await;
-    let stranger_id = create_test_user(&pool, "stranger-get").await;
+    let owner_id = support::create_test_user(&pool, "owner-get").await;
+    let stranger_id = support::create_test_user(&pool, "stranger-get").await;
 
-    let owner_ctx = test_ctx(owner_id);
-    let stranger_ctx = test_ctx(stranger_id);
+    let owner_ctx = support::test_ctx(owner_id);
+    let stranger_ctx = support::test_ctx(stranger_id);
 
     let tenant = service
         .create_tenant(
@@ -205,26 +149,26 @@ async fn get_tenant_by_slug() {
         .delete_tenant(&owner_ctx, tenant.slug.as_str())
         .await
         .unwrap();
-    delete_test_user(&pool, owner_id).await;
-    delete_test_user(&pool, stranger_id).await;
+    support::delete_test_user(&pool, owner_id).await;
+    support::delete_test_user(&pool, stranger_id).await;
 }
 
 #[tokio::test]
 async fn update_tenant_requires_admin_or_owner() {
-    let Some(pool) = setup_pool().await else {
+    let Some(pool) = support::setup_pool().await else {
         return;
     };
 
     let service = support::build_service(pool.clone()).await;
-    let owner_id = create_test_user(&pool, "owner-update").await;
-    let admin_id = create_test_user(&pool, "admin-update").await;
-    let member_id = create_test_user(&pool, "member-update").await;
-    let guest_id = create_test_user(&pool, "guest-update").await;
+    let owner_id = support::create_test_user(&pool, "owner-update").await;
+    let admin_id = support::create_test_user(&pool, "admin-update").await;
+    let member_id = support::create_test_user(&pool, "member-update").await;
+    let guest_id = support::create_test_user(&pool, "guest-update").await;
 
-    let owner_ctx = test_ctx(owner_id);
-    let admin_ctx = test_ctx(admin_id);
-    let member_ctx = test_ctx(member_id);
-    let guest_ctx = test_ctx(guest_id);
+    let owner_ctx = support::test_ctx(owner_id);
+    let admin_ctx = support::test_ctx(admin_id);
+    let member_ctx = support::test_ctx(member_id);
+    let guest_ctx = support::test_ctx(guest_id);
 
     let tenant = service
         .create_tenant(
@@ -283,26 +227,26 @@ async fn update_tenant_requires_admin_or_owner() {
         .delete_tenant(&owner_ctx, tenant.slug.as_str())
         .await
         .unwrap();
-    delete_test_user(&pool, owner_id).await;
-    delete_test_user(&pool, admin_id).await;
-    delete_test_user(&pool, member_id).await;
-    delete_test_user(&pool, guest_id).await;
+    support::delete_test_user(&pool, owner_id).await;
+    support::delete_test_user(&pool, admin_id).await;
+    support::delete_test_user(&pool, member_id).await;
+    support::delete_test_user(&pool, guest_id).await;
 }
 
 #[tokio::test]
 async fn delete_tenant_requires_owner() {
-    let Some(pool) = setup_pool().await else {
+    let Some(pool) = support::setup_pool().await else {
         return;
     };
 
     let service = support::build_service(pool.clone()).await;
-    let owner_id = create_test_user(&pool, "owner-delete").await;
-    let admin_id = create_test_user(&pool, "admin-delete").await;
-    let member_id = create_test_user(&pool, "member-delete").await;
+    let owner_id = support::create_test_user(&pool, "owner-delete").await;
+    let admin_id = support::create_test_user(&pool, "admin-delete").await;
+    let member_id = support::create_test_user(&pool, "member-delete").await;
 
-    let owner_ctx = test_ctx(owner_id);
-    let admin_ctx = test_ctx(admin_id);
-    let member_ctx = test_ctx(member_id);
+    let owner_ctx = support::test_ctx(owner_id);
+    let admin_ctx = support::test_ctx(admin_id);
+    let member_ctx = support::test_ctx(member_id);
 
     let tenant = service
         .create_tenant(
@@ -336,20 +280,20 @@ async fn delete_tenant_requires_owner() {
     let result = service.get_tenant(&owner_ctx, tenant.slug.as_str()).await;
     assert!(matches!(result, Err(TenantError::NotFound)));
 
-    delete_test_user(&pool, owner_id).await;
-    delete_test_user(&pool, admin_id).await;
-    delete_test_user(&pool, member_id).await;
+    support::delete_test_user(&pool, owner_id).await;
+    support::delete_test_user(&pool, admin_id).await;
+    support::delete_test_user(&pool, member_id).await;
 }
 
 #[tokio::test]
 async fn enforce_two_tenant_ownership_limit() {
-    let Some(pool) = setup_pool().await else {
+    let Some(pool) = support::setup_pool().await else {
         return;
     };
 
     let service = support::build_service(pool.clone()).await;
-    let owner_id = create_test_user(&pool, "owner-limit").await;
-    let ctx = test_ctx(owner_id);
+    let owner_id = support::create_test_user(&pool, "owner-limit").await;
+    let ctx = support::test_ctx(owner_id);
 
     for i in 0..2 {
         let request = CreateTenantRequest {
@@ -381,21 +325,21 @@ async fn enforce_two_tenant_ownership_limit() {
             .await
             .unwrap();
     }
-    delete_test_user(&pool, owner_id).await;
+    support::delete_test_user(&pool, owner_id).await;
 }
 
 #[tokio::test]
 async fn list_members_requires_membership() {
-    let Some(pool) = setup_pool().await else {
+    let Some(pool) = support::setup_pool().await else {
         return;
     };
 
     let service = support::build_service(pool.clone()).await;
-    let owner_id = create_test_user(&pool, "owner-members").await;
-    let stranger_id = create_test_user(&pool, "stranger-members").await;
+    let owner_id = support::create_test_user(&pool, "owner-members").await;
+    let stranger_id = support::create_test_user(&pool, "stranger-members").await;
 
-    let owner_ctx = test_ctx(owner_id);
-    let stranger_ctx = test_ctx(stranger_id);
+    let owner_ctx = support::test_ctx(owner_id);
+    let stranger_ctx = support::test_ctx(stranger_id);
 
     let tenant = service
         .create_tenant(
@@ -424,22 +368,22 @@ async fn list_members_requires_membership() {
         .delete_tenant(&owner_ctx, tenant.slug.as_str())
         .await
         .unwrap();
-    delete_test_user(&pool, owner_id).await;
-    delete_test_user(&pool, stranger_id).await;
+    support::delete_test_user(&pool, owner_id).await;
+    support::delete_test_user(&pool, stranger_id).await;
 }
 
 #[tokio::test]
 async fn add_update_remove_member_flow() {
-    let Some(pool) = setup_pool().await else {
+    let Some(pool) = support::setup_pool().await else {
         return;
     };
 
     let service = support::build_service(pool.clone()).await;
-    let owner_id = create_test_user(&pool, "owner-mgmt").await;
-    let member_user_id = create_test_user(&pool, "member-mgmt").await;
-    let guest_user_id = create_test_user(&pool, "guest-mgmt").await;
+    let owner_id = support::create_test_user(&pool, "owner-mgmt").await;
+    let member_user_id = support::create_test_user(&pool, "member-mgmt").await;
+    let guest_user_id = support::create_test_user(&pool, "guest-mgmt").await;
 
-    let owner_ctx = test_ctx(owner_id);
+    let owner_ctx = support::test_ctx(owner_id);
 
     let tenant = service
         .create_tenant(
@@ -517,7 +461,7 @@ async fn add_update_remove_member_flow() {
     let guest_email = format!("guest-mgmt-{}@example.com", guest_user_id.inner());
     let result = service
         .add_member(
-            &test_ctx(member_user_id),
+            &support::test_ctx(member_user_id),
             tenant.slug.as_str(),
             tenant_service::AddMemberRequest {
                 email: guest_email.clone(),
@@ -531,23 +475,23 @@ async fn add_update_remove_member_flow() {
         .delete_tenant(&owner_ctx, tenant.slug.as_str())
         .await
         .unwrap();
-    delete_test_user(&pool, owner_id).await;
-    delete_test_user(&pool, member_user_id).await;
-    delete_test_user(&pool, guest_user_id).await;
+    support::delete_test_user(&pool, owner_id).await;
+    support::delete_test_user(&pool, member_user_id).await;
+    support::delete_test_user(&pool, guest_user_id).await;
 }
 
 #[tokio::test]
 async fn cannot_modify_owner_membership() {
-    let Some(pool) = setup_pool().await else {
+    let Some(pool) = support::setup_pool().await else {
         return;
     };
 
     let service = support::build_service(pool.clone()).await;
-    let owner_id = create_test_user(&pool, "owner-protected").await;
-    let admin_id = create_test_user(&pool, "admin-protected").await;
+    let owner_id = support::create_test_user(&pool, "owner-protected").await;
+    let admin_id = support::create_test_user(&pool, "admin-protected").await;
 
-    let owner_ctx = test_ctx(owner_id);
-    let admin_ctx = test_ctx(admin_id);
+    let owner_ctx = support::test_ctx(owner_id);
+    let admin_ctx = support::test_ctx(admin_id);
 
     let tenant = service
         .create_tenant(
@@ -589,6 +533,6 @@ async fn cannot_modify_owner_membership() {
         .delete_tenant(&owner_ctx, tenant.slug.as_str())
         .await
         .unwrap();
-    delete_test_user(&pool, owner_id).await;
-    delete_test_user(&pool, admin_id).await;
+    support::delete_test_user(&pool, owner_id).await;
+    support::delete_test_user(&pool, admin_id).await;
 }

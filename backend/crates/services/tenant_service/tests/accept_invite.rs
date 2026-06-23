@@ -1,59 +1,11 @@
 //! Postgres-backed integration tests for accepting tenant invites.
 
-use base::ctx::{ActorType, ExecutionContext, RequestContext};
 use chrono::{Duration, Utc};
 use domain::{RoleId, UserId};
 use tenant_service::{CreateTenantRequest, TenantError};
 use uuid::Uuid;
 
 mod support;
-
-fn database_url() -> Option<String> {
-    std::env::var("DATABASE_URL").ok()
-}
-
-async fn setup_pool() -> Option<sqlx::PgPool> {
-    let url = database_url()?;
-    let pool = sqlx::PgPool::connect(&url).await.ok()?;
-    sqlx::migrate!("../../../migrations")
-        .run(&pool)
-        .await
-        .ok()?;
-    Some(pool)
-}
-
-fn test_ctx(user_id: UserId) -> ExecutionContext {
-    ExecutionContext::new(RequestContext::new()).with_actor(user_id.inner(), ActorType::User)
-}
-
-async fn create_test_user(pool: &sqlx::PgPool, prefix: &str) -> (UserId, String) {
-    let user_id = UserId::new();
-    let email = format!("{}-{}@example.com", prefix, user_id.inner());
-    let username = user_id.inner().to_string();
-
-    sqlx::query(
-        r#"
-        INSERT INTO users (
-            id, email, username, name, password_hash,
-            status, terms_accepted_at, terms_version
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        "#,
-    )
-    .bind(user_id.inner())
-    .bind(&email)
-    .bind(&username)
-    .bind(prefix)
-    .bind("hash")
-    .bind("active")
-    .bind(Utc::now())
-    .bind("1.0")
-    .execute(pool)
-    .await
-    .expect("user should insert");
-
-    (user_id, email)
-}
 
 async fn find_role_id(pool: &sqlx::PgPool, tenant_id: domain::TenantId, name: &str) -> RoleId {
     let id: Uuid = sqlx::query_scalar(
@@ -109,14 +61,6 @@ async fn create_invite(
     .expect("invite should insert");
 }
 
-async fn delete_test_user(pool: &sqlx::PgPool, user_id: UserId) {
-    sqlx::query("DELETE FROM users WHERE id = $1")
-        .bind(user_id.inner())
-        .execute(pool)
-        .await
-        .ok();
-}
-
 async fn delete_tenant(pool: &sqlx::PgPool, tenant_id: domain::TenantId) {
     sqlx::query("DELETE FROM tenants WHERE id = $1")
         .bind(tenant_id.inner())
@@ -127,18 +71,18 @@ async fn delete_tenant(pool: &sqlx::PgPool, tenant_id: domain::TenantId) {
 
 #[tokio::test]
 async fn accept_invite_adds_user_as_member() {
-    let Some(pool) = setup_pool().await else {
+    let Some(pool) = support::setup_pool().await else {
         return;
     };
 
     let service = support::build_service(pool.clone()).await;
-    let (owner_id, _) = create_test_user(&pool, "accept-owner").await;
-    let (new_user_id, new_email) = create_test_user(&pool, "accept-new").await;
-    let ctx = test_ctx(new_user_id);
+    let (owner_id, _) = support::create_test_user_with_email(&pool, "accept-owner").await;
+    let (new_user_id, new_email) = support::create_test_user_with_email(&pool, "accept-new").await;
+    let ctx = support::test_ctx(new_user_id);
 
     let tenant = service
         .create_tenant(
-            &test_ctx(owner_id),
+            &support::test_ctx(owner_id),
             CreateTenantRequest {
                 slug: format!("accept-{}", owner_id.inner()),
                 name: "Accept Tenant".to_string(),
@@ -168,19 +112,19 @@ async fn accept_invite_adds_user_as_member() {
     assert!(tenants.iter().any(|t| t.id == tenant.id));
 
     delete_tenant(&pool, tenant.id).await;
-    delete_test_user(&pool, owner_id).await;
-    delete_test_user(&pool, new_user_id).await;
+    support::delete_test_user(&pool, owner_id).await;
+    support::delete_test_user(&pool, new_user_id).await;
 }
 
 #[tokio::test]
 async fn accept_invite_returns_not_found_for_unknown_token() {
-    let Some(pool) = setup_pool().await else {
+    let Some(pool) = support::setup_pool().await else {
         return;
     };
 
     let service = support::build_service(pool.clone()).await;
-    let (user_id, _) = create_test_user(&pool, "accept-notfound").await;
-    let ctx = test_ctx(user_id);
+    let (user_id, _) = support::create_test_user_with_email(&pool, "accept-notfound").await;
+    let ctx = support::test_ctx(user_id);
 
     let result = service.accept_invite(&ctx, "missing-token").await;
     assert!(matches!(
@@ -188,23 +132,24 @@ async fn accept_invite_returns_not_found_for_unknown_token() {
         Err(TenantError::Domain(domain::DomainError::NotFound(_)))
     ));
 
-    delete_test_user(&pool, user_id).await;
+    support::delete_test_user(&pool, user_id).await;
 }
 
 #[tokio::test]
 async fn accept_invite_fails_when_expired() {
-    let Some(pool) = setup_pool().await else {
+    let Some(pool) = support::setup_pool().await else {
         return;
     };
 
     let service = support::build_service(pool.clone()).await;
-    let (owner_id, _) = create_test_user(&pool, "accept-expired-owner").await;
-    let (new_user_id, new_email) = create_test_user(&pool, "accept-expired").await;
-    let ctx = test_ctx(new_user_id);
+    let (owner_id, _) = support::create_test_user_with_email(&pool, "accept-expired-owner").await;
+    let (new_user_id, new_email) =
+        support::create_test_user_with_email(&pool, "accept-expired").await;
+    let ctx = support::test_ctx(new_user_id);
 
     let tenant = service
         .create_tenant(
-            &test_ctx(owner_id),
+            &support::test_ctx(owner_id),
             CreateTenantRequest {
                 slug: format!("expired-{}", owner_id.inner()),
                 name: "Expired Invite Tenant".to_string(),
@@ -234,24 +179,24 @@ async fn accept_invite_fails_when_expired() {
     ));
 
     delete_tenant(&pool, tenant.id).await;
-    delete_test_user(&pool, owner_id).await;
-    delete_test_user(&pool, new_user_id).await;
+    support::delete_test_user(&pool, owner_id).await;
+    support::delete_test_user(&pool, new_user_id).await;
 }
 
 #[tokio::test]
 async fn accept_invite_fails_for_wrong_email() {
-    let Some(pool) = setup_pool().await else {
+    let Some(pool) = support::setup_pool().await else {
         return;
     };
 
     let service = support::build_service(pool.clone()).await;
-    let (owner_id, _) = create_test_user(&pool, "accept-wrong-owner").await;
-    let (new_user_id, _) = create_test_user(&pool, "accept-wrong").await;
-    let ctx = test_ctx(new_user_id);
+    let (owner_id, _) = support::create_test_user_with_email(&pool, "accept-wrong-owner").await;
+    let (new_user_id, _) = support::create_test_user_with_email(&pool, "accept-wrong").await;
+    let ctx = support::test_ctx(new_user_id);
 
     let tenant = service
         .create_tenant(
-            &test_ctx(owner_id),
+            &support::test_ctx(owner_id),
             CreateTenantRequest {
                 slug: format!("wrong-{}", owner_id.inner()),
                 name: "Wrong Email Tenant".to_string(),
@@ -281,24 +226,25 @@ async fn accept_invite_fails_for_wrong_email() {
     ));
 
     delete_tenant(&pool, tenant.id).await;
-    delete_test_user(&pool, owner_id).await;
-    delete_test_user(&pool, new_user_id).await;
+    support::delete_test_user(&pool, owner_id).await;
+    support::delete_test_user(&pool, new_user_id).await;
 }
 
 #[tokio::test]
 async fn accept_invite_fails_when_already_accepted() {
-    let Some(pool) = setup_pool().await else {
+    let Some(pool) = support::setup_pool().await else {
         return;
     };
 
     let service = support::build_service(pool.clone()).await;
-    let (owner_id, _) = create_test_user(&pool, "accept-accepted-owner").await;
-    let (new_user_id, new_email) = create_test_user(&pool, "accept-accepted").await;
-    let ctx = test_ctx(new_user_id);
+    let (owner_id, _) = support::create_test_user_with_email(&pool, "accept-accepted-owner").await;
+    let (new_user_id, new_email) =
+        support::create_test_user_with_email(&pool, "accept-accepted").await;
+    let ctx = support::test_ctx(new_user_id);
 
     let tenant = service
         .create_tenant(
-            &test_ctx(owner_id),
+            &support::test_ctx(owner_id),
             CreateTenantRequest {
                 slug: format!("accepted-{}", owner_id.inner()),
                 name: "Already Accepted Tenant".to_string(),
@@ -328,6 +274,6 @@ async fn accept_invite_fails_when_already_accepted() {
     ));
 
     delete_tenant(&pool, tenant.id).await;
-    delete_test_user(&pool, owner_id).await;
-    delete_test_user(&pool, new_user_id).await;
+    support::delete_test_user(&pool, owner_id).await;
+    support::delete_test_user(&pool, new_user_id).await;
 }
