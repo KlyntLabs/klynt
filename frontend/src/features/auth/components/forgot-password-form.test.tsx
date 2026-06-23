@@ -12,7 +12,7 @@ describe("ForgotPasswordForm", () => {
     const user = userEvent.setup();
     render(<ForgotPasswordForm />);
     await user.click(screen.getByRole("button", { name: /send reset link/i }));
-    expect(await screen.findByText(/valid email/i)).toBeInTheDocument();
+    expect(await screen.findByText(/email is required/i)).toBeInTheDocument();
   });
 
   it("shows success toast after submit", async () => {

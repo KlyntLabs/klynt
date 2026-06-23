@@ -12,7 +12,7 @@ describe("LoginForm", () => {
     const user = userEvent.setup();
     render(<LoginForm />);
     await user.click(screen.getByRole("button", { name: /log in/i }));
-    expect(await screen.findByText(/valid email/i)).toBeInTheDocument();
+    expect(await screen.findByText(/email is required/i)).toBeInTheDocument();
   });
 
   it("submits valid credentials", async () => {

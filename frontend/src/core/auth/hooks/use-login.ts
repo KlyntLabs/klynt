@@ -1,4 +1,5 @@
 import { type UseMutationResult, useMutation } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { ApiError } from "@/core/api/api-error";
 import { useToastStore } from "@/core/notifications/toast-store";
@@ -8,6 +9,7 @@ import type { LoginInput } from "../types";
 
 export function useLogin(): UseMutationResult<void, Error, LoginInput, unknown> {
   const navigate = useNavigate();
+  const { t } = useTranslation("auth");
   const addToast = useToastStore((state) => state.addToast);
   const setSession = useAuthStore((state) => state.setSession);
 
@@ -21,7 +23,7 @@ export function useLogin(): UseMutationResult<void, Error, LoginInput, unknown> 
       navigate("/dashboard", { replace: true });
     },
     onError: (error) => {
-      const message = error instanceof ApiError ? error.message : "Login failed. Please try again.";
+      const message = error instanceof ApiError ? error.message : t("login.error");
       addToast({ message, type: "error", duration: 5000 });
     },
   });

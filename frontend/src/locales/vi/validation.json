@@ -8,5 +8,8 @@
   "passwordNumber": "Mật khẩu phải chứa số",
   "confirmPasswordRequired": "Vui lòng xác nhận mật khẩu",
   "passwordsMismatch": "Mật khẩu không khớp",
-  "inviteCodeRequired": "Mã mời là bắt buộc"
+  "inviteCodeRequired": "Mã mời là bắt buộc",
+  "emailRequired": "Vui lòng nhập email",
+  "passwordRequired": "Vui lòng nhập mật khẩu",
+  "usernameRequired": "Vui lòng nhập tên người dùng"
 }

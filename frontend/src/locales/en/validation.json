@@ -1,12 +1,15 @@
 {
   "nameRequired": "Name is required",
   "nameMax": "Name must be 200 characters or less",
+  "emailRequired": "Email is required",
   "emailInvalid": "Enter a valid email",
   "passwordMin": "Password must be at least 8 characters",
   "passwordUppercase": "Password must contain an uppercase letter",
   "passwordLowercase": "Password must contain a lowercase letter",
   "passwordNumber": "Password must contain a number",
+  "passwordRequired": "Password is required",
   "confirmPasswordRequired": "Please confirm your password",
   "passwordsMismatch": "Passwords do not match",
-  "inviteCodeRequired": "Invite code is required"
+  "inviteCodeRequired": "Invite code is required",
+  "usernameRequired": "Username is required"
 }
