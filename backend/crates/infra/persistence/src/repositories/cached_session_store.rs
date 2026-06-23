@@ -291,6 +291,23 @@ impl SessionStore for CachedSessionStore {
         user_id: UserId,
         membership: MembershipSnapshot,
     ) -> Result<(), SessionError> {
-        self.postgres.add_membership(ctx, user_id, membership).await
+        self.postgres
+            .add_membership(ctx, user_id, membership)
+            .await?;
+
+        match self.postgres.active_tokens_for_user(ctx, user_id).await {
+            Ok(tokens) => {
+                for token in tokens {
+                    if let Err(e) = self.invalidate_cache(&token).await {
+                        tracing::warn!(error = %e, "failed to invalidate cached session after add_membership");
+                    }
+                }
+            }
+            Err(e) => {
+                tracing::warn!(error = %e, "failed to list active tokens for cache invalidation");
+            }
+        }
+
+        Ok(())
     }
 }

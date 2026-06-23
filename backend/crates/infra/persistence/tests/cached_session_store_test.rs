@@ -1,8 +1,8 @@
 //! Integration tests for the Redis read-through session cache.
 
 use base::ctx::{ExecutionContext, RequestContext};
-use base::ports::session::{SessionKind, SessionStore, SessionToken};
-use domain::{Email, UserId, UserStatus};
+use base::ports::session::{MembershipSnapshot, SessionKind, SessionStore, SessionToken};
+use domain::{Email, TenantRole, UserId, UserStatus};
 use persistence::repositories::cached_session_store::CachedSessionStore;
 use persistence::repositories::session::PgSessionStore;
 use redis::aio::MultiplexedConnection;
@@ -191,4 +191,42 @@ async fn unknown_token_returns_none() {
     let token = SessionToken::new();
 
     assert!(store.find_valid(&ctx, &token).await.unwrap().is_none());
+}
+
+#[tokio::test]
+async fn update_memberships_invalidates_cached_session() {
+    let pool = setup_pool().await;
+    let mut inspect_conn = setup_redis().await;
+    let user_id = create_test_user(&pool).await;
+    let postgres = PgSessionStore::new(pool);
+    let store = CachedSessionStore::connect(postgres, &redis_url()).await;
+    let ctx = ExecutionContext::new(RequestContext::new());
+    let expires_at = chrono::Utc::now() + chrono::Duration::hours(1);
+    let tenant_id = Uuid::new_v4();
+    let snapshot = MembershipSnapshot {
+        tenant_id,
+        role: TenantRole::Member,
+    };
+
+    let token = store
+        .create_with_kind(&ctx, user_id, expires_at, SessionKind::Access, None)
+        .await
+        .unwrap();
+    let key = cache_key(&token);
+
+    // Populate the cache by reading the session.
+    let _ = store.find_valid(&ctx, &token).await.unwrap();
+    assert!(redis_has_key(&mut inspect_conn, &key).await);
+
+    store
+        .update_memberships(&ctx, &token, vec![snapshot.clone()])
+        .await
+        .unwrap();
+
+    // Cache entry should have been invalidated.
+    assert!(!redis_has_key(&mut inspect_conn, &key).await);
+
+    // Subsequent find_valid should return the updated snapshot from Postgres.
+    let session = store.find_valid(&ctx, &token).await.unwrap().unwrap();
+    assert_eq!(session.tenant_memberships, vec![snapshot]);
 }

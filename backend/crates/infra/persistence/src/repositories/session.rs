@@ -24,6 +24,23 @@ impl PgSessionStore {
     pub fn pool(&self) -> &PgPool {
         &self.pool
     }
+
+    pub(crate) async fn active_tokens_for_user(
+        &self,
+        _ctx: &ExecutionContext,
+        user_id: UserId,
+    ) -> Result<Vec<SessionToken>, SessionError> {
+        let rows: Vec<(Uuid,)> =
+            sqlx::query_as("SELECT token FROM sessions WHERE user_id = $1 AND expires_at > NOW()")
+                .bind(user_id.inner())
+                .fetch_all(&self.pool)
+                .await?;
+
+        Ok(rows
+            .into_iter()
+            .map(|(token,)| SessionToken(token))
+            .collect())
+    }
 }
 
 #[async_trait]
@@ -78,15 +95,17 @@ impl SessionStore for PgSessionStore {
         .fetch_optional(&self.pool)
         .await?;
 
-        Ok(row.map(
-            |(user_id, kind, pair_id, expires_at, memberships)| Session {
+        match row {
+            Some((user_id, kind, pair_id, expires_at, memberships)) => Ok(Some(Session {
                 user_id: UserId(user_id),
                 expires_at,
-                kind: SessionKind::try_from(kind.as_str()).unwrap_or(SessionKind::Access),
+                kind: SessionKind::try_from(kind.as_str())
+                    .map_err(|e| SessionError::Internal(format!("invalid session kind: {e}")))?,
                 pair_id,
                 tenant_memberships: memberships.0,
-            },
-        ))
+            })),
+            None => Ok(None),
+        }
     }
 
     async fn revoke(

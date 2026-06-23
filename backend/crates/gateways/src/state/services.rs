@@ -71,7 +71,8 @@ impl Services {
         )
         .await?;
         let user_service = Self::create_user_service(config, pool.clone()).await?;
-        let tenant_service = Self::create_tenant_service(pool.clone()).await?;
+        let tenant_service =
+            Self::create_tenant_service(pool.clone(), session_store.clone()).await?;
         let rate_limiter = Self::create_rate_limiter(config).await?;
         let trusted_proxies = Arc::new(
             config::parse_trusted_proxies(&config.trusted_proxies)
@@ -152,10 +153,12 @@ impl Services {
 
     async fn create_tenant_service(
         pool: sqlx::PgPool,
+        session_store: Arc<dyn base::ports::session::SessionStore>,
     ) -> Result<TenantService, crate::GatewayError> {
         TenantService::builder()
             .with_config(tenant_service::TenantConfig::default())
             .with_pool(pool)
+            .with_session_store(session_store)
             .build()
             .await
             .map_err(|e| crate::GatewayError::configuration(format!("Tenant service: {e}")))
