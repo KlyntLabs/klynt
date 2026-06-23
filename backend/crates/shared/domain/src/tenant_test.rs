@@ -42,6 +42,9 @@ fn tenant_create_succeeds_with_valid_input() {
     assert_eq!(tenant.slug.as_str(), "valid-slug");
     assert_eq!(tenant.name, "Valid Tenant");
     assert_eq!(tenant.owner_id, owner);
+    assert_eq!(tenant.max_members, 100);
+    assert_eq!(tenant.max_owners, 1);
+    assert!(tenant.settings.is_object());
     assert!(tenant.is_active());
 }
 
@@ -66,6 +69,25 @@ fn tenant_rename_rejects_empty_name() {
 
     assert!(tenant.rename("   ".to_string()).is_err());
     assert!(tenant.rename("".to_string()).is_err());
+}
+
+#[test]
+fn tenant_serializes_full_payload() {
+    let owner = UserId::new();
+    let slug = TenantSlug::parse("full-payload").unwrap();
+    let tenant = Tenant::create(slug, "Full Payload".to_string(), owner).unwrap();
+
+    let json = serde_json::to_value(&tenant).unwrap();
+    assert!(json.get("id").is_some());
+    assert_eq!(json["slug"], "full-payload");
+    assert_eq!(json["name"], "Full Payload");
+    assert!(json.get("owner_id").is_some());
+    assert_eq!(json["max_members"], 100);
+    assert_eq!(json["max_owners"], 1);
+    assert!(json["settings"].is_object());
+    assert_eq!(json["status"], "active");
+    assert!(json.get("created_at").is_some());
+    assert!(json.get("updated_at").is_some());
 }
 
 #[test]

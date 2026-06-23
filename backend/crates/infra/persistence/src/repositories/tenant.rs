@@ -32,6 +32,9 @@ struct TenantRow {
     slug: String,
     name: String,
     owner_id: uuid::Uuid,
+    max_members: i32,
+    max_owners: i32,
+    settings: serde_json::Value,
     status: String,
     created_at: chrono::DateTime<chrono::Utc>,
     updated_at: chrono::DateTime<chrono::Utc>,
@@ -50,6 +53,9 @@ fn map_tenant_row(row: TenantRow) -> DomainResult<Tenant> {
         slug,
         name: row.name,
         owner_id: UserId::from_uuid(row.owner_id),
+        max_members: row.max_members,
+        max_owners: row.max_owners,
+        settings: row.settings,
         status,
         created_at: row.created_at,
         updated_at: row.updated_at,
@@ -63,15 +69,18 @@ impl TenantRepository for PgTenantRepository {
 
         let row: TenantRow = match sqlx::query_as(
             r#"
-            INSERT INTO tenants (id, slug, name, owner_id, status, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING id, slug, name, owner_id, status, created_at, updated_at
+            INSERT INTO tenants (id, slug, name, owner_id, max_members, max_owners, settings, status, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            RETURNING id, slug, name, owner_id, max_members, max_owners, settings, status, created_at, updated_at
             "#,
         )
         .bind(tenant.id.inner())
         .bind(tenant.slug.as_str())
         .bind(&tenant.name)
         .bind(tenant.owner_id.inner())
+        .bind(tenant.max_members)
+        .bind(tenant.max_owners)
+        .bind(&tenant.settings)
         .bind(tenant.status.as_str())
         .bind(tenant.created_at)
         .bind(tenant.updated_at)
@@ -127,7 +136,7 @@ impl TenantRepository for PgTenantRepository {
     ) -> DomainResult<Option<Tenant>> {
         let row: Option<TenantRow> = sqlx::query_as(
             r#"
-            SELECT id, slug, name, owner_id, status, created_at, updated_at
+            SELECT id, slug, name, owner_id, max_members, max_owners, settings, status, created_at, updated_at
             FROM tenants
             WHERE id = $1
             "#,
@@ -147,7 +156,7 @@ impl TenantRepository for PgTenantRepository {
     ) -> DomainResult<Option<Tenant>> {
         let row: Option<TenantRow> = sqlx::query_as(
             r#"
-            SELECT id, slug, name, owner_id, status, created_at, updated_at
+            SELECT id, slug, name, owner_id, max_members, max_owners, settings, status, created_at, updated_at
             FROM tenants
             WHERE slug = $1
             "#,
@@ -167,7 +176,7 @@ impl TenantRepository for PgTenantRepository {
     ) -> DomainResult<Vec<Tenant>> {
         let rows: Vec<TenantRow> = sqlx::query_as(
             r#"
-            SELECT t.id, t.slug, t.name, t.owner_id, t.status, t.created_at, t.updated_at
+            SELECT t.id, t.slug, t.name, t.owner_id, t.max_members, t.max_owners, t.settings, t.status, t.created_at, t.updated_at
             FROM tenants t
             JOIN user_tenant_memberships m ON m.tenant_id = t.id
             WHERE m.user_id = $1
@@ -189,13 +198,16 @@ impl TenantRepository for PgTenantRepository {
         let result = sqlx::query(
             r#"
             UPDATE tenants
-            SET slug = $1, name = $2, owner_id = $3, status = $4, updated_at = $5
-            WHERE id = $6
+            SET slug = $1, name = $2, owner_id = $3, max_members = $4, max_owners = $5, settings = $6, status = $7, updated_at = $8
+            WHERE id = $9
             "#,
         )
         .bind(tenant.slug.as_str())
         .bind(&tenant.name)
         .bind(tenant.owner_id.inner())
+        .bind(tenant.max_members)
+        .bind(tenant.max_owners)
+        .bind(&tenant.settings)
         .bind(tenant.status.as_str())
         .bind(tenant.updated_at)
         .bind(tenant.id.inner())
@@ -268,12 +280,12 @@ async fn seed_system_roles(
 ) -> DomainResult<()> {
     sqlx::query(
         r#"
-        INSERT INTO tenant_roles (tenant_id, name, description, is_system)
+        INSERT INTO tenant_roles (tenant_id, name, description, is_system, is_custom)
         VALUES
-            ($1, 'owner', 'Full control over the tenant', TRUE),
-            ($1, 'admin', 'Can manage tenant settings, members, and roles', TRUE),
-            ($1, 'member', 'Base tenant access', TRUE),
-            ($1, 'guest', 'Limited read-only access', TRUE)
+            ($1, 'owner', 'Full control over the tenant', TRUE, FALSE),
+            ($1, 'admin', 'Can manage tenant settings, members, and roles', TRUE, FALSE),
+            ($1, 'member', 'Base tenant access', TRUE, FALSE),
+            ($1, 'guest', 'Limited read-only access', TRUE, FALSE)
         ON CONFLICT (tenant_id, name) DO NOTHING
         "#,
     )

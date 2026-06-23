@@ -191,6 +191,9 @@ async fn get_tenant_by_slug() {
         .await
         .unwrap();
     assert_eq!(found.id, tenant.id);
+    assert_eq!(found.max_members, 100);
+    assert_eq!(found.max_owners, 1);
+    assert!(found.settings.is_object());
 
     let result = service
         .get_tenant(&stranger_ctx, tenant.slug.as_str())

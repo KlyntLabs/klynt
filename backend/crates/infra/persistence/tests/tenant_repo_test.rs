@@ -157,6 +157,9 @@ async fn find_by_id_and_slug_return_tenant() {
         .unwrap();
     assert_eq!(by_id.id, tenant.id);
     assert_eq!(by_id.slug, tenant.slug);
+    assert_eq!(by_id.max_members, tenant.max_members);
+    assert_eq!(by_id.max_owners, tenant.max_owners);
+    assert_eq!(by_id.settings, tenant.settings);
 
     let by_slug = tenant_repo
         .find_by_slug(&ctx, &tenant.slug)
@@ -165,6 +168,9 @@ async fn find_by_id_and_slug_return_tenant() {
         .unwrap();
     assert_eq!(by_slug.id, tenant.id);
     assert_eq!(by_slug.name, tenant.name);
+    assert_eq!(by_slug.max_members, 100);
+    assert_eq!(by_slug.max_owners, 1);
+    assert!(by_slug.settings.is_object());
 
     cleanup_test_data(&pool, &[owner_id], &[tenant.id]).await;
 }
@@ -181,6 +187,33 @@ async fn find_by_slug_with_missing_slug_returns_none() {
 
     let found = tenant_repo.find_by_slug(&ctx, &slug).await.unwrap();
     assert!(found.is_none());
+}
+
+#[tokio::test]
+async fn create_persists_tenant_settings() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let tenant_repo = PgTenantRepository::new(pool.clone());
+    let ctx = test_ctx();
+    let owner_id = create_test_user(&pool, "SettingsOwner").await;
+    let tenant = create_test_tenant(&tenant_repo, owner_id, "Settings Tenant").await;
+
+    assert_eq!(tenant.max_members, 100);
+    assert_eq!(tenant.max_owners, 1);
+    assert!(tenant.settings.is_object());
+
+    let from_db = tenant_repo
+        .find_by_id(&ctx, tenant.id)
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(from_db.max_members, tenant.max_members);
+    assert_eq!(from_db.max_owners, tenant.max_owners);
+    assert_eq!(from_db.settings, tenant.settings);
+
+    cleanup_test_data(&pool, &[owner_id], &[tenant.id]).await;
 }
 
 #[tokio::test]

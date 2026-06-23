@@ -439,6 +439,7 @@ impl RoleRepository for FakeRoleRepository {
             tenant_id,
             name: name.to_string(),
             description: String::new(),
+            is_custom: false,
             is_system: true,
             permission_ids,
             created_at: chrono::Utc::now(),

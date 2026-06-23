@@ -130,6 +130,9 @@ impl std::str::FromStr for TenantStatus {
     }
 }
 
+const DEFAULT_MAX_MEMBERS: i32 = 100;
+const DEFAULT_MAX_OWNERS: i32 = 1;
+
 /// A tenant / organization in the platform.
 #[derive(Debug, Clone, Serialize)]
 pub struct Tenant {
@@ -137,6 +140,9 @@ pub struct Tenant {
     pub slug: TenantSlug,
     pub name: String,
     pub owner_id: UserId,
+    pub max_members: i32,
+    pub max_owners: i32,
+    pub settings: serde_json::Value,
     pub status: TenantStatus,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -154,6 +160,9 @@ impl Tenant {
             slug,
             name,
             owner_id,
+            max_members: DEFAULT_MAX_MEMBERS,
+            max_owners: DEFAULT_MAX_OWNERS,
+            settings: serde_json::Value::Object(serde_json::Map::new()),
             status: TenantStatus::Active,
             created_at: now,
             updated_at: now,

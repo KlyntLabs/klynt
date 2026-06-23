@@ -215,6 +215,9 @@ async fn owner_can_attempt_role_lifecycle() {
         .await
         .unwrap();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(json["data"]["name"], "Editor");
+    assert_eq!(json["data"]["is_custom"], true);
+    assert_eq!(json["data"]["is_system"], false);
     let role_id = json["data"]["id"].as_str().unwrap();
 
     let response = app

@@ -162,6 +162,53 @@ async fn member_can_list_their_tenants() {
     assert_eq!(json["data"].as_array().unwrap().len(), 1);
     assert_eq!(json["data"][0]["slug"], "owner-tenant");
     assert_eq!(json["data"][0]["name"], "Owner Tenant");
+    assert_eq!(json["data"][0]["max_members"], 100);
+    assert_eq!(json["data"][0]["max_owners"], 1);
+    assert!(json["data"][0]["settings"].is_object());
+}
+
+#[tokio::test]
+async fn get_tenant_returns_full_payload() {
+    let tenant_repo = Arc::new(support::StatefulFakeTenantRepository::default());
+    let membership_repo = Arc::new(support::StatefulFakeMembershipRepository::default());
+    let (app, session_service, user_repo) =
+        app_with_tenant_fakes(tenant_repo.clone(), membership_repo.clone());
+
+    let (owner_id, owner_token) =
+        create_active_user(&user_repo, &session_service, "owner-detail@example.com").await;
+    let tenant = create_owned_tenant(
+        &tenant_repo,
+        &membership_repo,
+        owner_id,
+        "detail-tenant",
+        "Detail Tenant",
+    );
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri(format!("/api/v1/tenants/{}", tenant.slug.as_str()))
+                .header("Authorization", format!("Bearer {owner_token}"))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(json["data"]["slug"], "detail-tenant");
+    assert_eq!(json["data"]["name"], "Detail Tenant");
+    assert_eq!(json["data"]["max_members"], 100);
+    assert_eq!(json["data"]["max_owners"], 1);
+    assert!(json["data"]["settings"].is_object());
+    assert!(json["data"].get("created_at").is_some());
+    assert!(json["data"].get("updated_at").is_some());
 }
 
 #[tokio::test]

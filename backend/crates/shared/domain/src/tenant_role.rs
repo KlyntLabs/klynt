@@ -36,6 +36,7 @@ pub struct TenantRoleAggregate {
     pub tenant_id: TenantId,
     pub name: String,
     pub description: String,
+    pub is_custom: bool,
     pub is_system: bool,
     pub permission_ids: Vec<PermissionId>,
     pub created_at: DateTime<Utc>,
@@ -55,6 +56,7 @@ impl TenantRoleAggregate {
             tenant_id,
             name: name.into(),
             description: description.into(),
+            is_custom: true,
             is_system: false,
             permission_ids: Vec::new(),
             created_at: now,
@@ -71,6 +73,7 @@ impl TenantRoleAggregate {
     ) -> Self {
         let mut role = Self::new(id, tenant_id, name, description);
         role.is_system = true;
+        role.is_custom = false;
         role.permission_ids = permission_ids;
         role
     }
@@ -83,5 +86,31 @@ impl TenantRoleAggregate {
     pub fn with_permissions(mut self, permission_ids: Vec<PermissionId>) -> Self {
         self.set_permissions(permission_ids);
         self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn custom_role_defaults_to_is_custom() {
+        let role =
+            TenantRoleAggregate::new(RoleId::new(), TenantId::new(), "custom", "a custom role");
+        assert!(role.is_custom);
+        assert!(!role.is_system);
+    }
+
+    #[test]
+    fn system_role_is_not_custom() {
+        let role = TenantRoleAggregate::system(
+            RoleId::new(),
+            TenantId::new(),
+            "owner",
+            "system role",
+            Vec::new(),
+        );
+        assert!(!role.is_custom);
+        assert!(role.is_system);
     }
 }

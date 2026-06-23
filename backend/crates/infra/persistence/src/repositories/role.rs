@@ -29,6 +29,7 @@ struct RoleRow {
     tenant_id: uuid::Uuid,
     name: String,
     description: String,
+    is_custom: bool,
     is_system: bool,
     permission_ids: Vec<uuid::Uuid>,
     created_at: chrono::DateTime<chrono::Utc>,
@@ -41,6 +42,7 @@ fn map_role_row(row: RoleRow) -> DomainResult<TenantRoleAggregate> {
         tenant_id: TenantId::from_uuid(row.tenant_id),
         name: row.name,
         description: row.description,
+        is_custom: row.is_custom,
         is_system: row.is_system,
         permission_ids: row
             .permission_ids
@@ -66,6 +68,7 @@ impl RoleRepository for PgRoleRepository {
                 r.tenant_id,
                 r.name,
                 r.description,
+                r.is_custom,
                 r.is_system,
                 r.created_at,
                 r.updated_at,
@@ -104,6 +107,7 @@ impl RoleRepository for PgRoleRepository {
                 r.tenant_id,
                 r.name,
                 r.description,
+                r.is_custom,
                 r.is_system,
                 r.created_at,
                 r.updated_at,
@@ -140,6 +144,7 @@ impl RoleRepository for PgRoleRepository {
                 r.tenant_id,
                 r.name,
                 r.description,
+                r.is_custom,
                 r.is_system,
                 r.created_at,
                 r.updated_at,
@@ -172,14 +177,15 @@ impl RoleRepository for PgRoleRepository {
 
         if let Err(err) = sqlx::query(
             r#"
-            INSERT INTO tenant_roles (id, tenant_id, name, description, is_system, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            INSERT INTO tenant_roles (id, tenant_id, name, description, is_custom, is_system, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             "#,
         )
         .bind(role.id.0)
         .bind(role.tenant_id.inner())
         .bind(&role.name)
         .bind(&role.description)
+        .bind(role.is_custom)
         .bind(role.is_system)
         .bind(role.created_at)
         .bind(role.updated_at)
