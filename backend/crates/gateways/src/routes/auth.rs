@@ -7,7 +7,6 @@ use axum::{
     response::{IntoResponse, Json},
 };
 use base::ctx::{ExecutionContext, RequestContext};
-use base::ports::session::SessionToken;
 use chrono::Utc;
 use domain::contracts::auth::{LoginRequest, RegistrationRequest};
 use domain::session::SessionSummary;
@@ -231,7 +230,7 @@ pub(crate) async fn revoke_session(
 
     services
         .auth
-        .revoke_session(&ctx, domain::UserId(user_id), SessionToken(session_id))
+        .revoke_session(&ctx, domain::UserId(user_id), session_id)
         .await
         .map_err(crate::GatewayError::from)?;
 

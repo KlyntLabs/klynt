@@ -148,6 +148,14 @@ pub trait SessionStore: Send + Sync {
         token: &SessionToken,
     ) -> Result<(), SessionError>;
 
+    /// Revoke a session by its public id after verifying ownership.
+    async fn revoke_by_id(
+        &self,
+        ctx: &ExecutionContext,
+        user_id: UserId,
+        session_id: Uuid,
+    ) -> Result<(), SessionError>;
+
     /// Revoke all sessions belonging to the same pair.
     async fn revoke_pair(
         &self,
@@ -222,6 +230,10 @@ pub enum SessionError {
     /// Session has expired.
     #[error("Session expired")]
     Expired,
+
+    /// Caller is not allowed to access or modify the session.
+    #[error("Forbidden")]
+    Forbidden,
 
     /// Underlying database error.
     #[error("Database error: {0}")]

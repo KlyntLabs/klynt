@@ -279,6 +279,17 @@ impl SessionStore for CachedSessionStore {
         self.postgres.list_active_by_user(ctx, user_id).await
     }
 
+    async fn revoke_by_id(
+        &self,
+        ctx: &ExecutionContext,
+        user_id: UserId,
+        session_id: Uuid,
+    ) -> Result<(), SessionError> {
+        // Postgres performs the ownership check and deletes by token; cache
+        // invalidation happens inside revoke().
+        self.postgres.revoke_by_id(ctx, user_id, session_id).await
+    }
+
     async fn update_memberships(
         &self,
         ctx: &ExecutionContext,

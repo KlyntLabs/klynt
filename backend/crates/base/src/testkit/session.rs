@@ -11,10 +11,16 @@ use crate::ports::session::{Session, SessionError, SessionKind, SessionStore, Se
 use domain::UserId;
 use uuid::Uuid;
 
+#[derive(Clone, Debug)]
+struct StoredSession {
+    session: Session,
+    public_id: Uuid,
+}
+
 /// In-memory session store for tests.
 #[derive(Clone, Debug, Default)]
 pub struct FakeSessionStore {
-    sessions: Arc<Mutex<HashMap<SessionToken, Session>>>,
+    sessions: Arc<Mutex<HashMap<SessionToken, StoredSession>>>,
 }
 
 impl FakeSessionStore {
@@ -35,6 +41,7 @@ impl SessionStore for FakeSessionStore {
         pair_id: Option<Uuid>,
     ) -> Result<SessionToken, SessionError> {
         let token = SessionToken::new();
+        let public_id = Uuid::new_v4();
         let session = Session {
             user_id,
             expires_at,
@@ -42,7 +49,10 @@ impl SessionStore for FakeSessionStore {
             pair_id,
             tenant_memberships: Vec::new(),
         };
-        self.sessions.lock().unwrap().insert(token, session);
+        self.sessions
+            .lock()
+            .unwrap()
+            .insert(token, StoredSession { session, public_id });
         Ok(token)
     }
 
@@ -56,6 +66,7 @@ impl SessionStore for FakeSessionStore {
             .lock()
             .unwrap()
             .get(token)
+            .map(|stored| &stored.session)
             .filter(|s| !s.is_expired())
             .cloned())
     }
@@ -76,8 +87,51 @@ impl SessionStore for FakeSessionStore {
         except_token: &SessionToken,
     ) -> Result<(), SessionError> {
         let mut sessions = self.sessions.lock().unwrap();
-        sessions
-            .retain(|token, session| !(session.pair_id == Some(pair_id) && token != except_token));
+        sessions.retain(|token, stored| {
+            !(stored.session.pair_id == Some(pair_id) && token != except_token)
+        });
+        Ok(())
+    }
+
+    async fn list_active_by_user(
+        &self,
+        _ctx: &ExecutionContext,
+        user_id: UserId,
+    ) -> Result<Vec<domain::session::SessionSummary>, SessionError> {
+        use domain::session::SessionSummary;
+        let sessions = self.sessions.lock().unwrap();
+        Ok(sessions
+            .values()
+            .filter(|stored| stored.session.user_id == user_id && !stored.session.is_expired())
+            .map(|stored| SessionSummary {
+                id: stored.public_id,
+                user_id: stored.session.user_id,
+                kind: stored.session.kind.as_str().to_string(),
+                created_at: Utc::now(),
+                expires_at: stored.session.expires_at,
+                user_agent: None,
+                ip_address: None,
+            })
+            .collect())
+    }
+
+    async fn revoke_by_id(
+        &self,
+        _ctx: &ExecutionContext,
+        user_id: UserId,
+        session_id: Uuid,
+    ) -> Result<(), SessionError> {
+        let mut sessions = self.sessions.lock().unwrap();
+        let token = sessions
+            .iter()
+            .find(|(_, stored)| {
+                stored.public_id == session_id
+                    && stored.session.user_id == user_id
+                    && !stored.session.is_expired()
+            })
+            .map(|(token, _)| *token)
+            .ok_or(SessionError::Forbidden)?;
+        sessions.remove(&token);
         Ok(())
     }
 }

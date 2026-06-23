@@ -24,6 +24,7 @@ use base::ports::{Clock, PasswordHasher};
 use domain::contracts::auth::{LoginRequest, LoginResponse, RegistrationRequest};
 use domain::session::SessionSummary;
 use domain::UserId;
+use uuid::Uuid;
 
 // Public exports
 pub use builder::AuthBuilder;
@@ -165,7 +166,7 @@ impl AuthService {
         &self,
         ctx: &ExecutionContext,
         user_id: UserId,
-        session_id: crate::core::SessionToken,
+        session_id: Uuid,
     ) -> Result<(), AuthError> {
         application::use_cases::revoke_session::execute(self, ctx, user_id, session_id).await
     }

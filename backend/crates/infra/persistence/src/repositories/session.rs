@@ -155,7 +155,7 @@ impl SessionStore for PgSessionStore {
     ) -> Result<Vec<SessionSummary>, SessionError> {
         let rows: Vec<(Uuid, Uuid, String, DateTime<Utc>, DateTime<Utc>)> = sqlx::query_as(
             r#"
-            SELECT token, user_id, kind, created_at, expires_at
+            SELECT id, user_id, kind, created_at, expires_at
             FROM sessions
             WHERE user_id = $1
               AND expires_at > NOW()
@@ -169,8 +169,8 @@ impl SessionStore for PgSessionStore {
         Ok(rows
             .into_iter()
             .map(
-                |(token, user_id, kind, created_at, expires_at)| SessionSummary {
-                    id: token,
+                |(id, user_id, kind, created_at, expires_at)| SessionSummary {
+                    id,
                     user_id: UserId(user_id),
                     kind,
                     created_at,
@@ -180,6 +180,30 @@ impl SessionStore for PgSessionStore {
                 },
             )
             .collect())
+    }
+
+    async fn revoke_by_id(
+        &self,
+        ctx: &ExecutionContext,
+        user_id: UserId,
+        session_id: Uuid,
+    ) -> Result<(), SessionError> {
+        let row: Option<(Uuid,)> = sqlx::query_as(
+            r#"
+            SELECT token
+            FROM sessions
+            WHERE id = $1
+              AND user_id = $2
+              AND expires_at > NOW()
+            "#,
+        )
+        .bind(session_id)
+        .bind(user_id.inner())
+        .fetch_optional(&self.pool)
+        .await?;
+
+        let token = row.ok_or(SessionError::Forbidden)?.0;
+        self.revoke(ctx, &SessionToken(token)).await
     }
 
     async fn update_memberships(

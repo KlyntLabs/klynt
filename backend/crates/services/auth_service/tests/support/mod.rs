@@ -378,6 +378,15 @@ impl SessionStore for FailingSessionStore {
             .retain(|token, session| !(session.pair_id == Some(pair_id) && token != except_token));
         Ok(())
     }
+
+    async fn revoke_by_id(
+        &self,
+        _ctx: &ExecutionContext,
+        _user_id: UserId,
+        _session_id: Uuid,
+    ) -> Result<(), BaseSessionError> {
+        Ok(())
+    }
 }
 
 /// Create a test user model pre-hashed for the default [`TestPasswordHasher`].

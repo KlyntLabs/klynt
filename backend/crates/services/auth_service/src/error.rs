@@ -76,6 +76,7 @@ impl From<SessionError> for AuthError {
     fn from(err: SessionError) -> Self {
         match err {
             SessionError::NotFound | SessionError::Expired => Self::InvalidToken,
+            SessionError::Forbidden => Self::Forbidden,
             SessionError::Database(msg) | SessionError::Internal(msg) => Self::Internal(msg),
         }
     }

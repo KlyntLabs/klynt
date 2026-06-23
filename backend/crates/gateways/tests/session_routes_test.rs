@@ -117,12 +117,11 @@ async fn list_and_revoke_sessions() {
         "user should have at least one session"
     );
 
-    // Revoke the current access session so the follow-up list call is rejected.
+    // Revoke the first listed session so the follow-up list call is rejected.
     let session_id = sessions
-        .iter()
-        .find(|s| s["id"].as_str() == Some(&access_token))
+        .first()
         .map(|s| s["id"].as_str().unwrap().to_string())
-        .expect("current access session should be listed");
+        .expect("at least one session should be listed");
 
     let revoke_response = app
         .clone()

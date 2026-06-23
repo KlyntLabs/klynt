@@ -74,6 +74,15 @@ impl SessionStore for FakeSessionStore {
             .retain(|token, session| !(session.pair_id == Some(pair_id) && token != except_token));
         Ok(())
     }
+
+    async fn revoke_by_id(
+        &self,
+        _ctx: &ExecutionContext,
+        _user_id: UserId,
+        _session_id: Uuid,
+    ) -> Result<(), StoreError> {
+        Ok(())
+    }
 }
 
 fn test_ctx() -> ExecutionContext {

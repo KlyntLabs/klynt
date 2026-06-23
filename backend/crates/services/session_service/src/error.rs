@@ -17,6 +17,9 @@ impl From<base::ports::session::SessionError> for SessionError {
         match err {
             base::ports::session::SessionError::NotFound => SessionError::InvalidToken,
             base::ports::session::SessionError::Expired => SessionError::InvalidToken,
+            base::ports::session::SessionError::Forbidden => {
+                SessionError::StoreError("forbidden".to_string())
+            }
             base::ports::session::SessionError::Database(msg) => SessionError::StoreError(msg),
             base::ports::session::SessionError::Internal(msg) => SessionError::StoreError(msg),
         }

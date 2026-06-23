@@ -12,7 +12,7 @@ use crate::user::UserId;
 /// metadata they need to identify and revoke their own sessions.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct SessionSummary {
-    /// Stable session identifier (exposes the database `token` UUID).
+    /// Stable public session identifier (exposes the database `id` column).
     pub id: Uuid,
 
     /// User this session belongs to.

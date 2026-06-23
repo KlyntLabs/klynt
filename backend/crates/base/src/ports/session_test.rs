@@ -213,6 +213,15 @@ mod tests {
             });
             Ok(())
         }
+
+        async fn revoke_by_id(
+            &self,
+            _ctx: &ExecutionContext,
+            _user_id: UserId,
+            _session_id: Uuid,
+        ) -> Result<(), SessionError> {
+            Ok(())
+        }
     }
 
     /// Minimal fake database error for `From<sqlx::Error>` tests.
