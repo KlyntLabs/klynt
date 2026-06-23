@@ -270,6 +270,32 @@ async fn login_returns_distinct_access_and_refresh_tokens() {
 }
 
 #[tokio::test]
+async fn login_without_remember_me_uses_default_session_lifetime() {
+    let (service, user_repo, _, clock) = support::build_test_service_with_clock();
+    let ctx = support::test_ctx();
+    let now = Utc::now();
+    clock.freeze_at(now);
+
+    let user = support::test_user("ada@example.com", "Str0ng!Pass#123", UserStatus::Active);
+    user_repo.insert(user);
+
+    let response = service
+        .login(
+            &ctx,
+            LoginRequest {
+                email: "ada@example.com".to_string(),
+                password: "Str0ng!Pass#123".to_string(),
+                remember_me: None,
+            },
+        )
+        .await
+        .unwrap();
+
+    let expected = now + Duration::seconds(86400);
+    assert_eq!(response.expires_at, expected);
+}
+
+#[tokio::test]
 async fn login_remember_me_extends_access_session_lifetime() {
     let (service, user_repo, _, clock) = support::build_test_service_with_clock();
     let ctx = support::test_ctx();

@@ -283,6 +283,104 @@ async fn empty_cookie_domain_omits_domain_attribute() {
     );
 }
 
+fn parse_cookie_max_age(set_cookie: &str) -> i64 {
+    set_cookie
+        .split(';')
+        .find_map(|part| {
+            let part = part.trim();
+            part.strip_prefix("Max-Age=")
+                .and_then(|value| value.trim().parse::<i64>().ok())
+        })
+        .expect("set-cookie should contain a valid Max-Age")
+}
+
+async fn login_with_remember_me(remember_me: Option<bool>) -> (axum::Router, String) {
+    let (mut services, _, auth_user_repo, user_service_repo) =
+        support::build_test_services_with_auth_fakes();
+    services.config.cookie_domain = String::new();
+    let config = support::test_config();
+    let app = gateways::create_router(config, services);
+
+    let user_id = UserId::new();
+    let now = Utc::now();
+    let user = User {
+        id: user_id,
+        email: Email::new("remember-me@example.com".to_string()),
+        full_name: Some("Remember Me".to_string()),
+        password_hash: "hash-password".to_string(),
+        status: UserStatus::Active,
+        role: UserRole::Student,
+        global_role: None,
+        email_verified_at: None,
+        institution_id: None,
+        terms_accepted_at: now,
+        terms_version: "1.0".to_string(),
+        created_at: now,
+        updated_at: now,
+        deleted_at: None,
+    };
+    auth_user_repo.insert(user.clone());
+    user_service_repo.insert(user);
+
+    let mut login_request = serde_json::json!({
+        "email": "remember-me@example.com",
+        "password": "password"
+    });
+    if let Some(value) = remember_me {
+        login_request["remember_me"] = serde_json::json!(value);
+    }
+
+    let addr = SocketAddr::from(([127, 0, 0, 1], 1234));
+    let response = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/api/v1/auth/login")
+                .header("content-type", "application/json")
+                .header("host", "localhost:3001")
+                .extension(ConnectInfo(addr))
+                .body(Body::from(serde_json::to_vec(&login_request).unwrap()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let set_cookie = response
+        .headers()
+        .get("set-cookie")
+        .expect("login should set a session cookie")
+        .to_str()
+        .unwrap()
+        .to_string();
+
+    (app, set_cookie)
+}
+
+#[tokio::test]
+async fn login_without_remember_me_sets_short_cookie_max_age() {
+    let (_, set_cookie) = login_with_remember_me(None).await;
+    let max_age = parse_cookie_max_age(&set_cookie);
+    // Default access-session TTL is 24 hours.
+    assert!(
+        (86_300..=86_500).contains(&max_age),
+        "expected Max-Age around 86400s, got {max_age}"
+    );
+}
+
+#[tokio::test]
+async fn login_with_remember_me_sets_long_cookie_max_age() {
+    let (_, set_cookie) = login_with_remember_me(Some(true)).await;
+    let max_age = parse_cookie_max_age(&set_cookie);
+    // Extended "remember me" TTL is 30 days.
+    assert!(
+        (2_591_900..=2_592_100).contains(&max_age),
+        "expected Max-Age around 2592000s, got {max_age}"
+    );
+}
+
 async fn cookie_authenticated_app() -> (axum::Router, String) {
     let (mut services, session_service, auth_user_repo, user_service_repo) =
         support::build_test_services_with_auth_fakes();
