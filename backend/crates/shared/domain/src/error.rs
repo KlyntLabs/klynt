@@ -90,6 +90,30 @@ impl DomainError {
     pub fn internal_msg<S: Into<String>>(message: S) -> Self {
         Self::Internal(message.into())
     }
+
+    /// Stable machine-readable error code for gateway mapping.
+    pub fn error_code(&self) -> &'static str {
+        match self {
+            Self::InvalidInput(_) => "INVALID_INPUT",
+            Self::Validation(_) => "VALIDATION_ERROR",
+            Self::InvalidEmail(_) => "INVALID_EMAIL",
+            Self::InvalidRole(_) => "INVALID_ROLE",
+            Self::InvalidToken(_) => "INVALID_TOKEN",
+            Self::InvalidName(_) => "INVALID_NAME",
+            Self::InstitutionRequired(_) => "INSTITUTION_REQUIRED",
+            Self::TermsNotAccepted => "TERMS_NOT_ACCEPTED",
+            Self::InvalidSessionToken => "INVALID_SESSION_TOKEN",
+            Self::NotFound(_) => "NOT_FOUND",
+            Self::Conflict(_) => "CONFLICT",
+            Self::NotPermitted(_) => "FORBIDDEN",
+            Self::AuthenticationRequired => "AUTHENTICATION_REQUIRED",
+            Self::TenantLimitReached => "TENANT_LIMIT_REACHED",
+            Self::NotTenantMember => "NOT_TENANT_MEMBER",
+            Self::InvalidTenantSlug => "INVALID_TENANT_SLUG",
+            Self::RateLimited => "RATE_LIMITED",
+            Self::Internal(_) => "INTERNAL_SERVER_ERROR",
+        }
+    }
 }
 
 /// Result type for domain operations.

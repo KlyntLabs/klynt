@@ -1,8 +1,6 @@
 //! Tenant service errors.
 
-use axum::http::StatusCode;
-
-use base::ports::{session::SessionError, HttpError};
+use base::ports::session::SessionError;
 use domain::DomainError;
 
 /// Tenant service-specific error type.
@@ -38,21 +36,9 @@ impl TenantError {
     pub fn internal(msg: impl Into<String>) -> Self {
         Self::Internal(msg.into())
     }
-}
 
-impl HttpError for TenantError {
-    fn status_code(&self) -> StatusCode {
-        match self {
-            Self::AuthenticationRequired => StatusCode::UNAUTHORIZED,
-            Self::NotFound => StatusCode::NOT_FOUND,
-            Self::NotMember | Self::NotAdmin | Self::NotOwner => StatusCode::FORBIDDEN,
-            Self::Domain(err) => err.status_code(),
-            Self::Session(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            Self::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        }
-    }
-
-    fn error_code(&self) -> &'static str {
+    /// Stable machine-readable error code for gateway mapping.
+    pub fn error_code(&self) -> &'static str {
         match self {
             Self::AuthenticationRequired => "AUTHENTICATION_REQUIRED",
             Self::NotFound => "NOT_FOUND",

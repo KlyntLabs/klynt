@@ -104,20 +104,21 @@ impl EmailRenderer {
 
 ## Builder Pattern
 
-Construct the service with all dependencies:
+Construct the service with all dependencies. Persistence adapters are supplied by the composition root; the builder no longer accepts a `sqlx` pool:
 
 ```rust
 let auth_service = AuthService::builder()
     .with_config(config)
-    .with_pool(pool)
+    .with_user_repository(user_repository)
+    .with_session_store(session_store)
     .with_session_service(session_service)
     .with_token_store(token_store)
-    .with_password_hasher(hasher)
+    .with_membership_repository(membership_repository)
     .with_email_sender(email_sender)
     .with_audit_logger(audit_logger)
+    .with_password_hasher(hasher)
     .with_clock(clock)
-    .build()
-    .await?;
+    .build()?;
 ```
 
 ## When to Use This Service

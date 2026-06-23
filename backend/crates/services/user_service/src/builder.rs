@@ -1,4 +1,4 @@
-//! Builder for constructing a [`UserService`] with sensible defaults.
+//! Builder for constructing a [`UserService`] with explicit dependencies.
 
 use std::sync::Arc;
 
@@ -14,11 +14,11 @@ use crate::UserService;
 /// Builder for [`UserService`].
 ///
 /// Provides a fluent API for wiring production dependencies while
-/// allowing test-specific overrides.
+/// allowing test-specific overrides. Persistence adapters must be supplied
+/// by the composition root; this crate no longer depends on `sqlx`.
 #[derive(Default)]
 pub struct UserBuilder {
     config: Option<UserConfig>,
-    pool: Option<sqlx::PgPool>,
     user_repository: Option<Arc<dyn UserRepository>>,
     audit_logger: Option<Arc<dyn AuditLogger>>,
     password_hasher: Option<Arc<dyn PasswordHasher>>,
@@ -37,19 +37,13 @@ impl UserBuilder {
         self
     }
 
-    /// Set the PostgreSQL connection pool used to create default adapters.
-    pub fn with_pool(mut self, pool: sqlx::PgPool) -> Self {
-        self.pool = Some(pool);
-        self
-    }
-
-    /// Override the user repository.
+    /// Set the user repository.
     pub fn with_user_repository(mut self, repo: Arc<dyn UserRepository>) -> Self {
         self.user_repository = Some(repo);
         self
     }
 
-    /// Override the audit logger.
+    /// Set the audit logger.
     pub fn with_audit_logger(mut self, logger: Arc<dyn AuditLogger>) -> Self {
         self.audit_logger = Some(logger);
         self
@@ -67,30 +61,21 @@ impl UserBuilder {
         self
     }
 
-    /// Build the service, creating default adapters for any unwired dependency.
+    /// Build the service.
     ///
     /// # Errors
     ///
-    /// Returns an error if no pool was provided and a default adapter is needed.
-    pub async fn build(self) -> Result<UserService, UserError> {
-        let pool = self
-            .pool
-            .ok_or_else(|| UserError::internal("UserBuilder requires a PostgreSQL pool"))?;
-
+    /// Returns an error if a required dependency was not provided.
+    pub fn build(self) -> Result<UserService, UserError> {
         let config = self.config.unwrap_or_default();
 
-        let user_repository = self.user_repository.unwrap_or_else(|| {
-            Arc::new(persistence::repositories::user::PgUserRepository::new(
-                pool.clone(),
-            )) as Arc<dyn UserRepository>
-        });
+        let user_repository = self
+            .user_repository
+            .ok_or_else(|| UserError::internal("UserBuilder requires a user repository"))?;
 
-        let audit_logger = self.audit_logger.unwrap_or_else(|| {
-            let audit_repo = Arc::new(
-                persistence::repositories::audit_event::PgAuditEventRepository::new(pool.clone()),
-            );
-            Arc::new(observability::audit::AuditService::new(audit_repo)) as Arc<dyn AuditLogger>
-        });
+        let audit_logger = self
+            .audit_logger
+            .ok_or_else(|| UserError::internal("UserBuilder requires an audit logger"))?;
 
         let password_hasher = self.password_hasher.unwrap_or_else(|| {
             Arc::new(UserPasswordHasherAdapter::new(

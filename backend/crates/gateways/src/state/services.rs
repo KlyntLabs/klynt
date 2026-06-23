@@ -70,11 +70,9 @@ impl Services {
             pool.clone(),
             session_store.clone(),
             session_service.clone(),
-        )
-        .await?;
-        let user_service = Self::create_user_service(config, pool.clone()).await?;
-        let tenant_service =
-            Self::create_tenant_service(pool.clone(), session_store.clone()).await?;
+        )?;
+        let user_service = Self::create_user_service(config, pool.clone())?;
+        let tenant_service = Self::create_tenant_service(pool.clone(), session_store.clone())?;
         let rate_limiter = Self::create_rate_limiter(config).await?;
         let trusted_proxies = Arc::new(
             config::parse_trusted_proxies(&config.trusted_proxies)
@@ -110,23 +108,44 @@ impl Services {
         }
     }
 
-    async fn create_auth_service(
+    fn create_auth_service(
         config: &Config,
         pool: sqlx::PgPool,
         session_store: Arc<dyn base::ports::session::SessionStore>,
         session_service: Arc<session_service::SessionService>,
     ) -> Result<AuthService, crate::GatewayError> {
+        let user_repository = Arc::new(persistence::repositories::user::PgUserRepository::new(
+            pool.clone(),
+        )) as Arc<dyn base::ports::repository::UserRepository>;
+        let token_store = Arc::new(persistence::repositories::token::PgTokenStore::new(
+            pool.clone(),
+        )) as Arc<dyn base::ports::TokenStore>;
+        let membership_repository = Arc::new(
+            persistence::repositories::membership::PgMembershipRepository::new(pool.clone()),
+        )
+            as Arc<dyn base::ports::repository::MembershipRepository>;
+        let audit_repo = Arc::new(
+            persistence::repositories::audit_event::PgAuditEventRepository::new(pool.clone()),
+        );
+        let audit_logger = Arc::new(observability::audit::AuditService::new(audit_repo))
+            as Arc<dyn base::ports::AuditLogger>;
+        let email_sender = Arc::new(persistence::email::MockEmailService::new())
+            as Arc<dyn base::ports::EmailSender>;
+
         AuthService::builder()
             .with_config(AuthConfig {
                 base_url: config.base_url.clone(),
                 token_duration_secs: 3600,
                 password_policy: None,
             })
-            .with_pool(pool)
+            .with_user_repository(user_repository)
             .with_session_store(session_store)
             .with_session_service(session_service)
+            .with_token_store(token_store)
+            .with_email_sender(email_sender)
+            .with_audit_logger(audit_logger)
+            .with_membership_repository(membership_repository)
             .build()
-            .await
             .map_err(|e| crate::GatewayError::configuration(format!("Auth service: {e}")))
     }
 
@@ -142,28 +161,67 @@ impl Services {
         session_service::SessionService::new(session_config, session_store)
     }
 
-    async fn create_user_service(
+    fn create_user_service(
         _config: &Config,
         pool: sqlx::PgPool,
     ) -> Result<user_service::UserService, crate::GatewayError> {
+        let user_repository = Arc::new(persistence::repositories::user::PgUserRepository::new(
+            pool.clone(),
+        )) as Arc<dyn base::ports::repository::UserRepository>;
+        let audit_repo =
+            Arc::new(persistence::repositories::audit_event::PgAuditEventRepository::new(pool));
+        let audit_logger = Arc::new(observability::audit::AuditService::new(audit_repo))
+            as Arc<dyn base::ports::AuditLogger>;
+
         user_service::UserService::builder()
             .with_config(user_service::UserConfig::default())
-            .with_pool(pool)
+            .with_user_repository(user_repository)
+            .with_audit_logger(audit_logger)
             .build()
-            .await
             .map_err(|e| crate::GatewayError::configuration(format!("User service: {e}")))
     }
 
-    async fn create_tenant_service(
+    fn create_tenant_service(
         pool: sqlx::PgPool,
         session_store: Arc<dyn base::ports::session::SessionStore>,
     ) -> Result<TenantService, crate::GatewayError> {
+        let tenant_repository = Arc::new(
+            persistence::repositories::tenant::PgTenantRepository::new(pool.clone()),
+        ) as Arc<dyn base::ports::repository::TenantRepository>;
+        let membership_repository = Arc::new(
+            persistence::repositories::membership::PgMembershipRepository::new(pool.clone()),
+        )
+            as Arc<dyn base::ports::repository::MembershipRepository>;
+        let user_repository = Arc::new(persistence::repositories::user::PgUserRepository::new(
+            pool.clone(),
+        )) as Arc<dyn base::ports::repository::UserRepository>;
+        let invite_repository = Arc::new(
+            persistence::repositories::tenant_invite::PgTenantInviteRepository::new(pool.clone()),
+        )
+            as Arc<dyn base::ports::repository::TenantInviteRepository>;
+        let permission_repository = Arc::new(
+            persistence::repositories::permission::PgPermissionRepository::new(pool.clone()),
+        )
+            as Arc<dyn base::ports::permission::PermissionRepository>;
+        let role_repository = Arc::new(persistence::repositories::role::PgRoleRepository::new(
+            pool.clone(),
+        )) as Arc<dyn base::ports::permission::RoleRepository>;
+        let audit_repo =
+            Arc::new(persistence::repositories::audit_event::PgAuditEventRepository::new(pool));
+        let audit_logger = Arc::new(observability::audit::AuditService::new(audit_repo))
+            as Arc<dyn base::ports::AuditLogger>;
+
         TenantService::builder()
             .with_config(tenant_service::TenantConfig::default())
-            .with_pool(pool)
+            .with_tenant_repository(tenant_repository)
+            .with_membership_repository(membership_repository)
+            .with_user_repository(user_repository)
+            .with_invite_repository(invite_repository)
+            .with_permission_repository(permission_repository)
+            .with_role_repository(role_repository)
             .with_session_store(session_store)
+            .with_audit_logger(audit_logger)
             .build()
-            .await
             .map_err(|e| crate::GatewayError::configuration(format!("Tenant service: {e}")))
     }
 

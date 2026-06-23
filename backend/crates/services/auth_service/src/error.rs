@@ -1,10 +1,6 @@
 //! Auth service errors.
 
-use axum::http::StatusCode;
-
-use base::ports::{
-    EmailError, HttpError, PasswordHashError, RepositoryError, SessionError, TokenError,
-};
+use base::ports::{EmailError, PasswordHashError, RepositoryError, SessionError, TokenError};
 use domain::DomainError;
 
 use crate::core::PasswordPolicyError;
@@ -123,25 +119,9 @@ impl AuthError {
     pub fn internal(msg: String) -> Self {
         Self::Internal(msg)
     }
-}
 
-impl HttpError for AuthError {
-    fn status_code(&self) -> StatusCode {
-        match self {
-            Self::InvalidCredentials
-            | Self::AccountInactive
-            | Self::AccountLocked
-            | Self::PasswordResetRequired => StatusCode::UNAUTHORIZED,
-            Self::InvalidToken | Self::PasswordPolicy(_) => StatusCode::BAD_REQUEST,
-            Self::UserNotFound => StatusCode::NOT_FOUND,
-            Self::RateLimited => StatusCode::TOO_MANY_REQUESTS,
-            Self::Forbidden => StatusCode::FORBIDDEN,
-            Self::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            Self::Domain(err) => err.status_code(),
-        }
-    }
-
-    fn error_code(&self) -> &'static str {
+    /// Stable machine-readable error code for gateway mapping.
+    pub fn error_code(&self) -> &'static str {
         match self {
             Self::InvalidCredentials => "INVALID_CREDENTIALS",
             Self::AccountInactive => "ACCOUNT_INACTIVE",

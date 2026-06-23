@@ -1,4 +1,4 @@
-//! Builder for constructing an [`AuthService`] with sensible defaults.
+//! Builder for constructing an [`AuthService`] with explicit dependencies.
 
 use std::sync::Arc;
 
@@ -15,11 +15,11 @@ use crate::Dependencies;
 /// Builder for [`AuthService`].
 ///
 /// Provides a fluent API for wiring production dependencies while
-/// allowing test-specific overrides.
+/// allowing test-specific overrides. Persistence adapters must be supplied
+/// by the composition root; this crate no longer depends on `sqlx`.
 #[derive(Default)]
 pub struct AuthBuilder {
     config: Option<AuthConfig>,
-    pool: Option<sqlx::PgPool>,
     user_repository: Option<Arc<dyn UserRepository>>,
     session_service: Option<Arc<session_service::SessionService>>,
     session_store: Option<Arc<dyn base::ports::session::SessionStore>>,
@@ -43,25 +43,19 @@ impl AuthBuilder {
         self
     }
 
-    /// Set the PostgreSQL connection pool used to create default adapters.
-    pub fn with_pool(mut self, pool: sqlx::PgPool) -> Self {
-        self.pool = Some(pool);
-        self
-    }
-
-    /// Override the user repository.
+    /// Set the user repository.
     pub fn with_user_repository(mut self, repo: Arc<dyn UserRepository>) -> Self {
         self.user_repository = Some(repo);
         self
     }
 
-    /// Override the session service.
+    /// Set the session service.
     pub fn with_session_service(mut self, service: Arc<session_service::SessionService>) -> Self {
         self.session_service = Some(service);
         self
     }
 
-    /// Override the session store.
+    /// Set the session store.
     pub fn with_session_store(
         mut self,
         store: Arc<dyn base::ports::session::SessionStore>,
@@ -70,19 +64,19 @@ impl AuthBuilder {
         self
     }
 
-    /// Override the token store.
+    /// Set the token store.
     pub fn with_token_store(mut self, store: Arc<dyn TokenStore>) -> Self {
         self.token_store = Some(store);
         self
     }
 
-    /// Override the email sender.
+    /// Set the email sender.
     pub fn with_email_sender(mut self, sender: Arc<dyn EmailSender>) -> Self {
         self.email_sender = Some(sender);
         self
     }
 
-    /// Override the audit logger.
+    /// Set the audit logger.
     pub fn with_audit_logger(mut self, logger: Arc<dyn AuditLogger>) -> Self {
         self.audit_logger = Some(logger);
         self
@@ -94,7 +88,7 @@ impl AuthBuilder {
         self
     }
 
-    /// Override the membership repository.
+    /// Set the membership repository.
     pub fn with_membership_repository(mut self, repo: Arc<dyn MembershipRepository>) -> Self {
         self.membership_repository = Some(repo);
         self
@@ -106,29 +100,17 @@ impl AuthBuilder {
         self
     }
 
-    /// Build the service, creating default adapters for any unwired dependency.
+    /// Build the service.
     ///
     /// # Errors
     ///
-    /// Returns an error if no pool was provided and a default adapter is needed.
-    pub async fn build(self) -> Result<AuthService, AuthError> {
-        let pool = self.pool.ok_or_else(|| {
-            AuthError::internal("AuthBuilder requires a PostgreSQL pool".to_string())
-        })?;
-
+    /// Returns an error if a required dependency was not provided.
+    pub fn build(self) -> Result<AuthService, AuthError> {
         let config = self.config.unwrap_or_default();
 
-        let user_repository = self.user_repository.unwrap_or_else(|| {
-            Arc::new(persistence::repositories::user::PgUserRepository::new(
-                pool.clone(),
-            )) as Arc<dyn UserRepository>
-        });
-
-        let session_store = self.session_store.unwrap_or_else(|| {
-            Arc::new(persistence::repositories::session::PgSessionStore::new(
-                pool.clone(),
-            )) as Arc<dyn base::ports::session::SessionStore>
-        });
+        let session_store = self.session_store.ok_or_else(|| {
+            AuthError::internal("AuthBuilder requires a session store".to_string())
+        })?;
 
         let session_service = self.session_service.unwrap_or_else(|| {
             Arc::new(session_service::SessionService::new(
@@ -137,33 +119,30 @@ impl AuthBuilder {
             ))
         });
 
-        let token_store = self.token_store.unwrap_or_else(|| {
-            Arc::new(persistence::repositories::token::PgTokenStore::new(
-                pool.clone(),
-            )) as Arc<dyn TokenStore>
-        });
+        let user_repository = self.user_repository.ok_or_else(|| {
+            AuthError::internal("AuthBuilder requires a user repository".to_string())
+        })?;
 
-        let email_sender = self.email_sender.unwrap_or_else(|| {
-            Arc::new(persistence::email::MockEmailService::new()) as Arc<dyn EmailSender>
-        });
+        let token_store = self
+            .token_store
+            .ok_or_else(|| AuthError::internal("AuthBuilder requires a token store".to_string()))?;
 
-        let audit_logger = self.audit_logger.unwrap_or_else(|| {
-            let audit_repo = Arc::new(
-                persistence::repositories::audit_event::PgAuditEventRepository::new(pool.clone()),
-            );
-            Arc::new(observability::audit::AuditService::new(audit_repo)) as Arc<dyn AuditLogger>
-        });
+        let email_sender = self.email_sender.ok_or_else(|| {
+            AuthError::internal("AuthBuilder requires an email sender".to_string())
+        })?;
+
+        let audit_logger = self.audit_logger.ok_or_else(|| {
+            AuthError::internal("AuthBuilder requires an audit logger".to_string())
+        })?;
+
+        let membership_repository = self.membership_repository.ok_or_else(|| {
+            AuthError::internal("AuthBuilder requires a membership repository".to_string())
+        })?;
 
         let password_hasher = self.password_hasher.unwrap_or_else(|| {
             Arc::new(AuthPasswordHasherAdapter::new(
                 persistence::password_hasher::Argon2PasswordHasher::new(),
             ))
-        });
-
-        let membership_repository = self.membership_repository.unwrap_or_else(|| {
-            Arc::new(
-                persistence::repositories::membership::PgMembershipRepository::new(pool.clone()),
-            ) as Arc<dyn MembershipRepository>
         });
 
         let clock = self.clock.unwrap_or_else(|| Arc::new(SystemClock));

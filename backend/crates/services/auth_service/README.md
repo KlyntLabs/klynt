@@ -13,9 +13,13 @@ use base::ctx::ExecutionContext;
 
 let service = AuthService::builder()
     .with_config(AuthConfig { ... })
-    .with_pool(pool)
-    .build()
-    .await?;
+    .with_user_repository(user_repository)
+    .with_session_store(session_store)
+    .with_token_store(token_store)
+    .with_membership_repository(membership_repository)
+    .with_email_sender(email_sender)
+    .with_audit_logger(audit_logger)
+    .build()?;
 let response = service.login(&ctx, LoginRequest { ... }).await?;
 let user_id = service.register(&ctx, RegistrationRequest { ... }).await?;
 ```

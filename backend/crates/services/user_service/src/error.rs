@@ -1,8 +1,6 @@
 //! User service errors.
 
-use axum::http::StatusCode;
-
-use base::ports::{HttpError, PasswordHashError, RepositoryError};
+use base::ports::{PasswordHashError, RepositoryError};
 use domain::DomainError;
 
 /// User service-specific error type.
@@ -67,23 +65,9 @@ impl UserError {
     pub fn invalid_password() -> Self {
         Self::InvalidPassword
     }
-}
 
-impl HttpError for UserError {
-    fn status_code(&self) -> StatusCode {
-        match self {
-            Self::NotFound => StatusCode::NOT_FOUND,
-            Self::UserDeleted | Self::CannotDeleteAdmin | Self::SelfDeleteNotAllowed => {
-                StatusCode::FORBIDDEN
-            }
-            Self::InvalidPassword => StatusCode::UNAUTHORIZED,
-            Self::Validation(_) => StatusCode::BAD_REQUEST,
-            Self::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            Self::Domain(err) => err.status_code(),
-        }
-    }
-
-    fn error_code(&self) -> &'static str {
+    /// Stable machine-readable error code for gateway mapping.
+    pub fn error_code(&self) -> &'static str {
         match self {
             Self::NotFound => "NOT_FOUND",
             Self::UserDeleted => "USER_DELETED",

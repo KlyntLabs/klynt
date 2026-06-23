@@ -5,7 +5,9 @@
 use base::ctx::{ActorType, ExecutionContext, RequestContext};
 use base::ports::repository::MembershipRepository;
 use domain::{Membership, TenantRole, UserId};
-use tenant_service::{CreateTenantRequest, TenantError, TenantService};
+use tenant_service::{CreateTenantRequest, TenantError};
+
+mod support;
 
 fn database_url() -> Option<String> {
     std::env::var("DATABASE_URL").ok()
@@ -23,14 +25,6 @@ async fn setup_pool() -> Option<sqlx::PgPool> {
 
 fn test_ctx(user_id: UserId) -> ExecutionContext {
     ExecutionContext::new(RequestContext::new()).with_actor(user_id.inner(), ActorType::User)
-}
-
-async fn build_service(pool: sqlx::PgPool) -> TenantService {
-    TenantService::builder()
-        .with_pool(pool)
-        .build()
-        .await
-        .expect("tenant service should build")
 }
 
 async fn create_test_user(pool: &sqlx::PgPool, prefix: &str) -> UserId {
@@ -92,7 +86,7 @@ async fn create_tenant_as_authenticated_user() {
         return;
     };
 
-    let service = build_service(pool.clone()).await;
+    let service = support::build_service(pool.clone()).await;
     let owner_id = create_test_user(&pool, "owner-create").await;
     let ctx = test_ctx(owner_id);
 
@@ -120,7 +114,7 @@ async fn list_my_tenants() {
         return;
     };
 
-    let service = build_service(pool.clone()).await;
+    let service = support::build_service(pool.clone()).await;
     let owner_id = create_test_user(&pool, "owner-list").await;
     let other_id = create_test_user(&pool, "other-list").await;
 
@@ -171,7 +165,7 @@ async fn get_tenant_by_slug() {
         return;
     };
 
-    let service = build_service(pool.clone()).await;
+    let service = support::build_service(pool.clone()).await;
     let owner_id = create_test_user(&pool, "owner-get").await;
     let stranger_id = create_test_user(&pool, "stranger-get").await;
 
@@ -221,7 +215,7 @@ async fn update_tenant_requires_admin_or_owner() {
         return;
     };
 
-    let service = build_service(pool.clone()).await;
+    let service = support::build_service(pool.clone()).await;
     let owner_id = create_test_user(&pool, "owner-update").await;
     let admin_id = create_test_user(&pool, "admin-update").await;
     let member_id = create_test_user(&pool, "member-update").await;
@@ -301,7 +295,7 @@ async fn delete_tenant_requires_owner() {
         return;
     };
 
-    let service = build_service(pool.clone()).await;
+    let service = support::build_service(pool.clone()).await;
     let owner_id = create_test_user(&pool, "owner-delete").await;
     let admin_id = create_test_user(&pool, "admin-delete").await;
     let member_id = create_test_user(&pool, "member-delete").await;
@@ -353,7 +347,7 @@ async fn enforce_two_tenant_ownership_limit() {
         return;
     };
 
-    let service = build_service(pool.clone()).await;
+    let service = support::build_service(pool.clone()).await;
     let owner_id = create_test_user(&pool, "owner-limit").await;
     let ctx = test_ctx(owner_id);
 
@@ -396,7 +390,7 @@ async fn list_members_requires_membership() {
         return;
     };
 
-    let service = build_service(pool.clone()).await;
+    let service = support::build_service(pool.clone()).await;
     let owner_id = create_test_user(&pool, "owner-members").await;
     let stranger_id = create_test_user(&pool, "stranger-members").await;
 
@@ -440,7 +434,7 @@ async fn add_update_remove_member_flow() {
         return;
     };
 
-    let service = build_service(pool.clone()).await;
+    let service = support::build_service(pool.clone()).await;
     let owner_id = create_test_user(&pool, "owner-mgmt").await;
     let member_user_id = create_test_user(&pool, "member-mgmt").await;
     let guest_user_id = create_test_user(&pool, "guest-mgmt").await;
@@ -548,7 +542,7 @@ async fn cannot_modify_owner_membership() {
         return;
     };
 
-    let service = build_service(pool.clone()).await;
+    let service = support::build_service(pool.clone()).await;
     let owner_id = create_test_user(&pool, "owner-protected").await;
     let admin_id = create_test_user(&pool, "admin-protected").await;
 

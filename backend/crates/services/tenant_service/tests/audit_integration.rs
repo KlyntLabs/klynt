@@ -4,7 +4,9 @@
 
 use base::ctx::{ActorType, ExecutionContext, RequestContext};
 use domain::{TenantRole, UserId};
-use tenant_service::{CreateTenantRequest, TenantService};
+use tenant_service::CreateTenantRequest;
+
+mod support;
 
 fn database_url() -> Option<String> {
     std::env::var("DATABASE_URL").ok()
@@ -22,14 +24,6 @@ async fn setup_pool() -> Option<sqlx::PgPool> {
 
 fn test_ctx(user_id: UserId) -> ExecutionContext {
     ExecutionContext::new(RequestContext::new()).with_actor(user_id.inner(), ActorType::User)
-}
-
-async fn build_service(pool: sqlx::PgPool) -> TenantService {
-    TenantService::builder()
-        .with_pool(pool)
-        .build()
-        .await
-        .expect("tenant service should build")
 }
 
 async fn create_test_user(pool: &sqlx::PgPool, prefix: &str) -> UserId {
@@ -101,7 +95,7 @@ async fn role_lifecycle_is_audited() {
         return;
     };
 
-    let service = build_service(pool.clone()).await;
+    let service = support::build_service(pool.clone()).await;
     let owner_id = create_test_user(&pool, "owner-audit-role").await;
     let owner_ctx = test_ctx(owner_id);
 
@@ -201,7 +195,7 @@ async fn member_role_change_and_removal_are_audited() {
         return;
     };
 
-    let service = build_service(pool.clone()).await;
+    let service = support::build_service(pool.clone()).await;
     let owner_id = create_test_user(&pool, "owner-audit-member").await;
     let member_id = create_test_user(&pool, "member-audit-member").await;
     let owner_ctx = test_ctx(owner_id);

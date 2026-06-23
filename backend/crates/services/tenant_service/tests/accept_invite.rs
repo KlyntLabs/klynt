@@ -3,8 +3,10 @@
 use base::ctx::{ActorType, ExecutionContext, RequestContext};
 use chrono::{Duration, Utc};
 use domain::{RoleId, UserId};
-use tenant_service::{CreateTenantRequest, TenantError, TenantService};
+use tenant_service::{CreateTenantRequest, TenantError};
 use uuid::Uuid;
+
+mod support;
 
 fn database_url() -> Option<String> {
     std::env::var("DATABASE_URL").ok()
@@ -22,14 +24,6 @@ async fn setup_pool() -> Option<sqlx::PgPool> {
 
 fn test_ctx(user_id: UserId) -> ExecutionContext {
     ExecutionContext::new(RequestContext::new()).with_actor(user_id.inner(), ActorType::User)
-}
-
-async fn build_service(pool: sqlx::PgPool) -> TenantService {
-    TenantService::builder()
-        .with_pool(pool)
-        .build()
-        .await
-        .expect("tenant service should build")
 }
 
 async fn create_test_user(pool: &sqlx::PgPool, prefix: &str) -> (UserId, String) {
@@ -137,7 +131,7 @@ async fn accept_invite_adds_user_as_member() {
         return;
     };
 
-    let service = build_service(pool.clone()).await;
+    let service = support::build_service(pool.clone()).await;
     let (owner_id, _) = create_test_user(&pool, "accept-owner").await;
     let (new_user_id, new_email) = create_test_user(&pool, "accept-new").await;
     let ctx = test_ctx(new_user_id);
@@ -184,7 +178,7 @@ async fn accept_invite_returns_not_found_for_unknown_token() {
         return;
     };
 
-    let service = build_service(pool.clone()).await;
+    let service = support::build_service(pool.clone()).await;
     let (user_id, _) = create_test_user(&pool, "accept-notfound").await;
     let ctx = test_ctx(user_id);
 
@@ -203,7 +197,7 @@ async fn accept_invite_fails_when_expired() {
         return;
     };
 
-    let service = build_service(pool.clone()).await;
+    let service = support::build_service(pool.clone()).await;
     let (owner_id, _) = create_test_user(&pool, "accept-expired-owner").await;
     let (new_user_id, new_email) = create_test_user(&pool, "accept-expired").await;
     let ctx = test_ctx(new_user_id);
@@ -250,7 +244,7 @@ async fn accept_invite_fails_for_wrong_email() {
         return;
     };
 
-    let service = build_service(pool.clone()).await;
+    let service = support::build_service(pool.clone()).await;
     let (owner_id, _) = create_test_user(&pool, "accept-wrong-owner").await;
     let (new_user_id, _) = create_test_user(&pool, "accept-wrong").await;
     let ctx = test_ctx(new_user_id);
@@ -297,7 +291,7 @@ async fn accept_invite_fails_when_already_accepted() {
         return;
     };
 
-    let service = build_service(pool.clone()).await;
+    let service = support::build_service(pool.clone()).await;
     let (owner_id, _) = create_test_user(&pool, "accept-accepted-owner").await;
     let (new_user_id, new_email) = create_test_user(&pool, "accept-accepted").await;
     let ctx = test_ctx(new_user_id);
