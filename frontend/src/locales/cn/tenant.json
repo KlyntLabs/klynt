@@ -26,11 +26,10 @@
   "settings": {
     "title": "租户设置",
     "generalTitle": "常规",
-    "generalDescription": "更新租户名称和 slug。",
+    "generalDescription": "更新租户名称。",
     "nameLabel": "名称",
     "nameRequired": "名称必填。",
     "slugLabel": "Slug",
-    "slugRequired": "Slug 必填。",
     "saveButton": "保存更改",
     "updateError": "更新租户失败：{{message}}",
     "loadErrorTitle": "加载租户失败",

@@ -60,14 +60,12 @@ export const tenantHandlers = [
     if (!existing) {
       return HttpResponse.json({ message: "Tenant not found" }, { status: 404 });
     }
-    const body = (await request.json()) as { slug?: string; name?: string };
+    const body = (await request.json()) as { name?: string };
     const updated = {
       ...existing,
       name: body.name ?? existing.name,
-      slug: body.slug ?? existing.slug,
     };
-    tenants.delete(slug);
-    tenants.set(updated.slug, updated);
+    tenants.set(slug, updated);
     return HttpResponse.json({ data: updated });
   }),
   http.delete("/api/v1/tenants/:slug", ({ params }) => {

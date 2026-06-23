@@ -11,4 +11,6 @@ export interface CreateTenantInput {
   name: string;
 }
 
-export type UpdateTenantInput = Partial<CreateTenantInput>;
+export interface UpdateTenantInput {
+  name: string;
+}

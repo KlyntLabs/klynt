@@ -33,6 +33,16 @@ describe("TenantSettingsPage", () => {
     expect(screen.getByDisplayValue("acme")).toBeInTheDocument();
   });
 
+  it("renders the slug field as read-only", async () => {
+    render(<TestRouter />, {
+      initialEntries: ["/tenants/acme/settings"],
+    });
+
+    const slugInput = await screen.findByTestId("tenant-slug-input");
+    expect(slugInput).toHaveAttribute("readonly");
+    expect(slugInput).toBeDisabled();
+  });
+
   it("updates tenant name", async () => {
     const user = userEvent.setup();
 
@@ -49,22 +59,6 @@ describe("TenantSettingsPage", () => {
     await waitFor(() => {
       expect(screen.getByDisplayValue("Acme Inc")).toBeInTheDocument();
     });
-  });
-
-  it("updates tenant slug and navigates to the new settings URL", async () => {
-    const user = userEvent.setup();
-
-    render(<TestRouter />, {
-      initialEntries: ["/tenants/acme/settings"],
-    });
-
-    const slugInput = await screen.findByTestId("tenant-slug-input");
-    await user.clear(slugInput);
-    await user.type(slugInput, "acme-corp");
-
-    await user.click(screen.getByTestId("save-tenant-button"));
-
-    expect(await screen.findByDisplayValue("acme-corp")).toBeInTheDocument();
   });
 
   it("deletes tenant after confirmation and redirects to dashboard", async () => {

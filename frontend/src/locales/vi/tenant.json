@@ -26,11 +26,10 @@
   "settings": {
     "title": "Cài đặt tenant",
     "generalTitle": "Chung",
-    "generalDescription": "Cập nhật tên và slug của tenant.",
+    "generalDescription": "Cập nhật tên của tenant.",
     "nameLabel": "Tên",
     "nameRequired": "Tên là bắt buộc.",
     "slugLabel": "Slug",
-    "slugRequired": "Slug là bắt buộc.",
     "saveButton": "Lưu thay đổi",
     "updateError": "Không thể cập nhật tenant: {{message}}",
     "loadErrorTitle": "Không thể tải tenant",

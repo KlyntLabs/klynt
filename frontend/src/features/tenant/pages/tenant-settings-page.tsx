@@ -47,31 +47,18 @@ export default function TenantSettingsPage() {
   const form = useForm<UpdateTenantInput>({
     defaultValues: {
       name: "",
-      slug: "",
     },
   });
 
   useEffect(() => {
     if (tenant) {
-      form.reset({ name: tenant.name, slug: tenant.slug });
+      form.reset({ name: tenant.name });
     }
   }, [tenant, form]);
 
   async function handleSubmit(data: UpdateTenantInput) {
-    const changed: UpdateTenantInput = {};
-    if (data.name !== tenant?.name) changed.name = data.name;
-    if (data.slug !== tenant?.slug) changed.slug = data.slug;
-
-    if (Object.keys(changed).length === 0) return;
-
-    await updateMutation.mutateAsync(changed, {
-      onSuccess: (_, variables) => {
-        const nextSlug = variables.slug ?? tenantSlug;
-        if (nextSlug !== tenantSlug) {
-          navigate(routePaths.tenantSettings.replace(":slug", nextSlug));
-        }
-      },
-    });
+    if (data.name === tenant?.name) return;
+    await updateMutation.mutateAsync(data);
   }
 
   async function handleRemove() {
@@ -121,20 +108,10 @@ export default function TenantSettingsPage() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="slug"
-                rules={{ required: t("settings.slugRequired") }}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("settings.slugLabel")}</FormLabel>
-                    <FormControl>
-                      <Input {...field} data-testid="tenant-slug-input" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid gap-2">
+                <FormLabel>{t("settings.slugLabel")}</FormLabel>
+                <Input value={tenantSlug} disabled readOnly data-testid="tenant-slug-input" />
+              </div>
               {updateMutation.error && (
                 <Alert variant="destructive">
                   <AlertDescription>

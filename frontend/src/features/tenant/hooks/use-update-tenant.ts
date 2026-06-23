@@ -12,11 +12,9 @@ export function useUpdateTenant(slug: string) {
 
   return useMutation({
     mutationFn: (input: UpdateTenantInput) => updateTenant(slug, input),
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["tenants"] });
       void queryClient.invalidateQueries({ queryKey: ["tenants", slug] });
-      const nextSlug = variables.slug ?? slug;
-      void queryClient.invalidateQueries({ queryKey: ["tenants", nextSlug] });
     },
     onError: (error) => {
       const apiError = createApiError(error);

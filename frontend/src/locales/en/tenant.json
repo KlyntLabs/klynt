@@ -26,11 +26,10 @@
   "settings": {
     "title": "Tenant settings",
     "generalTitle": "General",
-    "generalDescription": "Update your tenant's name and slug.",
+    "generalDescription": "Update your tenant's name.",
     "nameLabel": "Name",
     "nameRequired": "Name is required.",
     "slugLabel": "Slug",
-    "slugRequired": "Slug is required.",
     "saveButton": "Save changes",
     "updateError": "Failed to update tenant: {{message}}",
     "loadErrorTitle": "Failed to load tenant",
