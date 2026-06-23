@@ -61,7 +61,7 @@ services:
       # `api.allowed_origins` is a list in config/default.toml. Override it there
       # or by setting KLYNT_API__ALLOWED_ORIGINS='["http://localhost:5174"]'.
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:3001/api/v1/health/live"]
+      test: ["CMD", "curl", "-fsS", "http://localhost:3001/health/live"]
       interval: 10s
       timeout: 5s
       retries: 5

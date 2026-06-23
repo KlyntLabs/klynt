@@ -22,6 +22,8 @@ COPY crates/infra/observability/Cargo.toml crates/infra/observability/
 COPY crates/services/auth_service/Cargo.toml crates/services/auth_service/
 COPY crates/services/session_service/Cargo.toml crates/services/session_service/
 COPY crates/services/user_service/Cargo.toml crates/services/user_service/
+COPY crates/services/tenant_service/Cargo.toml crates/services/tenant_service/
+COPY crates/services/cleanup_job/Cargo.toml crates/services/cleanup_job/
 COPY crates/gateways/Cargo.toml crates/gateways/
 COPY crates/server/Cargo.toml crates/server/
 
@@ -35,6 +37,8 @@ RUN mkdir -p \
     crates/services/auth_service/src \
     crates/services/session_service/src \
     crates/services/user_service/src \
+    crates/services/tenant_service/src \
+    crates/services/cleanup_job/src \
     crates/gateways/src \
     crates/server/src && \
     echo 'fn main() {}' > crates/server/src/main.rs && \
@@ -46,6 +50,8 @@ RUN mkdir -p \
     echo '' > crates/services/auth_service/src/lib.rs && \
     echo '' > crates/services/session_service/src/lib.rs && \
     echo '' > crates/services/user_service/src/lib.rs && \
+    echo '' > crates/services/tenant_service/src/lib.rs && \
+    echo '' > crates/services/cleanup_job/src/lib.rs && \
     echo '' > crates/gateways/src/lib.rs && \
     echo '' > crates/server/src/lib.rs
 
@@ -79,9 +85,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=builder /usr/src/klynt/target/release/server ./server
 COPY --from=builder /usr/src/klynt/config ./config
 
-# The backend must bind to all interfaces inside the container
-ENV KLYNT_API_HOST=0.0.0.0
-ENV KLYNT_API_PORT=3001
+# The backend must bind to all interfaces inside the container.
+# The config loader uses "__" as the nested-key separator.
+ENV KLYNT_API__HOST=0.0.0.0
+ENV KLYNT_API__PORT=3001
 
 EXPOSE 3001
 
