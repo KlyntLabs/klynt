@@ -113,7 +113,10 @@ describe("SessionsPage", () => {
       http.get("/api/v1/auth/sessions", () => {
         attempts += 1;
         if (attempts === 1) {
-          return new HttpResponse(null, { status: 500 });
+          return HttpResponse.json(
+            { code: "bad_request", message: "bad request" },
+            { status: 400 }
+          );
         }
         return HttpResponse.json({ data: { sessions: baseSessions } });
       })

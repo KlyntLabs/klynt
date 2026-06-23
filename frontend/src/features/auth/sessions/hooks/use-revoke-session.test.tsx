@@ -2,9 +2,32 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
 import type { ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { I18nextProvider } from "react-i18next";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import i18n from "@/core/i18n/test-config";
+import { useToastStore } from "@/core/notifications/toast-store";
 import { server } from "@/test/msw/server";
 import { useRevokeSession } from "./use-revoke-session";
+
+function createTestSetup() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+
+  function Wrapper({ children }: { children: ReactNode }) {
+    return (
+      <I18nextProvider i18n={i18n}>
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      </I18nextProvider>
+    );
+  }
+
+  return { queryClient, Wrapper };
+}
+
+beforeEach(() => {
+  useToastStore.getState().reset();
+});
 
 describe("useRevokeSession", () => {
   it("revokes a session", async () => {
@@ -16,13 +39,7 @@ describe("useRevokeSession", () => {
       })
     );
 
-    const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
-    });
-    function Wrapper({ children }: { children: ReactNode }) {
-      return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
-    }
-
+    const { Wrapper } = createTestSetup();
     const { result } = renderHook(() => useRevokeSession(), { wrapper: Wrapper });
 
     result.current.mutate("s-1");
@@ -36,14 +53,8 @@ describe("useRevokeSession", () => {
       http.delete("/api/v1/auth/sessions/s-2", () => new HttpResponse(null, { status: 204 }))
     );
 
-    const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
-    });
+    const { queryClient, Wrapper } = createTestSetup();
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-
-    function Wrapper({ children }: { children: ReactNode }) {
-      return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
-    }
 
     const { result } = renderHook(() => useRevokeSession(), { wrapper: Wrapper });
 
@@ -51,5 +62,28 @@ describe("useRevokeSession", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["auth", "sessions"] });
+  });
+
+  it("shows a toast on error", async () => {
+    server.use(
+      http.delete("/api/v1/auth/sessions/s-3", () =>
+        HttpResponse.json({ code: "bad_request", message: "bad request" }, { status: 400 })
+      )
+    );
+
+    const addToastSpy = vi.spyOn(useToastStore.getState(), "addToast");
+    const { Wrapper } = createTestSetup();
+    const { result } = renderHook(() => useRevokeSession(), { wrapper: Wrapper });
+
+    result.current.mutate("s-3");
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(addToastSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "error",
+        duration: 5000,
+      })
+    );
+    expect(addToastSpy.mock.calls[0][0].message).toMatch(/Failed to revoke session:/);
   });
 });
