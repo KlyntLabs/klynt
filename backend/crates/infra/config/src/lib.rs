@@ -108,7 +108,7 @@ pub fn load_config() -> Result<AppConfig, LoaderConfigError> {
         .set_default("hsts_enabled", false)?
         .set_default("database_url", None::<String>)?
         .set_default("redis_url", None::<String>)?
-        .set_default("cookie_domain", ".klynt.edu")?
+        .set_default("cookie_domain", "")?
         .set_default("cookie_secure", false)?
         .set_default("csp_report_only", false)?
         .set_default("csp_directive", DEFAULT_CONTENT_SECURITY_POLICY)?

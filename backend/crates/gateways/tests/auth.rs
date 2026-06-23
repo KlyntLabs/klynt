@@ -119,8 +119,9 @@ async fn malformed_json_returns_bad_request() {
 
 #[tokio::test]
 async fn sso_cookie_authenticates_across_subdomains() {
-    let (services, _, auth_user_repo, user_service_repo) =
+    let (mut services, _, auth_user_repo, user_service_repo) =
         support::build_test_services_with_auth_fakes();
+    services.config.cookie_domain = ".klynt.edu".to_string();
     let config = support::test_config();
     let app = gateways::create_router(config, services);
 
@@ -215,9 +216,77 @@ async fn sso_cookie_authenticates_across_subdomains() {
     assert_eq!(response.status(), StatusCode::OK);
 }
 
-async fn cookie_authenticated_app() -> (axum::Router, String) {
-    let (services, session_service, auth_user_repo, user_service_repo) =
+#[tokio::test]
+async fn empty_cookie_domain_omits_domain_attribute() {
+    let (mut services, _, auth_user_repo, user_service_repo) =
         support::build_test_services_with_auth_fakes();
+    services.config.cookie_domain = String::new();
+    let config = support::test_config();
+    let app = gateways::create_router(config, services);
+
+    let user_id = UserId::new();
+    let now = Utc::now();
+    let user = User {
+        id: user_id,
+        email: Email::new("localhost@example.com".to_string()),
+        full_name: Some("Local Dev".to_string()),
+        password_hash: "hash-password".to_string(),
+        status: UserStatus::Active,
+        role: UserRole::Student,
+        global_role: None,
+        email_verified_at: None,
+        institution_id: None,
+        terms_accepted_at: now,
+        terms_version: "1.0".to_string(),
+        created_at: now,
+        updated_at: now,
+        deleted_at: None,
+    };
+    auth_user_repo.insert(user.clone());
+    user_service_repo.insert(user);
+
+    let login_request = serde_json::json!({
+        "email": "localhost@example.com",
+        "password": "password"
+    });
+    let addr = SocketAddr::from(([127, 0, 0, 1], 1234));
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/api/v1/auth/login")
+                .header("content-type", "application/json")
+                .header("host", "localhost:3001")
+                .extension(ConnectInfo(addr))
+                .body(Body::from(serde_json::to_vec(&login_request).unwrap()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let set_cookie = response
+        .headers()
+        .get("set-cookie")
+        .expect("login should set a session cookie")
+        .to_str()
+        .unwrap();
+    assert!(
+        set_cookie.contains(&format!("{SESSION_TOKEN_COOKIE}=")),
+        "set-cookie should contain {SESSION_TOKEN_COOKIE}: {set_cookie}"
+    );
+    assert!(
+        !set_cookie.contains("Domain="),
+        "set-cookie should omit Domain attribute when cookie_domain is empty: {set_cookie}"
+    );
+}
+
+async fn cookie_authenticated_app() -> (axum::Router, String) {
+    let (mut services, session_service, auth_user_repo, user_service_repo) =
+        support::build_test_services_with_auth_fakes();
+    services.config.cookie_domain = ".klynt.edu".to_string();
     let config = support::test_config();
 
     let user_id = UserId::new();

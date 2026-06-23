@@ -30,7 +30,7 @@ pub struct AppConfig {
 }
 
 fn default_cookie_domain() -> String {
-    ".klynt.edu".to_string()
+    String::new()
 }
 
 fn default_csp_directive() -> String {
@@ -70,7 +70,7 @@ mod tests {
             hsts_enabled: false,
             database_url: Some("postgresql://localhost/db".to_string()),
             redis_url: Some("redis://localhost".to_string()),
-            cookie_domain: ".klynt.edu".to_string(),
+            cookie_domain: String::new(),
             cookie_secure: false,
             csp_report_only: false,
             csp_directive: default_csp_directive(),
@@ -94,7 +94,7 @@ mod tests {
             hsts_enabled: false,
             database_url: None,
             redis_url: None,
-            cookie_domain: ".klynt.edu".to_string(),
+            cookie_domain: String::new(),
             cookie_secure: false,
             csp_report_only: false,
             csp_directive: default_csp_directive(),
@@ -112,7 +112,7 @@ mod tests {
             hsts_enabled: false,
             database_url: Some("postgresql://localhost/db".to_string()),
             redis_url: Some("redis://localhost".to_string()),
-            cookie_domain: ".klynt.edu".to_string(),
+            cookie_domain: String::new(),
             cookie_secure: false,
             csp_report_only: false,
             csp_directive: "\n".to_string(),

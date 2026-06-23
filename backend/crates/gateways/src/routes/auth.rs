@@ -20,6 +20,19 @@ fn execution_context() -> ExecutionContext {
     ExecutionContext::new(RequestContext::new())
 }
 
+/// Apply common cookie attributes. The `Domain` attribute is omitted when the
+/// configured `cookie_domain` is empty so that browsers use the current host,
+/// which is required for local development on `localhost`.
+fn apply_cookie_attributes(cookie: &mut Cookie, services: &Services) {
+    if !services.config.cookie_domain.is_empty() {
+        cookie.set_domain(services.config.cookie_domain.clone());
+    }
+    cookie.set_path("/");
+    cookie.set_http_only(true);
+    cookie.set_secure(services.config.cookie_secure);
+    cookie.set_same_site(tower_cookies::cookie::SameSite::Lax);
+}
+
 /// POST /api/v1/auth/login
 ///
 /// Authenticate a user and return a session token.
@@ -35,11 +48,7 @@ pub(crate) async fn login(
         .map_err(crate::GatewayError::from)?;
 
     let mut cookie = Cookie::new(SESSION_TOKEN_COOKIE, response.access_token.clone());
-    cookie.set_domain(services.config.cookie_domain.clone());
-    cookie.set_path("/");
-    cookie.set_http_only(true);
-    cookie.set_secure(services.config.cookie_secure);
-    cookie.set_same_site(tower_cookies::cookie::SameSite::Lax);
+    apply_cookie_attributes(&mut cookie, &services);
 
     let ttl_seconds = response
         .expires_at
@@ -169,11 +178,7 @@ pub(crate) async fn logout(
         .map_err(crate::GatewayError::from)?;
 
     let mut removal = Cookie::new(SESSION_TOKEN_COOKIE, "");
-    removal.set_domain(services.config.cookie_domain.clone());
-    removal.set_path("/");
-    removal.set_http_only(true);
-    removal.set_secure(services.config.cookie_secure);
-    removal.set_same_site(tower_cookies::cookie::SameSite::Lax);
+    apply_cookie_attributes(&mut removal, &services);
     cookies.remove(removal);
 
     Ok(Json(SuccessResponse::message("Logged out successfully")))

@@ -96,7 +96,7 @@ impl Default for Config {
 }
 
 fn default_cookie_domain() -> String {
-    ".klynt.edu".to_string()
+    String::new()
 }
 
 impl Config {
