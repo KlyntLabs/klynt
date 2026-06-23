@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { routePaths } from "@/core/routing/route-paths";
 import { CreateTenantForm } from "../components/CreateTenantForm";
 
 export default function CreateTenantPage() {
@@ -14,7 +15,7 @@ export default function CreateTenantPage() {
           <CardTitle>{t("tenant.createTitle")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <CreateTenantForm onSuccess={() => navigate("/dashboard")} />
+          <CreateTenantForm onSuccess={() => navigate(routePaths.dashboard)} />
         </CardContent>
       </Card>
     </div>

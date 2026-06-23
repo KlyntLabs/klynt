@@ -92,7 +92,7 @@ export const router = createBrowserRouter([
         element: <ProtectedLayout />,
         children: [
           { path: routePaths.dashboard, element: <DashboardPage /> },
-          { path: "/tenants/new", element: <CreateTenantPage /> },
+          { path: routePaths.tenantsNew, element: <CreateTenantPage /> },
         ],
       },
       {

@@ -7,5 +7,6 @@ describe("routePaths", () => {
     expect(routePaths.register).toBe("/register");
     expect(routePaths.registerSuccess).toBe("/register/success");
     expect(routePaths.dashboard).toBe("/dashboard");
+    expect(routePaths.tenantsNew).toBe("/tenants/new");
   });
 });
