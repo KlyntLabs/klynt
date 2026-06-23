@@ -1,0 +1,23 @@
+{
+  "members": {
+    "title": "Thành viên",
+    "inviteTitle": "Mở thành viên",
+    "inviteButton": "Mở thành viên",
+    "emailLabel": "Email",
+    "roleLabel": "Vai trò",
+    "nameLabel": "Tên",
+    "joinedAtLabel": "Ngày tham gia",
+    "noMembers": "Không tìm thấy thành viên nào.",
+    "saveButton": "Lưu",
+    "removeButton": "Xóa",
+    "removeConfirmTitle": "Xóa thành viên",
+    "removeConfirmMessage": "Bạn có chắc chắn muốn xóa {{email}}?",
+    "cancelButton": "Hủy",
+    "roles": {
+      "owner": "Chủ sở hữu",
+      "admin": "Quản trị viên",
+      "member": "Thành viên",
+      "guest": "Khách"
+    }
+  }
+}

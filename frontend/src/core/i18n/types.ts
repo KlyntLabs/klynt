@@ -4,6 +4,7 @@ import type common from "@/locales/en/common.json";
 import type errors from "@/locales/en/errors.json";
 import type home from "@/locales/en/home.json";
 import type marketing from "@/locales/en/marketing.json";
+import type tenant from "@/locales/en/tenant.json";
 import type ui from "@/locales/en/ui.json";
 import type validation from "@/locales/en/validation.json";
 
@@ -20,6 +21,7 @@ declare module "i18next" {
       errors: typeof errors;
       home: typeof home;
       marketing: typeof marketing;
+      tenant: typeof tenant;
       ui: typeof ui;
       validation: typeof validation;
     };

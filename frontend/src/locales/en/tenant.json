@@ -1,0 +1,23 @@
+{
+  "members": {
+    "title": "Members",
+    "inviteTitle": "Invite member",
+    "inviteButton": "Invite member",
+    "emailLabel": "Email",
+    "roleLabel": "Role",
+    "nameLabel": "Name",
+    "joinedAtLabel": "Joined",
+    "noMembers": "No members found.",
+    "saveButton": "Save",
+    "removeButton": "Remove",
+    "removeConfirmTitle": "Remove member",
+    "removeConfirmMessage": "Are you sure you want to remove {{email}}?",
+    "cancelButton": "Cancel",
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "member": "Member",
+      "guest": "Guest"
+    }
+  }
+}

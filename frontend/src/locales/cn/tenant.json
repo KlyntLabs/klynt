@@ -1,0 +1,23 @@
+{
+  "members": {
+    "title": "成员",
+    "inviteTitle": "邀请成员",
+    "inviteButton": "邀请成员",
+    "emailLabel": "邮箱",
+    "roleLabel": "角色",
+    "nameLabel": "姓名",
+    "joinedAtLabel": "加入时间",
+    "noMembers": "未找到成员。",
+    "saveButton": "保存",
+    "removeButton": "移除",
+    "removeConfirmTitle": "移除成员",
+    "removeConfirmMessage": "您确定要移除 {{email}} 吗？",
+    "cancelButton": "取消",
+    "roles": {
+      "owner": "所有者",
+      "admin": "管理员",
+      "member": "成员",
+      "guest": "访客"
+    }
+  }
+}

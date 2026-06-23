@@ -9,6 +9,7 @@ export const routePaths = {
   dashboard: "/dashboard",
   tenantsNew: "/tenants/new",
   tenantRoles: "/tenants/:slug/roles",
+  tenantMembers: "/tenants/:slug/members",
   admin: "/admin",
   settingsSessions: "/settings/sessions",
 } as const;
