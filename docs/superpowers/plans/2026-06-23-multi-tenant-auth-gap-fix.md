@@ -899,9 +899,9 @@ git commit -m "i18n(auth): replace hardcoded auth strings with i18n keys"
 ### Task 4.1: Write ADRs for tenant, permissions, and roles
 
 **Files:**
-- Create: `docs/adr/0007-tenant-and-membership-storage.md`
-- Create: `docs/adr/0008-permission-and-role-model.md`
-- Create: `docs/adr/0009-authorization-service-abstraction.md`
+- Create: `docs/adr/007-tenant-and-membership-storage.md`
+- Create: `docs/adr/008-permission-and-role-model.md`
+- Create: `docs/adr/009-authorization-service-abstraction.md`
 
 **Why:** AGENTS.md Definition of Done requires ADRs for new dependencies, storage strategies, and core abstractions.
 

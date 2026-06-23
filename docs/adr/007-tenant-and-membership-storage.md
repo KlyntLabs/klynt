@@ -58,5 +58,5 @@ Phase 2/3 introduces multi-tenancy: users can create and belong to organizations
 
 - Tenant URLs are stable and user-friendly.
 - Ownership limit is atomic and race-free.
-- Membership rows are authoritative for role assignment; session snapshots are updated for performance but are not the source of truth (see ADR-009).
+- Membership rows are authoritative for role assignment; session snapshots are kept in sync for UX/listing convenience but are not the source of truth (see ADR-009).
 - The ownership trigger must be kept in sync with any future plan-level limit changes.
