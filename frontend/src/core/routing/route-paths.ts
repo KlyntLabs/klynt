@@ -10,6 +10,7 @@ export const routePaths = {
   tenantsNew: "/tenants/new",
   tenantRoles: "/tenants/:slug/roles",
   tenantMembers: "/tenants/:slug/members",
+  tenantSettings: "/tenants/:slug/settings",
   admin: "/admin",
   settingsSessions: "/settings/sessions",
 } as const;

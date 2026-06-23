@@ -37,6 +37,9 @@ const RolesPage = lazy(() =>
 const MembersPage = lazy(() =>
   import("@/features/tenant").then((module) => ({ default: module.MembersPage }))
 );
+const TenantSettingsPage = lazy(() =>
+  import("@/features/tenant").then((module) => ({ default: module.TenantSettingsPage }))
+);
 const AdminPage = lazy(() => import("@/features/admin/pages/admin-page"));
 const SessionsPage = lazy(() =>
   import("@/features/auth").then((module) => ({ default: module.SessionsPage }))
@@ -120,6 +123,7 @@ export const router = createBrowserRouter([
           { path: routePaths.tenantsNew, element: <CreateTenantPage /> },
           { path: routePaths.tenantRoles, element: <RolesPage /> },
           { path: routePaths.tenantMembers, element: <MembersPage /> },
+          { path: routePaths.tenantSettings, element: <TenantSettingsPage /> },
           { path: routePaths.settingsSessions, element: <SessionsPage /> },
         ],
       },

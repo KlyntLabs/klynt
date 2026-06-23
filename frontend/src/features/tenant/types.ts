@@ -10,3 +10,5 @@ export interface CreateTenantInput {
   slug: string;
   name: string;
 }
+
+export type UpdateTenantInput = Partial<CreateTenantInput>;

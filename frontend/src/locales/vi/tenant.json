@@ -22,5 +22,25 @@
       "member": "Thành viên",
       "guest": "Khách"
     }
+  },
+  "settings": {
+    "title": "Cài đặt tenant",
+    "generalTitle": "Chung",
+    "generalDescription": "Cập nhật tên và slug của tenant.",
+    "nameLabel": "Tên",
+    "nameRequired": "Tên là bắt buộc.",
+    "slugLabel": "Slug",
+    "slugRequired": "Slug là bắt buộc.",
+    "saveButton": "Lưu thay đổi",
+    "updateError": "Không thể cập nhật tenant: {{message}}",
+    "loadErrorTitle": "Không thể tải tenant",
+    "loadErrorMessage": "Không thể tải cài đặt tenant. Vui lòng thử lại.",
+    "dangerTitle": "Vùng nguy hiểm",
+    "dangerDescription": "Xóa tenant không thể hoàn tác. Tất cả dữ liệu sẽ bị xóa vĩnh viễn.",
+    "deleteButton": "Xóa tenant",
+    "deleteConfirmTitle": "Xóa tenant?",
+    "deleteConfirmMessage": "Bạn có chắc chắn muốn xóa vĩnh viễn tenant này không? Hành động này không thể hoàn tác.",
+    "cancelButton": "Hủy",
+    "removeError": "Không thể xóa tenant: {{message}}"
   }
 }

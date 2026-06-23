@@ -22,5 +22,25 @@
       "member": "成员",
       "guest": "访客"
     }
+  },
+  "settings": {
+    "title": "租户设置",
+    "generalTitle": "常规",
+    "generalDescription": "更新租户名称和 slug。",
+    "nameLabel": "名称",
+    "nameRequired": "名称必填。",
+    "slugLabel": "Slug",
+    "slugRequired": "Slug 必填。",
+    "saveButton": "保存更改",
+    "updateError": "更新租户失败：{{message}}",
+    "loadErrorTitle": "加载租户失败",
+    "loadErrorMessage": "无法加载租户设置，请重试。",
+    "dangerTitle": "危险区域",
+    "dangerDescription": "删除租户无法撤销，所有数据将被永久删除。",
+    "deleteButton": "删除租户",
+    "deleteConfirmTitle": "删除租户？",
+    "deleteConfirmMessage": "您确定要永久删除此租户吗？此操作无法撤销。",
+    "cancelButton": "取消",
+    "removeError": "删除租户失败：{{message}}"
   }
 }
