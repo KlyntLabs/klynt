@@ -28,6 +28,20 @@
     "body": "为教师、家长和幼儿提供的简单工具——无需设置，没有杂乱。",
     "cta": "免费开始"
   },
+  "admin": {
+    "userManagement": {
+      "title": "用户管理",
+      "description": "管理员用户管理迷你应用。"
+    },
+    "tenantManagement": {
+      "title": "租户管理",
+      "description": "管理员租户管理迷你应用。"
+    },
+    "reports": {
+      "title": "报表",
+      "description": "管理员报表迷你应用。"
+    }
+  },
   "desktop": {
     "navLabel": "桌面应用",
     "backgrounds": {
@@ -44,7 +58,10 @@
       },
       "dashboard": {
         "label": "仪表板"
-      }
+      },
+      "userManagement": "用户管理",
+      "tenantManagement": "租户管理",
+      "reports": "报表"
     },
     "menubar": {
       "logo": "PostHog",
@@ -90,7 +107,18 @@
       },
       "search": "Search",
       "notifications": "Notifications",
-      "profile": "Profile"
+      "profile": "Profile",
+      "file": "文件",
+      "edit": "编辑",
+      "view": "查看",
+      "window": "窗口",
+      "settings": "设置",
+      "help": "帮助",
+      "newWindow": "新建窗口",
+      "closeWindow": "关闭窗口",
+      "showDesktop": "显示桌面",
+      "changeBackground": "更换背景",
+      "adminSettings": "管理设置"
     },
     "icons": {
       "switchToWebsite": "Switch to website",

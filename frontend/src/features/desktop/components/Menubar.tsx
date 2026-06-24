@@ -162,7 +162,7 @@ export default function Menubar({ config }: MenubarProps) {
                   : "text-[#1A1A1A] hover:bg-[#D4CFC6]"
               }`}
             >
-              {menu.label}
+              {t(menu.label as never)}
             </button>
 
             {/* Dropdown */}
@@ -180,7 +180,7 @@ export default function Menubar({ config }: MenubarProps) {
                       onClick={() => handleMenuClick(item)}
                       className="w-full text-left px-3 py-1.5 text-[13px] text-[#1A1A1A] hover:bg-[#F0EDE6] transition-colors"
                     >
-                      {item.label}
+                      {t(item.label as never)}
                     </button>
                   </div>
                 ))}

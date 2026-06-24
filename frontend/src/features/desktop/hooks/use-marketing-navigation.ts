@@ -35,7 +35,7 @@ export function useMarketingNavigation(): MarketingNavigation {
   );
 
   const goToHome = useCallback(() => {
-    goTo(marketingRegistry.defaultApp.route);
+    goTo(marketingRegistry.defaultApp.route ?? "/");
   }, [goTo]);
 
   const goToPricing = useCallback(() => {

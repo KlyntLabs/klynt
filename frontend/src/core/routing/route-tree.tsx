@@ -101,13 +101,15 @@ function IndexRoute() {
     );
   }
 
-  return <MarketingShell route={marketingRegistry.defaultApp.route} />;
+  return <MarketingShell route={marketingRegistry.defaultApp.route ?? "/"} />;
 }
 
-const marketingRoutes = marketingRegistry.apps.map((app) => ({
-  path: app.route,
-  element: <MarketingShell route={app.route} />,
-}));
+const marketingRoutes = marketingRegistry.apps
+  .filter((app): app is typeof app & { route: string } => Boolean(app.route))
+  .map((app) => ({
+    path: app.route,
+    element: <MarketingShell route={app.route} />,
+  }));
 
 export const router = createBrowserRouter([
   {

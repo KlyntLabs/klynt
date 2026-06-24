@@ -28,6 +28,20 @@
     "body": "Simple tools for teachers, parents, and young learners — no setup, no clutter.",
     "cta": "Get started free"
   },
+  "admin": {
+    "userManagement": {
+      "title": "User Management",
+      "description": "Admin user management mini-app."
+    },
+    "tenantManagement": {
+      "title": "Tenant Management",
+      "description": "Admin tenant management mini-app."
+    },
+    "reports": {
+      "title": "Reports",
+      "description": "Admin reports mini-app."
+    }
+  },
   "desktop": {
     "navLabel": "Desktop apps",
     "backgrounds": {
@@ -38,7 +52,10 @@
     "apps": {
       "home": { "label": "Home" },
       "register": { "label": "Register" },
-      "dashboard": { "label": "Dashboard" }
+      "dashboard": { "label": "Dashboard" },
+      "userManagement": "User Management",
+      "tenantManagement": "Tenant Management",
+      "reports": "Reports"
     },
     "menubar": {
       "logo": "PostHog",
@@ -47,6 +64,17 @@
       "search": "Search",
       "notifications": "Notifications",
       "profile": "Profile",
+      "file": "File",
+      "edit": "Edit",
+      "view": "View",
+      "window": "Window",
+      "settings": "Settings",
+      "help": "Help",
+      "newWindow": "New Window",
+      "closeWindow": "Close Window",
+      "showDesktop": "Show Desktop",
+      "changeBackground": "Change Background",
+      "adminSettings": "Admin Settings",
       "menus": {
         "productOS": {
           "label": "Product OS",

@@ -30,12 +30,13 @@ function DesktopIconItem({ icon, label, onClick }: DesktopIconItemProps) {
 
 function AppIcon({ app, desktopId }: { app: AppManifest; desktopId: string }) {
   const { openApp } = useDesktopStore();
+  const { t } = useTranslation("home");
   const Icon = app.icon;
   return (
     <DesktopIconItem
       key={app.id}
       icon={<Icon className="w-6 h-6" />}
-      label={app.title}
+      label={t(app.title as never)}
       onClick={() =>
         openApp(desktopId, app.id, { width: app.defaultSize.width, height: app.defaultSize.height })
       }

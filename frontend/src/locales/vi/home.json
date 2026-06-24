@@ -28,6 +28,20 @@
     "body": "Công cụ đơn giản cho giáo viên, phụ huynh và học sinh nhỏ — không cài đặt, không rườm rà.",
     "cta": "Bắt đầu miễn phí"
   },
+  "admin": {
+    "userManagement": {
+      "title": "Quản lý người dùng",
+      "description": "Ứng dụng nhỏ quản lý người dành cho quản trị viên."
+    },
+    "tenantManagement": {
+      "title": "Quản lý tenant",
+      "description": "Ứng dụng nhỏ quản lý tenant dành cho quản trị viên."
+    },
+    "reports": {
+      "title": "Báo cáo",
+      "description": "Ứng dụng nhỏ báo cáo dành cho quản trị viên."
+    }
+  },
   "desktop": {
     "navLabel": "Ứng dụng trên màn hình",
     "backgrounds": {
@@ -44,7 +58,10 @@
       },
       "dashboard": {
         "label": "Bảng điều khiển"
-      }
+      },
+      "userManagement": "Quản lý người dùng",
+      "tenantManagement": "Quản lý tenant",
+      "reports": "Báo cáo"
     },
     "menubar": {
       "logo": "PostHog",
@@ -90,7 +107,18 @@
       },
       "search": "Search",
       "notifications": "Notifications",
-      "profile": "Profile"
+      "profile": "Profile",
+      "file": "Tệp",
+      "edit": "Chỉnh sửa",
+      "view": "Xem",
+      "window": "Cửa sổ",
+      "settings": "Cài đặt",
+      "help": "Trợ giúp",
+      "newWindow": "Cửa sổ mới",
+      "closeWindow": "Đóng cửa sổ",
+      "showDesktop": "Hiển thị màn hình",
+      "changeBackground": "Thay đổi hình nền",
+      "adminSettings": "Cài đặt quản trị"
     },
     "icons": {
       "switchToWebsite": "Switch to website",

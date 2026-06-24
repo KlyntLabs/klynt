@@ -18,7 +18,7 @@ export type AppManifest = {
   id: string;
   title: string;
   shortTitle?: string;
-  route: string;
+  route?: string;
   icon: ComponentType<AppIconProps>;
   category: DesktopCategory;
   component: LazyExoticComponent<ComponentType> | ComponentType;

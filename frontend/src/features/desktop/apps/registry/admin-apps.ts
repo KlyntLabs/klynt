@@ -9,7 +9,6 @@ const ReportsApp = lazy(() => import("@/features/admin/components/reports-app"))
 export const adminApps: AppRegistry = [
   {
     id: "user-management",
-    route: "/admin/users",
     title: "desktop.apps.userManagement",
     icon: Users,
     category: "admin",
@@ -19,7 +18,6 @@ export const adminApps: AppRegistry = [
   },
   {
     id: "tenant-management",
-    route: "/admin/tenants",
     title: "desktop.apps.tenantManagement",
     icon: Building2,
     category: "admin",
@@ -29,7 +27,6 @@ export const adminApps: AppRegistry = [
   },
   {
     id: "reports",
-    route: "/admin/reports",
     title: "desktop.apps.reports",
     icon: BarChart3,
     category: "admin",
