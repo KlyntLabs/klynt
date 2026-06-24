@@ -149,6 +149,10 @@
       "title": "Desktop only",
       "message": "This experience is optimized for desktop. Please use a larger screen."
     },
+    "persistence": {
+      "loadError": "Could not load your desktop layout.",
+      "saveError": "Could not save your desktop layout."
+    },
     "errorFallback": {
       "title": "Something went wrong",
       "retry": "Try again"

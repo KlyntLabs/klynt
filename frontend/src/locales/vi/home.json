@@ -145,6 +145,10 @@
       "title": "Chỉ dành cho máy tính",
       "message": "Trải nghiệm này được tối ưu cho máy tính để bàn. Vui lòng sử dụng màn hình lớn hơn."
     },
+    "persistence": {
+      "loadError": "Không thể tải bố cục máy tính để bàn của bạn.",
+      "saveError": "Không thể lưu bố cục máy tính để bàn của bạn."
+    },
     "errorFallback": {
       "title": "Đã xảy ra lỗi",
       "retry": "Thử lại"

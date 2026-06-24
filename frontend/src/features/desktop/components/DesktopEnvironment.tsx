@@ -1,5 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Spinner } from "@/components/ui/spinner";
+import { useToastStore } from "@/core/notifications/toast-store";
 import { getPresetById } from "@/features/desktop/backgrounds/presets";
+import type { DesktopLayout } from "@/features/desktop/persistence/types";
 import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
 import type { DesktopConfig } from "../factory/types";
 import CookieBanner from "./CookieBanner";
@@ -14,17 +18,89 @@ interface DesktopEnvironmentProps {
 export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
   const { windows, openApp } = useDesktopStore();
   const desktopWindows = windows[config.id] ?? [];
-  const defaultApp = config.defaultApp;
-  const background = getPresetById(config.background.presetId);
+  const [backgroundPresetId, setBackgroundPresetId] = useState(config.background.presetId);
+  const [isLoading, setIsLoading] = useState(true);
+  const { t } = useTranslation("home");
+  const addToast = useToastStore((state) => state.addToast);
+  const configRef = useRef(config);
+  configRef.current = config;
+
+  const background = getPresetById(backgroundPresetId);
 
   useEffect(() => {
-    if (defaultApp && desktopWindows.length === 0) {
-      openApp(config.id, defaultApp.id, {
-        width: defaultApp.defaultSize.width,
-        height: defaultApp.defaultSize.height,
-      });
+    let cancelled = false;
+    const { persistence, id, defaultApp } = configRef.current;
+
+    async function load() {
+      const result = await persistence.load(id);
+      if (cancelled) return;
+
+      if (!result.ok) {
+        addToast({
+          message: t("desktop.persistence.loadError"),
+          type: "error",
+          duration: 5000,
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      if (result.layout) {
+        setBackgroundPresetId(result.layout.backgroundPresetId);
+        for (const window of result.layout.windows) {
+          openApp(id, window.appId, {
+            x: window.x,
+            y: window.y,
+            width: window.width,
+            height: window.height,
+            state: window.state,
+          });
+        }
+      } else if (defaultApp) {
+        openApp(id, defaultApp.id, {
+          width: defaultApp.defaultSize.width,
+          height: defaultApp.defaultSize.height,
+        });
+      }
+
+      setIsLoading(false);
     }
-  }, [config.id, defaultApp, desktopWindows.length, openApp]);
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [openApp, t, addToast]);
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (!configRef.current.persistence.canEdit()) return;
+
+    const layout: DesktopLayout = {
+      version: 1,
+      backgroundPresetId,
+      icons: [],
+      windows: desktopWindows.map((window) => ({
+        appId: window.appId,
+        x: window.x,
+        y: window.y,
+        width: window.width,
+        height: window.height,
+        state: window.state,
+      })),
+    };
+
+    configRef.current.persistence.save(config.id, layout).then((result) => {
+      if (!result.ok) {
+        addToast({
+          message: t("desktop.persistence.saveError"),
+          type: "error",
+          duration: 5000,
+        });
+      }
+    });
+  }, [desktopWindows, backgroundPresetId, config.id, isLoading, t, addToast]);
 
   return (
     <div className="w-screen h-screen overflow-hidden relative">
@@ -63,6 +139,18 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
 
       {/* Cookie Banner */}
       <CookieBanner />
+
+      {/* Persistence loading overlay */}
+      {isLoading && (
+        <div
+          className="absolute inset-0 z-50 flex items-center justify-center bg-background/50 backdrop-blur-sm"
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+        >
+          <Spinner />
+        </div>
+      )}
     </div>
   );
 }
