@@ -6,7 +6,7 @@ import { render } from "@/test/render";
 import VerifyEmailPage from "./verify-email-page";
 
 describe("VerifyEmailPage", () => {
-  it("renders verification loading state", () => {
+  it("renders the verify email app inside the kiosk desktop", () => {
     server.use(
       http.post("/api/v1/auth/verify-email", () =>
         HttpResponse.json({ message: "Email verified successfully" })
@@ -14,6 +14,6 @@ describe("VerifyEmailPage", () => {
     );
 
     render(<VerifyEmailPage />, { initialEntries: ["/?token=abc123"] });
-    expect(screen.getByText(/verifying your email/i)).toBeInTheDocument();
+    expect(screen.getByRole("status")).toBeInTheDocument();
   });
 });

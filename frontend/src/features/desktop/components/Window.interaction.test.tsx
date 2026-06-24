@@ -41,6 +41,18 @@ function WindowWrapper({ windowId, children }: { windowId: string; children?: Re
   );
 }
 
+function LockedWindowWrapper({ windowId, children }: { windowId: string; children?: ReactNode }) {
+  const w = useDesktopStore((state) =>
+    state.windows[DESKTOP_ID]?.find((win) => win.id === windowId)
+  );
+  if (!w) return null;
+  return (
+    <WindowComponent desktopId={DESKTOP_ID} window={w} title="Test Window" locked>
+      {children}
+    </WindowComponent>
+  );
+}
+
 describe("Window interactions", () => {
   beforeEach(() => {
     resetStore();
@@ -152,6 +164,45 @@ describe("Window interactions", () => {
       const moved = useDesktopStore.getState().windows[DESKTOP_ID]?.find((w) => w.id === "win-1");
       expect(moved?.x).not.toBe(100);
       expect(moved?.y).not.toBe(100);
+    });
+  });
+
+  describe("locked windows", () => {
+    it("hides the close, minimize, and maximize controls", () => {
+      render(<LockedWindowWrapper windowId="win-1">Content</LockedWindowWrapper>);
+
+      expect(screen.queryByRole("button", { name: /close/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /minimize/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /maximize/i })).not.toBeInTheDocument();
+    });
+
+    it("hides the toolbar", () => {
+      render(<LockedWindowWrapper windowId="win-1">Content</LockedWindowWrapper>);
+
+      expect(screen.queryByRole("button", { name: /back/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /search/i })).not.toBeInTheDocument();
+    });
+
+    it("does not update position when dragged", async () => {
+      render(<LockedWindowWrapper windowId="win-1">Content</LockedWindowWrapper>);
+
+      const windowEl = screen.getByText("Test Window").closest("div[class*='rounded-lg']");
+      expect(windowEl).toBeTruthy();
+
+      fireEvent.pointerDown(windowEl as HTMLElement, {
+        clientX: 200,
+        clientY: 200,
+      });
+      fireEvent.pointerUp(windowEl as HTMLElement, {
+        clientX: 250,
+        clientY: 270,
+      });
+
+      await waitFor(() => {
+        const moved = useDesktopStore.getState().windows[DESKTOP_ID]?.find((w) => w.id === "win-1");
+        expect(moved?.x).toBe(100);
+        expect(moved?.y).toBe(100);
+      });
     });
   });
 });

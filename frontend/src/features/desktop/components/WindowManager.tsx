@@ -1,4 +1,5 @@
 import { AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
 import type { DesktopConfig } from "../factory/types";
 import WindowComponent from "./Window";
@@ -10,6 +11,7 @@ interface WindowManagerProps {
 }
 
 export default function WindowManager({ config }: WindowManagerProps) {
+  const { t } = useTranslation("home");
   const desktopWindows = useDesktopStore((s) => s.windows[config.id]);
   const windows = desktopWindows ?? EMPTY_WINDOWS;
 
@@ -27,9 +29,11 @@ export default function WindowManager({ config }: WindowManagerProps) {
                 key={w.id}
                 desktopId={config.id}
                 window={w}
-                title={app.title}
+                title={t(app.title as never)}
                 errorFallback={app.errorFallback}
                 retryLimit={app.retryLimit}
+                locked={config.locked}
+                singleApp={config.singleApp}
               >
                 <AppComponent />
               </WindowComponent>

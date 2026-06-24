@@ -4,9 +4,8 @@ import { render } from "@/test/render";
 import ResetPasswordPage from "./reset-password-page";
 
 describe("ResetPasswordPage", () => {
-  it("renders reset password form with token", () => {
+  it("renders the reset password app inside the kiosk desktop", () => {
     render(<ResetPasswordPage />, { initialEntries: ["/?token=abc123"] });
-    expect(screen.getByText(/set new password/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /reset password/i })).toBeInTheDocument();
   });
 
