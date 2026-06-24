@@ -8,6 +8,7 @@ use crate::ctx::ExecutionContext;
 use async_trait::async_trait;
 use domain::membership::{Membership, TenantMember, TenantRole};
 use domain::tenant::{Tenant, TenantId, TenantMembershipSummary, TenantSlug};
+use domain::tenant_desktop_layout::{LayoutScope, TenantDesktopLayout};
 use domain::{
     DomainResult, Email, PaginationRequest, RoleId, TenantInvite, User, UserId, UserRole,
 };
@@ -223,6 +224,26 @@ pub trait TenantInviteRepository: Send + Sync {
         ctx: &ExecutionContext,
         invite_id: Uuid,
     ) -> Result<(), RepositoryError>;
+}
+
+/// Canonical tenant desktop layout repository interface.
+#[async_trait]
+pub trait TenantDesktopLayoutRepository: Send + Sync {
+    /// Find a layout by tenant, scope, and optional user.
+    async fn find(
+        &self,
+        ctx: &ExecutionContext,
+        tenant_id: Uuid,
+        scope: LayoutScope,
+        user_id: Option<Uuid>,
+    ) -> DomainResult<Option<TenantDesktopLayout>>;
+
+    /// Create or replace a layout.
+    async fn upsert(
+        &self,
+        ctx: &ExecutionContext,
+        layout: &TenantDesktopLayout,
+    ) -> DomainResult<TenantDesktopLayout>;
 }
 
 /// Canonical repository error type.

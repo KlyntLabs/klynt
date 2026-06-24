@@ -11,6 +11,7 @@ pub mod permission;
 pub mod role;
 pub mod session;
 pub mod tenant;
+pub mod tenant_desktop_layout;
 pub mod tenant_invite;
 pub mod token;
 pub mod user;
