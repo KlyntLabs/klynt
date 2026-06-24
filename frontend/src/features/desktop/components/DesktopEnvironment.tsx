@@ -42,7 +42,7 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
 
       if (!result.ok) {
         addToast({
-          message: t("desktop.persistence.loadError"),
+          message: t("desktop.toast.layoutLoadError"),
           type: "error",
           duration: 5000,
         });
@@ -100,7 +100,7 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
     configRef.current.persistence.save(config.id, layout).then((result) => {
       if (!result.ok) {
         addToast({
-          message: t("desktop.persistence.saveError"),
+          message: t("desktop.toast.layoutSaveError"),
           type: "error",
           duration: 5000,
         });

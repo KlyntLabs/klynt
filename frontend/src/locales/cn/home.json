@@ -145,13 +145,14 @@
       "title": "仅限桌面端",
       "message": "此体验针对桌面端优化。请使用更大的屏幕。"
     },
-    "persistence": {
-      "loadError": "无法加载您的桌面布局。",
-      "saveError": "无法保存您的桌面布局。"
+    "toast": {
+      "layoutLoadError": "无法加载您的桌面布局。",
+      "layoutSaveError": "无法保存您的桌面布局。"
     },
     "errorFallback": {
       "title": "出错了",
-      "retry": "重试"
+      "retry": "重试",
+      "description": "请重试。"
     },
     "cookieBanner": {
       "dismiss": "Dismiss cookie banner",

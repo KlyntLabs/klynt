@@ -37,12 +37,12 @@ interface WindowProps {
   singleApp?: boolean;
 }
 
-function DefaultErrorFallback({ error, retry }: ErrorFallbackProps) {
+function DefaultErrorFallback({ error: _error, retry }: ErrorFallbackProps) {
   const { t } = useTranslation("home");
   return (
     <div className="flex flex-col items-center justify-center h-full p-6 text-center">
       <p className="text-sm font-medium text-foreground mb-2">{t("desktop.errorFallback.title")}</p>
-      <p className="text-xs text-muted-foreground mb-4">{error.message}</p>
+      <p className="text-xs text-muted-foreground mb-4">{t("desktop.errorFallback.description")}</p>
       <button
         type="button"
         onClick={retry}
