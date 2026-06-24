@@ -1,4 +1,7 @@
 {
+  "menubar": {
+    "tenant": "租户"
+  },
   "members": {
     "title": "成员",
     "inviteTitle": "邀请成员",
@@ -22,6 +25,9 @@
       "member": "成员",
       "guest": "访客"
     }
+  },
+  "roles": {
+    "title": "角色"
   },
   "settings": {
     "title": "租户设置",

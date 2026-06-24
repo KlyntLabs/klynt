@@ -1,4 +1,7 @@
 {
+  "menubar": {
+    "tenant": "Tenant"
+  },
   "members": {
     "title": "Members",
     "inviteTitle": "Invite member",
@@ -22,6 +25,9 @@
       "member": "Member",
       "guest": "Guest"
     }
+  },
+  "roles": {
+    "title": "Roles"
   },
   "settings": {
     "title": "Tenant settings",

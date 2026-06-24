@@ -1,4 +1,7 @@
 {
+  "menubar": {
+    "tenant": "Tenant"
+  },
   "members": {
     "title": "Thành viên",
     "inviteTitle": "Mở thành viên",
@@ -22,6 +25,9 @@
       "member": "Thành viên",
       "guest": "Khách"
     }
+  },
+  "roles": {
+    "title": "Vai trò"
   },
   "settings": {
     "title": "Cài đặt tenant",
