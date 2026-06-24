@@ -1,26 +1,18 @@
 import { screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
+import { marketingDesktopConfig } from "@/features/desktop/factory/marketing-config";
 import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
+import { resetDesktopStore } from "@/features/desktop/test-helpers";
 import { render } from "@/test/render";
 import DesktopEnvironment from "./DesktopEnvironment";
 
-function resetStore() {
-  useDesktopStore.setState({
-    viewMode: "desktop",
-    windows: [],
-    activeWindowId: null,
-    cookieDismissed: true,
-    nextZIndex: 100,
-  });
-}
-
 describe("DesktopEnvironment interactions", () => {
   beforeEach(() => {
-    resetStore();
+    resetDesktopStore();
   });
 
   it("renders the menubar, desktop icons, and window manager", async () => {
-    render(<DesktopEnvironment />);
+    render(<DesktopEnvironment config={marketingDesktopConfig} />);
 
     // Menubar
     expect(screen.getByRole("button", { name: /posthog logo/i })).toBeInTheDocument();
@@ -36,7 +28,7 @@ describe("DesktopEnvironment interactions", () => {
     });
 
     const state = useDesktopStore.getState();
-    expect(state.windows).toHaveLength(1);
-    expect(state.windows[0]?.route).toBe("/");
+    expect(state.windows.marketing).toHaveLength(1);
+    expect(state.windows.marketing?.[0]?.appId).toBe("home");
   });
 });

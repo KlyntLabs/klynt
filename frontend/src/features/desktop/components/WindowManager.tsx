@@ -1,29 +1,37 @@
 import { AnimatePresence } from "framer-motion";
+import { Suspense } from "react";
+import { Spinner } from "@/components/ui/spinner";
 import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
-import { MarketingShell } from "@/features/marketing/components/MarketingShell";
+import type { DesktopConfig } from "../factory/types";
 import WindowComponent from "./Window";
 
-function AppContent({ route }: { route: string }) {
-  return (
-    <div className="p-6">
-      <MarketingShell route={route} />
-    </div>
-  );
+const EMPTY_WINDOWS: [] = [];
+
+interface WindowManagerProps {
+  config: DesktopConfig;
 }
 
-export default function WindowManager() {
-  const { windows } = useDesktopStore();
+export default function WindowManager({ config }: WindowManagerProps) {
+  const desktopWindows = useDesktopStore((s) => s.windows[config.id]);
+  const windows = desktopWindows ?? EMPTY_WINDOWS;
 
   return (
     <div className="absolute inset-0" style={{ top: 36 }}>
       <AnimatePresence>
         {windows
-          .filter((w) => !w.isMinimized)
-          .map((w) => (
-            <WindowComponent key={w.id} window={w}>
-              <AppContent route={w.route} />
-            </WindowComponent>
-          ))}
+          .filter((w) => w.state !== "minimized")
+          .map((w) => {
+            const app = config.apps.find((a) => a.id === w.appId);
+            if (!app) return null;
+            const AppComponent = app.component;
+            return (
+              <WindowComponent key={w.id} desktopId={config.id} window={w} title={app.title}>
+                <Suspense fallback={<Spinner className="mx-auto my-12" />}>
+                  <AppComponent />
+                </Suspense>
+              </WindowComponent>
+            );
+          })}
       </AnimatePresence>
     </div>
   );

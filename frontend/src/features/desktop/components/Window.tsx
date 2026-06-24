@@ -23,31 +23,42 @@ import type { WindowState } from "@/features/desktop/store/use-desktop-store";
 import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
 
 interface WindowProps {
+  desktopId: string;
   window: WindowState;
+  title: string;
   children?: ReactNode;
 }
 
-export default function WindowComponent({ window: w, children }: WindowProps) {
-  const { focusWindow, closeWindow, minimizeWindow, maximizeWindow, restoreWindow } =
-    useDesktopStore();
+export default function WindowComponent({ desktopId, window: w, title, children }: WindowProps) {
+  const {
+    focusWindow,
+    closeWindow,
+    minimizeWindow,
+    maximizeWindow,
+    restoreWindow,
+    moveWindow,
+    activeWindowId,
+  } = useDesktopStore();
   const { t } = useTranslation("home");
+  const isActive = activeWindowId[desktopId] === w.id;
+  const isMaximized = w.state === "maximized";
 
   const handleDragEnd = useCallback(
     (_: unknown, info: { offset: { x: number; y: number } }) => {
-      const currentX = w.position.x + info.offset.x;
-      const currentY = w.position.y + info.offset.y;
-      const clampedX = Math.max(0, Math.min(currentX, window.innerWidth - w.size.width));
+      const currentX = w.x + info.offset.x;
+      const currentY = w.y + info.offset.y;
+      const clampedX = Math.max(0, Math.min(currentX, window.innerWidth - w.width));
       const clampedY = Math.max(36, Math.min(currentY, window.innerHeight - 40));
-      useDesktopStore.getState().setWindowPosition(w.id, { x: clampedX, y: clampedY });
+      moveWindow(desktopId, w.id, { x: clampedX, y: clampedY, width: w.width, height: w.height });
     },
-    [w.id, w.position.x, w.position.y, w.size.width]
+    [desktopId, w.id, w.x, w.y, w.width, w.height, moveWindow]
   );
 
   const handleFocus = useCallback(() => {
-    if (!w.isActive) {
-      focusWindow(w.id);
+    if (!isActive) {
+      focusWindow(desktopId, w.id);
     }
-  }, [w.id, w.isActive, focusWindow]);
+  }, [desktopId, w.id, isActive, focusWindow]);
 
   return (
     <motion.div
@@ -55,8 +66,8 @@ export default function WindowComponent({ window: w, children }: WindowProps) {
       animate={{
         scale: 1,
         opacity: 1,
-        y: w.isMaximized ? 36 : w.position.y,
-        x: w.isMaximized ? 0 : w.position.x,
+        y: isMaximized ? 36 : w.y,
+        x: isMaximized ? 0 : w.x,
       }}
       exit={{ scale: 0.95, opacity: 0 }}
       transition={{
@@ -64,7 +75,7 @@ export default function WindowComponent({ window: w, children }: WindowProps) {
         stiffness: 400,
         damping: 30,
       }}
-      drag={!w.isMaximized}
+      drag={!isMaximized}
       dragMomentum={false}
       onDragEnd={handleDragEnd}
       onPointerDown={handleFocus}
@@ -73,8 +84,8 @@ export default function WindowComponent({ window: w, children }: WindowProps) {
         zIndex: w.zIndex,
         top: 0,
         left: 0,
-        width: w.isMaximized ? "calc(100vw - 0px)" : w.size.width,
-        height: w.isMaximized ? "calc(100vh - 36px)" : w.size.height,
+        width: isMaximized ? "calc(100vw - 0px)" : w.width,
+        height: isMaximized ? "calc(100vh - 36px)" : w.height,
       }}
       className="flex flex-col rounded-lg border border-[#D1D1D1] bg-white shadow-[0_8px_32px_rgba(0,0,0,0.15)] overflow-hidden select-none"
     >
@@ -89,7 +100,7 @@ export default function WindowComponent({ window: w, children }: WindowProps) {
         <div className="flex items-center gap-1.5 shrink-0">
           <button
             type="button"
-            onClick={() => closeWindow(w.id)}
+            onClick={() => closeWindow(desktopId, w.id)}
             aria-label={t("desktop.window.close")}
             className="w-3 h-3 rounded-full bg-[#FF5F57] hover:bg-[#FF453A] flex items-center justify-center transition-colors group"
             title={t("desktop.window.close")}
@@ -98,7 +109,7 @@ export default function WindowComponent({ window: w, children }: WindowProps) {
           </button>
           <button
             type="button"
-            onClick={() => minimizeWindow(w.id)}
+            onClick={() => minimizeWindow(desktopId, w.id)}
             aria-label={t("desktop.window.minimize")}
             className="w-3 h-3 rounded-full bg-[#FEBC2E] hover:bg-[#FFB224] flex items-center justify-center transition-colors group"
             title={t("desktop.window.minimize")}
@@ -107,10 +118,12 @@ export default function WindowComponent({ window: w, children }: WindowProps) {
           </button>
           <button
             type="button"
-            onClick={() => (w.isMaximized ? restoreWindow(w.id) : maximizeWindow(w.id))}
-            aria-label={w.isMaximized ? t("desktop.window.restore") : t("desktop.window.maximize")}
+            onClick={() =>
+              isMaximized ? restoreWindow(desktopId, w.id) : maximizeWindow(desktopId, w.id)
+            }
+            aria-label={isMaximized ? t("desktop.window.restore") : t("desktop.window.maximize")}
             className="w-3 h-3 rounded-full bg-[#28C840] hover:bg-[#24B439] flex items-center justify-center transition-colors group"
-            title={w.isMaximized ? t("desktop.window.restore") : t("desktop.window.maximize")}
+            title={isMaximized ? t("desktop.window.restore") : t("desktop.window.maximize")}
           >
             <Square className="w-2 h-2 text-[#0B5C1F] opacity-0 group-hover:opacity-100" />
           </button>
@@ -120,7 +133,7 @@ export default function WindowComponent({ window: w, children }: WindowProps) {
         <div className="flex-1 flex items-center justify-center gap-1.5 cursor-default">
           <FileText className="w-3.5 h-3.5 text-[#6B6B6B]" />
           <span className="text-[13px] font-medium text-[#1A1A1A] truncate max-w-[200px]">
-            {w.title}
+            {title}
           </span>
           <ChevronDown className="w-3 h-3 text-[#6B6B6B]" />
         </div>
@@ -226,13 +239,7 @@ export default function WindowComponent({ window: w, children }: WindowProps) {
 
       {/* Content Area */}
       <div className="flex-1 overflow-y-auto bg-white min-h-0">
-        {w.isMinimized ? (
-          <div className="flex items-center justify-center h-full text-[#9CA3AF] text-sm">
-            {t("desktop.window.minimized")}
-          </div>
-        ) : (
-          <div className="w-full">{children}</div>
-        )}
+        <div className="w-full">{children}</div>
       </div>
     </motion.div>
   );

@@ -5,20 +5,21 @@ import WindowComponent from "./Window";
 
 const sampleWindow = {
   id: "win-1",
-  route: "/",
-  title: "Home",
-  position: { x: 100, y: 100 },
-  size: { width: 400, height: 300 },
+  appId: "home",
+  x: 100,
+  y: 100,
+  width: 400,
+  height: 300,
   zIndex: 1,
-  isMinimized: false,
-  isMaximized: false,
-  isActive: true,
+  state: "normal" as const,
 };
 
 describe("Window accessibility", () => {
   it("has no accessibility violations", async () => {
     const { baseElement } = render(
-      <WindowComponent window={sampleWindow}>Window content</WindowComponent>
+      <WindowComponent desktopId="test" window={sampleWindow} title="Home">
+        Window content
+      </WindowComponent>
     );
     const results = await run(baseElement, {
       rules: {

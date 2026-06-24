@@ -1,3 +1,7 @@
+export type BackgroundConfig = {
+  presetId: string;
+};
+
 export type DesktopLayout = {
   version: number;
   backgroundPresetId: string;

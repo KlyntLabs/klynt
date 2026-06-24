@@ -1,7 +1,9 @@
 import { ExternalLink, Monitor } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { marketingRegistry } from "@/features/desktop/apps";
+import { useNavigate } from "react-router-dom";
 import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
+import type { AppManifest } from "../apps/types";
+import type { DesktopConfig } from "../factory/types";
 
 interface DesktopIconItemProps {
   icon: React.ReactNode;
@@ -26,62 +28,73 @@ function DesktopIconItem({ icon, label, onClick }: DesktopIconItemProps) {
   );
 }
 
-function DockIcons({ position }: { position: "left" | "right" }) {
-  const { openWindow } = useDesktopStore();
-  const apps = marketingRegistry.apps
-    .filter((app) => app.manifest.dock?.position === position)
-    .sort((a, b) => (a.manifest.dock?.order ?? 0) - (b.manifest.dock?.order ?? 0));
+function AppIcon({ app, desktopId }: { app: AppManifest; desktopId: string }) {
+  const { openApp } = useDesktopStore();
+  const Icon = app.icon;
+  return (
+    <DesktopIconItem
+      key={app.id}
+      icon={<Icon className="w-6 h-6" />}
+      label={app.title}
+      onClick={() =>
+        openApp(desktopId, app.id, { width: app.defaultSize.width, height: app.defaultSize.height })
+      }
+    />
+  );
+}
+
+function DockIcons({ config, position }: { config: DesktopConfig; position: "left" | "right" }) {
+  const apps = config.apps
+    .filter((app) => app.dock?.position === position)
+    .sort((a, b) => (a.dock?.order ?? 0) - (b.dock?.order ?? 0));
 
   return (
     <>
-      {apps.map((app) => {
-        const Icon = app.manifest.icon;
-        return (
-          <DesktopIconItem
-            key={app.manifest.id}
-            icon={<Icon className="w-6 h-6" />}
-            label={app.manifest.title}
-            onClick={() =>
-              openWindow(app.manifest.route, app.manifest.title, {
-                size: app.manifest.defaultSize,
-              })
-            }
-          />
-        );
-      })}
+      {apps.map((app) => (
+        <AppIcon key={app.id} app={app} desktopId={config.id} />
+      ))}
     </>
   );
 }
 
-export default function DesktopIcons() {
-  const { openWindow, setViewMode } = useDesktopStore();
+interface DesktopIconsProps {
+  config: DesktopConfig;
+}
+
+export default function DesktopIcons({ config }: DesktopIconsProps) {
+  const { setViewMode } = useDesktopStore();
   const { t } = useTranslation("home");
+  const navigate = useNavigate();
+  const isMarketing = config.id === "marketing";
 
   const handleSignUpClick = () => {
-    // Register is not a marketing app yet; open it generically.
-    openWindow("/register", t("desktop.icons.left.signUp"));
+    navigate("/register");
   };
 
   return (
     <>
       {/* Left column */}
       <div className="fixed left-4 top-[52px] z-10 flex flex-col gap-5">
-        <DockIcons position="left" />
-        <DesktopIconItem
-          icon={<ExternalLink className="w-6 h-6 text-[#6B6B6B]" />}
-          label={t("desktop.icons.left.signUp")}
-          onClick={handleSignUpClick}
-        />
-        <DesktopIconItem
-          icon={<Monitor className="w-6 h-6 text-[#6B6B6B]" />}
-          label={t("desktop.icons.switchToWebsite")}
-          onClick={() => setViewMode("website")}
-        />
+        <DockIcons config={config} position="left" />
+        {isMarketing && (
+          <>
+            <DesktopIconItem
+              icon={<ExternalLink className="w-6 h-6 text-[#6B6B6B]" />}
+              label={t("desktop.icons.left.signUp")}
+              onClick={handleSignUpClick}
+            />
+            <DesktopIconItem
+              icon={<Monitor className="w-6 h-6 text-[#6B6B6B]" />}
+              label={t("desktop.icons.switchToWebsite")}
+              onClick={() => setViewMode("website")}
+            />
+          </>
+        )}
       </div>
 
       {/* Right column */}
       <div className="fixed right-4 top-[52px] z-10 flex flex-col gap-5">
-        <DockIcons position="right" />
+        <DockIcons config={config} position="right" />
       </div>
     </>
   );

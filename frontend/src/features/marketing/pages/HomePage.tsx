@@ -1,3 +1,4 @@
+import { marketingRegistry } from "@/features/desktop/apps";
 import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
 import {
   ContentTabsSection,
@@ -8,10 +9,15 @@ import {
 } from "@/features/marketing/sections";
 
 export default function HomePage() {
-  const { openWindow } = useDesktopStore();
+  const { openApp } = useDesktopStore();
 
-  const handleOpenApp = (route: string, title?: string) => {
-    openWindow(route, title ?? "");
+  const handleOpenApp = (route: string) => {
+    const app = marketingRegistry.apps.find((app) => app.manifest.route === route);
+    if (!app) return;
+    openApp("marketing", app.manifest.id, {
+      width: app.manifest.defaultSize.width,
+      height: app.manifest.defaultSize.height,
+    });
   };
 
   return (

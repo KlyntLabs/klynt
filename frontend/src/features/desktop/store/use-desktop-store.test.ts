@@ -123,4 +123,77 @@ describe("useDesktopStore", () => {
     expect(result.current.activeWindowId).toEqual({});
     expect(result.current.viewMode).toBe("desktop");
   });
+
+  it("compacts z-indexes when threshold is exceeded on openApp", () => {
+    const { result } = renderHook(() => useDesktopStore());
+
+    act(() => {
+      result.current.openApp("desktop-1", "app-pricing");
+      result.current.openApp("desktop-1", "app-docs");
+    });
+
+    act(() => {
+      useDesktopStore.setState({ nextZIndex: 10000 });
+    });
+
+    act(() => {
+      result.current.openApp("desktop-1", "app-about");
+    });
+
+    const windows = result.current.windows["desktop-1"] ?? [];
+    expect(result.current.nextZIndex).toBe(104);
+    expect(windows.map((w) => w.zIndex).sort((a, b) => a - b)).toEqual([100, 101, 102]);
+  });
+
+  it("compacts z-indexes when threshold is exceeded on focusWindow", () => {
+    const { result } = renderHook(() => useDesktopStore());
+
+    act(() => {
+      result.current.openApp("desktop-1", "app-pricing");
+      result.current.openApp("desktop-1", "app-docs");
+    });
+
+    const firstId = result.current.windows["desktop-1"]?.[0]?.id;
+
+    act(() => {
+      useDesktopStore.setState({ nextZIndex: 10000 });
+    });
+
+    act(() => {
+      if (firstId) {
+        result.current.focusWindow("desktop-1", firstId);
+      }
+    });
+
+    const focused = result.current.windows["desktop-1"]?.find((w) => w.id === firstId);
+    expect(result.current.nextZIndex).toBe(103);
+    expect(focused?.zIndex).toBe(101);
+  });
+
+  it("compacts z-indexes when threshold is exceeded on closeWindow", () => {
+    const { result } = renderHook(() => useDesktopStore());
+
+    act(() => {
+      result.current.openApp("desktop-1", "app-pricing");
+      result.current.openApp("desktop-1", "app-docs");
+      result.current.openApp("desktop-1", "app-about");
+    });
+
+    const activeId = result.current.activeWindowId["desktop-1"];
+
+    act(() => {
+      useDesktopStore.setState({ nextZIndex: 10000 });
+    });
+
+    act(() => {
+      if (activeId) {
+        result.current.closeWindow("desktop-1", activeId);
+      }
+    });
+
+    const remaining = result.current.windows["desktop-1"] ?? [];
+    expect(remaining).toHaveLength(2);
+    expect(result.current.nextZIndex).toBe(103);
+    expect(remaining.map((w) => w.zIndex).sort((a, b) => a - b)).toEqual([100, 101]);
+  });
 });

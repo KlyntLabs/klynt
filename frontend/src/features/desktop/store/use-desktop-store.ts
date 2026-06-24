@@ -1,3 +1,4 @@
+import type { WritableDraft } from "immer";
 import { nanoid } from "nanoid";
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
@@ -11,6 +12,7 @@ export type WindowState = {
   width: number;
   height: number;
   state: "normal" | "minimized" | "maximized";
+  zIndex: number;
 };
 
 type DesktopViewMode = "desktop" | "website";
@@ -20,6 +22,7 @@ type DesktopState = {
   windows: Record<string, WindowState[]>;
   activeWindowId: Record<string, string | null>;
   viewMode: DesktopViewMode;
+  nextZIndex: number;
 
   setActiveDesktop: (id: string) => void;
   openApp: (desktopId: string, appId: string, defaultRect?: Partial<WindowState>) => void;
@@ -28,7 +31,7 @@ type DesktopState = {
   moveWindow: (
     desktopId: string,
     windowId: string,
-    rect: Omit<WindowState, "id" | "appId" | "state">
+    rect: Omit<WindowState, "id" | "appId" | "state" | "zIndex">
   ) => void;
   minimizeWindow: (desktopId: string, windowId: string) => void;
   maximizeWindow: (desktopId: string, windowId: string) => void;
@@ -39,6 +42,23 @@ type DesktopState = {
 
 const DEFAULT_WINDOW_WIDTH = 680;
 const DEFAULT_WINDOW_HEIGHT = 520;
+const Z_INDEX_BASE = 100;
+const Z_INDEX_COMPACT_THRESHOLD = 10000;
+
+const compactZIndexes = (draft: WritableDraft<DesktopState>) => {
+  const allWindows = Object.values(draft.windows).flat();
+  const sorted = allWindows.slice().sort((a, b) => a.zIndex - b.zIndex);
+  sorted.forEach((w, index) => {
+    w.zIndex = Z_INDEX_BASE + index;
+  });
+  draft.nextZIndex = Z_INDEX_BASE + sorted.length + 1;
+};
+
+const maybeCompactZIndexes = (draft: WritableDraft<DesktopState>) => {
+  if (draft.nextZIndex > Z_INDEX_COMPACT_THRESHOLD) {
+    compactZIndexes(draft);
+  }
+};
 
 const generateId = (): string => {
   try {
@@ -64,6 +84,7 @@ const initialState = {
   windows: {},
   activeWindowId: {},
   viewMode: "desktop" as DesktopViewMode,
+  nextZIndex: 100,
 };
 
 export const useDesktopStore = create<DesktopState>()(
@@ -83,6 +104,9 @@ export const useDesktopStore = create<DesktopState>()(
 
           if (existing) {
             existing.state = "normal";
+            existing.zIndex = draft.nextZIndex;
+            draft.nextZIndex += 1;
+            maybeCompactZIndexes(draft);
             draft.activeWindowId[desktopId] = existing.id;
             return;
           }
@@ -99,24 +123,40 @@ export const useDesktopStore = create<DesktopState>()(
             width,
             height,
             state: defaultRect?.state ?? "normal",
+            zIndex: draft.nextZIndex,
           };
+          draft.nextZIndex += 1;
 
           draft.windows[desktopId] = [...desktopWindows, newWindow];
           draft.activeWindowId[desktopId] = newWindow.id;
+          maybeCompactZIndexes(draft);
         }),
 
       closeWindow: (desktopId, windowId) =>
         set((draft) => {
           const desktopWindows = draft.windows[desktopId] ?? [];
-          draft.windows[desktopId] = desktopWindows.filter((w) => w.id !== windowId);
+          const remaining = desktopWindows.filter((w) => w.id !== windowId);
+          draft.windows[desktopId] = remaining;
 
           if (draft.activeWindowId[desktopId] === windowId) {
-            draft.activeWindowId[desktopId] = null;
+            const top = remaining.slice().sort((a, b) => b.zIndex - a.zIndex)[0];
+            draft.activeWindowId[desktopId] = top?.id ?? null;
+            if (top) {
+              top.zIndex = draft.nextZIndex;
+              draft.nextZIndex += 1;
+            }
           }
+          maybeCompactZIndexes(draft);
         }),
 
       focusWindow: (desktopId, windowId) =>
         set((draft) => {
+          const window = draft.windows[desktopId]?.find((w) => w.id === windowId);
+          if (window) {
+            window.zIndex = draft.nextZIndex;
+            draft.nextZIndex += 1;
+            maybeCompactZIndexes(draft);
+          }
           draft.activeWindowId[desktopId] = windowId;
         }),
 

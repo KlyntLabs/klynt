@@ -1,22 +1,30 @@
 import { useEffect } from "react";
-import { marketingRegistry } from "@/features/desktop/apps";
+import { getPresetById } from "@/features/desktop/backgrounds/presets";
 import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
+import type { DesktopConfig } from "../factory/types";
 import CookieBanner from "./CookieBanner";
 import DesktopIcons from "./DesktopIcons";
 import Menubar from "./Menubar";
 import WindowManager from "./WindowManager";
 
-export default function DesktopEnvironment() {
-  const { windows, openWindow } = useDesktopStore();
-  const defaultApp = marketingRegistry.defaultApp;
+interface DesktopEnvironmentProps {
+  config: DesktopConfig;
+}
+
+export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
+  const { windows, openApp } = useDesktopStore();
+  const desktopWindows = windows[config.id] ?? [];
+  const defaultApp = config.defaultApp;
+  const background = getPresetById(config.background.presetId);
 
   useEffect(() => {
-    if (windows.length === 0) {
-      openWindow(defaultApp.manifest.route, defaultApp.manifest.title, {
-        size: defaultApp.manifest.defaultSize,
+    if (defaultApp && desktopWindows.length === 0) {
+      openApp(config.id, defaultApp.id, {
+        width: defaultApp.defaultSize.width,
+        height: defaultApp.defaultSize.height,
       });
     }
-  }, [windows.length, openWindow]);
+  }, [config.id, defaultApp, desktopWindows.length, openApp]);
 
   return (
     <div className="w-screen h-screen overflow-hidden relative">
@@ -25,7 +33,7 @@ export default function DesktopEnvironment() {
         className="absolute inset-0"
         style={{
           backgroundColor: "#D8D2C8",
-          backgroundImage: "url(/wallpaper-texture.webp)",
+          backgroundImage: background ? `url(${background.src})` : "url(/wallpaper-texture.webp)",
           backgroundRepeat: "repeat",
           backgroundSize: "512px 512px",
         }}
@@ -45,16 +53,20 @@ export default function DesktopEnvironment() {
       </div>
 
       {/* Menubar */}
-      <Menubar />
+      <Menubar config={config} />
 
       {/* Desktop Icons */}
-      <DesktopIcons />
+      <DesktopIcons config={config} />
 
       {/* Windows */}
-      <WindowManager />
+      <WindowManager config={config} />
 
       {/* Cookie Banner */}
       <CookieBanner />
     </div>
   );
+}
+
+export default function DesktopEnvironmentDefault({ config }: DesktopEnvironmentProps) {
+  return <DesktopEnvironment config={config} />;
 }

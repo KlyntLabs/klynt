@@ -26,7 +26,7 @@ export interface AppIconProps {
   className?: string;
 }
 
-interface MarketingAppManifest {
+export interface MarketingAppManifest {
   id: string;
   route: string;
   title: string;

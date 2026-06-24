@@ -1,13 +1,14 @@
-import { Bell, Search, User, Zap } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { marketingRegistry } from "@/features/desktop/apps";
-import { useMarketingNavigation } from "@/features/desktop/hooks/use-marketing-navigation";
+import { useNavigate } from "react-router-dom";
+import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
+import type { DesktopAction } from "../apps/types";
+import type { DesktopConfig } from "../factory/types";
+import type { MenubarItem, MenubarSchema } from "../menubar/types";
 
 interface MenuItem {
   label: string;
-  route?: string;
-  external?: boolean;
+  onClick?: () => void;
   separator?: boolean;
 }
 
@@ -16,67 +17,54 @@ interface MenuGroup {
   items: MenuItem[];
 }
 
-const MENU_GROUP_ORDER = ["productOS", "pricing", "docs", "community", "company", "more"];
-
-const MENU_GROUP_LABEL_KEYS: Record<string, string> = {
-  productOS: "desktop.menubar.menus.productOS.label",
-  pricing: "desktop.menubar.menus.pricing.label",
-  docs: "desktop.menubar.menus.docs.label",
-  community: "desktop.menubar.menus.community.label",
-  company: "desktop.menubar.menus.company.label",
-  more: "desktop.menubar.menus.more.label",
-};
-
-function useMenuGroups(): MenuGroup[] {
-  const { t } = useTranslation("home");
-
-  return useMemo(() => {
-    const groups: MenuGroup[] = [];
-    const seenGroups = new Set<string>();
-
-    for (const group of MENU_GROUP_ORDER) {
-      const apps = marketingRegistry.apps.filter((app) => app.manifest.menuGroup === group);
-      if (apps.length === 0) continue;
-
-      seenGroups.add(group);
-      groups.push({
-        label: t(MENU_GROUP_LABEL_KEYS[group] as never),
-        items: apps.map((app) => ({
-          label: app.manifest.shortTitle || app.manifest.title,
-          route: app.manifest.route,
-        })),
-      });
-    }
-
-    // Append any registry menu groups not explicitly ordered.
-    for (const group of Array.from(
-      new Set(
-        marketingRegistry.apps
-          .map((app) => app.manifest.menuGroup)
-          .filter((group): group is string => Boolean(group))
-      )
-    )) {
-      if (seenGroups.has(group)) continue;
-      const apps = marketingRegistry.apps.filter((app) => app.manifest.menuGroup === group);
-      groups.push({
-        label: group,
-        items: apps.map((app) => ({
-          label: app.manifest.shortTitle || app.manifest.title,
-          route: app.manifest.route,
-        })),
-      });
-    }
-
-    return groups;
-  }, [t]);
+function itemToMenuItem(
+  item: MenubarItem,
+  onAction: (action: DesktopAction) => void
+): MenuItem | null {
+  switch (item.type) {
+    case "action":
+      return { label: item.label, onClick: () => onAction(item.action) };
+    case "separator":
+      return { label: "", separator: true };
+    case "submenu":
+      return {
+        label: item.label,
+        onClick: () => {},
+      };
+    default:
+      return null;
+  }
 }
 
-export default function Menubar() {
+function useMenuGroups(
+  menubar: MenubarSchema,
+  onAction: (action: DesktopAction) => void
+): MenuGroup[] {
+  return useMemo(() => {
+    return menubar.menus
+      .filter(
+        (menu): menu is { type: "submenu"; label: string; items: MenubarItem[] } =>
+          menu.type === "submenu"
+      )
+      .map((menu) => ({
+        label: menu.label,
+        items: menu.items
+          .map((item) => itemToMenuItem(item, onAction))
+          .filter((item): item is MenuItem => item !== null),
+      }));
+  }, [menubar.menus, onAction]);
+}
+
+interface MenubarProps {
+  config: DesktopConfig;
+}
+
+export default function Menubar({ config }: MenubarProps) {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const { goTo, goToHome, goToPricing } = useMarketingNavigation();
   const { t } = useTranslation("home");
-  const menus = useMenuGroups();
+  const { openApp } = useDesktopStore();
+  const navigate = useNavigate();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -88,19 +76,39 @@ export default function Menubar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleMenuClick = (item: MenuItem) => {
-    setOpenMenu(null);
-    if (item.route) {
-      goTo(item.route);
+  const handleAction = (action: DesktopAction) => {
+    switch (action.type) {
+      case "open-app":
+        openApp(config.id, action.appId);
+        break;
+      case "navigate":
+        navigate(action.to);
+        break;
+      case "dispatch":
+        action.action(config.context);
+        break;
+      default:
+        break;
     }
   };
 
-  const handleLogoClick = () => {
-    goToHome();
+  const menus = useMenuGroups(config.menubar, handleAction);
+
+  const handleMenuClick = (item: MenuItem) => {
+    setOpenMenu(null);
+    item.onClick?.();
   };
 
-  const handleGetStartedClick = () => {
-    goToPricing();
+  const handleLogoClick = () => {
+    if (config.defaultApp) {
+      openApp(config.id, config.defaultApp.id);
+    }
+  };
+
+  const handleTrailingClick = (item: MenubarItem) => {
+    if (item.type === "action") {
+      handleAction(item.action);
+    }
   };
 
   return (
@@ -120,7 +128,6 @@ export default function Menubar() {
         onClick={handleLogoClick}
         className="flex items-center gap-1.5 px-2 py-1 rounded hover:bg-[#D4CFC6] transition-colors"
       >
-        {/* PostHog Logo SVG */}
         <svg
           width="22"
           height="22"
@@ -135,7 +142,7 @@ export default function Menubar() {
           <circle cx="22" cy="12" r="2" fill="#F76E18" />
         </svg>
         <span className="text-[13px] font-semibold text-[#1A1A1A]">
-          {t("desktop.menubar.logo")}
+          {config.menubar.brand.label}
         </span>
       </button>
 
@@ -187,41 +194,27 @@ export default function Menubar() {
 
       {/* Right side actions */}
       <div className="flex items-center gap-1.5">
-        <button
-          type="button"
-          onClick={handleGetStartedClick}
-          className="h-7 px-3 flex items-center gap-1.5 rounded bg-[#F76E18] hover:bg-[#E56310] text-white text-[12px] font-semibold transition-colors"
-        >
-          <Zap className="w-3.5 h-3.5" />
-          {t("desktop.menubar.getStarted")}
-        </button>
-
-        <button
-          type="button"
-          aria-label={t("desktop.menubar.search")}
-          className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#D4CFC6] transition-colors"
-        >
-          <Search className="w-4 h-4 text-[#1A1A1A]" />
-        </button>
-
-        <button
-          type="button"
-          aria-label={t("desktop.menubar.notifications")}
-          className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#D4CFC6] transition-colors relative"
-        >
-          <Bell className="w-4 h-4 text-[#1A1A1A]" />
-          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#DC2626] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-            1
-          </span>
-        </button>
-
-        <button
-          type="button"
-          aria-label={t("desktop.menubar.profile")}
-          className="w-7 h-7 flex items-center justify-center rounded-full bg-[#D1D1D1] hover:bg-[#C4C4C4] transition-colors overflow-hidden"
-        >
-          <User className="w-4 h-4 text-[#6B6B6B]" />
-        </button>
+        {config.menubar.trailing.map((item) => {
+          if (item.type !== "action") return null;
+          const Icon = item.icon;
+          const isPrimary = item.variant === "primary";
+          return (
+            <button
+              key={item.label}
+              type="button"
+              onClick={() => handleTrailingClick(item)}
+              aria-label={item.label}
+              className={
+                isPrimary
+                  ? "h-7 px-3 flex items-center gap-1.5 rounded bg-[#F76E18] hover:bg-[#E56310] text-white text-[12px] font-semibold transition-colors"
+                  : "w-7 h-7 flex items-center justify-center rounded hover:bg-[#D4CFC6] transition-colors"
+              }
+            >
+              {Icon && <Icon className={isPrimary ? "w-3.5 h-3.5" : "w-4 h-4 text-[#1A1A1A]"} />}
+              {isPrimary && item.label}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

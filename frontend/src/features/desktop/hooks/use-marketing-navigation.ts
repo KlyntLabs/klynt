@@ -14,7 +14,7 @@ export interface MarketingNavigation {
 
 export function useMarketingNavigation(): MarketingNavigation {
   const navigate = useNavigate();
-  const { viewMode, openWindow } = useDesktopStore();
+  const { viewMode, openApp } = useDesktopStore();
 
   const goTo = useCallback(
     (route: string) => {
@@ -23,14 +23,15 @@ export function useMarketingNavigation(): MarketingNavigation {
         if (!app) {
           return;
         }
-        openWindow(app.manifest.route, app.manifest.title, {
-          size: app.manifest.defaultSize,
+        openApp("marketing", app.manifest.id, {
+          width: app.manifest.defaultSize.width,
+          height: app.manifest.defaultSize.height,
         });
       } else {
         navigate(route);
       }
     },
-    [navigate, openWindow, viewMode]
+    [navigate, openApp, viewMode]
   );
 
   const goToHome = useCallback(() => {

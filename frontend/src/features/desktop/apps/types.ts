@@ -1,3 +1,4 @@
+import type { ComponentType, LazyExoticComponent } from "react";
 import type { User } from "@/core/auth/types";
 
 export type DesktopCategory = "admin" | "user" | "tenant" | "marketing" | "system";
@@ -9,12 +10,18 @@ export type DesktopContext = {
   profileId?: string;
 };
 
+export type AppIconProps = {
+  className?: string;
+};
+
 export type AppManifest = {
   id: string;
   title: string;
-  icon: string;
+  shortTitle?: string;
+  route: string;
+  icon: ComponentType<AppIconProps>;
   category: DesktopCategory;
-  component: React.LazyExoticComponent<React.ComponentType>;
+  component: LazyExoticComponent<ComponentType> | ComponentType;
   errorFallback?: React.ComponentType<{ error: Error; retry: () => void }>;
   retryLimit?: number;
   defaultSize: { width: number; height: number };
@@ -24,6 +31,7 @@ export type AppManifest = {
   permissions?: (ctx: DesktopContext) => boolean;
   singleton?: boolean;
   dock?: { position: "left" | "right"; order: number };
+  menuGroup?: string;
 };
 
 export type AppRegistry = AppManifest[];
