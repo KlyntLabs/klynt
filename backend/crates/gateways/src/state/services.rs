@@ -14,7 +14,7 @@ use persistence::ports::RateLimiter;
 use persistence::rate_limiter::{NoOpRateLimiter, RedisRateLimiter};
 use persistence::repositories::cached_session_store::CachedSessionStore;
 use persistence::repositories::session::PgSessionStore;
-use tenant_service::TenantService;
+use tenant_service::{TenantDesktopLayoutService, TenantService};
 
 use super::Config;
 
@@ -25,6 +25,8 @@ pub struct Services {
     pub user: Arc<user_service::UserService>,
     /// Tenant service exposed for tenant management endpoints.
     pub tenant: Arc<TenantService>,
+    /// Tenant desktop layout service.
+    pub desktop_layout: Arc<TenantDesktopLayoutService>,
     /// Session service exposed for HTTP authentication middleware.
     pub session: Arc<session_service::SessionService>,
     /// Database pool used by background jobs and direct DB operations.
@@ -73,6 +75,7 @@ impl Services {
         )?;
         let user_service = Self::create_user_service(config, pool.clone())?;
         let tenant_service = Self::create_tenant_service(pool.clone(), session_store.clone())?;
+        let desktop_layout_service = Self::create_desktop_layout_service(pool.clone());
         let rate_limiter = Self::create_rate_limiter(config).await?;
         let trusted_proxies = Arc::new(
             config::parse_trusted_proxies(&config.trusted_proxies)
@@ -85,6 +88,7 @@ impl Services {
             auth: Arc::new(auth_service),
             user: Arc::new(user_service),
             tenant: Arc::new(tenant_service),
+            desktop_layout: Arc::new(desktop_layout_service),
             session: session_service,
             pool,
             rate_limiter,
@@ -223,6 +227,17 @@ impl Services {
             .with_audit_logger(audit_logger)
             .build()
             .map_err(|e| crate::GatewayError::configuration(format!("Tenant service: {e}")))
+    }
+
+    fn create_desktop_layout_service(pool: sqlx::PgPool) -> TenantDesktopLayoutService {
+        let repository = Arc::new(
+            persistence::repositories::tenant_desktop_layout::PgTenantDesktopLayoutRepository::new(
+                pool,
+            ),
+        )
+            as Arc<dyn base::ports::repository::TenantDesktopLayoutRepository>;
+
+        TenantDesktopLayoutService::new(repository)
     }
 
     async fn create_rate_limiter(
