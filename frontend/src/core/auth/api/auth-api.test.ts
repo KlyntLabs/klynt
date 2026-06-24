@@ -14,6 +14,7 @@ import {
 
 const mockUser = {
   id: "550e8400-e29b-41d4-a716-446655440000",
+  username: "ada_lovelace",
   fullName: "Ada Lovelace",
   email: "ada@example.com",
   role: "student" as const,
@@ -31,6 +32,7 @@ describe("auth-api", () => {
 
     const user = await login({ email: mockUser.email, password: "password" });
     expect(user.id).toBe(mockUser.id);
+    expect(user.username).toBe(mockUser.username);
     expect(user.name).toBe(mockUser.fullName);
     expect(user.role).toBe(mockUser.role);
   });
@@ -42,7 +44,12 @@ describe("auth-api", () => {
       )
     );
 
-    const result = await register({ name: "Ada", email: mockUser.email, password: "password" });
+    const result = await register({
+      name: "Ada",
+      username: "ada",
+      email: mockUser.email,
+      password: "password",
+    });
     expect(result.userId).toBe(mockUser.id);
   });
 

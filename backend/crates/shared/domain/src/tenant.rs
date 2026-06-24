@@ -133,6 +133,37 @@ impl std::str::FromStr for TenantStatus {
 const DEFAULT_MAX_MEMBERS: i32 = 100;
 const DEFAULT_MAX_OWNERS: i32 = 1;
 
+/// A lightweight read-model for a tenant plus the authenticated actor's
+/// membership details.
+///
+/// Returned by list-my-tenants and create/accept-invite flows so the frontend
+/// can render the tenant and the user's role in a single payload.
+#[derive(Debug, Clone, Serialize)]
+pub struct TenantMembershipSummary {
+    pub id: TenantId,
+    pub slug: TenantSlug,
+    pub name: String,
+    pub role: crate::membership::TenantRole,
+    pub joined_at: DateTime<Utc>,
+}
+
+impl TenantMembershipSummary {
+    /// Build a summary from a tenant, role, and join timestamp.
+    pub fn new(
+        tenant: Tenant,
+        role: crate::membership::TenantRole,
+        joined_at: DateTime<Utc>,
+    ) -> Self {
+        Self {
+            id: tenant.id,
+            slug: tenant.slug,
+            name: tenant.name,
+            role,
+            joined_at,
+        }
+    }
+}
+
 /// A tenant / organization in the platform.
 #[derive(Debug, Clone, Serialize)]
 pub struct Tenant {

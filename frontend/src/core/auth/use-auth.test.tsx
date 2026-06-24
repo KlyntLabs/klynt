@@ -6,6 +6,7 @@ import { useAuthStore } from "./auth-store";
 const mockUser = {
   id: "u-1",
   email: "a@b.com",
+  username: "a",
   name: "A",
   role: "student" as const,
   status: "active" as const,

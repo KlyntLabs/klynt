@@ -7,7 +7,7 @@
 use crate::ctx::ExecutionContext;
 use async_trait::async_trait;
 use domain::membership::{Membership, TenantMember, TenantRole};
-use domain::tenant::{Tenant, TenantId, TenantSlug};
+use domain::tenant::{Tenant, TenantId, TenantMembershipSummary, TenantSlug};
 use domain::{
     DomainResult, Email, PaginationRequest, RoleId, TenantInvite, User, UserId, UserRole,
 };
@@ -107,12 +107,13 @@ pub trait TenantRepository: Send + Sync {
         slug: &TenantSlug,
     ) -> DomainResult<Option<Tenant>>;
 
-    /// List all tenants where the user has a membership.
+    /// List all tenants where the user has a membership, including the user's
+    /// role and join timestamp.
     async fn list_for_user(
         &self,
         ctx: &ExecutionContext,
         user_id: UserId,
-    ) -> DomainResult<Vec<Tenant>>;
+    ) -> DomainResult<Vec<TenantMembershipSummary>>;
 
     /// Update a tenant.
     async fn update(&self, ctx: &ExecutionContext, tenant: &Tenant) -> DomainResult<Tenant>;
@@ -202,6 +203,13 @@ pub trait MembershipRepository: Send + Sync {
 /// Canonical tenant invite repository interface.
 #[async_trait]
 pub trait TenantInviteRepository: Send + Sync {
+    /// Create a new tenant invite.
+    async fn create(
+        &self,
+        ctx: &ExecutionContext,
+        invite: TenantInvite,
+    ) -> Result<TenantInvite, RepositoryError>;
+
     /// Find an invite by its opaque token.
     async fn find_by_token(
         &self,

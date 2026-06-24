@@ -58,6 +58,39 @@ fn map_invite_row(row: InviteRow) -> Result<TenantInvite, RepositoryError> {
 
 #[async_trait]
 impl TenantInviteRepository for PgTenantInviteRepository {
+    async fn create(
+        &self,
+        _ctx: &ExecutionContext,
+        invite: TenantInvite,
+    ) -> Result<TenantInvite, RepositoryError> {
+        sqlx::query(
+            r#"
+            INSERT INTO tenant_invites (
+                id, tenant_id, email, tenant_role_id, invited_by,
+                expires_at, accepted_at, token, created_at, updated_at
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            "#,
+        )
+        .bind(invite.id)
+        .bind(invite.tenant_id.inner())
+        .bind(invite.email.as_str())
+        .bind(invite.role_id.0)
+        .bind(invite.invited_by.inner())
+        .bind(invite.expires_at)
+        .bind(invite.accepted_at)
+        .bind(&invite.token)
+        .bind(invite.created_at)
+        .bind(invite.updated_at)
+        .execute(&self.pool)
+        .await
+        .map_err(RepositoryError::from)?;
+
+        self.find_by_token(_ctx, &invite.token)
+            .await?
+            .ok_or(RepositoryError::NotFound)
+    }
+
     async fn find_by_token(
         &self,
         _ctx: &ExecutionContext,

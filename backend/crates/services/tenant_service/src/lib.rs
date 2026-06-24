@@ -19,7 +19,8 @@ use std::sync::Arc;
 
 use base::ctx::ExecutionContext;
 use domain::{
-    Permission, PermissionId, RoleId, Tenant, TenantId, TenantRoleAggregate, TenantSlug, UserId,
+    Permission, PermissionId, RoleId, Tenant, TenantId, TenantMembershipSummary,
+    TenantRoleAggregate, TenantSlug, UserId,
 };
 
 pub use builder::TenantBuilder;
@@ -65,6 +66,15 @@ pub struct UpdateMemberRoleRequest {
 pub struct RemoveMemberRequest {
     /// Email address of the member to remove.
     pub email: String,
+}
+
+/// Request to create a tenant invite.
+#[derive(Debug, Clone)]
+pub struct CreateTenantInviteRequest {
+    /// Email address of the user to invite.
+    pub email: String,
+    /// Role to assign when the invite is accepted.
+    pub role: domain::membership::TenantRole,
 }
 
 /// Request to create a custom tenant role.
@@ -148,7 +158,7 @@ impl TenantService {
         &self,
         ctx: &ExecutionContext,
         request: CreateTenantRequest,
-    ) -> Result<Tenant, TenantError> {
+    ) -> Result<TenantMembershipSummary, TenantError> {
         application::use_cases::create_tenant::execute(self, ctx, request).await
     }
 
@@ -156,7 +166,7 @@ impl TenantService {
     pub async fn list_my_tenants(
         &self,
         ctx: &ExecutionContext,
-    ) -> Result<Vec<Tenant>, TenantError> {
+    ) -> Result<Vec<TenantMembershipSummary>, TenantError> {
         application::use_cases::list_my_tenants::execute(self, ctx).await
     }
 
@@ -212,8 +222,18 @@ impl TenantService {
         &self,
         ctx: &ExecutionContext,
         token: &str,
-    ) -> Result<domain::Tenant, TenantError> {
+    ) -> Result<TenantMembershipSummary, TenantError> {
         application::use_cases::accept_invite::execute(self, ctx, token).await
+    }
+
+    /// Create a tenant invite. Requires `tenant.manage_members`.
+    pub async fn create_invite(
+        &self,
+        ctx: &ExecutionContext,
+        slug: &str,
+        request: CreateTenantInviteRequest,
+    ) -> Result<domain::TenantInvite, TenantError> {
+        application::use_cases::create_invite::execute(self, ctx, slug, request).await
     }
 
     /// Update a member's role by email. Requires owner or admin role.

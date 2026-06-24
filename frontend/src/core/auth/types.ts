@@ -3,6 +3,7 @@ export type UserRole = "admin" | "instructor" | "student";
 export interface User {
   id: string;
   email: string;
+  username: string;
   name: string;
   role: UserRole;
   status: "pending" | "active" | "suspended" | "deleted";
@@ -25,6 +26,7 @@ export interface RegisterInput {
   email: string;
   password: string;
   name: string;
+  username: string;
 }
 
 export interface VerifyEmailInput {

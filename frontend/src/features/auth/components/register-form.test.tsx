@@ -12,6 +12,7 @@ describe("RegisterForm", () => {
     render(<RegisterForm />);
     await user.click(screen.getByRole("button", { name: /create account/i }));
     expect(await screen.findByText(/valid email/i)).toBeInTheDocument();
+    expect(await screen.findByText(/username is required/i)).toBeInTheDocument();
     expect(await screen.findByText(/at least 8 characters/i)).toBeInTheDocument();
   });
 
@@ -25,6 +26,7 @@ describe("RegisterForm", () => {
 
     render(<RegisterForm />);
     await user.type(screen.getByLabelText(/full name/i), "Ada Lovelace");
+    await user.type(screen.getByLabelText(/username/i), "ada_lovelace");
     await user.type(screen.getByLabelText(/email/i), "ada@example.com");
     await user.type(screen.getByLabelText(/password/i), "Str0ng!pass");
     await user.click(screen.getByRole("button", { name: /create account/i }));
@@ -47,6 +49,7 @@ describe("RegisterForm", () => {
 
     render(<RegisterForm />);
     await user.type(screen.getByLabelText(/full name/i), "Ada Lovelace");
+    await user.type(screen.getByLabelText(/username/i), "ada_lovelace");
     await user.type(screen.getByLabelText(/email/i), "duplicate@example.com");
     await user.type(screen.getByLabelText(/password/i), "Str0ng!pass");
     await user.click(screen.getByRole("button", { name: /create account/i }));
@@ -69,6 +72,7 @@ describe("RegisterForm", () => {
 
     render(<RegisterForm />);
     await user.type(screen.getByLabelText(/full name/i), "Ada Lovelace");
+    await user.type(screen.getByLabelText(/username/i), "ada_lovelace");
     await user.type(screen.getByLabelText(/email/i), "bad@example.com");
     await user.type(screen.getByLabelText(/password/i), "Str0ng!pass");
     await user.click(screen.getByRole("button", { name: /create account/i }));

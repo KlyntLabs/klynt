@@ -36,7 +36,9 @@ describe("MembersPage", () => {
     await user.type(screen.getByLabelText(/email/i), "new@acme.test");
     await user.click(screen.getByRole("button", { name: /invite member/i }));
 
-    expect(await screen.findByText("new@acme.test")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
   });
 
   it("updates a member role", async () => {

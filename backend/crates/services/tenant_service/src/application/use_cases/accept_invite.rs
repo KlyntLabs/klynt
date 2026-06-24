@@ -3,7 +3,7 @@
 use base::ctx::ExecutionContext;
 use base::ports::session::MembershipSnapshot;
 use chrono::Utc;
-use domain::{DomainError, Membership, TenantRole};
+use domain::{DomainError, Membership, TenantMembershipSummary, TenantRole};
 
 use crate::error::TenantError;
 use crate::TenantService;
@@ -14,7 +14,7 @@ pub(crate) async fn execute(
     service: &TenantService,
     ctx: &ExecutionContext,
     token: &str,
-) -> Result<domain::Tenant, TenantError> {
+) -> Result<TenantMembershipSummary, TenantError> {
     let actor_id = require_actor(ctx)?;
 
     let invite = service
@@ -87,5 +87,9 @@ pub(crate) async fn execute(
         .await?
         .ok_or(TenantError::NotFound)?;
 
-    Ok(tenant)
+    Ok(TenantMembershipSummary::new(
+        tenant,
+        created.role,
+        created.joined_at,
+    ))
 }

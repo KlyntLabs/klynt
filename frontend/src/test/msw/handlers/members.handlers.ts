@@ -38,21 +38,18 @@ export const membersHandlers = [
     return HttpResponse.json({ data: getMembers(slug) });
   }),
 
-  http.post("/api/v1/tenants/:slug/members", async ({ request, params }) => {
-    const slug = params.slug as string;
+  http.post("/api/v1/tenants/:slug/invites", async ({ request }) => {
     const body = (await request.json()) as {
       email?: string;
       role?: string;
     };
-    const member: BackendMember = {
-      user_id: `user-${Date.now()}`,
+    const invite = {
+      token: `invite-${Date.now()}`,
       email: body.email ?? "new@example.test",
-      full_name: null,
       role: body.role ?? "member",
-      joined_at: "2026-06-22T00:00:00Z",
+      expires_at: "2026-12-31T00:00:00Z",
     };
-    membersBySlug.set(slug, [...getMembers(slug), member]);
-    return HttpResponse.json({ data: member }, { status: 201 });
+    return HttpResponse.json({ data: invite }, { status: 201 });
   }),
 
   http.patch("/api/v1/tenants/:slug/members", async ({ request, params }) => {

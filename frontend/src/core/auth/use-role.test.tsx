@@ -7,6 +7,7 @@ function setUser(role: "admin" | "instructor" | "student") {
   useAuthStore.getState().setSession({
     id: "u-1",
     email: "a@b.com",
+    username: "a",
     name: "A",
     role,
     status: "active",

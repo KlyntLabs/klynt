@@ -182,6 +182,15 @@ impl UserAuditLogger for StubUserAuditLogger {
     ) {
     }
 
+    async fn log_member_invited(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _email: &str,
+        _role_name: &str,
+    ) {
+    }
+
     async fn log_member_role_changed(
         &self,
         _ctx: &ExecutionContext,

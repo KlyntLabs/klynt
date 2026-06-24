@@ -6,6 +6,7 @@ export function useRegisterSchema() {
 
   return z.object({
     name: z.string().min(1, t("nameRequired")).max(200, t("nameMax")),
+    username: z.string().min(1, t("usernameRequired")).max(50, t("usernameMax")),
     email: z.string().email(t("emailInvalid")),
     password: z
       .string()

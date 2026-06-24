@@ -165,9 +165,8 @@ async fn member_can_list_their_tenants() {
     assert_eq!(json["data"].as_array().unwrap().len(), 1);
     assert_eq!(json["data"][0]["slug"], "owner-tenant");
     assert_eq!(json["data"][0]["name"], "Owner Tenant");
-    assert_eq!(json["data"][0]["max_members"], 100);
-    assert_eq!(json["data"][0]["max_owners"], 1);
-    assert!(json["data"][0]["settings"].is_object());
+    assert_eq!(json["data"][0]["role"], "owner");
+    assert!(json["data"][0]["joined_at"].is_string());
 }
 
 #[tokio::test]

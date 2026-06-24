@@ -103,6 +103,15 @@ pub trait AuditLogger: Send + Sync {
     /// Log a member being added to a tenant.
     async fn log_member_added(&self, ctx: &ExecutionContext, tenant_id: TenantId, user_id: UserId);
 
+    /// Log a member being invited to a tenant.
+    async fn log_member_invited(
+        &self,
+        ctx: &ExecutionContext,
+        tenant_id: TenantId,
+        email: &str,
+        role_name: &str,
+    );
+
     /// Log a member's role being changed within a tenant.
     async fn log_member_role_changed(
         &self,

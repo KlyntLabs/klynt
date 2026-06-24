@@ -10,6 +10,7 @@ import { useRegister } from "./use-register";
 
 const validInput = {
   name: "Ada Lovelace",
+  username: "ada_lovelace",
   email: "ada@example.com",
   password: "Str0ng!pass",
 };

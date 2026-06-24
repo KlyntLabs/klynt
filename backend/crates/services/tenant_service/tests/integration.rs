@@ -24,6 +24,40 @@ async fn add_member(
         .expect("membership should insert");
 }
 
+async fn assert_membership_role_id(
+    pool: &sqlx::PgPool,
+    tenant_id: domain::TenantId,
+    user_id: UserId,
+    expected_role_name: &str,
+) {
+    let role_id: Option<uuid::Uuid> = sqlx::query_scalar(
+        r#"
+        SELECT tenant_role_id
+        FROM user_tenant_memberships
+        WHERE tenant_id = $1 AND user_id = $2
+        "#,
+    )
+    .bind(tenant_id.inner())
+    .bind(user_id.inner())
+    .fetch_one(pool)
+    .await
+    .ok();
+
+    assert!(role_id.is_some(), "membership should have a tenant_role_id");
+
+    let role_name: String = sqlx::query_scalar(
+        r#"
+        SELECT name FROM tenant_roles WHERE id = $1
+        "#,
+    )
+    .bind(role_id.unwrap())
+    .fetch_one(pool)
+    .await
+    .expect("role should exist");
+
+    assert_eq!(role_name, expected_role_name);
+}
+
 #[tokio::test]
 async fn create_tenant_as_authenticated_user() {
     let Some(pool) = support::setup_pool().await else {
@@ -43,7 +77,7 @@ async fn create_tenant_as_authenticated_user() {
 
     assert_eq!(tenant.slug.as_str(), format!("create-{}", owner_id.inner()));
     assert_eq!(tenant.name, "Created Tenant");
-    assert_eq!(tenant.owner_id, owner_id);
+    assert_eq!(tenant.role, TenantRole::Owner);
 
     service
         .delete_tenant(&ctx, tenant.slug.as_str())
@@ -88,7 +122,9 @@ async fn list_my_tenants() {
         .unwrap();
 
     let owner_list = service.list_my_tenants(&owner_ctx).await.unwrap();
-    assert!(owner_list.iter().any(|t| t.id == owner_tenant.id));
+    assert!(owner_list
+        .iter()
+        .any(|t| t.id == owner_tenant.id && t.role == TenantRole::Owner));
     assert!(!owner_list.iter().any(|t| t.id == other_tenant.id));
 
     service
@@ -412,6 +448,7 @@ async fn add_update_remove_member_flow() {
 
     assert_eq!(membership.user_id, member_user_id);
     assert_eq!(membership.role, TenantRole::Member);
+    assert_membership_role_id(&pool, tenant.id, member_user_id, "member").await;
 
     let members = service
         .list_members(&owner_ctx, tenant.slug.as_str())
@@ -430,6 +467,8 @@ async fn add_update_remove_member_flow() {
         )
         .await
         .unwrap();
+
+    assert_membership_role_id(&pool, tenant.id, member_user_id, "admin").await;
 
     let members = service
         .list_members(&owner_ctx, tenant.slug.as_str())

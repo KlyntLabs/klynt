@@ -31,6 +31,17 @@ describe("useVerifyEmail", () => {
     server.use(
       http.post("/api/v1/auth/verify-email", () =>
         HttpResponse.json({ message: "Email verified successfully" })
+      ),
+      http.get("/api/v1/users/me", () =>
+        HttpResponse.json({
+          data: {
+            id: "550e8400-e29b-41d4-a716-446655440000",
+            email: "ada@example.com",
+            fullName: "Ada Lovelace",
+            role: "student",
+            isEmailVerified: true,
+          },
+        })
       )
     );
 

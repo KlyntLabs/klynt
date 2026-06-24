@@ -5,6 +5,7 @@ import { server } from "@/test/msw/server";
 
 const input = {
   name: "Ada Lovelace",
+  username: "ada_lovelace",
   email: "ada@example.com",
   password: "Str0ng!pass",
 };
@@ -13,8 +14,13 @@ describe("register", () => {
   it("returns the created user id", async () => {
     server.use(
       http.post("/api/v1/auth/register", async ({ request }) => {
-        const body = (await request.json()) as { full_name?: string; email: string };
+        const body = (await request.json()) as {
+          email: string;
+          username: string;
+          full_name?: string;
+        };
         expect(body.email).toBe(input.email);
+        expect(body.username).toBe(input.username);
         expect(body.full_name).toBe(input.name);
         return HttpResponse.json({ data: "550e8400-e29b-41d4-a716-446655440000" }, { status: 201 });
       })

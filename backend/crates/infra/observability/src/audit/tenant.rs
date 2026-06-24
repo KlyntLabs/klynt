@@ -60,6 +60,30 @@ impl AuditService {
         self.repo.log(ctx, event).await
     }
 
+    /// Log a member being invited to a tenant.
+    pub async fn log_member_invited(
+        &self,
+        ctx: &ExecutionContext,
+        tenant_id: TenantId,
+        email: &str,
+        role_name: &str,
+    ) -> Result<(), DomainError> {
+        let mut event = AuditEvent::new(AuditAction::MemberInvited, ResourceType::Membership)
+            .with_resource(tenant_id.inner())
+            .with_tenant(tenant_id.inner())
+            .with_request_id(ctx.request.request_id.0)
+            .with_after(snapshot_to_value(serde_json::json!({
+                "email": email,
+                "role": role_name,
+            })));
+
+        if let Some(actor_id) = ctx.actor_id {
+            event = event.with_actor(UserId::from_uuid(actor_id));
+        }
+
+        self.repo.log(ctx, event).await
+    }
+
     /// Log a member being added to a tenant.
     pub async fn log_member_added(
         &self,

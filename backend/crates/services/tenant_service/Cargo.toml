@@ -7,8 +7,10 @@ edition = "2021"
 base = { path = "../../../crates/base" }
 domain = { path = "../../shared/domain" }
 chrono = { workspace = true }
+rand = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
+uuid = { workspace = true }
 
 [dev-dependencies]
 observability = { path = "../../../crates/infra/observability" }

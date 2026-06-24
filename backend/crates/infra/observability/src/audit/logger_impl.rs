@@ -139,6 +139,21 @@ impl AuditLogger for AuditService {
         .await;
     }
 
+    async fn log_member_invited(
+        &self,
+        ctx: &ExecutionContext,
+        tenant_id: TenantId,
+        email: &str,
+        role_name: &str,
+    ) {
+        self.try_log(
+            ctx,
+            "member_invited",
+            self.log_member_invited(ctx, tenant_id, email, role_name),
+        )
+        .await;
+    }
+
     async fn log_member_role_changed(
         &self,
         ctx: &ExecutionContext,

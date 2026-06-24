@@ -13,6 +13,7 @@ use validator::Validate;
 pub struct UserProfile {
     pub id: UserId,
     pub email: String,
+    pub username: String,
     pub full_name: Option<String>,
     pub role: UserRole,
     pub status: UserStatus,
@@ -24,6 +25,7 @@ impl From<User> for UserProfile {
         Self {
             id: user.id,
             email: user.email.inner().to_string(),
+            username: user.username,
             full_name: user.full_name,
             role: user.role,
             status: user.status,

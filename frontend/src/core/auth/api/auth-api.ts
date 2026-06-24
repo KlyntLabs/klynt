@@ -20,6 +20,7 @@ interface MessageResponse {
 interface BackendUser {
   id: string;
   email: string;
+  username?: string;
   fullName?: string | null;
   role: "admin" | "instructor" | "student";
   status?: "pending" | "active" | "suspended" | "deleted";
@@ -30,6 +31,7 @@ function mapUser(backend: BackendUser): User {
   return {
     id: backend.id,
     email: backend.email,
+    username: backend.username ?? backend.email.split("@")[0],
     name: backend.fullName ?? backend.email,
     role: backend.role,
     status: backend.status ?? "pending",
@@ -48,6 +50,7 @@ export async function login(input: LoginInput): Promise<User> {
 export async function register(input: RegisterInput): Promise<{ userId: string }> {
   const { data } = await apiClient.post<SuccessResponse<string>>("/auth/register", {
     email: input.email,
+    username: input.username,
     password: input.password,
     fullName: input.name,
   });

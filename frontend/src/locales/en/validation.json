@@ -1,6 +1,8 @@
 {
   "nameRequired": "Name is required",
   "nameMax": "Name must be 200 characters or less",
+  "usernameRequired": "Username is required",
+  "usernameMax": "Username must be 50 characters or less",
   "emailRequired": "Email is required",
   "emailInvalid": "Enter a valid email",
   "passwordMin": "Password must be at least 8 characters",

@@ -8,8 +8,8 @@ use base::ports::repository::{
 };
 use chrono::Utc;
 use domain::{
-    DomainError, DomainResult, Membership, Tenant, TenantId, TenantInvite, TenantMember,
-    TenantSlug, UserId,
+    membership::TenantRole, DomainError, DomainResult, Membership, Tenant, TenantId, TenantInvite,
+    TenantMember, TenantMembershipSummary, TenantSlug, UserId,
 };
 
 /// Stub tenant repository that returns empty results.
@@ -42,7 +42,7 @@ impl TenantRepository for FakeTenantRepository {
         &self,
         _ctx: &ExecutionContext,
         _user_id: UserId,
-    ) -> DomainResult<Vec<Tenant>> {
+    ) -> DomainResult<Vec<TenantMembershipSummary>> {
         Ok(Vec::new())
     }
 
@@ -137,14 +137,14 @@ impl TenantRepository for StatefulFakeTenantRepository {
         &self,
         _ctx: &ExecutionContext,
         user_id: UserId,
-    ) -> DomainResult<Vec<Tenant>> {
+    ) -> DomainResult<Vec<TenantMembershipSummary>> {
         Ok(self
             .tenants
             .lock()
             .unwrap()
             .values()
             .filter(|t| t.owner_id == user_id)
-            .cloned()
+            .map(|t| TenantMembershipSummary::new(t.clone(), TenantRole::Owner, t.created_at))
             .collect())
     }
 
@@ -376,6 +376,15 @@ impl FakeTenantInviteRepository {
 
 #[async_trait]
 impl TenantInviteRepository for FakeTenantInviteRepository {
+    async fn create(
+        &self,
+        _ctx: &ExecutionContext,
+        invite: TenantInvite,
+    ) -> Result<TenantInvite, RepositoryError> {
+        self.insert(invite.clone());
+        Ok(invite)
+    }
+
     async fn find_by_token(
         &self,
         _ctx: &ExecutionContext,

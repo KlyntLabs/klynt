@@ -26,6 +26,7 @@ describe("useLogout", () => {
     useAuthStore.getState().setSession({
       id: "u-1",
       email: "a@b.com",
+      username: "a",
       name: "A",
       role: "student",
       status: "active",

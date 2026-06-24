@@ -6,6 +6,7 @@ use axum::{
     response::IntoResponse,
     Json,
 };
+use chrono::{DateTime, Utc};
 use domain::UserId;
 
 use crate::middleware::auth::AuthContext;
@@ -31,6 +32,7 @@ pub fn routes(services: Services) -> axum::Router<Services> {
             "/{tenant_slug}/members",
             axum::routing::delete(remove_member),
         )
+        .route("/{tenant_slug}/invites", axum::routing::post(create_invite))
         .nest("/{tenant_slug}/roles", roles::routes())
         .layer(axum::middleware::from_fn_with_state(
             services,
@@ -196,6 +198,30 @@ async fn accept_invite(
     Ok(Json(SuccessResponse::ok(tenant)))
 }
 
+async fn create_invite(
+    State(services): State<Services>,
+    AuthContext(ctx): AuthContext,
+    Path(tenant_slug): Path<String>,
+    Json(request): Json<CreateInviteRequest>,
+) -> Result<impl IntoResponse, crate::GatewayError> {
+    let invite = services
+        .tenant
+        .create_invite(
+            &ctx,
+            &tenant_slug,
+            tenant_service::CreateTenantInviteRequest {
+                email: request.email,
+                role: request.role,
+            },
+        )
+        .await?;
+
+    Ok((
+        StatusCode::CREATED,
+        Json(SuccessResponse::ok(InviteResponse::from(invite))),
+    ))
+}
+
 #[derive(serde::Deserialize)]
 struct CreateTenantRequest {
     slug: String,
@@ -222,4 +248,29 @@ struct UpdateMemberRoleRequest {
 #[derive(serde::Deserialize)]
 struct RemoveMemberRequest {
     email: String,
+}
+
+#[derive(serde::Deserialize)]
+struct CreateInviteRequest {
+    email: String,
+    role: domain::membership::TenantRole,
+}
+
+#[derive(serde::Serialize)]
+struct InviteResponse {
+    token: String,
+    email: String,
+    role: String,
+    expires_at: DateTime<Utc>,
+}
+
+impl From<domain::TenantInvite> for InviteResponse {
+    fn from(invite: domain::TenantInvite) -> Self {
+        Self {
+            token: invite.token,
+            email: invite.email.as_str().to_string(),
+            role: invite.role_name,
+            expires_at: invite.expires_at,
+        }
+    }
 }

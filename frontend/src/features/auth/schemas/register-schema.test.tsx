@@ -14,10 +14,22 @@ describe("useRegisterSchema", () => {
 
     const parseResult = result.current.safeParse({
       name: "Ada Lovelace",
+      username: "ada_lovelace",
       email: "ada@example.com",
       password: "Str0ng!pass",
     });
     expect(parseResult.success).toBe(true);
+  });
+
+  it("rejects missing username", () => {
+    const { result } = renderHook(() => useRegisterSchema(), { wrapper: Wrapper });
+
+    const parseResult = result.current.safeParse({
+      name: "Ada Lovelace",
+      email: "ada@example.com",
+      password: "Str0ng!pass",
+    });
+    expect(parseResult.success).toBe(false);
   });
 
   it("rejects weak passwords", () => {
@@ -25,6 +37,7 @@ describe("useRegisterSchema", () => {
 
     const parseResult = result.current.safeParse({
       name: "Ada Lovelace",
+      username: "ada_lovelace",
       email: "ada@example.com",
       password: "weak",
     });

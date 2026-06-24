@@ -25,7 +25,7 @@ fn test_config() -> Config {
         rate_limiter: config::RateLimiterConfig::default(),
         session: config::SessionConfig::default(),
         hsts_enabled: false,
-        allowed_origins: vec!["http://localhost:5173".to_string()],
+        allowed_origins: vec!["http://localhost:5174".to_string()],
         trusted_proxies: Vec::new(),
         log_level: "warn".to_string(),
         cookie_domain: ".klynt.edu".to_string(),

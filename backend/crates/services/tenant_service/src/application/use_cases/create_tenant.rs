@@ -2,7 +2,7 @@
 
 use base::ctx::ExecutionContext;
 use base::ports::session::MembershipSnapshot;
-use domain::Tenant;
+use domain::{Tenant, TenantMembershipSummary};
 
 use crate::error::TenantError;
 use crate::CreateTenantRequest;
@@ -14,11 +14,12 @@ pub(crate) async fn execute(
     service: &TenantService,
     ctx: &ExecutionContext,
     request: CreateTenantRequest,
-) -> Result<Tenant, TenantError> {
+) -> Result<TenantMembershipSummary, TenantError> {
     let owner_id = require_actor(ctx)?;
     let slug = domain::TenantSlug::parse(&request.slug)?;
 
     let tenant = Tenant::create(slug, request.name, owner_id)?;
+    let joined_at = tenant.created_at;
 
     let created = service
         .internal()
@@ -45,5 +46,9 @@ pub(crate) async fn execute(
         .await
         .map_err(TenantError::Session)?;
 
-    Ok(created)
+    Ok(TenantMembershipSummary::new(
+        created,
+        domain::membership::TenantRole::Owner,
+        joined_at,
+    ))
 }

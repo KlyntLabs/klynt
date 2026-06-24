@@ -54,6 +54,27 @@ fn map_membership_row(row: MembershipRow) -> DomainResult<Membership> {
     })
 }
 
+async fn find_role_id_by_name(
+    pool: &PgPool,
+    tenant_id: TenantId,
+    name: &str,
+) -> DomainResult<RoleId> {
+    let id: Option<uuid::Uuid> = sqlx::query_scalar(
+        r#"
+        SELECT id FROM tenant_roles
+        WHERE tenant_id = $1 AND name = $2
+        "#,
+    )
+    .bind(tenant_id.inner())
+    .bind(name)
+    .fetch_optional(pool)
+    .await
+    .map_err(DomainError::internal)?;
+
+    id.map(RoleId::from_uuid)
+        .ok_or_else(|| DomainError::not_found("role"))
+}
+
 fn map_tenant_member_row(row: TenantMemberRow) -> DomainResult<TenantMember> {
     let role = TenantRole::parse(&row.role)
         .map_err(|e| DomainError::internal_msg(format!("invalid tenant role in DB: {e}")))?;
@@ -78,10 +99,15 @@ impl MembershipRepository for PgMembershipRepository {
         _ctx: &ExecutionContext,
         membership: &Membership,
     ) -> DomainResult<Membership> {
+        let tenant_role_id =
+            find_role_id_by_name(&self.pool, membership.tenant_id, membership.role.as_str())
+                .await
+                .map_err(|_| DomainError::not_found("tenant"))?;
+
         let row: MembershipRow = match sqlx::query_as(
             r#"
-            INSERT INTO user_tenant_memberships (tenant_id, user_id, role, joined_at)
-            VALUES ($1, $2, $3, $4)
+            INSERT INTO user_tenant_memberships (tenant_id, user_id, role, joined_at, tenant_role_id, status)
+            VALUES ($1, $2, $3, $4, $5, 'active')
             RETURNING tenant_id, user_id, role, joined_at
             "#,
         )
@@ -89,6 +115,7 @@ impl MembershipRepository for PgMembershipRepository {
         .bind(membership.user_id.inner())
         .bind(membership.role.as_str())
         .bind(membership.joined_at)
+        .bind(tenant_role_id.0)
         .fetch_one(&self.pool)
         .await
         {
@@ -254,16 +281,24 @@ impl MembershipRepository for PgMembershipRepository {
         user_id: UserId,
         role: TenantRole,
     ) -> DomainResult<()> {
+        let existing = self.find(_ctx, tenant_id, user_id).await?;
+        if existing.is_none() {
+            return Err(DomainError::not_found("membership"));
+        }
+
+        let tenant_role_id = find_role_id_by_name(&self.pool, tenant_id, role.as_str()).await?;
+
         let result = sqlx::query(
             r#"
             UPDATE user_tenant_memberships
-            SET role = $1
+            SET role = $1, tenant_role_id = $4
             WHERE tenant_id = $2 AND user_id = $3
             "#,
         )
         .bind(role.as_str())
         .bind(tenant_id.inner())
         .bind(user_id.inner())
+        .bind(tenant_role_id.0)
         .execute(&self.pool)
         .await
         .map_err(DomainError::internal)?;

@@ -19,3 +19,10 @@ export interface UpdateMemberRoleInput {
   email: string;
   role: TenantRole;
 }
+
+export interface TenantInvite {
+  token: string;
+  email: string;
+  role: TenantRole;
+  expiresAt: string;
+}

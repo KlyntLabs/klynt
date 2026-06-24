@@ -107,9 +107,12 @@ async fn accept_invite_adds_user_as_member() {
 
     let accepted = service.accept_invite(&ctx, &token).await.unwrap();
     assert_eq!(accepted.id, tenant.id);
+    assert_eq!(accepted.role, domain::membership::TenantRole::Member);
 
     let tenants = service.list_my_tenants(&ctx).await.unwrap();
-    assert!(tenants.iter().any(|t| t.id == tenant.id));
+    assert!(tenants
+        .iter()
+        .any(|t| t.id == tenant.id && t.role == domain::membership::TenantRole::Member));
 
     delete_tenant(&pool, tenant.id).await;
     support::delete_test_user(&pool, owner_id).await;

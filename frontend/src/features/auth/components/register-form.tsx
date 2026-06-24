@@ -24,6 +24,7 @@ export function RegisterForm() {
     resolver: zodResolver(registerSchema),
     defaultValues: {
       name: "",
+      username: "",
       email: "",
       password: "",
     },
@@ -53,6 +54,19 @@ export function RegisterForm() {
               <FormLabel>{t("auth:register.name.label")}</FormLabel>
               <FormControl>
                 <Input placeholder={t("auth:register.name.placeholder")} {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="username"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t("auth:register.username.label")}</FormLabel>
+              <FormControl>
+                <Input placeholder={t("auth:register.username.placeholder")} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

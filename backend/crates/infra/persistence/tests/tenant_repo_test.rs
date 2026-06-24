@@ -118,6 +118,16 @@ async fn create_makes_creator_an_owner_member() {
     assert_eq!(membership.user_id, owner_id);
     assert_eq!(membership.role, TenantRole::Owner);
 
+    let role_id: Option<uuid::Uuid> = sqlx::query_scalar(
+        "SELECT tenant_role_id FROM user_tenant_memberships WHERE tenant_id = $1 AND user_id = $2",
+    )
+    .bind(tenant.id.inner())
+    .bind(owner_id.inner())
+    .fetch_one(&pool)
+    .await
+    .ok();
+    assert!(role_id.is_some());
+
     cleanup_test_data(&pool, &[owner_id], &[tenant.id]).await;
 }
 

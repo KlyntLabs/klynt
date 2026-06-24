@@ -1,10 +1,10 @@
 import { apiClient } from "@/core/api/api-client";
-import type { InviteMemberInput, Member, UpdateMemberRoleInput } from "../types";
+import type { InviteMemberInput, Member, TenantInvite, UpdateMemberRoleInput } from "../types";
 
 export const memberApi = {
   list: (slug: string) => apiClient.get<{ data: Member[] }>(`/tenants/${slug}/members`),
   invite: (slug: string, payload: InviteMemberInput) =>
-    apiClient.post<{ data: Member }>(`/tenants/${slug}/members`, payload),
+    apiClient.post<{ data: TenantInvite }>(`/tenants/${slug}/invites`, payload),
   updateRole: (slug: string, payload: UpdateMemberRoleInput) =>
     apiClient.patch(`/tenants/${slug}/members`, payload),
   remove: (slug: string, email: string) =>

@@ -8,7 +8,8 @@ use base::ctx::{ExecutionContext, RequestContext};
 use base::ports::repository::{MembershipRepository, TenantInviteRepository};
 use chrono::Utc;
 use domain::{
-    Email, RoleId, Tenant, TenantInvite, TenantRole, TenantSlug, User, UserId, UserRole, UserStatus,
+    Email, Membership, RoleId, Tenant, TenantInvite, TenantRole, TenantSlug, User, UserId,
+    UserRole, UserStatus,
 };
 use std::sync::Arc;
 use tower::ServiceExt;
@@ -131,6 +132,8 @@ async fn accept_invite_returns_tenant_and_creates_membership() {
         .unwrap();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(json["data"]["slug"], "invite-tenant");
+    assert_eq!(json["data"]["role"], "member");
+    assert!(json["data"]["joined_at"].is_string());
 
     let accepted = invite_repo
         .find_by_token(
@@ -152,6 +155,65 @@ async fn accept_invite_returns_tenant_and_creates_membership() {
         .unwrap();
     assert!(membership.is_some());
     assert_eq!(membership.unwrap().role, TenantRole::Member);
+}
+
+#[tokio::test]
+async fn create_invite_returns_invite_details() {
+    let tenant_repo = Arc::new(support::StatefulFakeTenantRepository::default());
+    let membership_repo = Arc::new(support::StatefulFakeMembershipRepository::default());
+    let (app, session_service, invite_repo, user_repo) =
+        app_with_invite_fakes(tenant_repo.clone(), membership_repo.clone());
+
+    let email = "owner-create-invite@example.com";
+    let (owner_id, token) = create_active_user(&user_repo, &session_service, email).await;
+    let tenant = create_tenant(
+        &tenant_repo,
+        owner_id,
+        "invite-create",
+        "Invite Create Tenant",
+    );
+    membership_repo.insert(Membership::new(tenant.id, owner_id, TenantRole::Owner));
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri(format!("/api/v1/tenants/{}/invites", tenant.slug.as_str()))
+                .header("Authorization", format!("Bearer {token}"))
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    serde_json::json!({
+                        "email": "invited-user@example.com",
+                        "role": "admin"
+                    })
+                    .to_string(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::CREATED);
+
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert!(json["data"]["token"].is_string());
+    assert_eq!(json["data"]["email"], "invited-user@example.com");
+    assert_eq!(json["data"]["role"], "admin");
+    assert!(json["data"]["expires_at"].is_string());
+
+    let created_token = json["data"]["token"].as_str().unwrap().to_string();
+    let stored = invite_repo
+        .find_by_token(
+            &ExecutionContext::new(RequestContext::new()),
+            &created_token,
+        )
+        .await
+        .unwrap();
+    assert!(stored.is_some());
+    assert_eq!(stored.unwrap().role_name, "admin");
 }
 
 #[tokio::test]

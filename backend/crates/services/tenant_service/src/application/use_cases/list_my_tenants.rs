@@ -1,7 +1,7 @@
 //! List my tenants use case.
 
 use base::ctx::ExecutionContext;
-use domain::Tenant;
+use domain::TenantMembershipSummary;
 
 use crate::error::TenantError;
 use crate::TenantService;
@@ -11,7 +11,7 @@ use super::shared::require_actor;
 pub(crate) async fn execute(
     service: &TenantService,
     ctx: &ExecutionContext,
-) -> Result<Vec<Tenant>, TenantError> {
+) -> Result<Vec<TenantMembershipSummary>, TenantError> {
     let user_id = require_actor(ctx)?;
 
     service

@@ -49,6 +49,14 @@ const SessionsPage = lazy(() =>
 );
 const NotFoundPage = lazy(() => import("./not-found-page"));
 
+function PublicLayout() {
+  return (
+    <Suspense fallback={<Spinner />}>
+      <Outlet />
+    </Suspense>
+  );
+}
+
 function GuestLayout() {
   return (
     <GuestRoute>
@@ -109,12 +117,15 @@ export const router = createBrowserRouter([
       { index: true, element: <IndexRoute /> },
       ...marketingRoutes,
       {
+        element: <PublicLayout />,
+        children: [{ path: routePaths.verifyEmail, element: <VerifyEmailPage /> }],
+      },
+      {
         element: <GuestLayout />,
         children: [
           { path: routePaths.login, element: <LoginPage /> },
           { path: routePaths.register, element: <RegisterPage /> },
           { path: routePaths.registerSuccess, element: <RegisterSuccessPage /> },
-          { path: routePaths.verifyEmail, element: <VerifyEmailPage /> },
           { path: routePaths.forgotPassword, element: <ForgotPasswordPage /> },
           { path: routePaths.resetPassword, element: <ResetPasswordPage /> },
         ],
