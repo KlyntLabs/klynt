@@ -105,6 +105,14 @@
         "trash": "Trash"
       }
     },
+    "mobileFallback": {
+      "title": "Desktop only",
+      "message": "This experience is optimized for desktop. Please use a larger screen."
+    },
+    "errorFallback": {
+      "title": "Something went wrong",
+      "retry": "Try again"
+    },
     "cookieBanner": {
       "dismiss": "Dismiss cookie banner",
       "heading": "Legally-required cookie banner",

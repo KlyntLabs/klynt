@@ -111,6 +111,14 @@
         "trash": "Trash"
       }
     },
+    "mobileFallback": {
+      "title": "仅限桌面端",
+      "message": "此体验针对桌面端优化。请使用更大的屏幕。"
+    },
+    "errorFallback": {
+      "title": "出错了",
+      "retry": "重试"
+    },
     "cookieBanner": {
       "dismiss": "Dismiss cookie banner",
       "heading": "Legally-required cookie banner",
