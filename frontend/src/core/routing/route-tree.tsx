@@ -5,7 +5,6 @@ import { Spinner } from "@/components/ui/spinner";
 import { GuestRoute, ProtectedRoute, RoleGuard } from "@/core/auth";
 import { marketingRegistry } from "@/features/desktop/apps";
 import { buildMarketingDesktop } from "@/features/desktop/factory/marketing-desktop";
-import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
 import { MarketingShell } from "@/features/marketing/components/MarketingShell";
 import { routePaths } from "./route-paths";
 
@@ -86,17 +85,11 @@ function AdminLayout() {
 }
 
 function IndexRoute() {
-  const { viewMode } = useDesktopStore();
-
-  if (viewMode === "desktop") {
-    return (
-      <Suspense fallback={<Spinner />}>
-        <DesktopEnvironment config={buildMarketingDesktop()} />
-      </Suspense>
-    );
-  }
-
-  return <MarketingShell route={marketingRegistry.defaultApp.route ?? "/"} />;
+  return (
+    <Suspense fallback={<Spinner />}>
+      <DesktopEnvironment config={buildMarketingDesktop()} />
+    </Suspense>
+  );
 }
 
 const marketingRoutes = marketingRegistry.apps

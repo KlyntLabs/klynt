@@ -5,10 +5,12 @@ import { useToastStore } from "@/core/notifications/toast-store";
 import { getPresetById } from "@/features/desktop/backgrounds/presets";
 import type { DesktopLayout } from "@/features/desktop/persistence/types";
 import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import type { DesktopConfig } from "../factory/types";
 import CookieBanner from "./CookieBanner";
 import DesktopIcons from "./DesktopIcons";
 import Menubar from "./Menubar";
+import { MobileFallback } from "./MobileFallback";
 import WindowManager from "./WindowManager";
 
 interface DesktopEnvironmentProps {
@@ -22,12 +24,15 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
   const [isLoading, setIsLoading] = useState(true);
   const { t } = useTranslation("home");
   const addToast = useToastStore((state) => state.addToast);
+  const isBelowLg = useMediaQuery("(max-width: 1023px)");
   const configRef = useRef(config);
   configRef.current = config;
 
   const background = getPresetById(backgroundPresetId);
+  const isOsDesktop = !config.singleApp;
 
   useEffect(() => {
+    if (isBelowLg && isOsDesktop) return;
     let cancelled = false;
     const { persistence, id, defaultApp } = configRef.current;
 
@@ -71,10 +76,11 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
     return () => {
       cancelled = true;
     };
-  }, [openApp, t, addToast]);
+  }, [isBelowLg, isOsDesktop, openApp, t, addToast]);
 
   useEffect(() => {
     if (isLoading) return;
+    if (isBelowLg && isOsDesktop) return;
     if (!configRef.current.persistence.canEdit()) return;
 
     const layout: DesktopLayout = {
@@ -100,7 +106,20 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
         });
       }
     });
-  }, [desktopWindows, backgroundPresetId, config.id, isLoading, t, addToast]);
+  }, [
+    isBelowLg,
+    isOsDesktop,
+    desktopWindows,
+    backgroundPresetId,
+    config.id,
+    isLoading,
+    t,
+    addToast,
+  ]);
+
+  if (isBelowLg && isOsDesktop) {
+    return <MobileFallback />;
+  }
 
   return (
     <div className="w-screen h-screen overflow-hidden relative">
