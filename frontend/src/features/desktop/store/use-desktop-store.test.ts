@@ -1,202 +1,126 @@
 import { act, renderHook } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { useDesktopStore } from "./use-desktop-store";
-
-function createStorage() {
-  let store: Record<string, string> = {};
-  return {
-    getItem: vi.fn((key: string) => store[key] ?? null),
-    setItem: vi.fn((key: string, value: string) => {
-      store[key] = value;
-    }),
-    removeItem: vi.fn((key: string) => {
-      delete store[key];
-    }),
-    clear: vi.fn(() => {
-      store = {};
-    }),
-  };
-}
 
 describe("useDesktopStore", () => {
   beforeEach(() => {
-    Object.defineProperty(globalThis, "localStorage", {
-      value: createStorage(),
-      writable: true,
-    });
-    useDesktopStore.setState({
-      viewMode: "desktop",
-      windows: [],
-      activeWindowId: null,
-      cookieDismissed: false,
-      nextZIndex: 100,
+    act(() => {
+      useDesktopStore.getState().reset();
     });
   });
 
   afterEach(() => {
-    globalThis.localStorage.clear();
+    act(() => {
+      useDesktopStore.getState().reset();
+    });
   });
 
-  it("opens a window and marks it active", () => {
+  it("opens a window scoped by desktopId", () => {
     const { result } = renderHook(() => useDesktopStore());
 
     act(() => {
-      result.current.openWindow("/pricing", "Pricing");
+      result.current.openApp("desktop-1", "app-pricing");
     });
 
-    expect(result.current.windows).toHaveLength(1);
-    expect(result.current.windows[0]?.title).toBe("Pricing");
-    expect(result.current.windows[0]?.isActive).toBe(true);
-    expect(result.current.activeWindowId).toBe(result.current.windows[0]?.id);
+    expect(result.current.windows["desktop-1"]).toHaveLength(1);
+    expect(result.current.windows["desktop-1"]?.[0]?.appId).toBe("app-pricing");
+    expect(result.current.activeWindowId["desktop-1"]).toBe(
+      result.current.windows["desktop-1"]?.[0]?.id
+    );
   });
 
-  it("focuses an existing window instead of opening a duplicate", () => {
+  it("closes a window", () => {
     const { result } = renderHook(() => useDesktopStore());
 
     act(() => {
-      result.current.openWindow("/pricing", "Pricing");
+      result.current.openApp("desktop-1", "app-pricing");
     });
 
-    const firstId = result.current.windows[0]?.id;
+    const windowId = result.current.windows["desktop-1"]?.[0]?.id;
 
     act(() => {
-      result.current.openWindow("/docs", "Docs");
+      if (windowId) {
+        result.current.closeWindow("desktop-1", windowId);
+      }
     });
 
-    act(() => {
-      result.current.openWindow("/pricing", "Pricing");
-    });
-
-    expect(result.current.windows).toHaveLength(2);
-    expect(result.current.activeWindowId).toBe(firstId);
+    expect(result.current.windows["desktop-1"]).toHaveLength(0);
+    expect(result.current.activeWindowId["desktop-1"]).toBeNull();
   });
 
-  it("closes a window and activates the previous one", () => {
+  it("focuses an existing window instead of duplicating", () => {
     const { result } = renderHook(() => useDesktopStore());
 
     act(() => {
-      result.current.openWindow("/pricing", "Pricing");
+      result.current.openApp("desktop-1", "app-pricing");
+    });
+
+    const firstId = result.current.windows["desktop-1"]?.[0]?.id;
+
+    act(() => {
+      result.current.openApp("desktop-1", "app-docs");
     });
 
     act(() => {
-      result.current.openWindow("/docs", "Docs");
+      result.current.openApp("desktop-1", "app-pricing");
     });
 
-    const firstId = result.current.windows[0]?.id;
-    const secondId = result.current.windows[1]?.id;
-
-    act(() => {
-      result.current.closeWindow(secondId ?? "");
-    });
-
-    expect(result.current.windows).toHaveLength(1);
-    expect(result.current.activeWindowId).toBe(firstId);
-    expect(result.current.windows[0]?.isActive).toBe(true);
+    expect(result.current.windows["desktop-1"]).toHaveLength(2);
+    expect(result.current.activeWindowId["desktop-1"]).toBe(firstId);
+    expect(result.current.windows["desktop-1"]?.find((w) => w.id === firstId)?.state).toBe(
+      "normal"
+    );
   });
 
-  it("focuses a window and bumps its z-index", () => {
+  it("does not move a maximized window", () => {
     const { result } = renderHook(() => useDesktopStore());
 
     act(() => {
-      result.current.openWindow("/pricing", "Pricing");
+      result.current.openApp("desktop-1", "app-pricing", {
+        x: 100,
+        y: 100,
+        width: 400,
+        height: 300,
+      });
+    });
+
+    const windowId = result.current.windows["desktop-1"]?.[0]?.id;
+
+    act(() => {
+      if (windowId) {
+        result.current.maximizeWindow("desktop-1", windowId);
+      }
     });
 
     act(() => {
-      result.current.openWindow("/docs", "Docs");
+      if (windowId) {
+        result.current.moveWindow("desktop-1", windowId, { x: 10, y: 20, width: 200, height: 150 });
+      }
     });
 
-    const firstId = result.current.windows[0]?.id;
-    const initialZIndex = result.current.windows[0]?.zIndex ?? 0;
-
-    act(() => {
-      result.current.focusWindow(firstId ?? "");
-    });
-
-    const focused = result.current.windows.find((w) => w.id === firstId);
-    expect(focused?.isActive).toBe(true);
-    expect(focused?.zIndex).toBeGreaterThan(initialZIndex);
+    const moved = result.current.windows["desktop-1"]?.find((w) => w.id === windowId);
+    expect(moved?.x).toBe(100);
+    expect(moved?.y).toBe(100);
+    expect(moved?.width).toBe(400);
+    expect(moved?.height).toBe(300);
   });
 
-  it("minimizes and restores a window", () => {
+  it("resets state", () => {
     const { result } = renderHook(() => useDesktopStore());
 
     act(() => {
-      result.current.openWindow("/pricing", "Pricing");
-    });
-
-    const id = result.current.windows[0]?.id ?? "";
-
-    act(() => {
-      result.current.minimizeWindow(id);
-    });
-
-    expect(result.current.windows[0]?.isMinimized).toBe(true);
-    expect(result.current.windows[0]?.isActive).toBe(false);
-
-    act(() => {
-      result.current.restoreWindow(id);
-    });
-
-    expect(result.current.windows[0]?.isMinimized).toBe(false);
-    expect(result.current.windows[0]?.isMaximized).toBe(false);
-  });
-
-  it("maximizes a window", () => {
-    const { result } = renderHook(() => useDesktopStore());
-
-    act(() => {
-      result.current.openWindow("/pricing", "Pricing");
-    });
-
-    const id = result.current.windows[0]?.id ?? "";
-
-    act(() => {
-      result.current.maximizeWindow(id);
-    });
-
-    expect(result.current.windows[0]?.isMaximized).toBe(true);
-  });
-
-  it("updates window position and size", () => {
-    const { result } = renderHook(() => useDesktopStore());
-
-    act(() => {
-      result.current.openWindow("/pricing", "Pricing");
-    });
-
-    const id = result.current.windows[0]?.id ?? "";
-
-    act(() => {
-      result.current.setWindowPosition(id, { x: 10, y: 20 });
-    });
-
-    expect(result.current.windows[0]?.position).toEqual({ x: 10, y: 20 });
-
-    act(() => {
-      result.current.setWindowSize(id, { width: 100, height: 200 });
-    });
-
-    expect(result.current.windows[0]?.size).toEqual({ width: 100, height: 200 });
-  });
-
-  it("switches view mode", () => {
-    const { result } = renderHook(() => useDesktopStore());
-
-    act(() => {
+      result.current.setActiveDesktop("desktop-1");
+      result.current.openApp("desktop-1", "app-pricing");
       result.current.setViewMode("website");
     });
 
-    expect(result.current.viewMode).toBe("website");
-  });
-
-  it("dismisses the cookie banner and persists to localStorage", () => {
-    const { result } = renderHook(() => useDesktopStore());
-
     act(() => {
-      result.current.dismissCookie();
+      result.current.reset();
     });
 
-    expect(result.current.cookieDismissed).toBe(true);
-    expect(localStorage.getItem("cookie-dismissed")).toBe("true");
+    expect(result.current.activeDesktopId).toBeNull();
+    expect(result.current.windows).toEqual({});
+    expect(result.current.activeWindowId).toEqual({});
+    expect(result.current.viewMode).toBe("desktop");
   });
 });

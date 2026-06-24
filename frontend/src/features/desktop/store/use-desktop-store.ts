@@ -1,197 +1,169 @@
-import { create, type StateCreator } from "zustand";
+import { nanoid } from "nanoid";
+import { create } from "zustand";
+import { devtools } from "zustand/middleware";
+import { immer } from "zustand/middleware/immer";
 
-let _idCounter = 0;
-const generateId = () => `window-${++_idCounter}-${Date.now().toString(36)}`;
-
-export interface WindowState {
+export type WindowState = {
   id: string;
-  route: string;
-  title: string;
-  position: { x: number; y: number };
-  size: { width: number; height: number };
-  zIndex: number;
-  isMinimized: boolean;
-  isMaximized: boolean;
-  isActive: boolean;
-}
+  appId: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  state: "normal" | "minimized" | "maximized";
+};
 
-interface DesktopStore {
-  viewMode: "desktop" | "website";
-  windows: WindowState[];
-  activeWindowId: string | null;
-  cookieDismissed: boolean;
-  nextZIndex: number;
+type DesktopViewMode = "desktop" | "website";
 
-  setViewMode: (mode: "desktop" | "website") => void;
-  openWindow: (
-    route: string,
-    title: string,
-    options?: Partial<Omit<WindowState, "id" | "zIndex">>
+type DesktopState = {
+  activeDesktopId: string | null;
+  windows: Record<string, WindowState[]>;
+  activeWindowId: Record<string, string | null>;
+  viewMode: DesktopViewMode;
+
+  setActiveDesktop: (id: string) => void;
+  openApp: (desktopId: string, appId: string, defaultRect?: Partial<WindowState>) => void;
+  closeWindow: (desktopId: string, windowId: string) => void;
+  focusWindow: (desktopId: string, windowId: string) => void;
+  moveWindow: (
+    desktopId: string,
+    windowId: string,
+    rect: Omit<WindowState, "id" | "appId" | "state">
   ) => void;
-  closeWindow: (id: string) => void;
-  focusWindow: (id: string) => void;
-  minimizeWindow: (id: string) => void;
-  maximizeWindow: (id: string) => void;
-  restoreWindow: (id: string) => void;
-  setWindowPosition: (id: string, position: { x: number; y: number }) => void;
-  setWindowSize: (id: string, size: { width: number; height: number }) => void;
-  dismissCookie: () => void;
-}
+  minimizeWindow: (desktopId: string, windowId: string) => void;
+  maximizeWindow: (desktopId: string, windowId: string) => void;
+  restoreWindow: (desktopId: string, windowId: string) => void;
+  setViewMode: (mode: DesktopViewMode) => void;
+  reset: () => void;
+};
 
 const DEFAULT_WINDOW_WIDTH = 680;
 const DEFAULT_WINDOW_HEIGHT = 520;
 
-const getCenteredPosition = (width: number, height: number, zIndex: number): WindowState => {
+const generateId = (): string => {
+  try {
+    return nanoid();
+  } catch {
+    return crypto.randomUUID();
+  }
+};
+
+const getCenteredRect = (width: number, height: number) => {
   const vw = typeof window !== "undefined" ? window.innerWidth : 1200;
   const vh = typeof window !== "undefined" ? window.innerHeight : 800;
-  const x = Math.max(16, (vw - width) / 2);
-  const y = Math.max(48, (vh - height) / 2 - 36);
   return {
-    id: "",
-    route: "",
-    title: "",
-    position: { x, y },
-    size: { width, height },
-    zIndex,
-    isMinimized: false,
-    isMaximized: false,
-    isActive: true,
+    x: Math.max(16, (vw - width) / 2),
+    y: Math.max(48, (vh - height) / 2 - 36),
+    width,
+    height,
   };
 };
 
-const desktopStore: StateCreator<DesktopStore> = (set, get) => ({
-  viewMode: "desktop",
-  windows: [],
-  activeWindowId: null,
-  cookieDismissed: (() => {
-    try {
-      return localStorage.getItem("cookie-dismissed") === "true";
-    } catch {
-      return false;
-    }
-  })(),
-  nextZIndex: 100,
+const initialState = {
+  activeDesktopId: null,
+  windows: {},
+  activeWindowId: {},
+  viewMode: "desktop" as DesktopViewMode,
+};
 
-  setViewMode: (mode) => set({ viewMode: mode }),
+export const useDesktopStore = create<DesktopState>()(
+  devtools(
+    immer((set) => ({
+      ...initialState,
 
-  openWindow: (route, title, options) => {
-    const state = get();
-    const existingWindow = state.windows.find(
-      (w: WindowState) => w.route === route && !w.isMinimized
-    );
-    if (existingWindow) {
-      get().focusWindow(existingWindow.id);
-      return;
-    }
+      setActiveDesktop: (id) =>
+        set((draft) => {
+          draft.activeDesktopId = id;
+        }),
 
-    const newZIndex = state.nextZIndex + 1;
-    const size = {
-      width: options?.size?.width || DEFAULT_WINDOW_WIDTH,
-      height: options?.size?.height || DEFAULT_WINDOW_HEIGHT,
-    };
-    const windowTitle = title || route;
-    const base = getCenteredPosition(size.width, size.height, newZIndex);
+      openApp: (desktopId, appId, defaultRect) =>
+        set((draft) => {
+          const desktopWindows = draft.windows[desktopId] ?? [];
+          const existing = desktopWindows.find((w) => w.appId === appId);
 
-    const newWindow: WindowState = {
-      ...base,
-      id: generateId(),
-      route,
-      title: windowTitle,
-      position: options?.position || base.position,
-      size: options?.size || size,
-      isMinimized: false,
-      isMaximized: false,
-      isActive: true,
-    };
+          if (existing) {
+            existing.state = "normal";
+            draft.activeWindowId[desktopId] = existing.id;
+            return;
+          }
 
-    set({
-      windows: [...state.windows.map((w: WindowState) => ({ ...w, isActive: false })), newWindow],
-      activeWindowId: newWindow.id,
-      nextZIndex: newZIndex,
-    });
-  },
+          const width = defaultRect?.width ?? DEFAULT_WINDOW_WIDTH;
+          const height = defaultRect?.height ?? DEFAULT_WINDOW_HEIGHT;
+          const rect = getCenteredRect(width, height);
 
-  closeWindow: (id) => {
-    const state = get();
-    const filtered = state.windows.filter((w: WindowState) => w.id !== id);
-    const newActiveId = filtered.length > 0 ? filtered[filtered.length - 1].id : null;
-    set({
-      windows: filtered.map((w: WindowState) =>
-        w.id === newActiveId ? { ...w, isActive: true } : w
-      ),
-      activeWindowId: newActiveId,
-    });
-  },
+          const newWindow: WindowState = {
+            id: generateId(),
+            appId,
+            x: defaultRect?.x ?? rect.x,
+            y: defaultRect?.y ?? rect.y,
+            width,
+            height,
+            state: defaultRect?.state ?? "normal",
+          };
 
-  focusWindow: (id) => {
-    const state = get();
-    const newZIndex = state.nextZIndex + 1;
-    set({
-      windows: state.windows.map((w: WindowState) => ({
-        ...w,
-        isActive: w.id === id,
-        zIndex: w.id === id ? newZIndex : w.zIndex,
-      })),
-      activeWindowId: id,
-      nextZIndex: newZIndex,
-    });
-  },
+          draft.windows[desktopId] = [...desktopWindows, newWindow];
+          draft.activeWindowId[desktopId] = newWindow.id;
+        }),
 
-  minimizeWindow: (id) => {
-    const state = get();
-    const updated = state.windows.map((w: WindowState) =>
-      w.id === id ? { ...w, isMinimized: true, isActive: false } : w
-    );
-    const remaining = updated.filter((w: WindowState) => !w.isMinimized);
-    const newActiveId = remaining.length > 0 ? remaining[remaining.length - 1].id : null;
-    set({
-      windows: updated.map((w: WindowState) =>
-        w.id === newActiveId ? { ...w, isActive: true } : w
-      ),
-      activeWindowId: newActiveId,
-    });
-  },
+      closeWindow: (desktopId, windowId) =>
+        set((draft) => {
+          const desktopWindows = draft.windows[desktopId] ?? [];
+          draft.windows[desktopId] = desktopWindows.filter((w) => w.id !== windowId);
 
-  maximizeWindow: (id) => {
-    const state = get();
-    set({
-      windows: state.windows.map((w: WindowState) =>
-        w.id === id ? { ...w, isMaximized: true } : w
-      ),
-    });
-  },
+          if (draft.activeWindowId[desktopId] === windowId) {
+            draft.activeWindowId[desktopId] = null;
+          }
+        }),
 
-  restoreWindow: (id) => {
-    const state = get();
-    set({
-      windows: state.windows.map((w: WindowState) =>
-        w.id === id ? { ...w, isMaximized: false, isMinimized: false } : w
-      ),
-    });
-  },
+      focusWindow: (desktopId, windowId) =>
+        set((draft) => {
+          draft.activeWindowId[desktopId] = windowId;
+        }),
 
-  setWindowPosition: (id, position) => {
-    const state = get();
-    set({
-      windows: state.windows.map((w: WindowState) => (w.id === id ? { ...w, position } : w)),
-    });
-  },
+      moveWindow: (desktopId, windowId, rect) =>
+        set((draft) => {
+          const window = draft.windows[desktopId]?.find((w) => w.id === windowId);
+          if (!window || window.state === "maximized") {
+            return;
+          }
 
-  setWindowSize: (id, size) => {
-    const state = get();
-    set({
-      windows: state.windows.map((w: WindowState) => (w.id === id ? { ...w, size } : w)),
-    });
-  },
+          window.x = rect.x;
+          window.y = rect.y;
+          window.width = rect.width;
+          window.height = rect.height;
+        }),
 
-  dismissCookie: () => {
-    try {
-      localStorage.setItem("cookie-dismissed", "true");
-    } catch {
-      // ignore
-    }
-    set({ cookieDismissed: true });
-  },
-});
+      minimizeWindow: (desktopId, windowId) =>
+        set((draft) => {
+          const window = draft.windows[desktopId]?.find((w) => w.id === windowId);
+          if (window) {
+            window.state = "minimized";
+          }
+        }),
 
-export const useDesktopStore = create(desktopStore);
+      maximizeWindow: (desktopId, windowId) =>
+        set((draft) => {
+          const window = draft.windows[desktopId]?.find((w) => w.id === windowId);
+          if (window) {
+            window.state = "maximized";
+          }
+        }),
+
+      restoreWindow: (desktopId, windowId) =>
+        set((draft) => {
+          const window = draft.windows[desktopId]?.find((w) => w.id === windowId);
+          if (window) {
+            window.state = "normal";
+          }
+        }),
+
+      setViewMode: (mode) =>
+        set((draft) => {
+          draft.viewMode = mode;
+        }),
+
+      reset: () => set(initialState),
+    })),
+    { name: "desktop-store" }
+  )
+);
