@@ -9,7 +9,7 @@ interface MarketingShellProps {
 }
 
 export function MarketingShell({ route }: MarketingShellProps) {
-  const app = marketingRegistry.apps.find((app) => app.manifest.route === route);
+  const app = marketingRegistry.apps.find((app) => app.route === route);
 
   if (!app) {
     return (

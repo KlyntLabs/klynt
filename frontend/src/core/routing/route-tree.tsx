@@ -4,7 +4,7 @@ import { RootLayout } from "@/app/layout/root-layout";
 import { Spinner } from "@/components/ui/spinner";
 import { GuestRoute, ProtectedRoute, RoleGuard } from "@/core/auth";
 import { marketingRegistry } from "@/features/desktop/apps";
-import { marketingDesktopConfig } from "@/features/desktop/factory/marketing-config";
+import { buildMarketingDesktop } from "@/features/desktop/factory/marketing-desktop";
 import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
 import { MarketingShell } from "@/features/marketing/components/MarketingShell";
 import { routePaths } from "./route-paths";
@@ -96,17 +96,17 @@ function IndexRoute() {
   if (viewMode === "desktop") {
     return (
       <Suspense fallback={<Spinner />}>
-        <DesktopEnvironment config={marketingDesktopConfig} />
+        <DesktopEnvironment config={buildMarketingDesktop()} />
       </Suspense>
     );
   }
 
-  return <MarketingShell route={marketingRegistry.defaultApp.manifest.route} />;
+  return <MarketingShell route={marketingRegistry.defaultApp.route} />;
 }
 
 const marketingRoutes = marketingRegistry.apps.map((app) => ({
-  path: app.manifest.route,
-  element: <MarketingShell route={app.manifest.route} />,
+  path: app.route,
+  element: <MarketingShell route={app.route} />,
 }));
 
 export const router = createBrowserRouter([

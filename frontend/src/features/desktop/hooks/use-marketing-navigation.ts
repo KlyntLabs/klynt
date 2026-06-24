@@ -19,13 +19,13 @@ export function useMarketingNavigation(): MarketingNavigation {
   const goTo = useCallback(
     (route: string) => {
       if (viewMode === "desktop") {
-        const app = marketingRegistry.apps.find((app) => app.manifest.route === route);
+        const app = marketingRegistry.apps.find((app) => app.route === route);
         if (!app) {
           return;
         }
-        openApp("marketing", app.manifest.id, {
-          width: app.manifest.defaultSize.width,
-          height: app.manifest.defaultSize.height,
+        openApp("marketing", app.id, {
+          width: app.defaultSize.width,
+          height: app.defaultSize.height,
         });
       } else {
         navigate(route);
@@ -35,7 +35,7 @@ export function useMarketingNavigation(): MarketingNavigation {
   );
 
   const goToHome = useCallback(() => {
-    goTo(marketingRegistry.defaultApp.manifest.route);
+    goTo(marketingRegistry.defaultApp.route);
   }, [goTo]);
 
   const goToPricing = useCallback(() => {
