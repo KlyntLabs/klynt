@@ -61,7 +61,9 @@
       },
       "userManagement": "Quản lý người dùng",
       "tenantManagement": "Quản lý tenant",
-      "reports": "Báo cáo"
+      "reports": "Báo cáo",
+      "profile": "Hồ sơ",
+      "myCourses": "Khóa học của tôi"
     },
     "menubar": {
       "logo": "PostHog",
@@ -174,6 +176,16 @@
         "bookmark": "Bookmark",
         "settings": "Settings"
       }
+    }
+  },
+  "user": {
+    "profile": {
+      "title": "Hồ sơ",
+      "description": "Xem và quản lý hồ sơ của bạn."
+    },
+    "myCourses": {
+      "title": "Khóa học của tôi",
+      "description": "Duyệt các khóa học bạn đã đăng ký."
     }
   }
 }
