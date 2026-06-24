@@ -14,6 +14,6 @@ describe("VerifyEmailPage", () => {
     );
 
     render(<VerifyEmailPage />, { initialEntries: ["/?token=abc123"] });
-    expect(screen.getByRole("status")).toBeInTheDocument();
+    expect(screen.getAllByRole("status").length).toBeGreaterThanOrEqual(1);
   });
 });

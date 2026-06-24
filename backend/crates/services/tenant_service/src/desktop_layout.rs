@@ -106,7 +106,6 @@ mod tests {
     }
 
     #[async_trait]
-    #[async_trait]
     impl TenantDesktopLayoutRepository for FakeLayoutRepository {
         async fn find(
             &self,

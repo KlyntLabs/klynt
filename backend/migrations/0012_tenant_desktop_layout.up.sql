@@ -14,3 +14,18 @@ CREATE TABLE tenant_desktop_layouts (
 );
 
 CREATE INDEX idx_tenant_desktop_layouts_tenant_scope ON tenant_desktop_layouts(tenant_id, scope);
+
+-- Enforce data integrity: shared layouts are tenant-wide (no user_id),
+-- and user-scoped layouts must belong to a user.
+ALTER TABLE tenant_desktop_layouts
+ADD CONSTRAINT chk_tenant_desktop_layout_scope_user_id
+CHECK (
+    (scope = 'shared' AND user_id IS NULL) OR
+    (scope = 'user' AND user_id IS NOT NULL)
+);
+
+-- Enforce a single shared layout per tenant. The generic unique constraint
+-- allows multiple NULL user_id values, so a partial unique index is required.
+CREATE UNIQUE INDEX idx_tenant_desktop_layouts_tenant_shared
+ON tenant_desktop_layouts(tenant_id)
+WHERE scope = 'shared';

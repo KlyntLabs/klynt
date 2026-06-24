@@ -1,7 +1,7 @@
 import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { WindowState } from "@/features/desktop/store/use-desktop-store";
 import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
 import { render } from "@/test/render";
@@ -165,6 +165,26 @@ describe("Window interactions", () => {
       expect(moved?.x).not.toBe(100);
       expect(moved?.y).not.toBe(100);
     });
+  });
+
+  it("renders the default error fallback when a child throws", () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    function ThrowingChild(): ReactNode {
+      throw new Error("boom");
+    }
+
+    render(
+      <WindowWrapper windowId="win-1">
+        <ThrowingChild />
+      </WindowWrapper>
+    );
+
+    expect(screen.getByText("Something went wrong")).toBeInTheDocument();
+    expect(screen.getByText("Please try again.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /try again/i })).toBeInTheDocument();
+
+    consoleError.mockRestore();
   });
 
   describe("locked windows", () => {

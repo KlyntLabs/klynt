@@ -1,6 +1,6 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { marketingDesktopConfig } from "@/features/desktop/factory/marketing-config";
 import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
 import {
@@ -10,6 +10,15 @@ import {
 } from "@/features/desktop/test-helpers";
 import { render } from "@/test/render";
 import DesktopIcons from "./DesktopIcons";
+
+const mockNavigate = vi.fn();
+vi.mock("react-router-dom", async (importOriginal) => {
+  const actual = (await importOriginal()) as object;
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
 
 describe("DesktopIcons interactions", () => {
   beforeEach(() => {
@@ -67,6 +76,28 @@ describe("DesktopIcons interactions", () => {
       expect(state.activeWindowId["test-dock"]).toBe("win-pricing");
       const focused = state.windows["test-dock"]?.find((w) => w.id === "win-pricing");
       expect(focused?.zIndex).toBeGreaterThan(101);
+    });
+  });
+
+  it("navigates to register when the sign-up icon is clicked", async () => {
+    const user = userEvent.setup();
+    render(<DesktopIcons config={marketingDesktopConfig} />);
+
+    await user.click(screen.getByRole("button", { name: /sign up/i }));
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/register");
+    });
+  });
+
+  it("switches to website view when the switch icon is clicked", async () => {
+    const user = userEvent.setup();
+    render(<DesktopIcons config={marketingDesktopConfig} />);
+
+    await user.click(screen.getByRole("button", { name: /switch to website/i }));
+
+    await waitFor(() => {
+      expect(useDesktopStore.getState().viewMode).toBe("website");
     });
   });
 });
