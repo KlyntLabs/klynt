@@ -1,6 +1,6 @@
 import { ExternalLink, Monitor } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { getDockApps, marketingRegistry } from "@/features/desktop/apps";
+import { marketingRegistry } from "@/features/desktop/apps";
 import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
 
 interface DesktopIconItemProps {
@@ -28,7 +28,9 @@ function DesktopIconItem({ icon, label, onClick }: DesktopIconItemProps) {
 
 function DockIcons({ position }: { position: "left" | "right" }) {
   const { openWindow } = useDesktopStore();
-  const apps = getDockApps(marketingRegistry, position);
+  const apps = marketingRegistry.apps
+    .filter((app) => app.manifest.dock?.position === position)
+    .sort((a, b) => (a.manifest.dock?.order ?? 0) - (b.manifest.dock?.order ?? 0));
 
   return (
     <>

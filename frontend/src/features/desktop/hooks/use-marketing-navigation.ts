@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { getAppByRoute, marketingRegistry } from "@/features/desktop/apps";
+import { marketingRegistry } from "@/features/desktop/apps";
 import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
 
 export interface MarketingNavigation {
@@ -19,7 +19,7 @@ export function useMarketingNavigation(): MarketingNavigation {
   const goTo = useCallback(
     (route: string) => {
       if (viewMode === "desktop") {
-        const app = getAppByRoute(marketingRegistry, route);
+        const app = marketingRegistry.apps.find((app) => app.manifest.route === route);
         if (!app) {
           return;
         }

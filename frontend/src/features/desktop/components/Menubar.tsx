@@ -1,7 +1,7 @@
 import { Bell, Search, User, Zap } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { getAppMenuGroups, getAppsByMenuGroup, marketingRegistry } from "@/features/desktop/apps";
+import { marketingRegistry } from "@/features/desktop/apps";
 import { useMarketingNavigation } from "@/features/desktop/hooks/use-marketing-navigation";
 
 interface MenuItem {
@@ -35,7 +35,7 @@ function useMenuGroups(): MenuGroup[] {
     const seenGroups = new Set<string>();
 
     for (const group of MENU_GROUP_ORDER) {
-      const apps = getAppsByMenuGroup(marketingRegistry, group);
+      const apps = marketingRegistry.apps.filter((app) => app.manifest.menuGroup === group);
       if (apps.length === 0) continue;
 
       seenGroups.add(group);
@@ -49,9 +49,15 @@ function useMenuGroups(): MenuGroup[] {
     }
 
     // Append any registry menu groups not explicitly ordered.
-    for (const group of getAppMenuGroups(marketingRegistry)) {
+    for (const group of Array.from(
+      new Set(
+        marketingRegistry.apps
+          .map((app) => app.manifest.menuGroup)
+          .filter((group): group is string => Boolean(group))
+      )
+    )) {
       if (seenGroups.has(group)) continue;
-      const apps = getAppsByMenuGroup(marketingRegistry, group);
+      const apps = marketingRegistry.apps.filter((app) => app.manifest.menuGroup === group);
       groups.push({
         label: group,
         items: apps.map((app) => ({

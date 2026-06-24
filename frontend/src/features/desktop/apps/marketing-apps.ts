@@ -19,12 +19,34 @@ import {
   Trash2,
   Video,
 } from "lucide-react";
+import type { ComponentType, LazyExoticComponent } from "react";
 import { lazy } from "react";
-import type { AppRegistry, WindowApp } from "./types";
 
-/* ------------------------------------------------------------------ */
-/*  Lazy page components                                               */
-/* ------------------------------------------------------------------ */
+export interface AppIconProps {
+  className?: string;
+}
+
+interface MarketingAppManifest {
+  id: string;
+  route: string;
+  title: string;
+  shortTitle?: string;
+  icon: ComponentType<AppIconProps>;
+  category: string;
+  defaultSize: { width: number; height: number };
+  menuGroup?: string;
+  dock?: { position: "left" | "right"; order: number };
+}
+
+export interface WindowApp {
+  manifest: MarketingAppManifest;
+  component: LazyExoticComponent<ComponentType> | ComponentType;
+}
+
+export interface MarketingRegistry {
+  apps: WindowApp[];
+  defaultApp: WindowApp;
+}
 
 const HomePage = lazy(() => import("@/features/marketing/pages/HomePage"));
 const ProductsPage = lazy(() => import("@/features/marketing/pages/ProductsPage"));
@@ -36,22 +58,14 @@ const CommunityPage = lazy(() => import("@/features/marketing/pages/CommunityPag
 const TalkToHumanPage = lazy(() => import("@/features/marketing/pages/TalkToHumanPage"));
 const TrashPage = lazy(() => import("@/features/marketing/pages/TrashPage"));
 
-/* ------------------------------------------------------------------ */
-/*  Shared default sizes                                               */
-/* ------------------------------------------------------------------ */
-
 const SIZE_DEFAULT = { width: 680, height: 520 };
 const SIZE_WIDE = { width: 900, height: 600 };
 const SIZE_PRESENTATION = { width: 1000, height: 700 };
 const SIZE_DEMO = { width: 720, height: 480 };
 const SIZE_HOME = { width: 640, height: 560 };
 
-/* ------------------------------------------------------------------ */
-/*  App factories                                                      */
-/* ------------------------------------------------------------------ */
-
 function marketingApp(
-  partial: Omit<WindowApp["manifest"], "category"> & { component: WindowApp["component"] }
+  partial: Omit<MarketingAppManifest, "category"> & { component: WindowApp["component"] }
 ): WindowApp {
   return {
     manifest: {
@@ -61,10 +75,6 @@ function marketingApp(
     component: partial.component,
   };
 }
-
-/* ------------------------------------------------------------------ */
-/*  Registry                                                           */
-/* ------------------------------------------------------------------ */
 
 export const marketingApps: WindowApp[] = [
   marketingApp({
@@ -85,7 +95,6 @@ export const marketingApps: WindowApp[] = [
     dock: { position: "left", order: 5 },
     component: HomePage,
   }),
-
   // Product OS family
   marketingApp({
     id: "products",
@@ -160,7 +169,6 @@ export const marketingApps: WindowApp[] = [
     defaultSize: SIZE_PRESENTATION,
     component: ProductsPage,
   }),
-
   // Pricing
   marketingApp({
     id: "pricing",
@@ -172,7 +180,6 @@ export const marketingApps: WindowApp[] = [
     dock: { position: "left", order: 3 },
     component: PricingPage,
   }),
-
   // Content
   marketingApp({
     id: "customers",
@@ -193,7 +200,6 @@ export const marketingApps: WindowApp[] = [
     dock: { position: "left", order: 6 },
     component: DocsPage,
   }),
-
   // Company
   marketingApp({
     id: "about",
@@ -237,7 +243,6 @@ export const marketingApps: WindowApp[] = [
     dock: { position: "right", order: 4 },
     component: AboutPage,
   }),
-
   // Community
   marketingApp({
     id: "community",
@@ -270,7 +275,6 @@ export const marketingApps: WindowApp[] = [
     dock: { position: "left", order: 7 },
     component: TalkToHumanPage,
   }),
-
   // System
   marketingApp({
     id: "trash",
@@ -284,13 +288,7 @@ export const marketingApps: WindowApp[] = [
   }),
 ];
 
-/**
- * The desktop app registry for all marketing content.
- * Auth, dashboard, and admin routes remain outside the registry for now
- * because they are governed by route guards, but they can be added later
- * without changing the desktop shell.
- */
-export const marketingRegistry: AppRegistry = {
+export const marketingRegistry: MarketingRegistry = {
   apps: marketingApps,
   defaultApp: marketingApps[0],
 };
