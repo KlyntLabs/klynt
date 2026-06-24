@@ -1,10 +1,21 @@
 import { screen, waitFor } from "@testing-library/react";
+import { HttpResponse, http } from "msw";
 import { Route, Routes } from "react-router-dom";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { buildTenantDesktop } from "@/features/desktop/factory/tenant-desktop";
+import type { DesktopConfig } from "@/features/desktop/factory/types";
 import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
 import { resetDesktopStore } from "@/features/desktop/test-helpers";
+import { resetTenantHandlers } from "@/test/msw/handlers/tenant.handlers";
+import { server } from "@/test/msw/server";
 import { render } from "@/test/render";
 import TenantDesktopPage from "./tenant-desktop-page";
+
+vi.mock("@/features/desktop/factory/tenant-desktop", async (importOriginal) => {
+  const original =
+    await importOriginal<typeof import("@/features/desktop/factory/tenant-desktop")>();
+  return { ...original, buildTenantDesktop: vi.fn(original.buildTenantDesktop) };
+});
 
 function TestRouter() {
   return (
@@ -17,14 +28,56 @@ function TestRouter() {
 describe("TenantDesktopPage", () => {
   beforeEach(() => {
     resetDesktopStore();
+    resetTenantHandlers();
+    vi.clearAllMocks();
   });
 
-  it("renders the tenant desktop", () => {
+  it("renders the tenant desktop", async () => {
     render(<TestRouter />, {
       initialEntries: ["/tenants/acme"],
     });
 
-    expect(screen.getByText("Klynt")).toBeInTheDocument();
+    expect(await screen.findByText("Klynt")).toBeInTheDocument();
+  });
+
+  it("passes the tenant role from the API to buildTenantDesktop", async () => {
+    render(<TestRouter />, {
+      initialEntries: ["/tenants/acme"],
+    });
+
+    await waitFor(() =>
+      expect(buildTenantDesktop).toHaveBeenLastCalledWith("acme", "owner", expect.anything())
+    );
+
+    const result = vi.mocked(buildTenantDesktop).mock.results.slice(-1)[0]?.value as DesktopConfig;
+    expect(result.persistence.canEdit()).toBe(true);
+  });
+
+  it("defaults to the member role when the API reports no role", async () => {
+    server.use(
+      http.get("/api/v1/tenants/:slug", () =>
+        HttpResponse.json({
+          data: {
+            id: "2",
+            slug: "acme",
+            name: "Acme",
+            role: "member",
+            joined_at: "2026-06-22T00:00:00Z",
+          },
+        })
+      )
+    );
+
+    render(<TestRouter />, {
+      initialEntries: ["/tenants/acme"],
+    });
+
+    await waitFor(() =>
+      expect(buildTenantDesktop).toHaveBeenLastCalledWith("acme", "member", expect.anything())
+    );
+
+    const result = vi.mocked(buildTenantDesktop).mock.results.slice(-1)[0]?.value as DesktopConfig;
+    expect(result.persistence.canEdit()).toBe(false);
   });
 
   it("opens the members app from deep link", async () => {
