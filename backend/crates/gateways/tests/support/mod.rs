@@ -80,6 +80,7 @@ pub fn build_test_services_with_fakes() -> (
         auth: Arc::new(auth_service),
         user: Arc::new(user_service),
         tenant: Arc::new(tenant::build_test_tenant_service()),
+        desktop_layout: build_test_desktop_layout_service(),
         session: session_service.clone(),
         pool: dummy_pool(),
         rate_limiter: Arc::new(NoOpRateLimiter),
@@ -120,6 +121,7 @@ pub fn build_test_services_with_tenant_fakes(
             invite_repo.clone(),
             user_repo.clone(),
         )),
+        desktop_layout: build_test_desktop_layout_service(),
         session: session_service.clone(),
         pool: dummy_pool(),
         rate_limiter: Arc::new(NoOpRateLimiter),
@@ -187,6 +189,7 @@ pub fn build_test_services_with_auth_fakes() -> (
         auth: Arc::new(auth_service),
         user: Arc::new(user_service),
         tenant: Arc::new(tenant::build_test_tenant_service()),
+        desktop_layout: build_test_desktop_layout_service(),
         session: session_service.clone(),
         pool: dummy_pool(),
         rate_limiter: Arc::new(NoOpRateLimiter),
@@ -202,6 +205,16 @@ pub fn build_test_services_with_auth_fakes() -> (
         auth_user_repository,
         user_service_repository,
     )
+}
+
+fn build_test_desktop_layout_service() -> Arc<tenant_service::TenantDesktopLayoutService> {
+    let repository = Arc::new(
+        persistence::repositories::tenant_desktop_layout::PgTenantDesktopLayoutRepository::new(
+            dummy_pool(),
+        ),
+    ) as Arc<dyn base::ports::repository::TenantDesktopLayoutRepository>;
+
+    Arc::new(tenant_service::TenantDesktopLayoutService::new(repository))
 }
 
 /// Default test configuration.

@@ -6,6 +6,7 @@ pub mod metrics;
 pub mod openapi;
 pub mod permissions;
 pub mod roles;
+pub mod tenant_desktop_layout;
 pub mod tenants;
 pub mod users;
 

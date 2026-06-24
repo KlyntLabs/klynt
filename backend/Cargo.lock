@@ -2531,6 +2531,7 @@ dependencies = [
 name = "tenant_service"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "base",
  "chrono",
  "domain",

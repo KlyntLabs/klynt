@@ -15,6 +15,7 @@ use crate::response::SuccessResponse;
 use crate::state::Services;
 
 use super::roles;
+use super::tenant_desktop_layout;
 
 /// Tenant router — handles tenant management endpoints.
 pub fn routes(services: Services) -> axum::Router<Services> {
@@ -34,6 +35,10 @@ pub fn routes(services: Services) -> axum::Router<Services> {
         )
         .route("/{tenant_slug}/invites", axum::routing::post(create_invite))
         .nest("/{tenant_slug}/roles", roles::routes())
+        .nest(
+            "/{tenant_slug}/desktop-layout",
+            tenant_desktop_layout::routes(),
+        )
         .layer(axum::middleware::from_fn_with_state(
             services,
             require_tenant_membership,

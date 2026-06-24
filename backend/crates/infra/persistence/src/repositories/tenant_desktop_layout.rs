@@ -3,10 +3,9 @@
 use async_trait::async_trait;
 use base::ctx::ExecutionContext;
 use base::ports::repository::TenantDesktopLayoutRepository;
-use domain::{
-    DesktopIcon, DesktopWindow, DomainError, DomainResult, LayoutScope, TenantDesktopLayout,
-};
+use domain::{DomainError, DomainResult, LayoutScope, TenantDesktopLayout};
 use sqlx::{FromRow, PgPool};
+use std::str::FromStr;
 use uuid::Uuid;
 
 /// PostgreSQL implementation of the tenant desktop layout repository.
