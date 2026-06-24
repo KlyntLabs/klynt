@@ -1,6 +1,4 @@
 import { AnimatePresence } from "framer-motion";
-import { Suspense } from "react";
-import { Spinner } from "@/components/ui/spinner";
 import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
 import type { DesktopConfig } from "../factory/types";
 import WindowComponent from "./Window";
@@ -25,10 +23,15 @@ export default function WindowManager({ config }: WindowManagerProps) {
             if (!app) return null;
             const AppComponent = app.component;
             return (
-              <WindowComponent key={w.id} desktopId={config.id} window={w} title={app.title}>
-                <Suspense fallback={<Spinner className="mx-auto my-12" />}>
-                  <AppComponent />
-                </Suspense>
+              <WindowComponent
+                key={w.id}
+                desktopId={config.id}
+                window={w}
+                title={app.title}
+                errorFallback={app.errorFallback}
+                retryLimit={app.retryLimit}
+              >
+                <AppComponent />
               </WindowComponent>
             );
           })}

@@ -16,20 +16,50 @@ import {
   Underline,
   X,
 } from "lucide-react";
-import type { ReactNode } from "react";
-import { useCallback } from "react";
+import type { ComponentType, ReactNode } from "react";
+import { Suspense, useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import { Spinner } from "@/components/ui/spinner";
 import type { WindowState } from "@/features/desktop/store/use-desktop-store";
 import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
+import { AppErrorBoundary } from "./AppErrorBoundary";
+
+type ErrorFallbackProps = { error: Error; retry: () => void };
 
 interface WindowProps {
   desktopId: string;
   window: WindowState;
   title: string;
   children?: ReactNode;
+  errorFallback?: ComponentType<ErrorFallbackProps>;
+  retryLimit?: number;
 }
 
-export default function WindowComponent({ desktopId, window: w, title, children }: WindowProps) {
+function DefaultErrorFallback({ error, retry }: ErrorFallbackProps) {
+  const { t } = useTranslation("home");
+  return (
+    <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+      <p className="text-sm font-medium text-foreground mb-2">{t("desktop.errorFallback.title")}</p>
+      <p className="text-xs text-muted-foreground mb-4">{error.message}</p>
+      <button
+        type="button"
+        onClick={retry}
+        className="px-3 py-1.5 rounded bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+      >
+        {t("desktop.errorFallback.retry")}
+      </button>
+    </div>
+  );
+}
+
+export default function WindowComponent({
+  desktopId,
+  window: w,
+  title,
+  children,
+  errorFallback: ErrorFallback,
+  retryLimit,
+}: WindowProps) {
   const {
     focusWindow,
     closeWindow,
@@ -239,7 +269,16 @@ export default function WindowComponent({ desktopId, window: w, title, children 
 
       {/* Content Area */}
       <div className="flex-1 overflow-y-auto bg-white min-h-0">
-        <div className="w-full">{children}</div>
+        <div className="w-full h-full">
+          <Suspense fallback={<Spinner className="mx-auto my-12" />}>
+            <AppErrorBoundary
+              fallback={ErrorFallback ?? DefaultErrorFallback}
+              retryLimit={retryLimit}
+            >
+              {children}
+            </AppErrorBoundary>
+          </Suspense>
+        </div>
       </div>
     </motion.div>
   );
