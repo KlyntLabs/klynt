@@ -30,6 +30,11 @@
   },
   "desktop": {
     "navLabel": "桌面应用",
+    "backgrounds": {
+      "fabric": "织物",
+      "graphPaper": "方格纸",
+      "dotsDark": "深色圆点"
+    },
     "apps": {
       "home": {
         "label": "首页"

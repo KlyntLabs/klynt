@@ -30,6 +30,11 @@
   },
   "desktop": {
     "navLabel": "Desktop apps",
+    "backgrounds": {
+      "fabric": "Fabric",
+      "graphPaper": "Graph paper",
+      "dotsDark": "Dots dark"
+    },
     "apps": {
       "home": { "label": "Home" },
       "register": { "label": "Register" },

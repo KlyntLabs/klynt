@@ -30,6 +30,11 @@
   },
   "desktop": {
     "navLabel": "Ứng dụng trên màn hình",
+    "backgrounds": {
+      "fabric": "Vải",
+      "graphPaper": "Giấy kẻ ô",
+      "dotsDark": "Chấm tối"
+    },
     "apps": {
       "home": {
         "label": "Trang chủ"
