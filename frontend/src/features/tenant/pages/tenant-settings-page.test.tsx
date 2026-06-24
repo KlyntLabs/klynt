@@ -10,7 +10,7 @@ import TenantSettingsPage from "./tenant-settings-page";
 function TestRouter() {
   return (
     <Routes>
-      <Route path={routePaths.tenantSettings} element={<TenantSettingsPage />} />
+      <Route path="/tenants/:slug/settings" element={<TenantSettingsPage />} />
       <Route
         path={routePaths.dashboard}
         element={<div data-testid="dashboard-page">Dashboard</div>}

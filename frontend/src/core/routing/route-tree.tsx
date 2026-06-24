@@ -35,14 +35,8 @@ const DashboardPage = lazy(() => import("@/features/dashboard/pages/dashboard-pa
 const CreateTenantPage = lazy(() =>
   import("@/features/tenant").then((module) => ({ default: module.CreateTenantPage }))
 );
-const RolesPage = lazy(() =>
-  import("@/features/tenant").then((module) => ({ default: module.RolesPage }))
-);
-const MembersPage = lazy(() =>
-  import("@/features/tenant").then((module) => ({ default: module.MembersPage }))
-);
-const TenantSettingsPage = lazy(() =>
-  import("@/features/tenant").then((module) => ({ default: module.TenantSettingsPage }))
+const TenantDesktopPage = lazy(() =>
+  import("@/features/tenant").then((module) => ({ default: module.TenantDesktopPage }))
 );
 const AdminPage = lazy(() => import("@/features/admin/pages/admin-page"));
 const UserDesktopPage = lazy(() => import("@/features/user/pages/user-desktop-page"));
@@ -140,9 +134,7 @@ export const router = createBrowserRouter([
           { path: routePaths.dashboard, element: <DashboardPage /> },
           { path: routePaths.onboarding, element: <OnboardingPage /> },
           { path: routePaths.tenantsNew, element: <CreateTenantPage /> },
-          { path: routePaths.tenantRoles, element: <RolesPage /> },
-          { path: routePaths.tenantMembers, element: <MembersPage /> },
-          { path: routePaths.tenantSettings, element: <TenantSettingsPage /> },
+          { path: `${routePaths.tenantBase}/*`, element: <TenantDesktopPage /> },
           { path: routePaths.settingsSessions, element: <SessionsPage /> },
           { path: ":profileId", element: <UserDesktopPage /> },
         ],
