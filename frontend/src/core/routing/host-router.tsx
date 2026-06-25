@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { RouterProvider } from "react-router-dom";
 import { getHostContext } from "./host-context";
 import { createAdminRouter } from "./routers/admin-router";
-import { apexRouter } from "./routers/apex-router";
+import { createApexRouter } from "./routers/apex-router";
 import { loginRouter } from "./routers/login-router";
 import { createProfileRouter } from "./routers/profile-router";
 import { createTenantRouter } from "./routers/tenant-router";
@@ -21,7 +21,7 @@ export function HostRouter() {
       case "profile":
         return createProfileRouter(ctx.username);
       default:
-        return apexRouter;
+        return createApexRouter();
     }
   }, [hostname]);
 

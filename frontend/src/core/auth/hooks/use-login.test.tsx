@@ -3,7 +3,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
 import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useAuthStore } from "@/core/auth/auth-store";
 import { useToastStore } from "@/core/notifications/toast-store";
 import { server } from "@/test/msw/server";
@@ -16,6 +16,47 @@ vi.mock("../external-redirect", () => ({
   ExternalNavigate: ({ to }: { to: string }) => <div>{to}</div>,
 }));
 
+vi.mock("@/core/routing/host-context", () => ({
+  getBaseDomain: vi.fn(() => "lvh.me"),
+  getHostContext: vi.fn((hostname: string) => {
+    const host = hostname.toLowerCase();
+    if (host === "lvh.me") return { type: "apex" };
+    if (host === "login.lvh.me") return { type: "login" };
+    return { type: "unknown", subdomain: host.replace(".lvh.me", "") };
+  }),
+}));
+
+const originalLocation = window.location;
+const originalProtocol = import.meta.env.VITE_APP_PROTOCOL;
+
+beforeEach(() => {
+  Object.defineProperty(window, "location", {
+    value: {
+      host: "login.lvh.me:5174",
+      hostname: "login.lvh.me",
+      href: "http://login.lvh.me:5174/?from=http%3A%2F%2Facme.lvh.me%3A5174%2Fmembers",
+      protocol: "http:",
+      port: "5174",
+      pathname: "/",
+      search: "?from=http%3A%2F%2Facme.lvh.me%3A5174%2Fmembers",
+      replace: vi.fn(),
+    },
+    writable: true,
+    configurable: true,
+  });
+  import.meta.env.VITE_APP_PROTOCOL = "http";
+});
+
+afterEach(() => {
+  Object.defineProperty(window, "location", {
+    value: originalLocation,
+    writable: true,
+    configurable: true,
+  });
+  import.meta.env.VITE_APP_PROTOCOL = originalProtocol;
+  vi.clearAllMocks();
+});
+
 function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -23,7 +64,9 @@ function createWrapper() {
   return function Wrapper({ children }: { children: ReactNode }) {
     return (
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter initialEntries={["/?from=/dashboard"]}>{children}</MemoryRouter>
+        <MemoryRouter initialEntries={["/?from=http://acme.lvh.me:5174/members"]}>
+          {children}
+        </MemoryRouter>
       </QueryClientProvider>
     );
   };
@@ -39,7 +82,7 @@ const mockUser = {
 };
 
 describe("useLogin", () => {
-  it("sets session on success", async () => {
+  it("sets session and navigates to the from target", async () => {
     useAuthStore.getState().reset();
     server.use(
       http.post("/api/v1/auth/login", () => HttpResponse.json({ data: { user: mockUser } }))
@@ -53,7 +96,9 @@ describe("useLogin", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(useAuthStore.getState().isAuthenticated).toBe(true);
-    expect(navigateExternal).toHaveBeenCalledWith("/dashboard");
+    expect(navigateExternal).toHaveBeenCalledWith(
+      expect.stringContaining("acme.lvh.me:5174/members")
+    );
   });
 
   it("shows a toast on error", async () => {

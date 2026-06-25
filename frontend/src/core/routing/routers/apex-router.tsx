@@ -58,43 +58,45 @@ const marketingRoutes = marketingRegistry.apps
     element: <MarketingShell route={app.route} />,
   }));
 
-export const apexRouter = createBrowserRouter([
-  {
-    path: routePaths.home,
-    element: <RootLayout />,
-    hydrateFallbackElement: <Spinner />,
-    children: [
-      { index: true, element: <IndexRoute /> },
-      ...marketingRoutes,
-      {
-        element: <PublicLayout />,
-        children: [{ path: routePaths.verifyEmail, element: <VerifyEmailPage /> }],
-      },
-      {
-        element: <GuestLayout />,
-        children: [
-          { path: routePaths.login, element: <RedirectToLogin /> },
-          { path: routePaths.register, element: <RegisterPage /> },
-          { path: routePaths.registerSuccess, element: <RegisterSuccessPage /> },
-          { path: routePaths.forgotPassword, element: <ForgotPasswordPage /> },
-          { path: routePaths.resetPassword, element: <ResetPasswordPage /> },
-        ],
-      },
-      {
-        element: <ProtectedLayout />,
-        children: [
-          { path: routePaths.onboarding, element: <OnboardingPage /> },
-          { path: routePaths.tenantsNew, element: <CreateTenantPage /> },
-          { path: routePaths.settingsSessions, element: <SessionsPage /> },
-          { path: routePaths.userDesktop, element: <UserDesktopPage /> },
-        ],
-      },
-      { path: routePaths.dashboard, element: <RedirectToAdmin /> },
-      { path: routePaths.admin, element: <RedirectToAdminPage /> },
-      { path: `${routePaths.admin}/*`, element: <RedirectToAdminPage /> },
-      { path: `${routePaths.tenantBase}/*`, element: <RedirectToTenant /> },
-      { path: ":username", element: <RedirectToProfile /> },
-      { path: "*", element: <NotFoundPage /> },
-    ],
-  },
-]);
+export function createApexRouter() {
+  return createBrowserRouter([
+    {
+      path: routePaths.home,
+      element: <RootLayout />,
+      hydrateFallbackElement: <Spinner />,
+      children: [
+        { index: true, element: <IndexRoute /> },
+        ...marketingRoutes,
+        {
+          element: <PublicLayout />,
+          children: [{ path: routePaths.verifyEmail, element: <VerifyEmailPage /> }],
+        },
+        {
+          element: <GuestLayout />,
+          children: [
+            { path: routePaths.login, element: <RedirectToLogin /> },
+            { path: routePaths.register, element: <RegisterPage /> },
+            { path: routePaths.registerSuccess, element: <RegisterSuccessPage /> },
+            { path: routePaths.forgotPassword, element: <ForgotPasswordPage /> },
+            { path: routePaths.resetPassword, element: <ResetPasswordPage /> },
+          ],
+        },
+        {
+          element: <ProtectedLayout />,
+          children: [
+            { path: routePaths.onboarding, element: <OnboardingPage /> },
+            { path: routePaths.tenantsNew, element: <CreateTenantPage /> },
+            { path: routePaths.settingsSessions, element: <SessionsPage /> },
+            { path: routePaths.userDesktop, element: <UserDesktopPage /> },
+          ],
+        },
+        { path: routePaths.dashboard, element: <RedirectToAdmin /> },
+        { path: routePaths.admin, element: <RedirectToAdminPage /> },
+        { path: `${routePaths.admin}/*`, element: <RedirectToAdminPage /> },
+        { path: `${routePaths.tenantBase}/*`, element: <RedirectToTenant /> },
+        { path: ":username", element: <RedirectToProfile /> },
+        { path: "*", element: <NotFoundPage /> },
+      ],
+    },
+  ]);
+}
