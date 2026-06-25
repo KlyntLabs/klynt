@@ -3,7 +3,7 @@
 [api]
 host = "127.0.0.1"
 port = 3000
-allowed_origins = ["http://localhost:5174"]
+allowed_origins = ["http://localhost:5174", "http://*.lvh.me:5174"]
 
 [rate_limiter]
 enabled = false

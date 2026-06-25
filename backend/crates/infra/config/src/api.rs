@@ -38,9 +38,12 @@ impl Validated for ApiConfig {
         }
 
         for origin in &self.allowed_origins {
-            if !origin.starts_with("http://") && !origin.starts_with("https://") {
+            if !origin.starts_with("http://")
+                && !origin.starts_with("https://")
+                && !origin.starts_with("*.")
+            {
                 return Err(ConfigError::InvalidOrigin(format!(
-                    "origin '{}' must start with http:// or https://",
+                    "origin '{}' must start with http://, https://, or *.",
                     origin
                 )));
             }
@@ -96,6 +99,15 @@ mod tests {
             config.validated(),
             Err(ConfigError::InvalidOrigin(_))
         ));
+    }
+
+    #[test]
+    fn wildcard_origin_is_accepted() {
+        let config = ApiConfig {
+            allowed_origins: vec!["http://*.lvh.me:5174".to_string()],
+            ..Default::default()
+        };
+        assert!(config.validated().is_ok());
     }
 
     #[test]
