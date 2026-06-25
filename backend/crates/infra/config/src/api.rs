@@ -38,12 +38,9 @@ impl Validated for ApiConfig {
         }
 
         for origin in &self.allowed_origins {
-            if !origin.starts_with("http://")
-                && !origin.starts_with("https://")
-                && !origin.starts_with("*.")
-            {
+            if !origin.starts_with("http://") && !origin.starts_with("https://") {
                 return Err(ConfigError::InvalidOrigin(format!(
-                    "origin '{}' must start with http://, https://, or *.",
+                    "origin '{}' must start with http:// or https://",
                     origin
                 )));
             }
@@ -108,6 +105,30 @@ mod tests {
             ..Default::default()
         };
         assert!(config.validated().is_ok());
+    }
+
+    #[test]
+    fn schemeless_wildcard_origin_is_rejected() {
+        let config = ApiConfig {
+            allowed_origins: vec!["*.klynt.dev".to_string()],
+            ..Default::default()
+        };
+        assert!(matches!(
+            config.validated(),
+            Err(ConfigError::InvalidOrigin(_))
+        ));
+    }
+
+    #[test]
+    fn schemeless_origin_is_rejected() {
+        let config = ApiConfig {
+            allowed_origins: vec!["lvh.me".to_string()],
+            ..Default::default()
+        };
+        assert!(matches!(
+            config.validated(),
+            Err(ConfigError::InvalidOrigin(_))
+        ));
     }
 
     #[test]

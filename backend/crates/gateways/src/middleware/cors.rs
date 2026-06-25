@@ -6,18 +6,31 @@ use axum::http::{
 };
 use tower_http::cors::{AllowOrigin, CorsLayer};
 
+fn split_scheme(value: &str) -> (Option<&str>, &str) {
+    if let Some(rest) = value.strip_prefix("http://") {
+        (Some("http"), rest)
+    } else if let Some(rest) = value.strip_prefix("https://") {
+        (Some("https"), rest)
+    } else {
+        (None, value)
+    }
+}
+
 fn matches_wildcard_origin(origin: &str, pattern: &str) -> bool {
-    let origin_host = origin
-        .strip_prefix("http://")
-        .or_else(|| origin.strip_prefix("https://"))
-        .unwrap_or(origin);
-    let pattern_host = pattern
-        .strip_prefix("http://")
-        .or_else(|| pattern.strip_prefix("https://"))
-        .unwrap_or(pattern);
+    let (origin_scheme, origin_host) = split_scheme(origin);
+    let (pattern_scheme, pattern_host) = split_scheme(pattern);
+
+    // If the pattern specifies a scheme, the origin must use the same scheme.
+    if let Some(scheme) = pattern_scheme {
+        if origin_scheme != Some(scheme) {
+            return false;
+        }
+    }
 
     if let Some(suffix) = pattern_host.strip_prefix("*.") {
-        origin_host == suffix || origin_host.ends_with(&format!(".{}", suffix))
+        origin_host
+            .strip_suffix(suffix)
+            .is_some_and(|prefix| prefix.ends_with('.'))
     } else {
         origin_host == pattern_host
     }
@@ -84,13 +97,49 @@ mod tests {
             "http://deep.sub.lvh.me:5174",
             "http://*.lvh.me:5174"
         ));
-        assert!(matches_wildcard_origin(
+        assert!(!matches_wildcard_origin(
+            "http://other.local:5174",
+            "http://*.lvh.me:5174"
+        ));
+    }
+
+    #[test]
+    fn apex_domain_does_not_match_wildcard() {
+        assert!(!matches_wildcard_origin(
             "http://lvh.me:5174",
             "http://*.lvh.me:5174"
         ));
         assert!(!matches_wildcard_origin(
-            "http://other.local:5174",
+            "https://klynt.dev",
+            "https://*.klynt.dev"
+        ));
+    }
+
+    #[test]
+    fn scheme_mismatch_is_rejected() {
+        assert!(!matches_wildcard_origin(
+            "https://app.lvh.me:5174",
             "http://*.lvh.me:5174"
+        ));
+        assert!(!matches_wildcard_origin(
+            "http://app.lvh.me:5174",
+            "https://*.lvh.me:5174"
+        ));
+    }
+
+    #[test]
+    fn right_hand_boundary_attack_is_rejected() {
+        assert!(!matches_wildcard_origin(
+            "https://klynt.dev.evil.com",
+            "https://*.klynt.dev"
+        ));
+    }
+
+    #[test]
+    fn left_hand_boundary_with_hyphen_is_rejected() {
+        assert!(!matches_wildcard_origin(
+            "https://evil-klynt.dev",
+            "https://*.klynt.dev"
         ));
     }
 
