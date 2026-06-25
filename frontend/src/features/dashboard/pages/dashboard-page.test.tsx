@@ -21,7 +21,7 @@ function TestRouter() {
   return (
     <Routes>
       <Route path="/dashboard" element={<DashboardPage />} />
-      <Route path="/:profileId" element={<UserDesktopPlaceholder />} />
+      <Route path="/u/:profileId" element={<UserDesktopPlaceholder />} />
     </Routes>
   );
 }

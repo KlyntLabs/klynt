@@ -13,7 +13,11 @@ export function isExternalUrl(url: string): boolean {
 }
 
 export function navigateExternal(url: string) {
-  window.location.replace(url);
+  const resolved = new URL(url, window.location.href);
+  if (resolved.protocol !== "http:" && resolved.protocol !== "https:") {
+    throw new Error(`Refusing to navigate to non-HTTP(S) URL: ${url}`);
+  }
+  window.location.replace(resolved.toString());
 }
 
 export function ExternalNavigate({ to }: { to: string }) {

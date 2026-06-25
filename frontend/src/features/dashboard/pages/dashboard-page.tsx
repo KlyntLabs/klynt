@@ -7,7 +7,7 @@ export function DashboardPage() {
   const { user } = useAuth();
 
   if (user?.role !== "admin") {
-    return <Navigate to={user ? `/${user.id}` : "/"} replace />;
+    return <Navigate to={user ? `/u/${user.id}` : "/"} replace />;
   }
 
   const config = buildAdminDesktop({ user });

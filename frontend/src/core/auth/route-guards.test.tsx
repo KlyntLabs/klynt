@@ -1,9 +1,15 @@
 import { screen } from "@testing-library/react";
 import { Route, Routes } from "react-router-dom";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { render } from "@/test/render";
 import { GuestRoute, ProtectedRoute, RoleGuard } from "./auth-identity";
 import { useAuthStore } from "./auth-store";
+
+vi.mock("./external-redirect", () => ({
+  isExternalUrl: (url: string) => /^https?:/.test(url),
+  navigateExternal: vi.fn(),
+  ExternalNavigate: ({ to }: { to: string }) => <div data-testid="external-navigate">{to}</div>,
+}));
 
 function setup() {
   useAuthStore.getState().reset();
@@ -23,7 +29,7 @@ function setAuthenticated(role: "admin" | "instructor" | "student" = "student") 
 }
 
 describe("route guards", () => {
-  it("ProtectedRoute redirects to login when unauthenticated", () => {
+  it("ProtectedRoute redirects to login subdomain when unauthenticated", () => {
     setup();
     render(
       <Routes>
@@ -39,10 +45,12 @@ describe("route guards", () => {
       </Routes>,
       { initialEntries: ["/dashboard"] }
     );
-    expect(screen.getByText("Login page")).toBeInTheDocument();
+    expect(screen.getByTestId("external-navigate")).toHaveTextContent(
+      /login\.localhost(:\d+)?\/\?from=/
+    );
   });
 
-  it("GuestRoute redirects to dashboard when authenticated", () => {
+  it("GuestRoute redirects to apex dashboard when authenticated", () => {
     setup();
     setAuthenticated();
     render(
@@ -59,7 +67,9 @@ describe("route guards", () => {
       </Routes>,
       { initialEntries: ["/register"] }
     );
-    expect(screen.getByText("Dashboard")).toBeInTheDocument();
+    expect(screen.getByTestId("external-navigate")).toHaveTextContent(
+      /localhost(:\d+)?\/dashboard/
+    );
   });
 
   it("RoleGuard blocks non-admins from admin route", () => {

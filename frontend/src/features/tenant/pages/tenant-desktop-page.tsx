@@ -17,12 +17,12 @@ interface TenantDesktopPageProps {
   slug?: string;
 }
 
-export default function TenantDesktopPage({ slug: propSlug }: TenantDesktopPageProps) {
-  const { slug: routeSlug, "*": deepPath } = useParams<{ slug: string; "*": string }>();
+export default function TenantDesktopPage({ slug: propSlug }: TenantDesktopPageProps = {}) {
+  const { slug: paramSlug, "*": deepPath } = useParams<{ slug: string; "*": string }>();
   const { user } = useAuth();
   const openApp = useDesktopStore((s) => s.openApp);
 
-  const tenantSlug = propSlug ?? routeSlug ?? "";
+  const tenantSlug = propSlug ?? paramSlug ?? "";
   const { data: tenant, isLoading } = useTenant(tenantSlug);
   const tenantRole = tenant?.role ?? "member";
 

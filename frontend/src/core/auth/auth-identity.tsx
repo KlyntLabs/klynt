@@ -1,6 +1,7 @@
 import { useMemo } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
+import { buildApexUrl, buildLoginUrl } from "@/core/routing/subdomain-url";
 import { useAuthStore } from "./auth-store";
 import { ExternalNavigate, isExternalUrl } from "./external-redirect";
 import type { UserRole } from "./types";
@@ -51,7 +52,6 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading } = useAuth();
-  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -62,7 +62,8 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    const currentUrl = window.location.href;
+    return <ExternalNavigate to={buildLoginUrl(currentUrl)} />;
   }
 
   return <>{children}</>;
@@ -84,7 +85,7 @@ export function GuestRoute({ children }: GuestRouteProps) {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <ExternalNavigate to={buildApexUrl("/dashboard")} />;
   }
 
   return <>{children}</>;

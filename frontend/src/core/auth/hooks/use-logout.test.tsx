@@ -5,8 +5,16 @@ import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { useAuthStore } from "@/core/auth/auth-store";
+import { buildLoginUrl } from "@/core/routing/subdomain-url";
 import { server } from "@/test/msw/server";
+import { navigateExternal } from "../external-redirect";
 import { useLogout } from "./use-logout";
+
+vi.mock("../external-redirect", () => ({
+  navigateExternal: vi.fn(),
+  isExternalUrl: vi.fn(() => true),
+  ExternalNavigate: ({ to }: { to: string }) => <div>{to}</div>,
+}));
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -42,6 +50,7 @@ describe("useLogout", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(useAuthStore.getState().isAuthenticated).toBe(false);
+    expect(navigateExternal).toHaveBeenCalledWith(buildLoginUrl());
   });
 
   it("clears session on error", async () => {
@@ -69,6 +78,7 @@ describe("useLogout", () => {
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(useAuthStore.getState().isAuthenticated).toBe(false);
+    expect(navigateExternal).toHaveBeenCalledWith(buildLoginUrl());
     consoleError.mockRestore();
   });
 });

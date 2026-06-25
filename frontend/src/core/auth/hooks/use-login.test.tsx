@@ -3,11 +3,18 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
 import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { useAuthStore } from "@/core/auth/auth-store";
 import { useToastStore } from "@/core/notifications/toast-store";
 import { server } from "@/test/msw/server";
+import { navigateExternal } from "../external-redirect";
 import { useLogin } from "./use-login";
+
+vi.mock("../external-redirect", () => ({
+  navigateExternal: vi.fn(),
+  isExternalUrl: vi.fn(() => true),
+  ExternalNavigate: ({ to }: { to: string }) => <div>{to}</div>,
+}));
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -16,7 +23,7 @@ function createWrapper() {
   return function Wrapper({ children }: { children: ReactNode }) {
     return (
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter>{children}</MemoryRouter>
+        <MemoryRouter initialEntries={["/?from=/dashboard"]}>{children}</MemoryRouter>
       </QueryClientProvider>
     );
   };
@@ -46,6 +53,7 @@ describe("useLogin", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(useAuthStore.getState().isAuthenticated).toBe(true);
+    expect(navigateExternal).toHaveBeenCalledWith("/dashboard");
   });
 
   it("shows a toast on error", async () => {
