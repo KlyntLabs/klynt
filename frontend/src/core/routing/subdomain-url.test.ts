@@ -89,4 +89,9 @@ describe("subdomain-url", () => {
     expect(buildTenantUrl("acme", "/members")).toBe("http://acme.lvh.me:5174/members");
     expect(buildApexUrl("/dashboard")).toBe("http://lvh.me:5174/dashboard");
   });
+
+  it("falls back to the configured domain for unknown hosts", () => {
+    stubLocation("api.lvh.me:5174");
+    expect(buildApexUrl("/dashboard")).toBe("http://lvh.me:5174/dashboard");
+  });
 });
