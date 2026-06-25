@@ -1,12 +1,11 @@
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { routePaths } from "@/core/routing/route-paths";
+import { navigateExternal } from "@/core/auth/external-redirect";
+import { buildAdminUrl } from "@/core/routing/subdomain-url";
 import { CreateTenantForm } from "../components/CreateTenantForm";
 
 export default function CreateTenantPage() {
   const { t } = useTranslation("ui");
-  const navigate = useNavigate();
 
   return (
     <div className="p-6 max-w-md mx-auto">
@@ -15,7 +14,7 @@ export default function CreateTenantPage() {
           <CardTitle>{t("tenant.createTitle")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <CreateTenantForm onSuccess={() => navigate(routePaths.dashboard)} />
+          <CreateTenantForm onSuccess={() => navigateExternal(buildAdminUrl())} />
         </CardContent>
       </Card>
     </div>

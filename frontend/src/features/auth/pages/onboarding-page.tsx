@@ -1,16 +1,15 @@
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { routePaths } from "@/core/routing/route-paths";
+import { navigateExternal } from "@/core/auth/external-redirect";
+import { buildAdminUrl } from "@/core/routing/subdomain-url";
 import { CreateTenantForm } from "@/features/tenant";
 import { JoinTenantForm } from "../components/join-tenant-form";
 
 export default function OnboardingPage() {
   const { t } = useTranslation("auth");
-  const navigate = useNavigate();
 
-  const handleSuccess = () => navigate(routePaths.dashboard);
+  const handleSuccess = () => navigateExternal(buildAdminUrl());
 
   return (
     <div className="flex min-h-screen items-center justify-center p-6">

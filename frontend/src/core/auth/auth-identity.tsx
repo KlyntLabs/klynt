@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Navigate } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
-import { buildApexUrl, buildLoginUrl } from "@/core/routing/subdomain-url";
+import { buildAdminUrl, buildApexUrl, buildLoginUrl } from "@/core/routing/subdomain-url";
 import { useAuthStore } from "./auth-store";
 import { ExternalNavigate, isExternalUrl } from "./external-redirect";
 import type { UserRole } from "./types";
@@ -97,7 +97,11 @@ interface RoleGuardProps {
   children: React.ReactNode;
 }
 
-export function RoleGuard({ allowedRoles, redirectTo = "/dashboard", children }: RoleGuardProps) {
+export function RoleGuard({
+  allowedRoles,
+  redirectTo = buildAdminUrl(),
+  children,
+}: RoleGuardProps) {
   const { hasRole } = useRole();
 
   if (!hasRole(allowedRoles)) {

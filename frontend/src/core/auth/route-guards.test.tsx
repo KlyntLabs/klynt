@@ -89,7 +89,7 @@ describe("route guards", () => {
       </Routes>,
       { initialEntries: ["/admin"] }
     );
-    expect(screen.getByText("Dashboard")).toBeInTheDocument();
+    expect(screen.getByTestId("external-navigate")).toHaveTextContent(/admin\.localhost(:\d+)?\//);
   });
 
   it("ProtectedRoute shows loading state", () => {

@@ -1,20 +1,22 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Route, Routes } from "react-router-dom";
-import { beforeEach, describe, expect, it } from "vitest";
-import { routePaths } from "@/core/routing/route-paths";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { navigateExternal } from "@/core/auth/external-redirect";
 import { resetTenantHandlers } from "@/test/msw/handlers/tenant.handlers";
 import { render } from "@/test/render";
 import TenantSettingsPage from "./tenant-settings-page";
+
+vi.mock("@/core/auth/external-redirect", () => ({
+  navigateExternal: vi.fn(),
+  isExternalUrl: vi.fn(() => true),
+  ExternalNavigate: ({ to }: { to: string }) => <div>{to}</div>,
+}));
 
 function TestRouter() {
   return (
     <Routes>
       <Route path="/tenants/:slug/settings" element={<TenantSettingsPage />} />
-      <Route
-        path={routePaths.dashboard}
-        element={<div data-testid="dashboard-page">Dashboard</div>}
-      />
     </Routes>
   );
 }
@@ -61,7 +63,7 @@ describe("TenantSettingsPage", () => {
     });
   });
 
-  it("deletes tenant after confirmation and redirects to dashboard", async () => {
+  it("deletes tenant after confirmation and redirects to admin dashboard", async () => {
     const user = userEvent.setup();
 
     render(<TestRouter />, {
@@ -75,6 +77,10 @@ describe("TenantSettingsPage", () => {
 
     await user.click(screen.getByTestId("confirm-delete-tenant"));
 
-    expect(await screen.findByTestId("dashboard-page")).toBeInTheDocument();
+    await vi.waitFor(() =>
+      expect(navigateExternal).toHaveBeenCalledWith(
+        expect.stringMatching(/^http:\/\/admin\.localhost(:\d+)?\/$/)
+      )
+    );
   });
 });

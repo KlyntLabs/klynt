@@ -8,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuthStore } from "@/core/auth/auth-store";
+import { buildTenantUrl } from "@/core/routing/subdomain-url";
 import { listMyTenants } from "../api/tenant-api";
 
 export function TenantSwitcher() {
@@ -17,7 +18,6 @@ export function TenantSwitcher() {
     queryFn: listMyTenants,
   });
   const activeTenant = useAuthStore((state) => state.activeTenant);
-  const setActiveTenant = useAuthStore((state) => state.setActiveTenant);
 
   if (isLoading || !tenants) {
     return (
@@ -36,8 +36,8 @@ export function TenantSwitcher() {
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         {tenants.map((tenant) => (
-          <DropdownMenuItem key={tenant.id} onClick={() => setActiveTenant(tenant)}>
-            {tenant.name}
+          <DropdownMenuItem key={tenant.id} asChild>
+            <a href={buildTenantUrl(tenant.slug)}>{tenant.name}</a>
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -28,7 +28,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { createApiError } from "@/core/api/api-error";
-import { routePaths } from "@/core/routing/route-paths";
+import { navigateExternal } from "@/core/auth/external-redirect";
+import { buildAdminUrl } from "@/core/routing/subdomain-url";
 import { useRemoveTenant } from "../hooks/use-remove-tenant";
 import { useTenant } from "../hooks/use-tenant";
 import { useUpdateTenant } from "../hooks/use-update-tenant";
@@ -38,7 +39,6 @@ export default function TenantSettingsPage() {
   const { t } = useTranslation("tenant");
   const { slug } = useParams<{ slug: string }>();
   const tenantSlug = slug ?? "";
-  const navigate = useNavigate();
 
   const { data: tenant, isLoading, error } = useTenant(tenantSlug);
   const updateMutation = useUpdateTenant(tenantSlug);
@@ -66,7 +66,7 @@ export default function TenantSettingsPage() {
   async function handleRemove() {
     await removeMutation.mutateAsync(undefined, {
       onSuccess: () => {
-        navigate(routePaths.dashboard);
+        navigateExternal(buildAdminUrl());
       },
     });
   }
