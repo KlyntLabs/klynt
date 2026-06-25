@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
+import { buildApexUrl } from "@/core/routing/subdomain-url";
 import { LoginForm } from "./login-form";
 
 export function LoginApp() {
@@ -10,14 +10,14 @@ export function LoginApp() {
       <LoginForm />
       <p className="text-center text-sm text-muted-foreground">
         {t("login.noAccount")}{" "}
-        <Link to="/register" className="text-primary hover:underline">
+        <a href={buildApexUrl("/register")} className="text-primary hover:underline">
           {t("login.register")}
-        </Link>
+        </a>
       </p>
       <p className="text-center text-sm text-muted-foreground">
-        <Link to="/forgot-password" className="text-primary hover:underline">
+        <a href={buildApexUrl("/forgot-password")} className="text-primary hover:underline">
           {t("login.forgotPassword")}
-        </Link>
+        </a>
       </p>
     </div>
   );

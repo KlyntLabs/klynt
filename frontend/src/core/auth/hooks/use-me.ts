@@ -12,7 +12,9 @@ export function useMe() {
     queryKey: ["auth", "me"],
     queryFn: getMe,
     retry: false,
-    staleTime: Number.POSITIVE_INFINITY,
+    // Always verify the session cookie on mount so stale data from a previous
+    // user/session cannot keep the app authenticated after logout/cookie expiry.
+    staleTime: 0,
     refetchOnWindowFocus: false,
   });
 
