@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/core/auth/auth-identity";
+import { navigateExternal } from "@/core/auth/external-redirect";
 import { buildApexUrl } from "@/core/routing/subdomain-url";
 import { DesktopEnvironment } from "@/features/desktop/components/DesktopEnvironment";
 import { buildTenantDesktop } from "@/features/desktop/factory/tenant-desktop";
@@ -44,7 +45,7 @@ export default function TenantDesktopPage({ slug: propSlug }: TenantDesktopPageP
   useEffect(() => {
     if (isLoading) return;
     if (!tenant || isTenantNotFound(error)) {
-      window.location.href = buildApexUrl("/");
+      navigateExternal(buildApexUrl("/"));
     }
   }, [isLoading, tenant, error]);
 
