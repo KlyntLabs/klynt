@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuthStore } from "./auth-store";
+import { ExternalNavigate, isExternalUrl } from "./external-redirect";
 import type { UserRole } from "./types";
 
 export interface UseAuthResult {
@@ -91,14 +92,19 @@ export function GuestRoute({ children }: GuestRouteProps) {
 
 interface RoleGuardProps {
   allowedRoles: UserRole[];
+  redirectTo?: string;
   children: React.ReactNode;
 }
 
-export function RoleGuard({ allowedRoles, children }: RoleGuardProps) {
+export function RoleGuard({ allowedRoles, redirectTo = "/dashboard", children }: RoleGuardProps) {
   const { hasRole } = useRole();
 
   if (!hasRole(allowedRoles)) {
-    return <Navigate to="/dashboard" replace />;
+    return isExternalUrl(redirectTo) ? (
+      <ExternalNavigate to={redirectTo} />
+    ) : (
+      <Navigate to={redirectTo} replace />
+    );
   }
 
   return <>{children}</>;

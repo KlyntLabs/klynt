@@ -1,17 +1,21 @@
 import { lazy, Suspense } from "react";
-import { createBrowserRouter, Outlet } from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
 import { RootLayout } from "@/app/layout/root-layout";
 import { Spinner } from "@/components/ui/spinner";
-import { GuestRoute, ProtectedRoute, RoleGuard } from "@/core/auth";
 import { marketingRegistry } from "@/features/desktop/apps";
 import { buildMarketingDesktop } from "@/features/desktop/factory/marketing-desktop";
 import { MarketingShell } from "@/features/marketing/components/MarketingShell";
-import { routePaths } from "./route-paths";
+import {
+  RedirectToAdmin,
+  RedirectToAdminPage,
+  RedirectToLogin,
+  RedirectToProfile,
+  RedirectToTenant,
+} from "../redirects";
+import { routePaths } from "../route-paths";
+import { GuestLayout, ProtectedLayout, PublicLayout } from "./shared-layouts";
 
 const DesktopEnvironment = lazy(() => import("@/features/desktop/components/DesktopEnvironment"));
-const LoginPage = lazy(() =>
-  import("@/features/auth").then((module) => ({ default: module.LoginPage }))
-);
 const RegisterPage = lazy(() =>
   import("@/features/auth").then((module) => ({ default: module.RegisterPage }))
 );
@@ -30,59 +34,14 @@ const ForgotPasswordPage = lazy(() =>
 const ResetPasswordPage = lazy(() =>
   import("@/features/auth").then((module) => ({ default: module.ResetPasswordPage }))
 );
-const DashboardPage = lazy(() => import("@/features/dashboard/pages/dashboard-page"));
 const CreateTenantPage = lazy(() =>
   import("@/features/tenant").then((module) => ({ default: module.CreateTenantPage }))
 );
-const TenantDesktopPage = lazy(() =>
-  import("@/features/tenant").then((module) => ({ default: module.TenantDesktopPage }))
-);
-const AdminPage = lazy(() => import("@/features/admin/pages/admin-page"));
 const UserDesktopPage = lazy(() => import("@/features/user/pages/user-desktop-page"));
 const SessionsPage = lazy(() =>
   import("@/features/auth").then((module) => ({ default: module.SessionsPage }))
 );
-const NotFoundPage = lazy(() => import("./not-found-page"));
-
-function PublicLayout() {
-  return (
-    <Suspense fallback={<Spinner />}>
-      <Outlet />
-    </Suspense>
-  );
-}
-
-function GuestLayout() {
-  return (
-    <GuestRoute>
-      <Suspense fallback={<Spinner />}>
-        <Outlet />
-      </Suspense>
-    </GuestRoute>
-  );
-}
-
-function ProtectedLayout() {
-  return (
-    <ProtectedRoute>
-      <Suspense fallback={<Spinner />}>
-        <Outlet />
-      </Suspense>
-    </ProtectedRoute>
-  );
-}
-
-function AdminLayout() {
-  return (
-    <ProtectedRoute>
-      <RoleGuard allowedRoles={["admin"]}>
-        <Suspense fallback={<Spinner />}>
-          <Outlet />
-        </Suspense>
-      </RoleGuard>
-    </ProtectedRoute>
-  );
-}
+const NotFoundPage = lazy(() => import("../not-found-page"));
 
 function IndexRoute() {
   return (
@@ -99,7 +58,7 @@ const marketingRoutes = marketingRegistry.apps
     element: <MarketingShell route={app.route} />,
   }));
 
-export const router = createBrowserRouter([
+export const apexRouter = createBrowserRouter([
   {
     path: routePaths.home,
     element: <RootLayout />,
@@ -114,7 +73,7 @@ export const router = createBrowserRouter([
       {
         element: <GuestLayout />,
         children: [
-          { path: routePaths.login, element: <LoginPage /> },
+          { path: routePaths.login, element: <RedirectToLogin /> },
           { path: routePaths.register, element: <RegisterPage /> },
           { path: routePaths.registerSuccess, element: <RegisterSuccessPage /> },
           { path: routePaths.forgotPassword, element: <ForgotPasswordPage /> },
@@ -124,18 +83,17 @@ export const router = createBrowserRouter([
       {
         element: <ProtectedLayout />,
         children: [
-          { path: routePaths.dashboard, element: <DashboardPage /> },
           { path: routePaths.onboarding, element: <OnboardingPage /> },
           { path: routePaths.tenantsNew, element: <CreateTenantPage /> },
-          { path: `${routePaths.tenantBase}/*`, element: <TenantDesktopPage /> },
           { path: routePaths.settingsSessions, element: <SessionsPage /> },
-          { path: ":profileId", element: <UserDesktopPage /> },
+          { path: routePaths.userDesktop, element: <UserDesktopPage /> },
         ],
       },
-      {
-        element: <AdminLayout />,
-        children: [{ path: routePaths.admin, element: <AdminPage /> }],
-      },
+      { path: routePaths.dashboard, element: <RedirectToAdmin /> },
+      { path: routePaths.admin, element: <RedirectToAdminPage /> },
+      { path: `${routePaths.admin}/*`, element: <RedirectToAdminPage /> },
+      { path: `${routePaths.tenantBase}/*`, element: <RedirectToTenant /> },
+      { path: ":username", element: <RedirectToProfile /> },
       { path: "*", element: <NotFoundPage /> },
     ],
   },

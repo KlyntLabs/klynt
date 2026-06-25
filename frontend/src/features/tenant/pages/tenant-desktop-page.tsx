@@ -13,12 +13,16 @@ const DEEP_LINK_APP_MAP: Record<string, string> = {
   settings: "tenant-settings",
 };
 
-export default function TenantDesktopPage() {
-  const { slug, "*": deepPath } = useParams<{ slug: string; "*": string }>();
+interface TenantDesktopPageProps {
+  slug?: string;
+}
+
+export default function TenantDesktopPage({ slug: propSlug }: TenantDesktopPageProps) {
+  const { slug: routeSlug, "*": deepPath } = useParams<{ slug: string; "*": string }>();
   const { user } = useAuth();
   const openApp = useDesktopStore((s) => s.openApp);
 
-  const tenantSlug = slug ?? "";
+  const tenantSlug = propSlug ?? routeSlug ?? "";
   const { data: tenant, isLoading } = useTenant(tenantSlug);
   const tenantRole = tenant?.role ?? "member";
 

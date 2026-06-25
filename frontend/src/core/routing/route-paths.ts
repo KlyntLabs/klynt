@@ -12,4 +12,5 @@ export const routePaths = {
   tenantBase: "/tenants/:slug",
   admin: "/admin",
   settingsSessions: "/settings/sessions",
+  userDesktop: "/u/:profileId",
 } as const;
