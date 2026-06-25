@@ -54,6 +54,11 @@ impl std::str::FromStr for TenantId {
 #[serde(transparent)]
 pub struct TenantSlug(String);
 
+/// Subdomains reserved for the platform; they cannot be used as tenant slugs.
+const RESERVED_SUBDOMAINS: &[&str] = &[
+    "www", "login", "admin", "u", "api", "app", "mail", "ftp", "cdn", "static",
+];
+
 impl TenantSlug {
     /// Parse and validate a tenant slug.
     pub fn parse(raw: &str) -> Result<Self, DomainError> {
@@ -69,6 +74,11 @@ impl TenantSlug {
         if lower.starts_with('-') || lower.ends_with('-') {
             return Err(DomainError::validation(
                 "slug may not start or end with a hyphen",
+            ));
+        }
+        if RESERVED_SUBDOMAINS.contains(&lower.as_str()) {
+            return Err(DomainError::validation(
+                "slug is a reserved subdomain and cannot be used as a tenant slug",
             ));
         }
         Ok(Self(lower))

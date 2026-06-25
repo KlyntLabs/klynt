@@ -11,6 +11,16 @@ fn slug_rejects_invalid_characters() {
 }
 
 #[test]
+fn slug_rejects_reserved_subdomains() {
+    assert!(TenantSlug::parse("admin").is_err());
+    assert!(TenantSlug::parse("login").is_err());
+    assert!(TenantSlug::parse("www").is_err());
+    assert!(TenantSlug::parse("u").is_err());
+    assert!(TenantSlug::parse("api").is_err());
+    assert!(TenantSlug::parse("static").is_err());
+}
+
+#[test]
 fn slug_accepts_valid_input() {
     let slug = TenantSlug::parse("klynt-edu").unwrap();
     assert_eq!(slug.as_str(), "klynt-edu");
