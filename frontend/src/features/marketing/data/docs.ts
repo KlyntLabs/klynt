@@ -82,8 +82,8 @@ export const integrationCategories: DocCategory = {
 export const aiPlatformCategories: DocCategory = {
   nameKey: "marketing:docs.categories.aiPlatform",
   items: [
-    { labelKey: "marketing:docs.items.posthogCode", icon: Coffee },
-    { labelKey: "marketing:docs.items.posthogAI", icon: Star },
+    { labelKey: "marketing:docs.items.klyntCode", icon: Coffee },
+    { labelKey: "marketing:docs.items.klyntAI", icon: Star },
     { labelKey: "marketing:docs.items.mcp", icon: Puzzle },
     { labelKey: "marketing:docs.items.aiWizard", icon: Wand2 },
     { labelKey: "marketing:docs.items.aiEngineering", icon: Brain },

@@ -1,15 +1,15 @@
 {
   "home": {
     "hero": {
-      "logoAlt": "PostHog logo",
-      "brand": "PostHog",
+      "logoAlt": "Klynt logo",
+      "brand": "Klynt",
       "title": "The new way to build products",
       "subtitle1": "Product development used to mean manually writing code, running analysis, diagnosing bugs, and rolling out changes using dozens of tools.",
-      "subtitle2": "PostHog is the only platform that acts like a co-pilot for you (and your AI agents) to do it all — ",
+      "subtitle2": "Klynt is the only platform that acts like a co-pilot for you (and your AI agents) to do it all — ",
       "subtitle2Emphasis": "autonomously",
       "ctaPrimary": "Get started - free",
       "ctaSecondary": "Install with AI",
-      "installCommand": "bunx @posthog/wizard",
+      "installCommand": "bunx @klynt/wizard",
       "copyTooltip": "Copy to clipboard",
       "installHint": "Install with AI in a single prompt. Paste into your terminal or code editor and make AI do the work.",
       "links": {
@@ -28,11 +28,11 @@
     "tabUnderstand": {
       "title": "Understand what users are doing",
       "body": "Measure engagement, track conversion, and understand usage patterns – whether it's by person, company, or AI feature.",
-      "link": "How we analyze data and build products has changed a lot. Work smarter with PostHog AI to get direct answers to questions about your data."
+      "link": "How we analyze data and build products has changed a lot. Work smarter with Klynt AI to get direct answers to questions about your data."
     },
     "tabData": {
       "title": "Build better products with better data",
-      "body": "Not your mama's data integrations. Third party data is imported into PostHog's CDP and warehouse as a first-class citizen. This means you can query third party data and product usage data, leading to more informed decisions.",
+      "body": "Not your mama's data integrations. Third party data is imported into Klynt's CDP and warehouse as a first-class citizen. This means you can query third party data and product usage data, leading to more informed decisions.",
       "sourcesTitle": "Data sources & import",
       "sourcesLink": "Explore data sources (159)",
       "manageTitle": "Manage & query",
@@ -46,14 +46,14 @@
     },
     "tabShip": {
       "title": "Ship features safely & get feedback",
-      "body1": "Now that you know what's happening, you can make informed decisions about what to build. PostHog helps you roll out features to specific users or groups, then test and validate ideas before you ship them to everyone.",
-      "body2": "And you can build it all with PostHog Code, our new AI code editor.",
+      "body1": "Now that you know what's happening, you can make informed decisions about what to build. Klynt helps you roll out features to specific users or groups, then test and validate ideas before you ship them to everyone.",
+      "body2": "And you can build it all with Klynt Code, our new AI code editor.",
       "featureDev": "Feature development",
       "automation": "Data APIs & automation",
       "feedback": "Feedback & training"
     },
     "customers": {
-      "title": "Who's using PostHog?",
+      "title": "Who's using Klynt?",
       "subtitle": "Here are some of our paying customers. (Yes they actually use us, no it's not just some random engineer who tried us out 2+ years ago.)",
       "shuffle": "Shuffle companies",
       "vcLabel": "VCs love them",
@@ -61,10 +61,10 @@
       "openCustomers": "Open customers.mdx"
     },
     "dataStack": {
-      "title": "PostHog data stack, built for data teams and loved by product teams",
+      "title": "Klynt data stack, built for data teams and loved by product teams",
       "body1": "When you're analyzing how customers use your product, you should be operating from the full set of data.",
       "body2": "This includes customer information that happens outside your product: payments from Stripe, exceptions in an error tracking tool, tickets in your support platform.",
-      "body3": "Having all the data in one place means you can make more informed decisions about what to build next. PostHog's Product OS isn't just analytics – it's the entire suite of tools built to give you a single source of truth about your customers.",
+      "body3": "Having all the data in one place means you can make more informed decisions about what to build next. Klynt's Product OS isn't just analytics – it's the entire suite of tools built to give you a single source of truth about your customers.",
       "includedAlt": "Included",
       "items": [
         "A data warehouse",
@@ -73,13 +73,13 @@
         "User activity feed (CDP-lite)",
         "API, webhooks"
       ],
-      "readmeLink": "README: PostHog data stack.md"
+      "readmeLink": "README: Klynt data stack.md"
     },
     "pricing": {
       "title": "Usage-based pricing",
       "philosophy": "Our whole philosophy is that you shouldn't have to worry about pricing.",
-      "freeTierText": "All our paid products are pay-per-use with generous monthly free tiers. In fact, 98% of our customers use PostHog for free.",
-      "salesText": "We aim to match the cheapest option at scale – PostHog should be a no-brainer. You never have to \"jump on a quick call\" with sales.",
+      "freeTierText": "All our paid products are pay-per-use with generous monthly free tiers. In fact, 98% of our customers use Klynt for free.",
+      "salesText": "We aim to match the cheapest option at scale – Klynt should be a no-brainer. You never have to \"jump on a quick call\" with sales.",
       "seeAll": "See all pricing →"
     }
   },
@@ -114,7 +114,7 @@
       "dataModeling": "Data modeling",
       "sqlEditor": "SQL editor",
       "aiObservability": "AI Observability",
-      "posthogAI": "PostHog AI"
+      "klyntAI": "Klynt AI"
     },
     "productDescriptions": {
       "sessionReplay": "Watch real user sessions",
@@ -187,7 +187,7 @@
     "slides": {
       "title": {
         "title": "Product Analytics",
-        "subtitle": "Understand your product with PostHog",
+        "subtitle": "Understand your product with Klynt",
         "tagline": "The complete analytics toolkit for product engineers",
         "hint": "Press → to start"
       },
@@ -205,17 +205,35 @@
       "features": {
         "title": "Everything you need",
         "items": [
-          { "title": "Trend analysis", "desc": "Track metrics over time with powerful filtering" },
-          { "title": "Funnels", "desc": "See where users drop off in your flows" },
-          { "title": "Retention", "desc": "Understand how users come back" },
-          { "title": "Paths", "desc": "Visualize user navigation patterns" },
-          { "title": "Cohorts", "desc": "Group users by behavior" },
-          { "title": "SQL access", "desc": "Query your raw data directly" }
+          {
+            "title": "Trend analysis",
+            "desc": "Track metrics over time with powerful filtering"
+          },
+          {
+            "title": "Funnels",
+            "desc": "See where users drop off in your flows"
+          },
+          {
+            "title": "Retention",
+            "desc": "Understand how users come back"
+          },
+          {
+            "title": "Paths",
+            "desc": "Visualize user navigation patterns"
+          },
+          {
+            "title": "Cohorts",
+            "desc": "Group users by behavior"
+          },
+          {
+            "title": "SQL access",
+            "desc": "Query your raw data directly"
+          }
         ]
       },
       "autocapture": {
         "title": "Autocapture — data without the setup",
-        "body": "Just install PostHog and we automatically capture:",
+        "body": "Just install Klynt and we automatically capture:",
         "items": ["Every pageview", "Every click", "Every form submission", "Every input change"],
         "footer": "No manual tracking code required.",
         "codeComment1": "// Just this one line",
@@ -224,9 +242,18 @@
       "privacy": {
         "title": "Your data, your rules",
         "items": [
-          { "title": "EU hosting", "desc": "Choose where your data lives. EU or US." },
-          { "title": "No third-party cookies", "desc": "We don't use third-party cookies. Ever." },
-          { "title": "Open source", "desc": "Our code is open source. Audit it yourself." }
+          {
+            "title": "EU hosting",
+            "desc": "Choose where your data lives. EU or US."
+          },
+          {
+            "title": "No third-party cookies",
+            "desc": "We don't use third-party cookies. Ever."
+          },
+          {
+            "title": "Open source",
+            "desc": "Our code is open source. Audit it yourself."
+          }
         ]
       },
       "pricing": {
@@ -256,21 +283,21 @@
       },
       "cta": {
         "title": "Ready to understand your users?",
-        "subtitle": "Join 100,000+ companies using PostHog",
+        "subtitle": "Join 100,000+ companies using Klynt",
         "primary": "Get started — free",
         "secondary": "Talk to a human",
-        "installCommand": "bun add posthog-js",
+        "installCommand": "bun add @klynt/js",
         "copyTooltip": "Copy"
       },
       "notes": {
-        "title": "Welcome to Product Analytics. This is our core product — the thing that started it all. Let's walk through what makes PostHog's analytics different.",
-        "track": "PostHog autocaptures pageviews and clicks automatically. Add custom events for deeper insights. Track the full user journey from first visit to power user.",
+        "title": "Welcome to Product Analytics. This is our core product — the thing that started it all. Let's walk through what makes Klynt's analytics different.",
+        "track": "Klynt autocaptures pageviews and clicks automatically. Add custom events for deeper insights. Track the full user journey from first visit to power user.",
         "features": "Six core analysis tools. Each one is designed to answer a specific type of product question. Use them individually or combine for deeper insights.",
-        "autocapture": "The magic of autocapture — install PostHog and data starts flowing immediately. No need to define every event upfront. Retroactively define events using our 'Actions' feature.",
+        "autocapture": "The magic of autocapture — install Klynt and data starts flowing immediately. No need to define every event upfront. Retroactively define events using our 'Actions' feature.",
         "privacy": "Privacy isn't an afterthought. Choose your data region, no third-party cookies, and our code is open source. The cookie banner isn't just a joke — it's a statement.",
         "pricing": "Generous free tier — 1 million events per month. Most startups never pay a cent. When you do grow, our pricing is transparent and usage-based.",
         "integration": "SDKs for every major framework. React, Vue, Angular, mobile, backend — we've got you covered. Install takes less than 5 minutes.",
-        "cta": "That's Product Analytics. The easiest way to start is to install PostHog and let autocapture do the work. Questions? Talk to a human — we actually respond."
+        "cta": "That's Product Analytics. The easiest way to start is to install Klynt and let autocapture do the work. Questions? Talk to a human — we actually respond."
       },
       "slideTitles": {
         "title": "Title",
@@ -307,13 +334,13 @@
       "title": "We're here to help product engineers build successful products",
       "subtitle": "Literally every piece of SaaS that a product engineer needs.",
       "body1": "This includes tools for building products, talking to customers, and making sense of all your customer data.",
-      "body2": "PostHog is a single platform for people who build things.",
+      "body2": "Klynt is a single platform for people who build things.",
       "cta": "Explore product suite",
-      "mascotAlt": "PostHog hedgehog mascot",
+      "mascotAlt": "Klynt hedgehog mascot",
       "caption": "There are other dev tool companies, but they not like us 🎵",
       "storyTitle": "So how did we get here?",
       "teamCount": "190254",
-      "teamCountLabel": "teams using PostHog"
+      "teamCountLabel": "teams using Klynt"
     },
     "timeline": [
       {
@@ -378,17 +405,17 @@
       "tray": "Backend web app platform",
       "jitter": "Crypto wallet",
       "pulumi": "AI video generator",
-      "posthog": "Would it be clever or lame if we included our own company here?"
+      "klynt": "Would it be clever or lame if we included our own company here?"
     }
   },
   "pricing": {
     "hero": {
-      "title": "PostHog Cloud",
-      "body1": "PostHog is designed to grow with you. Our {{productCount}} products (and counting) will take you from idea to product-market fit to IPO and beyond.",
-      "body2": "Our generous free tier means more than 90% of companies use PostHog for free. Only add a card if you need more than the free tier limits, advanced features, or want more projects. You still keep the same monthly free volume, even after upgrading.",
+      "title": "Klynt Cloud",
+      "body1": "Klynt is designed to grow with you. Our {{productCount}} products (and counting) will take you from idea to product-market fit to IPO and beyond.",
+      "body2": "Our generous free tier means more than 90% of companies use Klynt for free. Only add a card if you need more than the free tier limits, advanced features, or want more projects. You still keep the same monthly free volume, even after upgrading.",
       "statNumber": "3000",
-      "statLabel": "PostHog",
-      "caption": "The latest version of PostHog comes with 10+ products, generous free tiers, and usage-based pricing."
+      "statLabel": "Klynt",
+      "caption": "The latest version of Klynt comes with 10+ products, generous free tiers, and usage-based pricing."
     },
     "planToggle": {
       "free": "Free",
@@ -398,16 +425,56 @@
       "title": "Free tier on all plans",
       "subtitle": "Our generous free tier resets monthly",
       "items": [
-        { "product": "Product Analytics", "allowance": "1M events/mo", "included": false },
-        { "product": "Session Replay", "allowance": "5K sessions/mo", "included": false },
-        { "product": "Feature Flags", "allowance": "1M API calls/mo", "included": false },
-        { "product": "Experiments", "allowance": "Included with FF", "included": true },
-        { "product": "Surveys", "allowance": "250 responses/mo", "included": false },
-        { "product": "Data Warehouse", "allowance": "1M rows/mo", "included": false },
-        { "product": "Web Analytics", "allowance": "1M events/mo", "included": false },
-        { "product": "Error Tracking", "allowance": "100K exceptions/mo", "included": false },
-        { "product": "AI Analytics", "allowance": "Included", "included": true },
-        { "product": "CDP", "allowance": "Included", "included": true }
+        {
+          "product": "Product Analytics",
+          "allowance": "1M events/mo",
+          "included": false
+        },
+        {
+          "product": "Session Replay",
+          "allowance": "5K sessions/mo",
+          "included": false
+        },
+        {
+          "product": "Feature Flags",
+          "allowance": "1M API calls/mo",
+          "included": false
+        },
+        {
+          "product": "Experiments",
+          "allowance": "Included with FF",
+          "included": true
+        },
+        {
+          "product": "Surveys",
+          "allowance": "250 responses/mo",
+          "included": false
+        },
+        {
+          "product": "Data Warehouse",
+          "allowance": "1M rows/mo",
+          "included": false
+        },
+        {
+          "product": "Web Analytics",
+          "allowance": "1M events/mo",
+          "included": false
+        },
+        {
+          "product": "Error Tracking",
+          "allowance": "100K exceptions/mo",
+          "included": false
+        },
+        {
+          "product": "AI Analytics",
+          "allowance": "Included",
+          "included": true
+        },
+        {
+          "product": "CDP",
+          "allowance": "Included",
+          "included": true
+        }
       ]
     },
     "scalePlan": {
@@ -475,19 +542,19 @@
           "answer": "You only pay for usage beyond the free tier. We'll never charge you without warning. You can set up billing alerts to get notified when you're approaching your limits."
         },
         {
-          "question": "Can I use PostHog for free forever?",
-          "answer": "Yes! More than 90% of companies use PostHog for free. The free tier resets every month, so you get the same generous allowance continuously."
+          "question": "Can I use Klynt for free forever?",
+          "answer": "Yes! More than 90% of companies use Klynt for free. The free tier resets every month, so you get the same generous allowance continuously."
         },
         {
           "question": "Do I need a credit card to start?",
-          "answer": "No. You can use PostHog's full free tier without any payment information. We only ask for billing details when you choose to upgrade for higher limits."
+          "answer": "No. You can use Klynt's full free tier without any payment information. We only ask for billing details when you choose to upgrade for higher limits."
         },
         {
           "question": "What is the difference between Free and Scale plans?",
           "answer": "Scale adds higher usage limits, SSO/SAML authentication, advanced permissions, custom data retention, and dedicated support. The base price is $199/month plus usage."
         },
         {
-          "question": "Can I self-host PostHog?",
+          "question": "Can I self-host Klynt?",
           "answer": "Yes, we offer a self-hosted option for enterprise customers who need to keep data on their own infrastructure. Contact our sales team for details."
         },
         {
@@ -508,9 +575,9 @@
   "products": {
     "hero": {
       "title": "Devtools and product data infrastructure for building successful products",
-      "body": "Humans and AI agents build with PostHog because everything you need to collect and analyze product usage data – and build and ship new features – lives in one place.",
+      "body": "Humans and AI agents build with Klynt because everything you need to collect and analyze product usage data – and build and ship new features – lives in one place.",
       "getStarted": "Get started",
-      "installCommand": "bunx @posthog/wizard",
+      "installCommand": "bunx @klynt/wizard",
       "copyTooltip": "Copy to clipboard",
       "supports": "Supports",
       "and": "and",
@@ -548,7 +615,7 @@
     "dataPlatform": {
       "title": "Data platform",
       "readme": "Data stack README",
-      "body": "Having all your product data in one place means you can make more informed decisions. Push all your data to PostHog, then send it anywhere else you need, too.",
+      "body": "Having all your product data in one place means you can make more informed decisions. Push all your data to Klynt, then send it anywhere else you need, too.",
       "sourcesCard": {
         "title": "Data sources & import (ELT)",
         "link": "View all integrations"
@@ -559,11 +626,21 @@
       },
       "manageTitle": "Manage & query",
       "manageCards": [
-        { "title": "Data modeling" },
-        { "title": "Managed warehouse" },
-        { "title": "CDP" },
-        { "title": "SQL editor" },
-        { "title": "BI" }
+        {
+          "title": "Data modeling"
+        },
+        {
+          "title": "Managed warehouse"
+        },
+        {
+          "title": "CDP"
+        },
+        {
+          "title": "SQL editor"
+        },
+        {
+          "title": "BI"
+        }
       ]
     },
     "automaticTooling": {
@@ -571,8 +648,8 @@
       "readme": "Tooling README",
       "llmInstructions": "Instructions for LLMs",
       "bodyBefore": "In a previous era of building products, you'd need to configure event tracking and feature flags manually. Now, your AI coding agent can use the ",
-      "bodyAfter": " to configure PostHog without leaving your ADE.",
-      "mcp": "PostHog MCP"
+      "bodyAfter": " to configure Klynt without leaving your ADE.",
+      "mcp": "Klynt MCP"
     },
     "categories": {
       "understand": "Understand product usage",
@@ -600,7 +677,7 @@
         "body": "Look for the help icon (?) in the app to access contextual documentation."
       },
       "ai": {
-        "title": "Ask PostHog AI",
+        "title": "Ask Klynt AI",
         "body": "Our AI assistant can answer questions about any of our docs."
       },
       "community": {
@@ -619,7 +696,7 @@
     },
     "items": {
       "installAndConfigure": "Install and configure",
-      "installAndConfigureDesc": "Get started with PostHog",
+      "installAndConfigureDesc": "Get started with Klynt",
       "sdks": "SDKs",
       "sdksDesc": "Client libraries",
       "frameworks": "Frameworks",
@@ -630,8 +707,8 @@
       "advancedDesc": "Advanced configuration",
       "gettingHogPilled": "Getting HogPilled",
       "gettingHogPilledDesc": "Philosophy & culture",
-      "posthogCode": "PostHog Code",
-      "posthogAI": "PostHog AI",
+      "klyntCode": "Klynt Code",
+      "klyntAI": "Klynt AI",
       "mcp": "MCP",
       "aiWizard": "AI wizard",
       "aiEngineering": "AI engineering",
@@ -659,12 +736,12 @@
   },
   "community": {
     "header": {
-      "title": "The PostHog Gazette",
-      "tagline": "PostHog's community newspaper. Stories, updates, and musings from the team.",
+      "title": "The Klynt Gazette",
+      "tagline": "Klynt's community newspaper. Stories, updates, and musings from the team.",
       "operational": "All systems operational"
     },
     "editor": {
-      "welcome": "Welcome to Inside PostHog — our community newspaper. Explore our latest posts, community questions, and everything else that's happening in the world of PostHog.",
+      "welcome": "Welcome to Inside Klynt — our community newspaper. Explore our latest posts, community questions, and everything else that's happening in the world of Klynt.",
       "signature": "— Andy, Editor-in-Chief"
     },
     "wisdom": {
@@ -672,7 +749,7 @@
       "attribution": "— Max, our resident hedgehog"
     },
     "slack": {
-      "title": "From the PostHog Slack",
+      "title": "From the Klynt Slack",
       "threads": [
         {
           "channel": "#devrel",
@@ -694,14 +771,22 @@
     "spotlight": {
       "name": "Dana",
       "role": "Technical Customer Success Manager",
-      "bio": "In a past life, Dana studied medicine. Now she helps teams get started with PostHog. In her downtime she's a founding member of PostHog's D&D club.",
+      "bio": "In a past life, Dana studied medicine. Now she helps teams get started with Klynt. In her downtime she's a founding member of Klynt's D&D club.",
       "cta": "Learn more about {{name}}"
     },
     "events": {
       "title": "Upcoming events",
       "items": [
-        { "title": "Community Office Hours", "date": "June 25, 2026", "type": "Virtual" },
-        { "title": "PostHog Meetup: London", "date": "July 8, 2026", "type": "In-person" }
+        {
+          "title": "Community Office Hours",
+          "date": "June 25, 2026",
+          "type": "Virtual"
+        },
+        {
+          "title": "Klynt Meetup: London",
+          "date": "July 8, 2026",
+          "type": "In-person"
+        }
       ]
     },
     "articles": {
@@ -724,7 +809,7 @@
         {
           "category": "Tutorial",
           "title": "How to set up feature flags in Next.js",
-          "excerpt": "A step-by-step guide to getting feature flags working in your Next.js application with PostHog..."
+          "excerpt": "A step-by-step guide to getting feature flags working in your Next.js application with Klynt..."
         },
         {
           "category": "Blog",
@@ -734,9 +819,18 @@
       ]
     },
     "stats": {
-      "slackMembers": { "value": "12k+", "label": "Slack members" },
-      "messagesSent": { "value": "2.4M", "label": "Messages sent" },
-      "countries": { "value": "500+", "label": "Countries" }
+      "slackMembers": {
+        "value": "12k+",
+        "label": "Slack members"
+      },
+      "messagesSent": {
+        "value": "2.4M",
+        "label": "Messages sent"
+      },
+      "countries": {
+        "value": "500+",
+        "label": "Countries"
+      }
     },
     "newsletter": {
       "title": "Subscribe to our newsletter",
@@ -755,19 +849,40 @@
       "viewAll": "View all",
       "reply": "Last reply {{time}}",
       "items": [
-        { "topic": "Manual ticket creation", "reply": "16 hours ago" },
-        { "topic": "Unable to export data", "reply": "a day ago" },
-        { "topic": "Split ID", "reply": "a day ago" },
-        { "topic": "Session replay not loading", "reply": "2 days ago" }
+        {
+          "topic": "Manual ticket creation",
+          "reply": "16 hours ago"
+        },
+        {
+          "topic": "Unable to export data",
+          "reply": "a day ago"
+        },
+        {
+          "topic": "Split ID",
+          "reply": "a day ago"
+        },
+        {
+          "topic": "Session replay not loading",
+          "reply": "2 days ago"
+        }
       ]
     },
     "changelog": {
       "title": "Latest changelog",
       "body": "Here's what we've shipped in the last two weeks.",
       "items": [
-        { "category": "Product analytics", "text": "Search and filter the alerts list" },
-        { "category": "Feature flags", "text": "New UI for creating flags" },
-        { "category": "Session replay", "text": "Mobile network waterfall view" }
+        {
+          "category": "Product analytics",
+          "text": "Search and filter the alerts list"
+        },
+        {
+          "category": "Feature flags",
+          "text": "New UI for creating flags"
+        },
+        {
+          "category": "Session replay",
+          "text": "Mobile network waterfall view"
+        }
       ],
       "viewAll": "View full changelog"
     },
@@ -775,9 +890,18 @@
       "title": "Latest feature requests",
       "voteCta": "Vote on the roadmap",
       "items": [
-        { "name": "Product tours", "votes": 695 },
-        { "name": "Customer support product", "votes": 119 },
-        { "name": "PostHog CRM", "votes": 110 }
+        {
+          "name": "Product tours",
+          "votes": 695
+        },
+        {
+          "name": "Customer support product",
+          "votes": 119
+        },
+        {
+          "name": "Klynt CRM",
+          "votes": 110
+        }
       ]
     },
     "ceoMusings": {
@@ -799,8 +923,8 @@
       },
       "email": {
         "title": "Email",
-        "body": "Prefer email? Reach out to us at hey@posthog.com. We read every message.",
-        "link": "hey@posthog.com"
+        "body": "Prefer email? Reach out to us at hey@klynt.com. We read every message.",
+        "link": "hey@klynt.com"
       },
       "github": {
         "title": "GitHub",
@@ -819,7 +943,7 @@
         },
         "email": {
           "label": "Email address",
-          "placeholder": "james@posthog.com",
+          "placeholder": "james@klynt.com",
           "errorRequired": "Please enter your email",
           "errorInvalid": "Please enter a valid email address"
         },
@@ -834,12 +958,30 @@
         }
       },
       "subjects": [
-        { "value": "", "label": "Select a topic" },
-        { "value": "Help with setup", "label": "Help with setup" },
-        { "value": "Billing question", "label": "Billing question" },
-        { "value": "Feature request", "label": "Feature request" },
-        { "value": "Bug report", "label": "Bug report" },
-        { "value": "Something else", "label": "Something else" }
+        {
+          "value": "",
+          "label": "Select a topic"
+        },
+        {
+          "value": "Help with setup",
+          "label": "Help with setup"
+        },
+        {
+          "value": "Billing question",
+          "label": "Billing question"
+        },
+        {
+          "value": "Feature request",
+          "label": "Feature request"
+        },
+        {
+          "value": "Bug report",
+          "label": "Bug report"
+        },
+        {
+          "value": "Something else",
+          "label": "Something else"
+        }
       ],
       "submit": "Send message",
       "sending": "Sending...",
@@ -940,7 +1082,7 @@
           "You'll make beautiful mockups that engineers will implement with... varying degrees of fidelity. You'll say \"this doesn't match the design\" at least 4 times per sprint. You'll learn that \"pixel perfect\" is a state of mind, not a reality.",
           "",
           "## DevRel",
-          "You'll write blog posts at 2 AM. You'll answer the same question in Slack 47 times with the same enthusiasm each time. You'll become weirdly good at making GIFs. You'll explain what PostHog is to your family and they'll still say you \"work in computers.\"",
+          "You'll write blog posts at 2 AM. You'll answer the same question in Slack 47 times with the same enthusiasm each time. You'll become weirdly good at making GIFs. You'll explain what Klynt is to your family and they'll still say you \"work in computers.\"",
           "",
           "[HR said we couldn't publish this. Cowards.]"
         ]
@@ -951,7 +1093,7 @@
         "content": [
           "[PDF: 12 slides]",
           "",
-          "Slide 1: \"PostHog\" — with that bad logo #1",
+          "Slide 1: \"Klynt\" — with that bad logo #1",
           "Slide 2: \"Product analytics, but open source\"",
           "Slide 3: [REDACTED — too embarrassing]",
           "Slide 4: TAM slide with a completely made-up number",
@@ -971,13 +1113,13 @@
         "content": [
           "# Email to Tim Cook",
           "",
-          "**From:** james@posthog.com",
+          "**From:** james@klynt.com",
           "**To:** tim@apple.com",
           "**Subject:** \"We should talk\"",
           "",
           "Hi Tim,",
           "",
-          "Love the work you are doing with the iPhone. Big fan. We make product analytics software. Have you considered adding better analytics to Xcode? Also, would love to put PostHog on the App Store. Can you expedite the review?",
+          "Love the work you are doing with the iPhone. Big fan. We make product analytics software. Have you considered adding better analytics to Xcode? Also, would love to put Klynt on the App Store. Can you expedite the review?",
           "",
           "Also — any chance you could mention us in the keynote? Even a small shoutout would be great.",
           "",
@@ -1009,16 +1151,16 @@
         "filename": "rejected-taglines.txt",
         "description": "Taglines that didn't make the cut",
         "content": [
-          "PostHog: We are not a cult",
-          "PostHog: Like Google Analytics but you own your data",
-          "PostHog: The everything app (trademark issues)",
-          "PostHog: So easy even your PM can use it",
-          "PostHog: Hedgehogs > Unicorns",
-          "PostHog: Now with 47% fewer bugs",
-          "PostHog: The DevTool-iest DevTool that ever DevTooled",
-          "PostHog: Your data pipeline's spirit animal",
-          "PostHog: We read your commits so you don't have to",
-          "PostHog: Making product engineers cry (tears of joy, mostly)"
+          "Klynt: We are not a cult",
+          "Klynt: Like Google Analytics but you own your data",
+          "Klynt: The everything app (trademark issues)",
+          "Klynt: So easy even your PM can use it",
+          "Klynt: Hedgehogs > Unicorns",
+          "Klynt: Now with 47% fewer bugs",
+          "Klynt: The DevTool-iest DevTool that ever DevTooled",
+          "Klynt: Your data pipeline's spirit animal",
+          "Klynt: We read your commits so you don't have to",
+          "Klynt: Making product engineers cry (tears of joy, mostly)"
         ]
       },
       {
@@ -1100,19 +1242,19 @@
         ]
       },
       {
-        "filename": "why-we-use-posthog.md",
+        "filename": "why-we-use-klynt.md",
         "description": "Meta, but make it self-aware",
         "content": [
-          "# Why We Use PostHog (At PostHog)",
+          "# Why We Use Klynt (At Klynt)",
           "",
-          "We use PostHog to track how people use PostHog so we can make PostHog better. This is not a tongue twister; it is our actual job.",
+          "We use Klynt to track how people use Klynt so we can make Klynt better. This is not a tongue twister; it is our actual job.",
           "",
           "## How meta is it?",
           "",
-          "- We use PostHog analytics to analyze PostHog usage",
-          "- We use PostHog session replay to watch people use PostHog session replay",
-          "- We use PostHog feature flags to roll out new PostHog features",
-          "- We use PostHog experiments to test which PostHog experiments work best",
+          "- We use Klynt analytics to analyze Klynt usage",
+          "- We use Klynt session replay to watch people use Klynt session replay",
+          "- We use Klynt feature flags to roll out new Klynt features",
+          "- We use Klynt experiments to test which Klynt experiments work best",
           "",
           "## Metrics we track:",
           "",

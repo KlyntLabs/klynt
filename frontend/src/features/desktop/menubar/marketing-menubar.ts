@@ -3,6 +3,10 @@ import type { MenubarItem, MenubarSchema } from "./types";
 
 const MENU_GROUP_ORDER = ["productOS", "pricing", "docs", "community", "company", "more"];
 
+function groupLabelKey(group: string): string {
+  return `desktop.menubar.menus.${group}.label`;
+}
+
 function buildMenubarSchema(): MenubarSchema {
   const groups: MenubarItem[] = [];
   const seenGroups = new Set<string>();
@@ -14,7 +18,7 @@ function buildMenubarSchema(): MenubarSchema {
     seenGroups.add(group);
     groups.push({
       type: "submenu",
-      label: group,
+      label: groupLabelKey(group),
       items: groupApps.map((app) => ({
         type: "action",
         label: app.shortTitle || app.title,
@@ -34,7 +38,7 @@ function buildMenubarSchema(): MenubarSchema {
     const groupApps = marketingApps.filter((app) => app.menuGroup === group);
     groups.push({
       type: "submenu",
-      label: group,
+      label: groupLabelKey(group),
       items: groupApps.map((app) => ({
         type: "action",
         label: app.shortTitle || app.title,
@@ -49,13 +53,13 @@ function buildMenubarSchema(): MenubarSchema {
     trailing: [
       {
         type: "action",
-        label: "Get started",
+        label: "desktop.menubar.getStarted",
         variant: "primary",
         action: { type: "open-app", appId: "pricing" },
       },
-      { type: "action", label: "Search", action: { type: "noop" } },
-      { type: "action", label: "Notifications", action: { type: "noop" } },
-      { type: "action", label: "Profile", action: { type: "noop" } },
+      { type: "action", label: "desktop.menubar.search", action: { type: "noop" } },
+      { type: "action", label: "desktop.menubar.notifications", action: { type: "noop" } },
+      { type: "action", label: "desktop.menubar.profile", action: { type: "noop" } },
     ],
   };
 }

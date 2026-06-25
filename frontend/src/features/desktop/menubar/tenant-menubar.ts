@@ -23,21 +23,21 @@ export const tenantMenubar: MenubarSchema = {
     },
     {
       type: "submenu",
-      label: "tenant.menubar.tenant",
+      label: "tenant:menubar.tenant",
       items: [
         {
           type: "action",
-          label: "tenant.members.title",
+          label: "tenant:members.title",
           action: { type: "open-app", appId: "tenant-members" },
         },
         {
           type: "action",
-          label: "tenant.roles.title",
+          label: "tenant:roles.title",
           action: { type: "open-app", appId: "tenant-roles" },
         },
         {
           type: "action",
-          label: "tenant.settings.title",
+          label: "tenant:settings.title",
           action: { type: "open-app", appId: "tenant-settings" },
         },
       ],

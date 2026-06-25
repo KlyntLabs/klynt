@@ -15,16 +15,16 @@ describe("DesktopEnvironment interactions", () => {
     render(<DesktopEnvironment config={marketingDesktopConfig} />);
 
     // Menubar
-    expect(screen.getByRole("button", { name: /posthog logo/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /klynt logo/i })).toBeInTheDocument();
     expect(screen.getAllByText(/^Product OS$/i).length).toBeGreaterThanOrEqual(1);
 
     // Desktop icons
-    expect(screen.getByRole("button", { name: /^home\.mdx$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Home$/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /switch to website/i })).toBeInTheDocument();
 
     // Window manager opens the default home window
     await waitFor(() => {
-      expect(screen.getAllByText("home.mdx").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText("Home").length).toBeGreaterThanOrEqual(1);
     });
 
     const state = useDesktopStore.getState();

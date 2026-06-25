@@ -49,7 +49,7 @@ export const marketingApps: AppManifest[] = [
   marketingApp({
     id: "home",
     route: "/",
-    title: "home.mdx",
+    title: "desktop.marketing.apps.home",
     icon: FileText,
     defaultSize: SIZE_HOME,
     dock: { position: "left", order: 1 },
@@ -58,7 +58,7 @@ export const marketingApps: AppManifest[] = [
   marketingApp({
     id: "demo",
     route: "/demo",
-    title: "demo.mov",
+    title: "desktop.marketing.apps.demo",
     icon: Video,
     defaultSize: SIZE_DEMO,
     dock: { position: "left", order: 5 },
@@ -68,7 +68,7 @@ export const marketingApps: AppManifest[] = [
   marketingApp({
     id: "products",
     route: "/products",
-    title: "Product OS",
+    title: "desktop.marketing.apps.products",
     menuGroup: "productOS",
     icon: FolderOpen,
     defaultSize: SIZE_DEFAULT,
@@ -78,7 +78,7 @@ export const marketingApps: AppManifest[] = [
   marketingApp({
     id: "product-analytics",
     route: "/product-analytics",
-    title: "Product Analytics",
+    title: "desktop.marketing.apps.productAnalytics",
     menuGroup: "productOS",
     icon: BarChart3,
     defaultSize: SIZE_PRESENTATION,
@@ -87,7 +87,7 @@ export const marketingApps: AppManifest[] = [
   marketingApp({
     id: "web-analytics",
     route: "/web-analytics",
-    title: "Web Analytics",
+    title: "desktop.marketing.apps.webAnalytics",
     menuGroup: "productOS",
     icon: Globe,
     defaultSize: SIZE_PRESENTATION,
@@ -96,7 +96,7 @@ export const marketingApps: AppManifest[] = [
   marketingApp({
     id: "session-replay",
     route: "/session-replay",
-    title: "Session Replay",
+    title: "desktop.marketing.apps.sessionReplay",
     menuGroup: "productOS",
     icon: PlayCircle,
     defaultSize: SIZE_PRESENTATION,
@@ -105,7 +105,7 @@ export const marketingApps: AppManifest[] = [
   marketingApp({
     id: "feature-flags",
     route: "/feature-flags",
-    title: "Feature Flags",
+    title: "desktop.marketing.apps.featureFlags",
     menuGroup: "productOS",
     icon: Flag,
     defaultSize: SIZE_PRESENTATION,
@@ -114,7 +114,7 @@ export const marketingApps: AppManifest[] = [
   marketingApp({
     id: "experiments",
     route: "/experiments",
-    title: "Experiments",
+    title: "desktop.marketing.apps.experiments",
     menuGroup: "productOS",
     icon: Beaker,
     defaultSize: SIZE_PRESENTATION,
@@ -123,7 +123,7 @@ export const marketingApps: AppManifest[] = [
   marketingApp({
     id: "surveys",
     route: "/surveys",
-    title: "Surveys",
+    title: "desktop.marketing.apps.surveys",
     menuGroup: "productOS",
     icon: MessageCircleQuestion,
     defaultSize: SIZE_PRESENTATION,
@@ -132,7 +132,7 @@ export const marketingApps: AppManifest[] = [
   marketingApp({
     id: "data-warehouse",
     route: "/data-warehouse",
-    title: "Data Warehouse",
+    title: "desktop.marketing.apps.dataWarehouse",
     menuGroup: "productOS",
     icon: Database,
     defaultSize: SIZE_PRESENTATION,
@@ -142,7 +142,7 @@ export const marketingApps: AppManifest[] = [
   marketingApp({
     id: "pricing",
     route: "/pricing",
-    title: "Pricing",
+    title: "desktop.marketing.apps.pricing",
     menuGroup: "pricing",
     icon: Table,
     defaultSize: SIZE_WIDE,
@@ -153,7 +153,7 @@ export const marketingApps: AppManifest[] = [
   marketingApp({
     id: "customers",
     route: "/customers",
-    title: "customers.mdx",
+    title: "desktop.marketing.apps.customers",
     icon: FileText,
     defaultSize: { width: 700, height: 520 },
     dock: { position: "left", order: 4 },
@@ -162,7 +162,7 @@ export const marketingApps: AppManifest[] = [
   marketingApp({
     id: "docs",
     route: "/docs",
-    title: "Docs",
+    title: "desktop.marketing.apps.docs",
     menuGroup: "docs",
     icon: BookOpen,
     defaultSize: SIZE_WIDE,
@@ -173,8 +173,8 @@ export const marketingApps: AppManifest[] = [
   marketingApp({
     id: "about",
     route: "/about",
-    title: "Why PostHog?",
-    shortTitle: "About",
+    title: "desktop.marketing.apps.about",
+    shortTitle: "desktop.menubar.menus.company.about",
     menuGroup: "company",
     icon: Bookmark,
     defaultSize: SIZE_DEFAULT,
@@ -184,7 +184,7 @@ export const marketingApps: AppManifest[] = [
   marketingApp({
     id: "careers",
     route: "/careers",
-    title: "Careers",
+    title: "desktop.marketing.apps.careers",
     menuGroup: "company",
     icon: Building2,
     defaultSize: SIZE_DEFAULT,
@@ -194,8 +194,8 @@ export const marketingApps: AppManifest[] = [
   marketingApp({
     id: "handbook",
     route: "/handbook",
-    title: "Company handbook",
-    shortTitle: "Handbook",
+    title: "desktop.marketing.apps.handbook",
+    shortTitle: "desktop.menubar.menus.company.handbook",
     menuGroup: "company",
     icon: BookMarked,
     defaultSize: SIZE_DEFAULT,
@@ -205,7 +205,7 @@ export const marketingApps: AppManifest[] = [
   marketingApp({
     id: "merch",
     route: "/merch",
-    title: "Store",
+    title: "desktop.marketing.apps.merch",
     menuGroup: "more",
     icon: ShoppingBag,
     defaultSize: SIZE_DEFAULT,
@@ -216,7 +216,7 @@ export const marketingApps: AppManifest[] = [
   marketingApp({
     id: "community",
     route: "/community",
-    title: "Community",
+    title: "desktop.marketing.apps.community",
     menuGroup: "community",
     icon: MessageCircleQuestion,
     defaultSize: SIZE_DEFAULT,
@@ -226,7 +226,7 @@ export const marketingApps: AppManifest[] = [
   marketingApp({
     id: "changelog",
     route: "/changelog",
-    title: "Changelog",
+    title: "desktop.marketing.apps.changelog",
     menuGroup: "community",
     icon: Calendar,
     defaultSize: SIZE_DEFAULT,
@@ -236,8 +236,8 @@ export const marketingApps: AppManifest[] = [
   marketingApp({
     id: "talk-to-a-human",
     route: "/talk-to-a-human",
-    title: "Talk to a human",
-    shortTitle: "Talk to us",
+    title: "desktop.marketing.apps.talkToHuman",
+    shortTitle: "desktop.menubar.menus.more.talkToHuman",
     menuGroup: "more",
     icon: Mail,
     defaultSize: SIZE_DEFAULT,
@@ -248,7 +248,7 @@ export const marketingApps: AppManifest[] = [
   marketingApp({
     id: "trash",
     route: "/trash",
-    title: "Trash",
+    title: "desktop.marketing.apps.trash",
     menuGroup: "more",
     icon: Trash2,
     defaultSize: SIZE_DEFAULT,

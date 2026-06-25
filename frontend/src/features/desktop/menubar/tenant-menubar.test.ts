@@ -18,7 +18,7 @@ describe("tenantMenubar", () => {
       "desktop.menubar.file",
       "desktop.menubar.edit",
       "desktop.menubar.view",
-      "tenant.menubar.tenant",
+      "tenant:menubar.tenant",
       "desktop.menubar.window",
       "desktop.menubar.help",
     ]);
@@ -27,7 +27,7 @@ describe("tenantMenubar", () => {
   it("includes tenant app open actions", () => {
     const tenantMenu = tenantMenubar.menus.find(
       (menu): menu is SubmenuItem =>
-        menu.type === "submenu" && menu.label === "tenant.menubar.tenant"
+        menu.type === "submenu" && menu.label === "tenant:menubar.tenant"
     );
 
     const actions = tenantMenu?.items.filter((item) => item.type === "action");

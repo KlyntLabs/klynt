@@ -198,12 +198,13 @@ export default function Menubar({ config }: MenubarProps) {
           if (item.type !== "action") return null;
           const Icon = item.icon;
           const isPrimary = item.variant === "primary";
+          const trailingLabel = t(item.label as never);
           return (
             <button
               key={item.label}
               type="button"
               onClick={() => handleTrailingClick(item)}
-              aria-label={item.label}
+              aria-label={trailingLabel}
               className={
                 isPrimary
                   ? "h-7 px-3 flex items-center gap-1.5 rounded bg-[#F76E18] hover:bg-[#E56310] text-white text-[12px] font-semibold transition-colors"
@@ -211,7 +212,7 @@ export default function Menubar({ config }: MenubarProps) {
               }
             >
               {Icon && <Icon className={isPrimary ? "w-3.5 h-3.5" : "w-4 h-4 text-[#1A1A1A]"} />}
-              {isPrimary && item.label}
+              {isPrimary && trailingLabel}
             </button>
           );
         })}

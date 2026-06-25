@@ -60,9 +60,15 @@
       "dotsDark": "Dots dark"
     },
     "apps": {
-      "home": { "label": "Home" },
-      "register": { "label": "Register" },
-      "dashboard": { "label": "Dashboard" },
+      "home": {
+        "label": "Home"
+      },
+      "register": {
+        "label": "Register"
+      },
+      "dashboard": {
+        "label": "Dashboard"
+      },
       "userManagement": "User Management",
       "tenantManagement": "Tenant Management",
       "reports": "Reports",
@@ -70,8 +76,8 @@
       "myCourses": "My Courses"
     },
     "menubar": {
-      "logo": "PostHog",
-      "logoAlt": "PostHog logo",
+      "logo": "Klynt",
+      "logoAlt": "Klynt logo",
       "getStarted": "Get started – free",
       "search": "Search",
       "notifications": "Notifications",
@@ -137,7 +143,7 @@
         "signUp": "Sign up"
       },
       "right": {
-        "whyPostHog": "Why PostHog?",
+        "whyKlynt": "Why Klynt?",
         "changelog": "Changelog",
         "companyHandbook": "Company handbook",
         "store": "Store",
@@ -161,7 +167,7 @@
     "cookieBanner": {
       "dismiss": "Dismiss cookie banner",
       "heading": "Legally-required cookie banner",
-      "body": "PostHog.com doesn't use third-party cookies, only a single in-house cookie. No data is sent to a third party.",
+      "body": "Klynt.com doesn't use third-party cookies, only a single in-house cookie. No data is sent to a third party.",
       "aside": "(Ursula von der Leyen would be so proud.)",
       "ursulaAlt": "Ursula von der Leyen",
       "footer": "No cookies were harmed in the making of this banner."
@@ -184,6 +190,31 @@
         "search": "Search",
         "bookmark": "Bookmark",
         "settings": "Settings"
+      }
+    },
+    "marketing": {
+      "apps": {
+        "home": "Home",
+        "demo": "Demo",
+        "products": "Product OS",
+        "productAnalytics": "Product Analytics",
+        "webAnalytics": "Web Analytics",
+        "sessionReplay": "Session Replay",
+        "featureFlags": "Feature Flags",
+        "experiments": "Experiments",
+        "surveys": "Surveys",
+        "dataWarehouse": "Data Warehouse",
+        "pricing": "Pricing",
+        "customers": "Customers",
+        "docs": "Documentation",
+        "about": "About",
+        "careers": "Careers",
+        "handbook": "Handbook",
+        "merch": "Store",
+        "community": "Community",
+        "changelog": "Changelog",
+        "talkToHuman": "Talk to a human",
+        "trash": "Trash"
       }
     }
   }

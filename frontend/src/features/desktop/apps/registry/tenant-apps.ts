@@ -5,7 +5,7 @@ import type { AppRegistry } from "../types";
 export const tenantApps: AppRegistry = [
   {
     id: "tenant-members",
-    title: "tenant.members.title",
+    title: "tenant:members.title",
     icon: Users,
     category: "tenant",
     component: lazy(() => import("@/features/tenant/members/pages/members-page")),
@@ -14,7 +14,7 @@ export const tenantApps: AppRegistry = [
   },
   {
     id: "tenant-roles",
-    title: "tenant.roles.title",
+    title: "tenant:roles.title",
     icon: Shield,
     category: "tenant",
     component: lazy(() => import("@/features/tenant/permissions/pages/roles-page")),
@@ -23,7 +23,7 @@ export const tenantApps: AppRegistry = [
   },
   {
     id: "tenant-settings",
-    title: "tenant.settings.title",
+    title: "tenant:settings.title",
     icon: Settings,
     category: "tenant",
     component: lazy(() => import("@/features/tenant/pages/tenant-settings-page")),

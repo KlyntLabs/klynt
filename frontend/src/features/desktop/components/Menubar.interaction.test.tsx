@@ -50,7 +50,7 @@ describe("Menubar interactions", () => {
     const user = userEvent.setup();
     render(<Menubar config={marketingDesktopConfig} />);
 
-    await user.click(screen.getByRole("button", { name: /posthog logo/i }));
+    await user.click(screen.getByRole("button", { name: /klynt logo/i }));
 
     await waitFor(() => {
       const state = useDesktopStore.getState();

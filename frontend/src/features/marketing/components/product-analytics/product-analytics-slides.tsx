@@ -126,7 +126,7 @@ export function SlideAutocapture() {
             {t("productAnalytics.slides.autocapture.codeComment1")}
           </span>
           <br />
-          <span className="text-[#F76E18]">posthog</span>
+          <span className="text-[#F76E18]">klynt</span>
           <span className="text-white">.init(</span>
           <span className="text-[#FEBC2E]">&apos;YOUR_API_KEY&apos;</span>
           <span className="text-white">)</span>
@@ -230,18 +230,17 @@ export function SlideIntegration() {
         </span>
         <br />
         <span className="text-[#C084FC]">import</span>{" "}
-        <span className="text-white">{"{ usePostHog }"}</span>{" "}
+        <span className="text-white">{"{ useKlynt }"}</span>{" "}
         <span className="text-[#C084FC]">from</span>{" "}
-        <span className="text-[#FEBC2E]">&apos;posthog-js/react&apos;</span>
+        <span className="text-[#FEBC2E]">&apos;@klynt/js/react&apos;</span>
         <br />
         <br />
         <span className="text-[#9CA3AF]">
           {t("productAnalytics.slides.integration.codeComment2")}
         </span>
         <br />
-        <span className="text-[#C084FC]">const</span>{" "}
-        <span className="text-[#60A5FA]">posthog</span> <span className="text-white">=</span>{" "}
-        <span className="text-[#F76E18]">usePostHog</span>
+        <span className="text-[#C084FC]">const</span> <span className="text-[#60A5FA]">klynt</span>{" "}
+        <span className="text-white">=</span> <span className="text-[#F76E18]">useKlynt</span>
         <span className="text-white">()</span>
       </div>
     </div>

@@ -66,8 +66,8 @@
       "myCourses": "我的课程"
     },
     "menubar": {
-      "logo": "PostHog",
-      "logoAlt": "PostHog logo",
+      "logo": "Klynt",
+      "logoAlt": "Klynt logo",
       "getStarted": "Get started – free",
       "menus": {
         "productOS": {
@@ -133,7 +133,7 @@
         "signUp": "Sign up"
       },
       "right": {
-        "whyPostHog": "Why PostHog?",
+        "whyKlynt": "Why Klynt?",
         "changelog": "Changelog",
         "companyHandbook": "Company handbook",
         "store": "Store",
@@ -157,7 +157,7 @@
     "cookieBanner": {
       "dismiss": "Dismiss cookie banner",
       "heading": "Legally-required cookie banner",
-      "body": "PostHog.com doesn't use third-party cookies, only a single in-house cookie. No data is sent to a third party.",
+      "body": "Klynt.com doesn't use third-party cookies, only a single in-house cookie. No data is sent to a third party.",
       "aside": "(Ursula von der Leyen would be so proud.)",
       "ursulaAlt": "Ursula von der Leyen",
       "footer": "No cookies were harmed in the making of this banner."
@@ -180,6 +180,31 @@
         "search": "Search",
         "bookmark": "Bookmark",
         "settings": "Settings"
+      }
+    },
+    "marketing": {
+      "apps": {
+        "home": "首页",
+        "demo": "演示",
+        "products": "产品操作系统",
+        "productAnalytics": "产品分析",
+        "webAnalytics": "网站分析",
+        "sessionReplay": "会话回放",
+        "featureFlags": "功能标志",
+        "experiments": "实验",
+        "surveys": "调查",
+        "dataWarehouse": "数据仓库",
+        "pricing": "价格",
+        "customers": "客户",
+        "docs": "文档",
+        "about": "关于",
+        "careers": "招聘",
+        "handbook": "手册",
+        "merch": "商店",
+        "community": "社区",
+        "changelog": "更新日志",
+        "talkToHuman": "联系客服",
+        "trash": "垃圾桶"
       }
     }
   },
