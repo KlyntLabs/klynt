@@ -1,11 +1,11 @@
 import { useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
 import { useVerifyEmail } from "@/core/auth/hooks/use-verify-email";
 
 export function VerifyEmailApp() {
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get("token") ?? "";
+  const { token: tokenParam } = useParams<{ token: string }>();
+  const token = tokenParam ?? "";
   const verify = useVerifyEmail();
 
   useEffect(() => {

@@ -119,6 +119,7 @@ pub fn load_config() -> Result<AppConfig, LoaderConfigError> {
         .set_default("email.smtp.port", 1025_i64)?
         .set_default("email.smtp.from", "noreply@klynt.local")?
         .set_default("email.smtp.tls", false)?
+        .set_default("base_url", "")?
         .build()?;
 
     let app_config: AppConfig = config.try_deserialize()?;

@@ -128,14 +128,14 @@ describe("createApexRouter", () => {
   });
 
   it("renders the reset password page", async () => {
-    stubLocation("http://lvh.me:5174/reset-password");
+    stubLocation("http://lvh.me:5174/reset-password/token123");
     const router = createApexRouter();
     const { getByTestId } = rtlRender(<RouterProvider router={router} />);
     await waitFor(() => expect(getByTestId("reset-password-page")).toBeInTheDocument());
   });
 
   it("renders the verify email page", async () => {
-    stubLocation("http://lvh.me:5174/verify-email");
+    stubLocation("http://lvh.me:5174/verify/token123");
     const router = createApexRouter();
     const { getByTestId } = rtlRender(<RouterProvider router={router} />);
     await waitFor(() => expect(getByTestId("verify-email-page")).toBeInTheDocument());

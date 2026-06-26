@@ -1,11 +1,11 @@
 import { useTranslation } from "react-i18next";
-import { useSearchParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { ResetPasswordForm } from "./reset-password-form";
 
 export function ResetPasswordApp() {
   const { t } = useTranslation("auth");
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get("token") ?? "";
+  const { token: tokenParam } = useParams<{ token: string }>();
+  const token = tokenParam ?? "";
 
   if (!token) {
     return (

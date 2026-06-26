@@ -30,6 +30,10 @@ pub struct AppConfig {
     /// Email delivery configuration.
     #[serde(default)]
     pub email: EmailConfig,
+    /// Public base URL used for links in emails (e.g. verification/reset links).
+    /// When empty the gateway falls back to deriving it from the API host.
+    #[serde(default)]
+    pub base_url: String,
 }
 
 fn default_cookie_domain() -> String {
@@ -78,6 +82,7 @@ mod tests {
             csp_report_only: false,
             csp_directive: default_csp_directive(),
             email: EmailConfig::default(),
+            base_url: String::new(),
         };
         assert!(config.validated().is_ok());
     }
@@ -103,6 +108,7 @@ mod tests {
             csp_report_only: false,
             csp_directive: default_csp_directive(),
             email: EmailConfig::default(),
+            base_url: String::new(),
         };
         assert!(config.validated().is_err());
     }
@@ -122,6 +128,7 @@ mod tests {
             csp_report_only: false,
             csp_directive: "\n".to_string(),
             email: EmailConfig::default(),
+            base_url: String::new(),
         };
         assert!(matches!(
             config.validated(),

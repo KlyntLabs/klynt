@@ -73,6 +73,7 @@ services:
       - KLYNT_EMAIL__SMTP__HOST=${KLYNT_EMAIL__SMTP__HOST:-mailpit}
       - KLYNT_EMAIL__SMTP__PORT=${KLYNT_EMAIL__SMTP__PORT:-1025}
       - KLYNT_EMAIL__SMTP__FROM=${KLYNT_EMAIL__SMTP__FROM:-noreply@klynt.local}
+      - KLYNT_BASE_URL=${KLYNT_BASE_URL:-http://lvh.me:5174}
     ports:
       - "127.0.0.1:${KLYNT_BACKEND_PORT:-3001}:3001"
     depends_on:

@@ -115,15 +115,19 @@ impl Config {
 impl From<config::AppConfig> for Config {
     fn from(config: config::AppConfig) -> Self {
         let bind_address = format!("{}:{}", config.api.host, config.api.port);
-        let base_url = format!(
-            "{}://{}",
-            if config.api.host.contains("localhost") || config.api.host == "127.0.0.1" {
-                "http"
-            } else {
-                "https"
-            },
-            config.api.host
-        );
+        let base_url = if config.base_url.is_empty() {
+            format!(
+                "{}://{}",
+                if config.api.host.contains("localhost") || config.api.host == "127.0.0.1" {
+                    "http"
+                } else {
+                    "https"
+                },
+                config.api.host
+            )
+        } else {
+            config.base_url.clone()
+        };
 
         Self {
             service_name: "api-gateway".to_string(),

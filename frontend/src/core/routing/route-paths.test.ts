@@ -6,7 +6,7 @@ describe("routePaths", () => {
     expect(routePaths.home).toBe("/");
     expect(routePaths.register).toBe("/register");
     expect(routePaths.registerSuccess).toBe("/register/success");
-    expect(routePaths.verifyEmail).toBe("/verify-email");
+    expect(routePaths.verifyEmail).toBe("/verify/:token");
     expect(routePaths.onboarding).toBe("/onboarding");
     expect(routePaths.dashboard).toBe("/dashboard");
     expect(routePaths.tenantsNew).toBe("/tenants/new");
