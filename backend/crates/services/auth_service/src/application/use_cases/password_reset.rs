@@ -28,29 +28,11 @@ pub(crate) async fn request(
         None => return Ok(()),
     };
 
-    let token = Token::generate(TokenKind::PasswordReset, user.id);
-    service
-        .internal()
-        .token_store
-        .save(
-            ctx,
-            TokenKind::PasswordReset,
-            user.id,
-            token.hash,
-            token.expires_at,
-        )
-        .await?;
-
     // Swallow email errors to prevent account enumeration during outages.
     if let Err(e) = service
         .internal()
-        .email_sender
-        .send_password_reset(
-            ctx,
-            &parsed_email,
-            &token.plaintext,
-            &service.config().base_url,
-        )
+        .token_email_service
+        .send_password_reset(ctx, &parsed_email, user.id)
         .await
     {
         tracing::warn!(

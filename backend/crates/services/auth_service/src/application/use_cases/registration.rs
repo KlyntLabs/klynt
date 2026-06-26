@@ -5,7 +5,6 @@ use domain::contracts::auth::RegistrationRequest;
 use domain::{DomainError, Email};
 use validator::Validate;
 
-use crate::core::{Token, TokenKind};
 use crate::error::AuthError;
 use crate::AuthService;
 
@@ -70,23 +69,10 @@ pub(crate) async fn execute(
         .log_user_registered(ctx, user_id)
         .await;
 
-    let token = Token::generate(TokenKind::EmailVerification, user_id);
     service
         .internal()
-        .token_store
-        .save(
-            ctx,
-            TokenKind::EmailVerification,
-            user_id,
-            token.hash,
-            token.expires_at,
-        )
-        .await?;
-
-    service
-        .internal()
-        .email_sender
-        .send_verification(ctx, &email, &token.plaintext, &service.config().base_url)
+        .token_email_service
+        .send_verification(ctx, &email, user_id)
         .await?;
 
     Ok(user_id)

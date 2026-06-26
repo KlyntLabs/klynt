@@ -32,6 +32,7 @@ pub use core::{PasswordPolicy, SessionToken};
 pub use error::{AuthError, AuthResult};
 
 use application::ports::{AuditLogger, EmailSender, MembershipRepository, UserRepository};
+use application::services::token_email::TokenEmailService;
 use base::ports::session::SessionStore;
 use core::TokenStore;
 
@@ -60,7 +61,6 @@ use core::TokenStore;
 ///
 /// Tests cross the same interface as production code — no testing past the interface.
 pub struct AuthService {
-    config: AuthConfig,
     password_policy: PasswordPolicy,
     internal_state: InternalState,
 }
@@ -77,16 +77,22 @@ impl AuthService {
     /// remains available for tests and custom dependency injection.
     pub fn new(config: AuthConfig, dependencies: Dependencies) -> Result<Self, AuthError> {
         let password_policy = config.password_policy.clone().unwrap_or_default();
+        let base_url = config.base_url.clone();
+
+        let token_email_service = TokenEmailService::new(
+            dependencies.token_store.clone(),
+            dependencies.email_sender.clone(),
+            base_url,
+        );
 
         Ok(Self {
-            config,
             password_policy,
             internal_state: InternalState {
                 user_repository: dependencies.user_repository,
                 session_service: dependencies.session_service,
                 session_store: dependencies.session_store,
                 token_store: dependencies.token_store,
-                email_sender: dependencies.email_sender,
+                token_email_service,
                 audit_logger: dependencies.audit_logger,
                 password_hasher: dependencies.password_hasher,
                 membership_repository: dependencies.membership_repository,
@@ -175,10 +181,6 @@ impl AuthService {
         &self.internal_state
     }
 
-    pub(crate) fn config(&self) -> &AuthConfig {
-        &self.config
-    }
-
     pub(crate) fn password_policy(&self) -> &PasswordPolicy {
         &self.password_policy
     }
@@ -232,7 +234,7 @@ pub(crate) struct InternalState {
     pub session_service: Arc<session_service::SessionService>,
     pub session_store: Arc<dyn SessionStore>,
     pub token_store: Arc<dyn TokenStore>,
-    pub email_sender: Arc<dyn EmailSender>,
+    pub token_email_service: TokenEmailService,
     pub audit_logger: Arc<dyn AuditLogger>,
     pub password_hasher: Arc<dyn PasswordHasher>,
     pub membership_repository: Arc<dyn MembershipRepository>,
