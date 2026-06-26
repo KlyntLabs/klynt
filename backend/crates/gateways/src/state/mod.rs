@@ -63,6 +63,9 @@ pub struct Config {
     /// Content Security Policy directive string.
     #[serde(default = "default_csp_directive")]
     pub csp_directive: String,
+
+    /// Email delivery configuration.
+    pub email: config::EmailConfig,
 }
 
 fn default_log_level() -> String {
@@ -91,6 +94,7 @@ impl Default for Config {
             cookie_secure: false,
             csp_report_only: false,
             csp_directive: default_csp_directive(),
+            email: config::EmailConfig::default(),
         }
     }
 }
@@ -137,6 +141,7 @@ impl From<config::AppConfig> for Config {
             cookie_secure: config.cookie_secure,
             csp_report_only: config.csp_report_only,
             csp_directive: config.csp_directive,
+            email: config.email,
         }
     }
 }

@@ -12,6 +12,7 @@ pub mod ports;
 pub mod rate_limiter;
 pub mod repositories;
 pub mod repository;
+pub mod smtp_email;
 pub mod token_generator;
 
 pub use db::*;

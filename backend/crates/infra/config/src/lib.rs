@@ -2,11 +2,13 @@
 
 pub mod api;
 pub mod app;
+pub mod email_config;
 pub mod rate_limiter;
 pub mod session;
 
 pub use api::ApiConfig;
 pub use app::{AppConfig, DEFAULT_CONTENT_SECURITY_POLICY};
+pub use email_config::{EmailConfig, EmailProvider, SmtpConfig};
 pub use rate_limiter::RateLimiterConfig;
 pub use session::SessionConfig;
 
@@ -112,6 +114,11 @@ pub fn load_config() -> Result<AppConfig, LoaderConfigError> {
         .set_default("cookie_secure", false)?
         .set_default("csp_report_only", false)?
         .set_default("csp_directive", DEFAULT_CONTENT_SECURITY_POLICY)?
+        .set_default("email.provider", "mock")?
+        .set_default("email.smtp.host", "localhost")?
+        .set_default("email.smtp.port", 1025_i64)?
+        .set_default("email.smtp.from", "noreply@klynt.local")?
+        .set_default("email.smtp.tls", false)?
         .build()?;
 
     let app_config: AppConfig = config.try_deserialize()?;

@@ -21,3 +21,16 @@ cookie_domain = ""
 # WARNING: cookie_secure must be true in production with TLS termination.
 # Leaving it false sends session cookies over plaintext HTTP.
 cookie_secure = false
+
+# Email delivery backend. Use "mock" for tests/initial dev and "smtp" with the
+# bundled Mailpit service for real email verification flow testing.
+[email]
+provider = "mock"
+
+[email.smtp]
+host = "localhost"
+port = 1025
+from = "noreply@klynt.local"
+# username = ""
+# password = ""
+tls = false

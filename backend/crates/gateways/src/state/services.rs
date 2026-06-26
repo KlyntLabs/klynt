@@ -133,8 +133,15 @@ impl Services {
         );
         let audit_logger = Arc::new(observability::audit::AuditService::new(audit_repo))
             as Arc<dyn base::ports::AuditLogger>;
-        let email_sender = Arc::new(persistence::email::MockEmailService::new())
-            as Arc<dyn base::ports::EmailSender>;
+        let email_sender: Arc<dyn base::ports::EmailSender> = match config.email.provider {
+            config::EmailProvider::Smtp => {
+                let smtp =
+                    persistence::smtp_email::SmtpEmailService::from_config(&config.email.smtp)
+                        .map_err(|e| crate::GatewayError::configuration(format!("SMTP: {e}")))?;
+                Arc::new(smtp)
+            }
+            config::EmailProvider::Mock => Arc::new(persistence::email::MockEmailService::new()),
+        };
 
         AuthService::builder()
             .with_config(AuthConfig {

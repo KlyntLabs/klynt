@@ -35,6 +35,20 @@ services:
       timeout: 3s
       retries: 10
 
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: klynt-mailpit-dev
+    ports:
+      - "127.0.0.1:${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025"
+    environment:
+      - MP_SMTP_AUTH_ALLOW_INSECURE=true
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8025/api/v1/messages"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   backend:
     build:
       context: ./backend
@@ -55,12 +69,18 @@ services:
       - KLYNT_API__PORT=3001
       - KLYNT_DATABASE_URL=${KLYNT_DATABASE_URL:-postgresql://klynt:klynt@postgres:5432/klynt}
       - KLYNT_REDIS_URL=${KLYNT_REDIS_URL:-redis://redis:6379}
+      - KLYNT_EMAIL__PROVIDER=${KLYNT_EMAIL__PROVIDER:-smtp}
+      - KLYNT_EMAIL__SMTP__HOST=${KLYNT_EMAIL__SMTP__HOST:-mailpit}
+      - KLYNT_EMAIL__SMTP__PORT=${KLYNT_EMAIL__SMTP__PORT:-1025}
+      - KLYNT_EMAIL__SMTP__FROM=${KLYNT_EMAIL__SMTP__FROM:-noreply@klynt.local}
     ports:
       - "127.0.0.1:${KLYNT_BACKEND_PORT:-3001}:3001"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      mailpit:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:3001/health/live"]

@@ -1,7 +1,7 @@
 use http::HeaderValue;
 use serde::Deserialize;
 
-use super::{ApiConfig, ConfigError, RateLimiterConfig, SessionConfig, Validated};
+use super::{ApiConfig, ConfigError, EmailConfig, RateLimiterConfig, SessionConfig, Validated};
 
 /// Default Content-Security-Policy directive.
 ///
@@ -27,6 +27,9 @@ pub struct AppConfig {
     pub csp_report_only: bool,
     #[serde(default = "default_csp_directive")]
     pub csp_directive: String,
+    /// Email delivery configuration.
+    #[serde(default)]
+    pub email: EmailConfig,
 }
 
 fn default_cookie_domain() -> String {
@@ -74,6 +77,7 @@ mod tests {
             cookie_secure: false,
             csp_report_only: false,
             csp_directive: default_csp_directive(),
+            email: EmailConfig::default(),
         };
         assert!(config.validated().is_ok());
     }
@@ -98,6 +102,7 @@ mod tests {
             cookie_secure: false,
             csp_report_only: false,
             csp_directive: default_csp_directive(),
+            email: EmailConfig::default(),
         };
         assert!(config.validated().is_err());
     }
@@ -116,6 +121,7 @@ mod tests {
             cookie_secure: false,
             csp_report_only: false,
             csp_directive: "\n".to_string(),
+            email: EmailConfig::default(),
         };
         assert!(matches!(
             config.validated(),
