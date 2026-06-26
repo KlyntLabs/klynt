@@ -22,15 +22,6 @@ cookie_domain = ""
 # Leaving it false sends session cookies over plaintext HTTP.
 cookie_secure = false
 
-# Email delivery backend. Use "mock" for tests/initial dev and "smtp" with the
-# bundled Mailpit service for real email verification flow testing.
-[email]
-provider = "mock"
-
-[email.smtp]
-host = "localhost"
-port = 1025
-from = "noreply@klynt.local"
-# username = ""
-# password = ""
-tls = false
+# Public base URL used for links in emails (verification/reset). When empty the
+# gateway derives it from the API host.
+base_url = ""
