@@ -4,6 +4,12 @@ import { useAuthStore } from "@/core/auth/auth-store";
 import { listMyTenants } from "../../api/tenant-api";
 import { listPermissions, listRoles } from "../api";
 
+if (import.meta.env.DEV) {
+  console.warn(
+    "[DEPRECATED] useTenantPermissions is deprecated. Use usePermissions from '../permissions-module.ts' instead."
+  );
+}
+
 export interface UseTenantPermissionsResult {
   hasPermission: (name: string) => boolean;
   isLoading: boolean;
