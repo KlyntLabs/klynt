@@ -10,6 +10,7 @@ user_service = { path = "../services/user_service" }
 session_service = { path = "../services/session_service" }
 tenant_service = { path = "../services/tenant_service" }
 session_coordinator = { path = "../services/session_coordinator" }
+infra_facades = { path = "../services/infra_facades" }
 
 # === Phase 1 Foundation ===
 base = { path = "../base" }

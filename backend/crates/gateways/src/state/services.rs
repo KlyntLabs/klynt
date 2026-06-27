@@ -3,6 +3,15 @@
 use std::sync::Arc;
 
 use auth_service::{AuthConfig, AuthService};
+use base::ports::repository::{
+    MembershipRepository, TenantDesktopLayoutRepository, TenantInviteRepository, TenantRepository,
+    UserRepository,
+};
+use base::ports::{
+    AuditLogger, Clock, EmailSender, PasswordHasher, PermissionRepository, RoleRepository,
+    TokenStore,
+};
+use infra_facades::{InfraFacade, PersistenceFacade};
 use ipnet::IpNet;
 use observability::health::{
     AlwaysUnhealthyCheck, CompositeHealthReporter, HealthReporter, PostgresHealthCheck,
@@ -73,15 +82,53 @@ impl Services {
             session_store.clone(),
         ));
 
+        let persistence_facade = Arc::new(PersistenceFacade::new(
+            Arc::new(persistence::repositories::user::PgUserRepository::new(pool.clone()))
+                as Arc<dyn UserRepository>,
+            Arc::new(persistence::repositories::tenant::PgTenantRepository::new(pool.clone()))
+                as Arc<dyn TenantRepository>,
+            Arc::new(persistence::repositories::membership::PgMembershipRepository::new(pool.clone()))
+                as Arc<dyn MembershipRepository>,
+            Arc::new(
+                persistence::repositories::tenant_invite::PgTenantInviteRepository::new(pool.clone()),
+            ) as Arc<dyn TenantInviteRepository>,
+            Arc::new(persistence::repositories::permission::PgPermissionRepository::new(pool.clone()))
+                as Arc<dyn PermissionRepository>,
+            Arc::new(persistence::repositories::role::PgRoleRepository::new(pool.clone()))
+                as Arc<dyn RoleRepository>,
+            Arc::new(
+                persistence::repositories::tenant_desktop_layout::PgTenantDesktopLayoutRepository::new(
+                    pool.clone(),
+                ),
+            ) as Arc<dyn TenantDesktopLayoutRepository>,
+            session_store.clone(),
+            Arc::new(persistence::repositories::token::PgTokenStore::new(pool.clone()))
+                as Arc<dyn TokenStore>,
+            Arc::new(observability::audit::AuditService::new(Arc::new(
+                persistence::repositories::audit_event::PgAuditEventRepository::new(pool.clone()),
+            ))) as Arc<dyn AuditLogger>,
+        ));
+
+        let password_hasher = Arc::new(auth_service::infrastructure::PasswordHasherAdapter::new(
+            persistence::password_hasher::Argon2PasswordHasher::new(),
+        )) as Arc<dyn PasswordHasher>;
+        let email_sender: Arc<dyn EmailSender> =
+            Arc::new(persistence::email::MockEmailService::new());
+        let clock: Arc<dyn Clock> = Arc::new(base::ports::SystemClock);
+        let infra_facade = Arc::new(InfraFacade::new(password_hasher, email_sender, clock));
+
         let auth_service = Self::create_auth_service(
             config,
-            pool.clone(),
-            session_store.clone(),
+            persistence_facade.clone(),
+            infra_facade.clone(),
             session_service.clone(),
         )?;
-        let user_service = Self::create_user_service(config, pool.clone())?;
-        let tenant_service = Self::create_tenant_service(pool.clone(), session_coordinator)?;
-        let desktop_layout_service = Self::create_desktop_layout_service(pool.clone());
+        let user_service =
+            Self::create_user_service(config, persistence_facade.clone(), infra_facade.clone())?;
+        let tenant_service =
+            Self::create_tenant_service(persistence_facade.clone(), session_coordinator)?;
+        let desktop_layout_service =
+            Self::create_desktop_layout_service(persistence_facade.clone());
         let rate_limiter = Self::create_rate_limiter(config).await?;
         let trusted_proxies = Arc::new(
             config::parse_trusted_proxies(&config.trusted_proxies)
@@ -120,41 +167,19 @@ impl Services {
 
     fn create_auth_service(
         config: &Config,
-        pool: sqlx::PgPool,
-        session_store: Arc<dyn base::ports::session::SessionStore>,
+        persistence_facade: Arc<PersistenceFacade>,
+        infra_facade: Arc<InfraFacade>,
         session_service: Arc<session_service::SessionService>,
     ) -> Result<AuthService, crate::GatewayError> {
-        let user_repository = Arc::new(persistence::repositories::user::PgUserRepository::new(
-            pool.clone(),
-        )) as Arc<dyn base::ports::repository::UserRepository>;
-        let token_store = Arc::new(persistence::repositories::token::PgTokenStore::new(
-            pool.clone(),
-        )) as Arc<dyn base::ports::TokenStore>;
-        let membership_repository = Arc::new(
-            persistence::repositories::membership::PgMembershipRepository::new(pool.clone()),
-        )
-            as Arc<dyn base::ports::repository::MembershipRepository>;
-        let audit_repo = Arc::new(
-            persistence::repositories::audit_event::PgAuditEventRepository::new(pool.clone()),
-        );
-        let audit_logger = Arc::new(observability::audit::AuditService::new(audit_repo))
-            as Arc<dyn base::ports::AuditLogger>;
-        let email_sender: Arc<dyn base::ports::EmailSender> =
-            Arc::new(persistence::email::MockEmailService::new());
-
         AuthService::builder()
             .with_config(AuthConfig {
                 base_url: config.base_url.clone(),
                 token_duration_secs: 3600,
                 password_policy: None,
             })
-            .with_user_repository(user_repository)
-            .with_session_store(session_store)
+            .with_persistence_facade(persistence_facade)
+            .with_infra_facade(infra_facade)
             .with_session_service(session_service)
-            .with_token_store(token_store)
-            .with_email_sender(email_sender)
-            .with_audit_logger(audit_logger)
-            .with_membership_repository(membership_repository)
             .build()
             .map_err(|e| crate::GatewayError::configuration(format!("Auth service: {e}")))
     }
@@ -173,20 +198,15 @@ impl Services {
 
     fn create_user_service(
         _config: &Config,
-        pool: sqlx::PgPool,
+        persistence_facade: Arc<PersistenceFacade>,
+        infra_facade: Arc<InfraFacade>,
     ) -> Result<user_service::UserService, crate::GatewayError> {
-        let user_repository = Arc::new(persistence::repositories::user::PgUserRepository::new(
-            pool.clone(),
-        )) as Arc<dyn base::ports::repository::UserRepository>;
-        let audit_repo =
-            Arc::new(persistence::repositories::audit_event::PgAuditEventRepository::new(pool));
-        let audit_logger = Arc::new(observability::audit::AuditService::new(audit_repo))
-            as Arc<dyn base::ports::AuditLogger>;
-
         user_service::UserService::builder()
             .with_config(user_service::UserConfig::default())
-            .with_user_repository(user_repository)
-            .with_audit_logger(audit_logger)
+            .with_user_repository(persistence_facade.user_repository.clone())
+            .with_audit_logger(persistence_facade.audit_logger.clone())
+            .with_password_hasher(infra_facade.password_hasher.clone())
+            .with_clock(infra_facade.clock.clone())
             .build()
             .map_err(|e| crate::GatewayError::configuration(format!("User service: {e}")))
     }
@@ -204,58 +224,21 @@ impl Services {
     }
 
     fn create_tenant_service(
-        pool: sqlx::PgPool,
+        persistence_facade: Arc<PersistenceFacade>,
         session_coordinator: Arc<SessionCoordinator>,
     ) -> Result<TenantService, crate::GatewayError> {
-        let tenant_repository = Arc::new(
-            persistence::repositories::tenant::PgTenantRepository::new(pool.clone()),
-        ) as Arc<dyn base::ports::repository::TenantRepository>;
-        let membership_repository = Arc::new(
-            persistence::repositories::membership::PgMembershipRepository::new(pool.clone()),
-        )
-            as Arc<dyn base::ports::repository::MembershipRepository>;
-        let user_repository = Arc::new(persistence::repositories::user::PgUserRepository::new(
-            pool.clone(),
-        )) as Arc<dyn base::ports::repository::UserRepository>;
-        let invite_repository = Arc::new(
-            persistence::repositories::tenant_invite::PgTenantInviteRepository::new(pool.clone()),
-        )
-            as Arc<dyn base::ports::repository::TenantInviteRepository>;
-        let permission_repository = Arc::new(
-            persistence::repositories::permission::PgPermissionRepository::new(pool.clone()),
-        )
-            as Arc<dyn base::ports::permission::PermissionRepository>;
-        let role_repository = Arc::new(persistence::repositories::role::PgRoleRepository::new(
-            pool.clone(),
-        )) as Arc<dyn base::ports::permission::RoleRepository>;
-        let audit_repo =
-            Arc::new(persistence::repositories::audit_event::PgAuditEventRepository::new(pool));
-        let audit_logger = Arc::new(observability::audit::AuditService::new(audit_repo))
-            as Arc<dyn base::ports::AuditLogger>;
-
         TenantService::builder()
             .with_config(tenant_service::TenantConfig::default())
-            .with_tenant_repository(tenant_repository)
-            .with_membership_repository(membership_repository)
-            .with_user_repository(user_repository)
-            .with_invite_repository(invite_repository)
-            .with_permission_repository(permission_repository)
-            .with_role_repository(role_repository)
+            .with_persistence_facade(persistence_facade)
             .with_session_coordinator(session_coordinator)
-            .with_audit_logger(audit_logger)
             .build()
             .map_err(|e| crate::GatewayError::configuration(format!("Tenant service: {e}")))
     }
 
-    fn create_desktop_layout_service(pool: sqlx::PgPool) -> TenantDesktopLayoutService {
-        let repository = Arc::new(
-            persistence::repositories::tenant_desktop_layout::PgTenantDesktopLayoutRepository::new(
-                pool,
-            ),
-        )
-            as Arc<dyn base::ports::repository::TenantDesktopLayoutRepository>;
-
-        TenantDesktopLayoutService::new(repository)
+    fn create_desktop_layout_service(
+        persistence_facade: Arc<PersistenceFacade>,
+    ) -> TenantDesktopLayoutService {
+        TenantDesktopLayoutService::new(persistence_facade.layout_repository.clone())
     }
 
     async fn create_rate_limiter(

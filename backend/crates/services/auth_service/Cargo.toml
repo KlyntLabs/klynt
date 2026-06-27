@@ -11,6 +11,7 @@ session_service = { path = "../session_service" }
 
 # === Storage and infrastructure adapters ===
 persistence = { path = "../../../crates/infra/persistence" }
+infra_facades = { path = "../infra_facades" }
 
 # === Async Runtime ===
 tokio = { workspace = true }

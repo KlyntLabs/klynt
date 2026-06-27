@@ -11,6 +11,7 @@ use base::ctx::{ActorType, ExecutionContext, RequestContext};
 use base::ports::session::{Session, SessionStore, SessionToken};
 use chrono::{Duration, Utc};
 use domain::UserId;
+use infra_facades::PersistenceFacade;
 use tenant_service::TenantService;
 
 /// Build a Postgres-backed session store.
@@ -45,24 +46,41 @@ pub fn build_service_with_session_store_and_config(
     let role_repository = Arc::new(persistence::repositories::role::PgRoleRepository::new(
         pool.clone(),
     )) as Arc<dyn base::ports::RoleRepository>;
-    let session_coordinator = Arc::new(session_coordinator::SessionCoordinator::new(
-        session_store,
-        session_coordinator_config,
-    ));
+    let layout_repository = Arc::new(
+        persistence::repositories::tenant_desktop_layout::PgTenantDesktopLayoutRepository::new(
+            pool.clone(),
+        ),
+    )
+        as Arc<dyn base::ports::repository::TenantDesktopLayoutRepository>;
+    let token_store = Arc::new(persistence::repositories::token::PgTokenStore::new(
+        pool.clone(),
+    )) as Arc<dyn base::ports::TokenStore>;
     let audit_repo =
         Arc::new(persistence::repositories::audit_event::PgAuditEventRepository::new(pool));
     let audit_logger = Arc::new(observability::audit::AuditService::new(audit_repo))
         as Arc<dyn base::ports::AuditLogger>;
 
+    let persistence_facade = Arc::new(PersistenceFacade::new(
+        user_repository,
+        tenant_repository,
+        membership_repository,
+        invite_repository,
+        permission_repository,
+        role_repository,
+        layout_repository,
+        session_store,
+        token_store,
+        audit_logger,
+    ));
+
+    let session_coordinator = Arc::new(session_coordinator::SessionCoordinator::new(
+        persistence_facade.session_store.clone(),
+        session_coordinator_config,
+    ));
+
     TenantService::builder()
-        .with_tenant_repository(tenant_repository)
-        .with_membership_repository(membership_repository)
-        .with_user_repository(user_repository)
-        .with_invite_repository(invite_repository)
-        .with_permission_repository(permission_repository)
-        .with_role_repository(role_repository)
+        .with_persistence_facade(persistence_facade)
         .with_session_coordinator(session_coordinator)
-        .with_audit_logger(audit_logger)
         .build()
         .expect("tenant service should build")
 }
