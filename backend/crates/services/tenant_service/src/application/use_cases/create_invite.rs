@@ -32,7 +32,7 @@ pub(crate) async fn execute(
             domain::permission::tenant::MANAGE_MEMBERS,
         )
         .await
-        .map_err(|_| TenantError::NotAdmin)?;
+        .map_err(|e| super::shared::map_permission_error(e, TenantError::NotAdmin))?;
 
     let email = Email::parse(&request.email).map_err(DomainError::from)?;
     let role_name = request.role.as_str();

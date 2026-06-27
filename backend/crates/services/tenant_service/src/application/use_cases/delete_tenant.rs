@@ -20,7 +20,7 @@ pub(crate) async fn execute(
         .authorization()
         .require_permission_with_context(ctx, tenant.id, user_id, permission::tenant::DELETE)
         .await
-        .map_err(|_| TenantError::NotOwner)?;
+        .map_err(|e| super::shared::map_permission_error(e, TenantError::NotOwner))?;
 
     service
         .internal()

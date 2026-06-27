@@ -27,7 +27,7 @@ pub(crate) async fn execute(
             permission::tenant::MANAGE_SETTINGS,
         )
         .await
-        .map_err(|_| TenantError::NotAdmin)?;
+        .map_err(|e| super::shared::map_permission_error(e, TenantError::NotAdmin))?;
 
     tenant.rename(name)?;
 

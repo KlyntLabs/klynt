@@ -23,7 +23,7 @@ pub(crate) async fn execute(
         .authorization()
         .require_permission_with_context(ctx, tenant.id, user_id, permission::tenant::MANAGE_ROLES)
         .await
-        .map_err(|_| TenantError::NotAdmin)?;
+        .map_err(|e| super::super::shared::map_permission_error(e, TenantError::NotAdmin))?;
 
     let old_role = service
         .internal()

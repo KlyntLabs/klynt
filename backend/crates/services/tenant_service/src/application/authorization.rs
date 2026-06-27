@@ -31,27 +31,6 @@ impl AuthorizationService {
         }
     }
 
-    /// Return `Ok(())` if the user has `permission_name` within the tenant.
-    pub async fn ensure_permission(
-        &self,
-        ctx: &ExecutionContext,
-        tenant_id: TenantId,
-        user_id: UserId,
-        permission_name: &str,
-    ) -> DomainResult<()> {
-        let permitted = self
-            .has_permission(ctx, tenant_id, user_id, permission_name)
-            .await?;
-
-        if permitted {
-            Ok(())
-        } else {
-            Err(DomainError::NotPermitted(format!(
-                "missing permission: {permission_name}"
-            )))
-        }
-    }
-
     /// Return whether the user has `permission_name` within the tenant.
     pub async fn has_permission(
         &self,
@@ -78,7 +57,13 @@ impl AuthorizationService {
         Ok(self.role_has_permission(&role, &permission.id))
     }
 
-    /// Ensure user has permission within tenant, returning domain error on failure.
+    /// Ensure user has permission within tenant, returning a domain error on failure.
+    ///
+    /// Returns [`DomainError::NotFound`] when the user is not a member of the
+    /// tenant, and [`DomainError::NotPermitted`] when the membership exists but
+    /// does not grant the requested permission. Repository and other failures are
+    /// propagated unchanged so callers can distinguish them from authorization
+    /// denials.
     pub(crate) async fn require_permission_with_context(
         &self,
         ctx: &ExecutionContext,
@@ -86,11 +71,35 @@ impl AuthorizationService {
         user_id: UserId,
         permission_name: &str,
     ) -> DomainResult<()> {
-        let permitted = self
-            .has_permission(ctx, tenant_id, user_id, permission_name)
-            .await?;
+        let membership = match self.resolve_membership(ctx, tenant_id, user_id).await? {
+            Some(m) => m,
+            None => {
+                return Err(DomainError::NotFound(
+                    "user is not a member of tenant".to_string(),
+                ))
+            }
+        };
 
-        if permitted {
+        let role = match self.resolve_role(ctx, tenant_id, &membership.role).await? {
+            Some(r) => r,
+            None => {
+                return Err(DomainError::NotPermitted(format!(
+                    "tenant role not found: {}",
+                    membership.role
+                )))
+            }
+        };
+
+        let permission = match self.resolve_permission(ctx, permission_name).await? {
+            Some(p) => p,
+            None => {
+                return Err(DomainError::NotPermitted(format!(
+                    "permission not found: {permission_name}"
+                )))
+            }
+        };
+
+        if self.role_has_permission(&role, &permission.id) {
             Ok(())
         } else {
             Err(DomainError::NotPermitted(format!(
@@ -99,7 +108,7 @@ impl AuthorizationService {
         }
     }
 
-    /// Private: resolve membership or return not-permitted.
+    /// Private: resolve membership.
     async fn resolve_membership(
         &self,
         ctx: &ExecutionContext,
@@ -111,7 +120,7 @@ impl AuthorizationService {
             .await
     }
 
-    /// Private: resolve role aggregate or return not-permitted.
+    /// Private: resolve role aggregate or return `None`.
     async fn resolve_role(
         &self,
         ctx: &ExecutionContext,
@@ -123,7 +132,7 @@ impl AuthorizationService {
             .await
     }
 
-    /// Private: resolve permission or return not-permitted.
+    /// Private: resolve permission or return `None`.
     async fn resolve_permission(
         &self,
         ctx: &ExecutionContext,
