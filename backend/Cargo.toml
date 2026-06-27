@@ -11,6 +11,7 @@ members = [
     "crates/services/session_service",
     "crates/services/tenant_service",
     "crates/services/cleanup_job",
+    "crates/services/infra_facades",
     "crates/gateways",
     "crates/server",
     "crates/services/session_coordinator",

@@ -1,0 +1,11 @@
+[package]
+name = "infra_facades"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+base = { path = "../../base" }
+domain = { path = "../../shared/domain" }
+persistence = { path = "../../infra/persistence" }
+observability = { path = "../../infra/observability" }
+thiserror = "2.0"
