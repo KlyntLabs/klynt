@@ -147,6 +147,13 @@ impl SessionStore for FakeSessionStore {
         Ok(())
     }
 
+    /// Add a tenant membership to all active sessions for the user.
+    ///
+    /// This implementation is idempotent: if a membership for the tenant already
+    /// exists, it is not added again. This is stricter than the current Postgres
+    /// implementation (`PgSessionStore::add_membership`), which appends via
+    /// `tenant_memberships || $1::jsonb` and may create duplicate tenant entries
+    /// if called twice.
     async fn add_membership(
         &self,
         _ctx: &ExecutionContext,
