@@ -4,6 +4,7 @@ pub mod auth;
 pub mod contracts;
 pub mod error;
 pub mod membership;
+pub mod operations;
 pub mod permission;
 pub mod role;
 pub mod session;
