@@ -2,6 +2,7 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::error::DomainError;
 use crate::tenant::TenantId;
@@ -83,6 +84,37 @@ impl Membership {
     pub fn set_role(&mut self, role: TenantRole) {
         self.role = role;
     }
+
+    /// Convert to session-compatible snapshot format.
+    pub fn to_session_snapshot(&self) -> SessionMembershipSnapshot {
+        SessionMembershipSnapshot {
+            tenant_id: self.tenant_id.inner(),
+            role: self.role,
+        }
+    }
+
+    /// Reconstruct from a session snapshot.
+    pub fn from_session_snapshot(
+        snapshot: SessionMembershipSnapshot,
+        user_id: UserId,
+        joined_at: DateTime<Utc>,
+    ) -> Self {
+        Self {
+            tenant_id: TenantId(snapshot.tenant_id),
+            user_id,
+            role: snapshot.role,
+            joined_at,
+        }
+    }
+}
+
+/// Session-compatible membership representation (for serialization).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SessionMembershipSnapshot {
+    /// Tenant the user belongs to.
+    pub tenant_id: Uuid,
+    /// Role the user has within the tenant.
+    pub role: TenantRole,
 }
 
 /// A tenant member with their user details and role.

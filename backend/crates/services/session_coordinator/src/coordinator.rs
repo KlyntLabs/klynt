@@ -3,7 +3,8 @@
 use std::sync::Arc;
 
 use base::ctx::ExecutionContext;
-use base::ports::session::{MembershipSnapshot, SessionStore};
+use base::ports::session::SessionStore;
+use domain::membership::Membership;
 
 use super::config::SessionCoordinatorConfig;
 use super::error::SessionCoordinatorError;
@@ -48,10 +49,7 @@ impl SessionCoordinator {
                 user_id,
                 role,
             } => {
-                let snapshot = MembershipSnapshot {
-                    tenant_id: tenant_id.inner(),
-                    role,
-                };
+                let snapshot = Membership::new(tenant_id, user_id, role).to_session_snapshot();
                 self.session_store
                     .add_membership(ctx, user_id, snapshot)
                     .await?;
@@ -61,10 +59,7 @@ impl SessionCoordinator {
                 user_id,
                 role,
             } => {
-                let snapshot = MembershipSnapshot {
-                    tenant_id: tenant_id.inner(),
-                    role,
-                };
+                let snapshot = Membership::new(tenant_id, user_id, role).to_session_snapshot();
                 self.session_store
                     .update_membership(ctx, user_id, snapshot)
                     .await?;

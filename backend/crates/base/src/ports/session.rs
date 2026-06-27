@@ -6,6 +6,7 @@
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
+use domain::membership::SessionMembershipSnapshot;
 use domain::session::SessionSummary;
 use domain::UserId;
 use uuid::Uuid;
@@ -81,13 +82,10 @@ impl TryFrom<&str> for SessionKind {
 }
 
 /// Snapshot of a tenant membership stored on a session.
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
-pub struct MembershipSnapshot {
-    /// Tenant the user belongs to.
-    pub tenant_id: Uuid,
-    /// Role the user has within the tenant.
-    pub role: domain::membership::TenantRole,
-}
+///
+/// This is a re-export of the domain's session-compatible membership
+/// representation so the session port and the domain model share one type.
+pub type MembershipSnapshot = SessionMembershipSnapshot;
 
 /// An authenticated session.
 #[derive(Clone, Debug)]

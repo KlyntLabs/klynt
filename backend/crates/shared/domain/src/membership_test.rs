@@ -67,3 +67,33 @@ fn membership_set_role_updates_role() {
 
     assert_eq!(membership.role, TenantRole::Admin);
 }
+
+#[test]
+fn membership_to_session_snapshot_preserves_tenant_and_role() {
+    let tenant_id = TenantId::new();
+    let user_id = UserId::new();
+    let membership = Membership::new(tenant_id, user_id, TenantRole::Admin);
+
+    let snapshot = membership.to_session_snapshot();
+
+    assert_eq!(snapshot.tenant_id, tenant_id.inner());
+    assert_eq!(snapshot.role, TenantRole::Admin);
+}
+
+#[test]
+fn membership_from_session_snapshot_restores_fields() {
+    let tenant_id = TenantId::new();
+    let user_id = UserId::new();
+    let joined_at = Utc::now();
+    let snapshot = SessionMembershipSnapshot {
+        tenant_id: tenant_id.inner(),
+        role: TenantRole::Member,
+    };
+
+    let membership = Membership::from_session_snapshot(snapshot, user_id, joined_at);
+
+    assert_eq!(membership.tenant_id, tenant_id);
+    assert_eq!(membership.user_id, user_id);
+    assert_eq!(membership.role, TenantRole::Member);
+    assert_eq!(membership.joined_at, joined_at);
+}
