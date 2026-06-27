@@ -35,9 +35,45 @@ impl SessionCoordinator {
             return Ok(());
         }
 
-        let _ = (ctx, event);
+        match event {
+            MembershipEvent::Added {
+                tenant_id,
+                user_id,
+                role,
+            } => {
+                use base::ports::session::MembershipSnapshot;
+                let snapshot = MembershipSnapshot {
+                    tenant_id: tenant_id.inner(),
+                    role,
+                };
+                self.session_store
+                    .add_membership(ctx, user_id, snapshot)
+                    .await
+                    .map_err(|e| SessionCoordinatorError::SessionStore(e.to_string()))?;
+            }
+            MembershipEvent::Updated {
+                tenant_id,
+                user_id,
+                role,
+            } => {
+                use base::ports::session::MembershipSnapshot;
+                let snapshot = MembershipSnapshot {
+                    tenant_id: tenant_id.inner(),
+                    role,
+                };
+                self.session_store
+                    .update_membership(ctx, user_id, snapshot)
+                    .await
+                    .map_err(|e| SessionCoordinatorError::SessionStore(e.to_string()))?;
+            }
+            MembershipEvent::Removed { tenant_id, user_id } => {
+                self.session_store
+                    .remove_membership(ctx, user_id, tenant_id)
+                    .await
+                    .map_err(|e| SessionCoordinatorError::SessionStore(e.to_string()))?;
+            }
+        }
 
-        // TODO: Implement event handling in next task
         Ok(())
     }
 }

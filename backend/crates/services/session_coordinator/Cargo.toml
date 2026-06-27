@@ -10,3 +10,8 @@ async-trait = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
+
+[dev-dependencies]
+base = { path = "../../../crates/base", features = ["testkit"] }
+chrono = { workspace = true }
+tokio = { workspace = true, features = ["rt", "macros"] }

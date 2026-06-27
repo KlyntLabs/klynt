@@ -218,6 +218,35 @@ pub trait SessionStore: Send + Sync {
     ) -> Result<(), SessionError> {
         Ok(())
     }
+
+    /// Update a membership snapshot across all active sessions for a user.
+    ///
+    /// Semantically identical to [`Self::update_membership_for_user`]; provided
+    /// as the canonical name for new callers. The default implementation
+    /// delegates to [`Self::update_membership_for_user`] so existing stores
+    /// continue to work unchanged.
+    async fn update_membership(
+        &self,
+        ctx: &ExecutionContext,
+        user_id: UserId,
+        membership: MembershipSnapshot,
+    ) -> Result<(), SessionError> {
+        self.update_membership_for_user(ctx, user_id, membership)
+            .await
+    }
+
+    /// Remove a membership snapshot from all active sessions for a user.
+    ///
+    /// Default implementation is a no-op for fakes that do not need to track
+    /// tenant memberships.
+    async fn remove_membership(
+        &self,
+        _ctx: &ExecutionContext,
+        _user_id: UserId,
+        _tenant_id: domain::TenantId,
+    ) -> Result<(), SessionError> {
+        Ok(())
+    }
 }
 
 /// Errors that can occur when interacting with a session store.

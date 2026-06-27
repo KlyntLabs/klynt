@@ -279,4 +279,28 @@ impl SessionStore for PgSessionStore {
         .await?;
         Ok(())
     }
+
+    async fn remove_membership(
+        &self,
+        _ctx: &ExecutionContext,
+        user_id: UserId,
+        tenant_id: domain::TenantId,
+    ) -> Result<(), SessionError> {
+        sqlx::query(
+            r#"
+            UPDATE sessions
+            SET tenant_memberships = (
+                SELECT COALESCE(jsonb_agg(elem), '[]'::jsonb)
+                FROM jsonb_array_elements(tenant_memberships) AS elem
+                WHERE (elem->>'tenant_id')::uuid <> $1
+            )
+            WHERE user_id = $2 AND expires_at > NOW()
+            "#,
+        )
+        .bind(tenant_id.inner())
+        .bind(user_id.inner())
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
 }

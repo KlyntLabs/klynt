@@ -7,8 +7,10 @@ use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 
 use crate::ctx::ExecutionContext;
-use crate::ports::session::{Session, SessionError, SessionKind, SessionStore, SessionToken};
-use domain::UserId;
+use crate::ports::session::{
+    MembershipSnapshot, Session, SessionError, SessionKind, SessionStore, SessionToken,
+};
+use domain::{TenantId, UserId};
 use uuid::Uuid;
 
 #[derive(Clone, Debug)]
@@ -27,6 +29,28 @@ impl FakeSessionStore {
     /// Create an empty fake session store.
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Return a snapshot of all stored sessions, including expired ones.
+    pub fn all_sessions(&self) -> Vec<Session> {
+        self.sessions
+            .lock()
+            .unwrap()
+            .values()
+            .map(|stored| stored.session.clone())
+            .collect()
+    }
+
+    fn mutate_memberships<F>(&self, user_id: UserId, mut f: F)
+    where
+        F: FnMut(&mut Vec<MembershipSnapshot>),
+    {
+        let mut sessions = self.sessions.lock().unwrap();
+        for stored in sessions.values_mut() {
+            if stored.session.user_id == user_id {
+                f(&mut stored.session.tenant_memberships);
+            }
+        }
     }
 }
 
@@ -130,6 +154,55 @@ impl SessionStore for FakeSessionStore {
             .map(|(token, _)| *token)
             .ok_or(SessionError::Forbidden)?;
         sessions.remove(&token);
+        Ok(())
+    }
+
+    async fn add_membership(
+        &self,
+        _ctx: &ExecutionContext,
+        user_id: UserId,
+        membership: MembershipSnapshot,
+    ) -> Result<(), SessionError> {
+        self.mutate_memberships(user_id, |memberships| {
+            if let Some(existing) = memberships
+                .iter_mut()
+                .find(|m| m.tenant_id == membership.tenant_id)
+            {
+                existing.role = membership.role;
+            } else {
+                memberships.push(membership.clone());
+            }
+        });
+        Ok(())
+    }
+
+    async fn update_membership_for_user(
+        &self,
+        _ctx: &ExecutionContext,
+        user_id: UserId,
+        membership: MembershipSnapshot,
+    ) -> Result<(), SessionError> {
+        self.mutate_memberships(user_id, |memberships| {
+            if let Some(existing) = memberships
+                .iter_mut()
+                .find(|m| m.tenant_id == membership.tenant_id)
+            {
+                existing.role = membership.role;
+            }
+        });
+        Ok(())
+    }
+
+    async fn remove_membership(
+        &self,
+        _ctx: &ExecutionContext,
+        user_id: UserId,
+        tenant_id: TenantId,
+    ) -> Result<(), SessionError> {
+        let tenant_id = tenant_id.inner();
+        self.mutate_memberships(user_id, |memberships| {
+            memberships.retain(|m| m.tenant_id != tenant_id);
+        });
         Ok(())
     }
 }

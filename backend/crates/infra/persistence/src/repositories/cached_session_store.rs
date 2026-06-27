@@ -360,4 +360,30 @@ impl SessionStore for CachedSessionStore {
 
         Ok(())
     }
+
+    async fn remove_membership(
+        &self,
+        ctx: &ExecutionContext,
+        user_id: UserId,
+        tenant_id: domain::TenantId,
+    ) -> Result<(), SessionError> {
+        self.postgres
+            .remove_membership(ctx, user_id, tenant_id)
+            .await?;
+
+        match self.postgres.active_tokens_for_user(ctx, user_id).await {
+            Ok(tokens) => {
+                for token in tokens {
+                    if let Err(e) = self.invalidate_cache(&token).await {
+                        tracing::warn!(error = %e, "failed to invalidate cached session after remove_membership");
+                    }
+                }
+            }
+            Err(e) => {
+                tracing::warn!(error = %e, "failed to list active tokens for cache invalidation");
+            }
+        }
+
+        Ok(())
+    }
 }
