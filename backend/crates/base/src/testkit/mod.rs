@@ -15,6 +15,7 @@ pub mod crypto;
 pub mod domain;
 pub mod repository;
 pub mod session;
+pub mod stubs;
 pub mod token;
 
 pub use authorization::{FakeMembershipRepository, FakePermissionRepository, FakeRoleRepository};
@@ -24,4 +25,8 @@ pub use crypto::TestPasswordHasher;
 pub use domain::{sample_active_user, sample_user};
 pub use repository::FakeUserRepository;
 pub use session::FakeSessionStore;
+pub use stubs::{
+    FakeAuditLogger, FakeEmailSender, FakeTenantDesktopLayoutRepository,
+    FakeTenantInviteRepository, FakeTenantRepository,
+};
 pub use token::FakeTokenStore;
