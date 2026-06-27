@@ -4,45 +4,34 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 
-if (import.meta.env.DEV) {
-  console.warn(
-    "[DEPRECATED] useDesktopStore is deprecated. Use useWindowManager from '../window-manager/window-module.ts' instead."
-  );
-}
+export type WindowState = "normal" | "minimized" | "maximized";
 
-export type WindowState = {
+export interface Window {
   id: string;
   appId: string;
   x: number;
   y: number;
   width: number;
   height: number;
-  state: "normal" | "minimized" | "maximized";
+  state: WindowState;
   zIndex: number;
-};
+}
 
-type DesktopViewMode = "desktop" | "website";
+export type WindowGeometry = Pick<Window, "x" | "y" | "width" | "height">;
 
-type DesktopState = {
-  activeDesktopId: string | null;
-  windows: Record<string, WindowState[]>;
+type WindowManagerState = {
+  windows: Record<string, Window[]>;
   activeWindowId: Record<string, string | null>;
-  viewMode: DesktopViewMode;
   nextZIndex: number;
+  preMaximizeRects: Record<string, WindowGeometry>;
 
-  setActiveDesktop: (id: string) => void;
-  openApp: (desktopId: string, appId: string, defaultRect?: Partial<WindowState>) => void;
+  openApp: (desktopId: string, appId: string, defaultRect?: Partial<Window>) => void;
   closeWindow: (desktopId: string, windowId: string) => void;
   focusWindow: (desktopId: string, windowId: string) => void;
-  moveWindow: (
-    desktopId: string,
-    windowId: string,
-    rect: Omit<WindowState, "id" | "appId" | "state" | "zIndex">
-  ) => void;
+  moveWindow: (desktopId: string, windowId: string, rect: WindowGeometry) => void;
   minimizeWindow: (desktopId: string, windowId: string) => void;
   maximizeWindow: (desktopId: string, windowId: string) => void;
   restoreWindow: (desktopId: string, windowId: string) => void;
-  setViewMode: (mode: DesktopViewMode) => void;
   reset: () => void;
 };
 
@@ -50,8 +39,11 @@ const DEFAULT_WINDOW_WIDTH = 680;
 const DEFAULT_WINDOW_HEIGHT = 520;
 const Z_INDEX_BASE = 100;
 const Z_INDEX_COMPACT_THRESHOLD = 10000;
+const MENUBAR_HEIGHT = 36;
 
-const compactZIndexes = (draft: WritableDraft<DesktopState>) => {
+const EMPTY_WINDOWS: Window[] = [];
+
+const compactZIndexes = (draft: WritableDraft<WindowManagerState>) => {
   const allWindows = Object.values(draft.windows).flat();
   const sorted = allWindows.slice().sort((a, b) => a.zIndex - b.zIndex);
   sorted.forEach((w, index) => {
@@ -60,7 +52,7 @@ const compactZIndexes = (draft: WritableDraft<DesktopState>) => {
   draft.nextZIndex = Z_INDEX_BASE + sorted.length + 1;
 };
 
-const maybeCompactZIndexes = (draft: WritableDraft<DesktopState>) => {
+const maybeCompactZIndexes = (draft: WritableDraft<WindowManagerState>) => {
   if (draft.nextZIndex > Z_INDEX_COMPACT_THRESHOLD) {
     compactZIndexes(draft);
   }
@@ -74,61 +66,55 @@ const generateId = (): string => {
   }
 };
 
-const getCenteredRect = (width: number, height: number) => {
+const getCenteredRect = (width: number, height: number): WindowGeometry => {
   const vw = typeof window !== "undefined" ? window.innerWidth : 1200;
   const vh = typeof window !== "undefined" ? window.innerHeight : 800;
   return {
     x: Math.max(16, (vw - width) / 2),
-    y: Math.max(48, (vh - height) / 2 - 36),
+    y: Math.max(MENUBAR_HEIGHT * 2, (vh - height) / 2 - MENUBAR_HEIGHT),
     width,
     height,
   };
 };
 
-const initialState = {
-  activeDesktopId: null,
+const initialState: Omit<
+  WindowManagerState,
+  | "openApp"
+  | "closeWindow"
+  | "focusWindow"
+  | "moveWindow"
+  | "minimizeWindow"
+  | "maximizeWindow"
+  | "restoreWindow"
+  | "reset"
+> = {
   windows: {},
   activeWindowId: {},
-  viewMode: "desktop" as DesktopViewMode,
-  nextZIndex: 100,
+  nextZIndex: Z_INDEX_BASE,
+  preMaximizeRects: {},
 };
 
-export const useDesktopStore = create<DesktopState>()(
+export const useWindowManager = create<WindowManagerState>()(
   devtools(
     immer((set) => ({
       ...initialState,
 
-      setActiveDesktop: (id) =>
-        set((draft) => {
-          draft.activeDesktopId = id;
-        }),
-
       openApp: (desktopId, appId, defaultRect) =>
         set((draft) => {
           const desktopWindows = draft.windows[desktopId] ?? [];
-          const existing = desktopWindows.find((w) => w.appId === appId);
-
-          if (existing) {
-            existing.state = "normal";
-            existing.zIndex = draft.nextZIndex;
-            draft.nextZIndex += 1;
-            maybeCompactZIndexes(draft);
-            draft.activeWindowId[desktopId] = existing.id;
-            return;
-          }
 
           const width = defaultRect?.width ?? DEFAULT_WINDOW_WIDTH;
           const height = defaultRect?.height ?? DEFAULT_WINDOW_HEIGHT;
           const rect = getCenteredRect(width, height);
 
-          const newWindow: WindowState = {
+          const newWindow: Window = {
             id: generateId(),
             appId,
             x: defaultRect?.x ?? rect.x,
             y: defaultRect?.y ?? rect.y,
             width,
             height,
-            state: defaultRect?.state ?? "normal",
+            state: (defaultRect?.state as WindowState) ?? "normal",
             zIndex: draft.nextZIndex,
           };
           draft.nextZIndex += 1;
@@ -143,6 +129,7 @@ export const useDesktopStore = create<DesktopState>()(
           const desktopWindows = draft.windows[desktopId] ?? [];
           const remaining = desktopWindows.filter((w) => w.id !== windowId);
           draft.windows[desktopId] = remaining;
+          delete draft.preMaximizeRects[windowId];
 
           if (draft.activeWindowId[desktopId] === windowId) {
             const top = remaining.slice().sort((a, b) => b.zIndex - a.zIndex)[0];
@@ -157,9 +144,9 @@ export const useDesktopStore = create<DesktopState>()(
 
       focusWindow: (desktopId, windowId) =>
         set((draft) => {
-          const window = draft.windows[desktopId]?.find((w) => w.id === windowId);
-          if (window) {
-            window.zIndex = draft.nextZIndex;
+          const win = draft.windows[desktopId]?.find((w) => w.id === windowId);
+          if (win) {
+            win.zIndex = draft.nextZIndex;
             draft.nextZIndex += 1;
             maybeCompactZIndexes(draft);
           }
@@ -168,48 +155,75 @@ export const useDesktopStore = create<DesktopState>()(
 
       moveWindow: (desktopId, windowId, rect) =>
         set((draft) => {
-          const window = draft.windows[desktopId]?.find((w) => w.id === windowId);
-          if (!window || window.state === "maximized") {
+          const win = draft.windows[desktopId]?.find((w) => w.id === windowId);
+          if (!win || win.state === "maximized") {
             return;
           }
 
-          window.x = rect.x;
-          window.y = rect.y;
-          window.width = rect.width;
-          window.height = rect.height;
+          win.x = rect.x;
+          win.y = rect.y;
+          win.width = rect.width;
+          win.height = rect.height;
         }),
 
       minimizeWindow: (desktopId, windowId) =>
         set((draft) => {
-          const window = draft.windows[desktopId]?.find((w) => w.id === windowId);
-          if (window) {
-            window.state = "minimized";
+          const win = draft.windows[desktopId]?.find((w) => w.id === windowId);
+          if (win) {
+            win.state = "minimized";
           }
         }),
 
       maximizeWindow: (desktopId, windowId) =>
         set((draft) => {
-          const window = draft.windows[desktopId]?.find((w) => w.id === windowId);
-          if (window) {
-            window.state = "maximized";
+          const win = draft.windows[desktopId]?.find((w) => w.id === windowId);
+          if (!win) {
+            return;
           }
+
+          if (win.state !== "maximized") {
+            draft.preMaximizeRects[windowId] = {
+              x: win.x,
+              y: win.y,
+              width: win.width,
+              height: win.height,
+            };
+          }
+
+          win.state = "maximized";
+          win.x = 0;
+          win.y = MENUBAR_HEIGHT;
+          win.width = globalThis.window.innerWidth;
+          win.height = globalThis.window.innerHeight - MENUBAR_HEIGHT;
         }),
 
       restoreWindow: (desktopId, windowId) =>
         set((draft) => {
-          const window = draft.windows[desktopId]?.find((w) => w.id === windowId);
-          if (window) {
-            window.state = "normal";
+          const win = draft.windows[desktopId]?.find((w) => w.id === windowId);
+          if (!win) {
+            return;
           }
-        }),
 
-      setViewMode: (mode) =>
-        set((draft) => {
-          draft.viewMode = mode;
+          win.state = "normal";
+
+          const prevRect = draft.preMaximizeRects[windowId];
+          if (prevRect) {
+            win.x = prevRect.x;
+            win.y = prevRect.y;
+            win.width = prevRect.width;
+            win.height = prevRect.height;
+            delete draft.preMaximizeRects[windowId];
+          }
         }),
 
       reset: () => set(initialState),
     })),
-    { name: "desktop-store" }
+    { name: "window-manager" }
   )
 );
+
+export const useDesktopWindows = (desktopId: string) =>
+  useWindowManager((s) => s.windows[desktopId] ?? EMPTY_WINDOWS);
+
+export const useActiveWindowId = (desktopId: string) =>
+  useWindowManager((s) => s.activeWindowId[desktopId] ?? null);
