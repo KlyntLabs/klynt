@@ -19,7 +19,19 @@ Short-lived verification token for email verification or password reset.
 Persistence interface port. Canonical definitions live in `base::ports`.
 
 ### Service
-Business logic layer. `auth_service`, `session_service`, and `user_service` provide deep interfaces and depend only on `base` ports and `domain` types.
+Business logic layer. `auth_service`, `session_service`, `tenant_service`, and `user_service` provide deep interfaces and depend only on `base` ports and `domain` types.
+
+### SessionCoordinator
+Event-driven service that keeps session state in sync with membership changes. Emits `MembershipEvent` (`Added`, `Updated`, `Removed`) and updates sessions through the `SessionStore` port.
+
+### MembershipEvent
+Domain event representing a membership change. Carries `tenant_id`, `user_id`, and optionally the new role.
+
+### PersistenceFacade
+Infrastructure facade grouping all repository and store adapters behind a single interface. Simplifies service composition by reducing dependency count.
+
+### InfraFacade
+Infrastructure facade grouping infrastructure adapters (`PasswordHasher`, `EmailSender`, `Clock`) behind a single interface.
 
 ## Architecture Vocabulary
 
@@ -30,6 +42,12 @@ Business logic layer. `auth_service`, `session_service`, and `user_service` prov
 - **Adapter** — Translates a canonical port into a concrete implementation (e.g., Postgres `UserRepository`)
 - **Leverage** — Value added per unit of interface complexity
 - **Locality** — Related concepts living together; the goal that led to replacing `klynt_common` with focused `domain` modules
+
+## Deepened Interfaces
+
+- **AuthorizationService** — Consolidates all authorization checks internally
+- **SessionCoordinator** — Single interface for session synchronization
+- **Repository `execute()`** — Command-based entry point for all operations
 
 ## Canonical Ports
 
@@ -72,9 +90,12 @@ backend/crates/
 │   ├── telemetry           # Tracing, audit, metrics, health
 │   └── config              # Configuration loading
 ├── services/
-│   ├── auth_service        # Registration, login, email verification, password reset
-│   ├── session_service     # Session lifecycle
-│   └── user_service        # Profiles, password changes, user listing, soft delete
+│   ├── auth_service         # Registration, login, email verification, password reset
+│   ├── session_service      # Session lifecycle
+│   ├── session_coordinator  # Session synchronization via membership events
+│   ├── infra_facades        # Persistence and infrastructure facades
+│   ├── tenant_service       # Tenant and membership management
+│   └── user_service         # Profiles, password changes, user listing, soft delete
 ├── gateways/               # HTTP handlers, middleware, composition root
 └── server                  # Binary entrypoint
 ```
