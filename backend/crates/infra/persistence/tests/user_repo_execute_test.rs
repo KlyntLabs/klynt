@@ -35,7 +35,7 @@ fn unique_email() -> Email {
 }
 
 #[tokio::test]
-async fn execute_delegates_find_by_email() {
+async fn repository_execute_delegates_find_by_email() {
     let Some(pool) = setup_pool().await else {
         return;
     };

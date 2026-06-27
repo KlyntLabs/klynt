@@ -320,7 +320,7 @@ async fn delete_for_missing_membership_returns_not_found() {
 }
 
 #[tokio::test]
-async fn execute_delegates_find() {
+async fn repository_execute_delegates_find() {
     let Some(pool) = setup_pool().await else {
         return;
     };

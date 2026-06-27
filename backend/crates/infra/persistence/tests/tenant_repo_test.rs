@@ -428,7 +428,7 @@ async fn duplicate_slug_returns_conflict() {
 }
 
 #[tokio::test]
-async fn execute_delegates_find_by_id() {
+async fn repository_execute_delegates_find_by_id() {
     let Some(pool) = setup_pool().await else {
         return;
     };
