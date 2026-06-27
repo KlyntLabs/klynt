@@ -67,27 +67,19 @@ impl AuthBuilder {
             AuthError::internal("AuthBuilder requires an infrastructure facade".to_string())
         })?;
 
-        let session_store = persistence_facade.session_store.clone();
-
         let session_service = self.session_service.unwrap_or_else(|| {
             Arc::new(session_service::SessionService::new(
                 session_service::SessionConfig::default(),
-                session_store.clone(),
+                persistence_facade.session_store.clone(),
             ))
         });
 
         AuthService::new(
             config,
             Dependencies {
-                user_repository: persistence_facade.user_repository.clone(),
+                persistence_facade,
+                infra_facade,
                 session_service,
-                session_store,
-                token_store: persistence_facade.token_store.clone(),
-                email_sender: infra_facade.email_sender.clone(),
-                audit_logger: persistence_facade.audit_logger.clone(),
-                password_hasher: infra_facade.password_hasher.clone(),
-                membership_repository: persistence_facade.membership_repository.clone(),
-                clock: infra_facade.clock.clone(),
             },
         )
     }

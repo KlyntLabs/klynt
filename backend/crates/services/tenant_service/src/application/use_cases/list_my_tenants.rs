@@ -16,6 +16,7 @@ pub(crate) async fn execute(
 
     service
         .internal()
+        .persistence_facade
         .tenant_repository
         .list_for_user(ctx, user_id)
         .await

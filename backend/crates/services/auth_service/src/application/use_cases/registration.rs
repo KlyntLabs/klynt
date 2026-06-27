@@ -22,6 +22,7 @@ pub(crate) async fn execute(
 
     let password_hash = service
         .internal()
+        .infra_facade
         .password_hasher
         .hash(&request.password)
         .await?;
@@ -51,6 +52,7 @@ pub(crate) async fn execute(
 
     let user_id = service
         .internal()
+        .persistence_facade
         .user_repository
         .create_pending_user(
             ctx,
@@ -65,6 +67,7 @@ pub(crate) async fn execute(
 
     service
         .internal()
+        .persistence_facade
         .audit_logger
         .log_user_registered(ctx, user_id)
         .await;

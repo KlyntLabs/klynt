@@ -3,6 +3,8 @@
 //! Cross-cutting test doubles come from [`base::testkit`]; this module
 //! keeps only the auth-service-specific fakes.
 
+#![allow(dead_code)]
+
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
@@ -22,6 +24,7 @@ use domain::{
     DomainResult, Email, Membership, PermissionId, RoleId, TenantId, TenantMember, User, UserId,
     UserStatus,
 };
+use infra_facades::{InfraFacade, PersistenceFacade};
 use uuid::Uuid;
 
 pub use session_service::SessionConfig as TestSessionConfig;
@@ -284,18 +287,31 @@ pub fn build_test_service_with_clock() -> (
         session_store.clone(),
         clock.clone(),
     ));
+
+    let persistence_facade = Arc::new(PersistenceFacade::new(
+        user_repository.clone(),
+        Arc::new(base::testkit::FakeTenantRepository),
+        Arc::new(StubMembershipRepository),
+        Arc::new(base::testkit::FakeTenantInviteRepository::new()),
+        Arc::new(base::testkit::FakePermissionRepository::new()),
+        Arc::new(base::testkit::FakeRoleRepository::new()),
+        Arc::new(base::testkit::FakeTenantDesktopLayoutRepository),
+        session_store.clone(),
+        Arc::new(FakeTokenStore::new()),
+        Arc::new(StubAuditLogger),
+    ));
+    let infra_facade = Arc::new(InfraFacade::new(
+        Arc::new(TestPasswordHasher::new()),
+        email_sender.clone(),
+        clock.clone(),
+    ));
+
     let service = AuthService::new(
         AuthConfig::default(),
         Dependencies {
-            user_repository: user_repository.clone(),
+            persistence_facade,
+            infra_facade,
             session_service,
-            session_store,
-            token_store: Arc::new(FakeTokenStore::new()),
-            email_sender: email_sender.clone(),
-            audit_logger: Arc::new(StubAuditLogger),
-            password_hasher: Arc::new(TestPasswordHasher::new()),
-            membership_repository: Arc::new(StubMembershipRepository),
-            clock: clock.clone(),
         },
     )
     .expect("valid test dependencies");
@@ -320,18 +336,31 @@ pub fn build_test_service_with_session_store(
         session_store.clone(),
         clock.clone(),
     ));
+
+    let persistence_facade = Arc::new(PersistenceFacade::new(
+        user_repository.clone(),
+        Arc::new(base::testkit::FakeTenantRepository),
+        Arc::new(StubMembershipRepository),
+        Arc::new(base::testkit::FakeTenantInviteRepository::new()),
+        Arc::new(base::testkit::FakePermissionRepository::new()),
+        Arc::new(base::testkit::FakeRoleRepository::new()),
+        Arc::new(base::testkit::FakeTenantDesktopLayoutRepository),
+        session_store.clone(),
+        Arc::new(FakeTokenStore::new()),
+        Arc::new(StubAuditLogger),
+    ));
+    let infra_facade = Arc::new(InfraFacade::new(
+        Arc::new(TestPasswordHasher::new()),
+        email_sender.clone(),
+        clock.clone(),
+    ));
+
     let service = AuthService::new(
         AuthConfig::default(),
         Dependencies {
-            user_repository: user_repository.clone(),
+            persistence_facade,
+            infra_facade,
             session_service,
-            session_store,
-            token_store: Arc::new(FakeTokenStore::new()),
-            email_sender: email_sender.clone(),
-            audit_logger: Arc::new(StubAuditLogger),
-            password_hasher: Arc::new(TestPasswordHasher::new()),
-            membership_repository: Arc::new(StubMembershipRepository),
-            clock: clock.clone(),
         },
     )
     .expect("valid test dependencies");

@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use infra_facades::PersistenceFacade;
+use infra_facades::{InfraFacade, PersistenceFacade};
 use session_coordinator::SessionCoordinator;
 
 use crate::error::TenantError;
@@ -16,6 +16,7 @@ use crate::{Dependencies, TenantConfig, TenantService};
 pub struct TenantBuilder {
     config: Option<TenantConfig>,
     persistence_facade: Option<Arc<PersistenceFacade>>,
+    infra_facade: Option<Arc<InfraFacade>>,
     session_coordinator: Option<Arc<SessionCoordinator>>,
 }
 
@@ -34,6 +35,12 @@ impl TenantBuilder {
     /// Set the persistence facade.
     pub fn with_persistence_facade(mut self, facade: Arc<PersistenceFacade>) -> Self {
         self.persistence_facade = Some(facade);
+        self
+    }
+
+    /// Set the infrastructure facade.
+    pub fn with_infra_facade(mut self, facade: Arc<InfraFacade>) -> Self {
+        self.infra_facade = Some(facade);
         self
     }
 
@@ -58,6 +65,10 @@ impl TenantBuilder {
             .persistence_facade
             .ok_or_else(|| TenantError::internal("TenantBuilder requires a persistence facade"))?;
 
+        let infra_facade = self.infra_facade.ok_or_else(|| {
+            TenantError::internal("TenantBuilder requires an infrastructure facade")
+        })?;
+
         let session_coordinator = self
             .session_coordinator
             .ok_or_else(|| TenantError::internal("TenantBuilder requires a session coordinator"))?;
@@ -65,14 +76,9 @@ impl TenantBuilder {
         TenantService::new(
             config,
             Dependencies {
-                tenant_repository: persistence_facade.tenant_repository.clone(),
-                membership_repository: persistence_facade.membership_repository.clone(),
-                user_repository: persistence_facade.user_repository.clone(),
-                invite_repository: persistence_facade.invite_repository.clone(),
-                permission_repository: persistence_facade.permission_repository.clone(),
-                role_repository: persistence_facade.role_repository.clone(),
+                persistence_facade,
+                infra_facade,
                 session_coordinator,
-                audit_logger: persistence_facade.audit_logger.clone(),
             },
         )
     }

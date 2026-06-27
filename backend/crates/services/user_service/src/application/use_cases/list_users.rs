@@ -14,6 +14,7 @@ pub(crate) async fn execute(
 ) -> Result<PaginatedResponse<UserProfile>, UserError> {
     let (users, total) = service
         .internal()
+        .persistence_facade
         .user_repository
         .list(ctx, pagination.clone())
         .await?;

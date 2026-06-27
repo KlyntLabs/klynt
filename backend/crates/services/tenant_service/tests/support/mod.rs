@@ -11,7 +11,7 @@ use base::ctx::{ActorType, ExecutionContext, RequestContext};
 use base::ports::session::{Session, SessionStore, SessionToken};
 use chrono::{Duration, Utc};
 use domain::UserId;
-use infra_facades::PersistenceFacade;
+use infra_facades::{InfraFacade, PersistenceFacade};
 use tenant_service::TenantService;
 
 /// Build a Postgres-backed session store.
@@ -68,18 +68,25 @@ pub fn build_service_with_session_store_and_config(
         permission_repository,
         role_repository,
         layout_repository,
-        session_store,
+        session_store.clone(),
         token_store,
         audit_logger,
     ));
 
+    let infra_facade = Arc::new(InfraFacade::new(
+        Arc::new(base::testkit::TestPasswordHasher::new()),
+        Arc::new(base::testkit::FakeEmailSender::new()),
+        Arc::new(base::ports::SystemClock),
+    ));
+
     let session_coordinator = Arc::new(session_coordinator::SessionCoordinator::new(
-        persistence_facade.session_store.clone(),
+        session_store,
         session_coordinator_config,
     ));
 
     TenantService::builder()
         .with_persistence_facade(persistence_facade)
+        .with_infra_facade(infra_facade)
         .with_session_coordinator(session_coordinator)
         .build()
         .expect("tenant service should build")

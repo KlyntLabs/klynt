@@ -20,14 +20,12 @@ pub mod models;
 use std::sync::Arc;
 
 use base::ctx::ExecutionContext;
-use base::ports::{Clock, PasswordHasher};
 use domain::{PaginationRequest, UserId};
+use infra_facades::{InfraFacade, PersistenceFacade};
 
 pub use builder::UserBuilder;
 pub use error::{UserError, UserResult};
 pub use models::{ProfileUpdate, UserProfile};
-
-use application::ports::{AuditLogger, UserRepository};
 
 /// User service — deep module with small interface.
 ///
@@ -70,10 +68,8 @@ impl UserService {
         Ok(Self {
             config,
             internal_state: InternalState {
-                user_repository: dependencies.user_repository,
-                audit_logger: dependencies.audit_logger,
-                password_hasher: dependencies.password_hasher,
-                clock: dependencies.clock,
+                persistence_facade: dependencies.persistence_facade,
+                infra_facade: dependencies.infra_facade,
             },
         })
     }
@@ -152,16 +148,12 @@ pub struct UserConfig {
 /// Dependencies wired into the user service.
 #[derive(Clone)]
 pub struct Dependencies {
-    pub user_repository: Arc<dyn UserRepository>,
-    pub audit_logger: Arc<dyn AuditLogger>,
-    pub password_hasher: Arc<dyn PasswordHasher>,
-    pub clock: Arc<dyn Clock>,
+    pub persistence_facade: Arc<PersistenceFacade>,
+    pub infra_facade: Arc<InfraFacade>,
 }
 
 /// Internal state — not part of the public interface.
 pub(crate) struct InternalState {
-    pub user_repository: Arc<dyn UserRepository>,
-    pub audit_logger: Arc<dyn AuditLogger>,
-    pub password_hasher: Arc<dyn PasswordHasher>,
-    pub clock: Arc<dyn Clock>,
+    pub persistence_facade: Arc<PersistenceFacade>,
+    pub infra_facade: Arc<InfraFacade>,
 }

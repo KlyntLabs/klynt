@@ -25,6 +25,7 @@ pub(crate) async fn execute(
 
     let user = match service
         .internal()
+        .persistence_facade
         .user_repository
         .find_by_email(ctx, &email)
         .await?
@@ -33,6 +34,7 @@ pub(crate) async fn execute(
         None => {
             service
                 .internal()
+                .persistence_facade
                 .audit_logger
                 .log_login_failed(ctx, &request.email, "invalid credentials")
                 .await;
@@ -42,6 +44,7 @@ pub(crate) async fn execute(
 
     let password_valid = service
         .internal()
+        .infra_facade
         .password_hasher
         .verify(&request.password, &user.password_hash)
         .await?;
@@ -49,6 +52,7 @@ pub(crate) async fn execute(
     if !password_valid {
         service
             .internal()
+            .persistence_facade
             .audit_logger
             .log_login_failed(ctx, &request.email, "invalid credentials")
             .await;
@@ -58,6 +62,7 @@ pub(crate) async fn execute(
     if !user.is_active() {
         service
             .internal()
+            .persistence_facade
             .audit_logger
             .log_login_failed(ctx, &request.email, "account inactive")
             .await;
@@ -94,6 +99,7 @@ pub(crate) async fn execute(
 
     let memberships = service
         .internal()
+        .persistence_facade
         .membership_repository
         .list_for_user(ctx, user.id)
         .await?;
@@ -108,12 +114,14 @@ pub(crate) async fn execute(
 
     service
         .internal()
+        .persistence_facade
         .session_store
         .update_memberships(ctx, &access.token, snapshots)
         .await?;
 
     service
         .internal()
+        .persistence_facade
         .audit_logger
         .log_session_created(ctx, user.id, access.token.to_string())
         .await;

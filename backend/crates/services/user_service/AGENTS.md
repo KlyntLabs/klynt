@@ -43,19 +43,15 @@ Core methods for user profile operations:
 
 ```rust
 pub struct UserService {
-    user_repository: Arc<dyn UserRepository>,
-    password_hasher: Arc<dyn PasswordHasher>,
-    audit_logger: Arc<dyn AuditLogger>,
-    clock: Arc<dyn Clock>,
+    persistence_facade: Arc<PersistenceFacade>,
+    infra_facade: Arc<InfraFacade>,
 }
 ```
 
 | Dependency | Purpose |
 |------------|---------|
-| `UserRepository` | User persistence |
-| `PasswordHasher` | Password hashing for changes |
-| `AuditLogger` | Audit logging for changes |
-| `Clock` | Timestamps |
+| `PersistenceFacade` | User repository, audit logger, and related persistence adapters |
+| `InfraFacade` | Password hasher, email sender, and clock |
 
 ## Operation Details
 
@@ -98,10 +94,8 @@ pub struct UserService {
 
 ```rust
 let user_service = UserService::builder()
-    .user_repository(user_repo)
-    .password_hasher(hasher)
-    .audit_logger(audit_logger)
-    .clock(clock)
+    .with_persistence_facade(persistence_facade)
+    .with_infra_facade(infra_facade)
     .build()?;
 ```
 
@@ -154,8 +148,8 @@ Password changes invalidate existing sessions for security.
 
 - `base` — Port interfaces
 - `domain` — Domain types and contracts
-- `persistence` — Concrete implementations (only in wiring)
-- `observability` — Audit logging
+- `infra_facades` — Persistence and infrastructure facades
+- `observability` — Audit logging (via facade in wiring)
 - `chrono` — Time handling
 - `uuid` — ID handling
 - `validator` — Input validation

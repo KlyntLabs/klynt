@@ -1,6 +1,10 @@
 use std::sync::Arc;
 
-use base::testkit::FakeSessionStore;
+use base::testkit::{
+    FakeEmailSender, FakeSessionStore, FakeTenantDesktopLayoutRepository, FakeTokenStore,
+    TestPasswordHasher,
+};
+use infra_facades::{InfraFacade, PersistenceFacade};
 use session_coordinator::{SessionCoordinator, SessionCoordinatorConfig};
 
 use super::{
@@ -10,25 +14,64 @@ use super::{
 };
 use crate::support::user::{FakeUserServiceRepository, StubUserAuditLogger};
 
+#[allow(clippy::too_many_arguments)]
+fn build_persistence_facade(
+    tenant_repository: Arc<dyn base::ports::repository::TenantRepository>,
+    membership_repository: Arc<dyn base::ports::repository::MembershipRepository>,
+    user_repository: Arc<dyn base::ports::repository::UserRepository>,
+    invite_repository: Arc<dyn base::ports::repository::TenantInviteRepository>,
+    permission_repository: Arc<dyn base::ports::PermissionRepository>,
+    role_repository: Arc<dyn base::ports::RoleRepository>,
+    session_store: Arc<dyn base::ports::session::SessionStore>,
+    audit_logger: Arc<dyn base::ports::AuditLogger>,
+) -> Arc<PersistenceFacade> {
+    Arc::new(PersistenceFacade::new(
+        user_repository,
+        tenant_repository,
+        membership_repository,
+        invite_repository,
+        permission_repository,
+        role_repository,
+        Arc::new(FakeTenantDesktopLayoutRepository),
+        session_store,
+        Arc::new(FakeTokenStore::new()),
+        audit_logger,
+    ))
+}
+
+fn build_infra_facade() -> Arc<InfraFacade> {
+    Arc::new(InfraFacade::new(
+        Arc::new(TestPasswordHasher::new()),
+        Arc::new(FakeEmailSender::new()),
+        Arc::new(base::ports::SystemClock),
+    ))
+}
+
 /// Build a fake tenant service for gateway tests.
 pub fn build_test_tenant_service() -> tenant_service::TenantService {
     let session_store = Arc::new(FakeSessionStore::new());
     let session_coordinator = Arc::new(SessionCoordinator::new(
-        session_store,
+        session_store.clone(),
         SessionCoordinatorConfig::default(),
     ));
+
+    let persistence_facade = build_persistence_facade(
+        Arc::new(FakeTenantRepository),
+        Arc::new(FakeMembershipRepository),
+        Arc::new(FakeUserServiceRepository::default()),
+        Arc::new(FakeTenantInviteRepository::default()),
+        Arc::new(FakePermissionRepository::default()),
+        Arc::new(FakeRoleRepository),
+        session_store,
+        Arc::new(StubUserAuditLogger),
+    );
 
     tenant_service::TenantService::new(
         tenant_service::TenantConfig::default(),
         tenant_service::Dependencies {
-            tenant_repository: Arc::new(FakeTenantRepository),
-            membership_repository: Arc::new(FakeMembershipRepository),
-            user_repository: Arc::new(FakeUserServiceRepository::default()),
-            invite_repository: Arc::new(FakeTenantInviteRepository::default()),
-            permission_repository: Arc::new(FakePermissionRepository::default()),
-            role_repository: Arc::new(FakeRoleRepository),
+            persistence_facade,
+            infra_facade: build_infra_facade(),
             session_coordinator,
-            audit_logger: Arc::new(StubUserAuditLogger),
         },
     )
     .expect("valid fake tenant dependencies")
@@ -43,21 +86,27 @@ pub fn build_stateful_test_tenant_service(
 ) -> tenant_service::TenantService {
     let session_store = Arc::new(FakeSessionStore::new());
     let session_coordinator = Arc::new(SessionCoordinator::new(
-        session_store,
+        session_store.clone(),
         SessionCoordinatorConfig::default(),
     ));
+
+    let persistence_facade = build_persistence_facade(
+        tenant_repo,
+        membership_repo,
+        user_repo,
+        invite_repo,
+        Arc::new(FakePermissionRepository::default()),
+        Arc::new(StatefulFakeRoleRepository::default()),
+        session_store,
+        Arc::new(StubUserAuditLogger),
+    );
 
     tenant_service::TenantService::new(
         tenant_service::TenantConfig::default(),
         tenant_service::Dependencies {
-            tenant_repository: tenant_repo,
-            membership_repository: membership_repo,
-            user_repository: user_repo,
-            invite_repository: invite_repo,
-            permission_repository: Arc::new(FakePermissionRepository::default()),
-            role_repository: Arc::new(StatefulFakeRoleRepository::default()),
+            persistence_facade,
+            infra_facade: build_infra_facade(),
             session_coordinator,
-            audit_logger: Arc::new(StubUserAuditLogger),
         },
     )
     .expect("valid fake tenant dependencies")

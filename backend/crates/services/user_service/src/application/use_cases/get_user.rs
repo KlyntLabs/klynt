@@ -14,6 +14,7 @@ pub(crate) async fn execute(
 ) -> Result<UserProfile, UserError> {
     let user = service
         .internal()
+        .persistence_facade
         .user_repository
         .find_by_id(ctx, user_id)
         .await?

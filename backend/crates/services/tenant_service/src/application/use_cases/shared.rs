@@ -23,6 +23,7 @@ pub async fn fetch_tenant(
 
     service
         .internal()
+        .persistence_facade
         .tenant_repository
         .find_by_slug(ctx, &slug)
         .await?

@@ -26,15 +26,12 @@ use domain::{
     Permission, PermissionId, RoleId, Tenant, TenantId, TenantMembershipSummary,
     TenantRoleAggregate, TenantSlug, UserId,
 };
+use infra_facades::{InfraFacade, PersistenceFacade};
 
 pub use builder::TenantBuilder;
 pub use config::TenantConfig;
 pub use error::{TenantError, TenantResult};
 
-use application::ports::{
-    AuditLogger, MembershipRepository, PermissionRepository, RoleRepository,
-    TenantInviteRepository, TenantRepository, UserRepository,
-};
 use application::AuthorizationService;
 use session_coordinator::SessionCoordinator;
 
@@ -137,21 +134,22 @@ impl TenantService {
     /// remains available for tests and custom dependency injection.
     pub fn new(_config: TenantConfig, dependencies: Dependencies) -> Result<Self, TenantError> {
         let authorization_service = AuthorizationService::new(
-            dependencies.membership_repository.clone(),
-            dependencies.permission_repository.clone(),
-            dependencies.role_repository.clone(),
+            dependencies
+                .persistence_facade
+                .membership_repository
+                .clone(),
+            dependencies
+                .persistence_facade
+                .permission_repository
+                .clone(),
+            dependencies.persistence_facade.role_repository.clone(),
         );
 
         Ok(Self {
             internal_state: InternalState {
-                tenant_repository: dependencies.tenant_repository,
-                membership_repository: dependencies.membership_repository,
-                user_repository: dependencies.user_repository,
-                invite_repository: dependencies.invite_repository,
-                permission_repository: dependencies.permission_repository,
-                role_repository: dependencies.role_repository,
+                persistence_facade: dependencies.persistence_facade,
+                infra_facade: dependencies.infra_facade,
                 session_coordinator: dependencies.session_coordinator,
-                audit_logger: dependencies.audit_logger,
                 authorization_service,
             },
         })
@@ -325,6 +323,7 @@ impl TenantService {
         slug: &TenantSlug,
     ) -> Result<Option<Tenant>, TenantError> {
         self.internal()
+            .persistence_facade
             .tenant_repository
             .find_by_slug(ctx, slug)
             .await
@@ -340,6 +339,7 @@ impl TenantService {
     ) -> Result<(), TenantError> {
         let membership = self
             .internal()
+            .persistence_facade
             .membership_repository
             .find(ctx, tenant_id, user_id)
             .await?;
@@ -367,25 +367,17 @@ impl TenantService {
 /// Dependencies wired into the tenant service.
 #[derive(Clone)]
 pub struct Dependencies {
-    pub tenant_repository: Arc<dyn TenantRepository>,
-    pub membership_repository: Arc<dyn MembershipRepository>,
-    pub user_repository: Arc<dyn UserRepository>,
-    pub invite_repository: Arc<dyn TenantInviteRepository>,
-    pub permission_repository: Arc<dyn PermissionRepository>,
-    pub role_repository: Arc<dyn RoleRepository>,
+    pub persistence_facade: Arc<PersistenceFacade>,
+    pub infra_facade: Arc<InfraFacade>,
     pub session_coordinator: Arc<SessionCoordinator>,
-    pub audit_logger: Arc<dyn AuditLogger>,
 }
 
 /// Internal state — not part of the public interface.
 pub(crate) struct InternalState {
-    pub tenant_repository: Arc<dyn TenantRepository>,
-    pub membership_repository: Arc<dyn MembershipRepository>,
-    pub user_repository: Arc<dyn UserRepository>,
-    pub invite_repository: Arc<dyn TenantInviteRepository>,
-    pub permission_repository: Arc<dyn PermissionRepository>,
-    pub role_repository: Arc<dyn RoleRepository>,
+    pub persistence_facade: Arc<PersistenceFacade>,
+    /// Retained for dependency injection; not currently used by tenant use cases.
+    #[allow(dead_code)]
+    pub infra_facade: Arc<InfraFacade>,
     pub session_coordinator: Arc<SessionCoordinator>,
-    pub audit_logger: Arc<dyn AuditLogger>,
     pub authorization_service: AuthorizationService,
 }

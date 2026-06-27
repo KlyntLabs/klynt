@@ -5,6 +5,9 @@ edition = "2021"
 
 [dependencies]
 base = { path = "../../base" }
+persistence = { path = "../../infra/persistence" }
+async-trait = { workspace = true }
 
 [dev-dependencies]
 base = { path = "../../base", features = ["testkit"] }
+tokio = { workspace = true }

@@ -27,6 +27,7 @@ pub(crate) async fn execute(
 
     let old_role = service
         .internal()
+        .persistence_facade
         .role_repository
         .find_role_by_id(ctx, tenant.id, role_id)
         .await
@@ -35,6 +36,7 @@ pub(crate) async fn execute(
 
     service
         .internal()
+        .persistence_facade
         .role_repository
         .update_role_permissions(ctx, tenant.id, role_id, request.permission_ids.clone())
         .await
@@ -42,6 +44,7 @@ pub(crate) async fn execute(
 
     let updated_role = service
         .internal()
+        .persistence_facade
         .role_repository
         .find_role_by_id(ctx, tenant.id, role_id)
         .await
@@ -50,6 +53,7 @@ pub(crate) async fn execute(
 
     service
         .internal()
+        .persistence_facade
         .audit_logger
         .log_role_permissions_updated(
             ctx,

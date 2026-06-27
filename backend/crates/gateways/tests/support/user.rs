@@ -10,6 +10,7 @@ use base::ports::repository::{RepositoryError, UserRepository};
 use base::ports::{Clock, PasswordHashError, PasswordHasher};
 use chrono::{DateTime, Utc};
 use domain::{Email, PaginationRequest, PermissionId, RoleId, TenantId, User, UserId, UserRole};
+use infra_facades::{InfraFacade, PersistenceFacade};
 use user_service::{
     application::ports::AuditLogger as UserAuditLogger, Dependencies as UserDependencies,
     UserConfig, UserService,
@@ -282,13 +283,29 @@ impl Clock for FixedUserClock {
 /// Build a fake user service and its backing repository for tests.
 pub fn build_test_user_service() -> (UserService, Arc<FakeUserServiceRepository>) {
     let repo = Arc::new(FakeUserServiceRepository::default());
+    let clock = Arc::new(FixedUserClock { now: Utc::now() });
+    let persistence_facade = Arc::new(PersistenceFacade::new(
+        repo.clone(),
+        Arc::new(base::testkit::FakeTenantRepository),
+        Arc::new(base::testkit::FakeMembershipRepository::new()),
+        Arc::new(base::testkit::FakeTenantInviteRepository::new()),
+        Arc::new(base::testkit::FakePermissionRepository::new()),
+        Arc::new(base::testkit::FakeRoleRepository::new()),
+        Arc::new(base::testkit::FakeTenantDesktopLayoutRepository),
+        Arc::new(base::testkit::FakeSessionStore::new()),
+        Arc::new(base::testkit::FakeTokenStore::new()),
+        Arc::new(StubUserAuditLogger),
+    ));
+    let infra_facade = Arc::new(InfraFacade::new(
+        Arc::new(FakeUserPasswordHasher),
+        Arc::new(base::testkit::FakeEmailSender::new()),
+        clock,
+    ));
     let service = UserService::new(
         UserConfig::default(),
         UserDependencies {
-            user_repository: repo.clone(),
-            audit_logger: Arc::new(StubUserAuditLogger),
-            password_hasher: Arc::new(FakeUserPasswordHasher),
-            clock: Arc::new(FixedUserClock { now: Utc::now() }),
+            persistence_facade,
+            infra_facade,
         },
     )
     .expect("valid test dependencies");

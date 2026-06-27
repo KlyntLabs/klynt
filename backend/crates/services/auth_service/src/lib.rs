@@ -20,10 +20,10 @@ pub mod models;
 use std::sync::Arc;
 
 use base::ctx::ExecutionContext;
-use base::ports::{Clock, PasswordHasher};
 use domain::contracts::auth::{LoginRequest, LoginResponse, RegistrationRequest};
 use domain::session::SessionSummary;
 use domain::UserId;
+use infra_facades::{InfraFacade, PersistenceFacade};
 use uuid::Uuid;
 
 // Public exports
@@ -31,10 +31,7 @@ pub use builder::AuthBuilder;
 pub use core::{PasswordPolicy, SessionToken};
 pub use error::{AuthError, AuthResult};
 
-use application::ports::{AuditLogger, EmailSender, MembershipRepository, UserRepository};
 use application::services::token_email::TokenEmailService;
-use base::ports::session::SessionStore;
-use core::TokenStore;
 
 /// Authentication service — deep module with small interface.
 ///
@@ -80,23 +77,18 @@ impl AuthService {
         let base_url = config.base_url.clone();
 
         let token_email_service = TokenEmailService::new(
-            dependencies.token_store.clone(),
-            dependencies.email_sender.clone(),
+            dependencies.persistence_facade.token_store.clone(),
+            dependencies.infra_facade.email_sender.clone(),
             base_url,
         );
 
         Ok(Self {
             password_policy,
             internal_state: InternalState {
-                user_repository: dependencies.user_repository,
+                persistence_facade: dependencies.persistence_facade,
+                infra_facade: dependencies.infra_facade,
                 session_service: dependencies.session_service,
-                session_store: dependencies.session_store,
-                token_store: dependencies.token_store,
                 token_email_service,
-                audit_logger: dependencies.audit_logger,
-                password_hasher: dependencies.password_hasher,
-                membership_repository: dependencies.membership_repository,
-                clock: dependencies.clock,
             },
         })
     }
@@ -213,33 +205,19 @@ impl Default for AuthConfig {
 
 /// Dependencies wired into the auth service.
 ///
-/// All concrete adapters are supplied at construction time, keeping the
-/// service testable and framework-agnostic.
+/// Adapters are supplied through infrastructure facades, keeping the service
+/// testable and framework-agnostic.
 #[derive(Clone)]
 pub struct Dependencies {
-    pub user_repository: Arc<dyn UserRepository>,
+    pub persistence_facade: Arc<PersistenceFacade>,
+    pub infra_facade: Arc<InfraFacade>,
     pub session_service: Arc<session_service::SessionService>,
-    pub session_store: Arc<dyn SessionStore>,
-    pub token_store: Arc<dyn TokenStore>,
-    pub email_sender: Arc<dyn EmailSender>,
-    pub audit_logger: Arc<dyn AuditLogger>,
-    pub password_hasher: Arc<dyn PasswordHasher>,
-    pub membership_repository: Arc<dyn MembershipRepository>,
-    pub clock: Arc<dyn Clock>,
 }
 
 /// Internal state — not part of the public interface.
 pub(crate) struct InternalState {
-    pub user_repository: Arc<dyn UserRepository>,
+    pub persistence_facade: Arc<PersistenceFacade>,
+    pub infra_facade: Arc<InfraFacade>,
     pub session_service: Arc<session_service::SessionService>,
-    pub session_store: Arc<dyn SessionStore>,
-    pub token_store: Arc<dyn TokenStore>,
     pub token_email_service: TokenEmailService,
-    pub audit_logger: Arc<dyn AuditLogger>,
-    pub password_hasher: Arc<dyn PasswordHasher>,
-    pub membership_repository: Arc<dyn MembershipRepository>,
-    /// Retained for dependency injection and future token/time-sensitive logic.
-    /// The session service owns the clock used for session expiry.
-    #[allow(dead_code)]
-    pub clock: Arc<dyn Clock>,
 }

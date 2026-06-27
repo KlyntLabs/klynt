@@ -23,12 +23,14 @@ pub(crate) async fn execute(
 
     let created = service
         .internal()
+        .persistence_facade
         .tenant_repository
         .create(ctx, &tenant)
         .await?;
 
     service
         .internal()
+        .persistence_facade
         .audit_logger
         .log_tenant_created(ctx, created.id)
         .await;

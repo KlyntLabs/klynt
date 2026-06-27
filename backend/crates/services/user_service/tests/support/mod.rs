@@ -3,6 +3,8 @@
 //! Cross-cutting test doubles come from [`base::testkit`]; this module
 //! keeps only the user-service-specific fakes.
 
+#![allow(dead_code)]
+
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
@@ -11,6 +13,7 @@ use base::ctx::ExecutionContext;
 use base::ports::audit::{PasswordChangeSnapshot, ProfileUpdateSnapshot, RoleMetadataSnapshot};
 use base::testkit::{sample_user as base_sample_user, FakeUserRepository};
 use domain::{PermissionId, RoleId, TenantId, User, UserId, UserStatus};
+use infra_facades::{InfraFacade, PersistenceFacade};
 use user_service::application::ports::AuditLogger;
 use user_service::{Dependencies, UserConfig, UserService};
 
@@ -182,13 +185,29 @@ impl AuditLogger for TestAuditLogger {
 pub fn build_test_service() -> (UserService, Arc<FakeUserRepository>, Arc<TestAuditLogger>) {
     let repo = Arc::new(FakeUserRepository::new());
     let audit = Arc::new(TestAuditLogger::new());
+    let clock = Arc::new(TestClock::new());
+    let persistence_facade = Arc::new(PersistenceFacade::new(
+        repo.clone(),
+        Arc::new(base::testkit::FakeTenantRepository),
+        Arc::new(base::testkit::FakeMembershipRepository::new()),
+        Arc::new(base::testkit::FakeTenantInviteRepository::new()),
+        Arc::new(base::testkit::FakePermissionRepository::new()),
+        Arc::new(base::testkit::FakeRoleRepository::new()),
+        Arc::new(base::testkit::FakeTenantDesktopLayoutRepository),
+        Arc::new(base::testkit::FakeSessionStore::new()),
+        Arc::new(base::testkit::FakeTokenStore::new()),
+        audit.clone(),
+    ));
+    let infra_facade = Arc::new(InfraFacade::new(
+        Arc::new(TestPasswordHasher::with_prefix("")),
+        Arc::new(base::testkit::FakeEmailSender::new()),
+        clock,
+    ));
     let service = UserService::new(
         UserConfig::default(),
         Dependencies {
-            user_repository: repo.clone(),
-            audit_logger: audit.clone(),
-            password_hasher: Arc::new(TestPasswordHasher::with_prefix("")),
-            clock: Arc::new(TestClock::new()),
+            persistence_facade,
+            infra_facade,
         },
     )
     .expect("service construction should succeed");

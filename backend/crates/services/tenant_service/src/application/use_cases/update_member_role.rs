@@ -33,6 +33,7 @@ pub(crate) async fn execute(
     let email = Email::parse(&request.email).map_err(DomainError::from)?;
     let target_user = service
         .internal()
+        .persistence_facade
         .user_repository
         .find_by_email(ctx, &email)
         .await
@@ -47,6 +48,7 @@ pub(crate) async fn execute(
 
     let existing = service
         .internal()
+        .persistence_facade
         .membership_repository
         .find(ctx, tenant.id, target_user.id)
         .await?
@@ -56,12 +58,14 @@ pub(crate) async fn execute(
 
     service
         .internal()
+        .persistence_facade
         .membership_repository
         .update_role(ctx, tenant.id, target_user.id, request.role)
         .await?;
 
     service
         .internal()
+        .persistence_facade
         .audit_logger
         .log_member_role_changed(
             ctx,

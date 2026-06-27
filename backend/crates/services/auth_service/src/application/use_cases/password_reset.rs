@@ -20,6 +20,7 @@ pub(crate) async fn request(
 
     let user = match service
         .internal()
+        .persistence_facade
         .user_repository
         .find_by_email(ctx, &parsed_email)
         .await?
@@ -58,23 +59,27 @@ pub(crate) async fn reset(
     let token_hash = Token::sha256_hash(token);
     let user_id = service
         .internal()
+        .persistence_facade
         .token_store
         .consume(ctx, TokenKind::PasswordReset, token_hash)
         .await?;
 
     let password_hash = service
         .internal()
+        .infra_facade
         .password_hasher
         .hash(new_password)
         .await?;
     service
         .internal()
+        .persistence_facade
         .user_repository
         .update_password(ctx, user_id, password_hash)
         .await?;
 
     service
         .internal()
+        .persistence_facade
         .audit_logger
         .log_password_reset(ctx, user_id)
         .await;

@@ -25,6 +25,7 @@ pub(crate) async fn execute(
 
     let members = service
         .internal()
+        .persistence_facade
         .membership_repository
         .list_members(ctx, tenant.id)
         .await?;

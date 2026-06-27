@@ -22,6 +22,7 @@ pub(crate) async fn execute(
 
     let mut user = service
         .internal()
+        .persistence_facade
         .user_repository
         .find_by_id(ctx, user_id)
         .await?
@@ -31,10 +32,16 @@ pub(crate) async fn execute(
 
     user.update_profile(updates.full_name)?;
 
-    let user = service.internal().user_repository.update(ctx, user).await?;
+    let user = service
+        .internal()
+        .persistence_facade
+        .user_repository
+        .update(ctx, user)
+        .await?;
 
     service
         .internal()
+        .persistence_facade
         .audit_logger
         .log_profile_updated(
             ctx,

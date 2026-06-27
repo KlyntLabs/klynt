@@ -19,6 +19,7 @@ pub(crate) async fn execute(
 
     let invite = service
         .internal()
+        .persistence_facade
         .invite_repository
         .find_by_token(ctx, token)
         .await
@@ -33,6 +34,7 @@ pub(crate) async fn execute(
 
     let actor = service
         .internal()
+        .persistence_facade
         .user_repository
         .find_by_id(ctx, actor_id)
         .await
@@ -50,12 +52,14 @@ pub(crate) async fn execute(
 
     let created = service
         .internal()
+        .persistence_facade
         .membership_repository
         .create_with_role_id(ctx, &membership, invite.role_id)
         .await?;
 
     service
         .internal()
+        .persistence_facade
         .invite_repository
         .mark_accepted(ctx, invite.id)
         .await
@@ -63,6 +67,7 @@ pub(crate) async fn execute(
 
     service
         .internal()
+        .persistence_facade
         .audit_logger
         .log_member_added(ctx, invite.tenant_id, actor_id)
         .await;
@@ -80,6 +85,7 @@ pub(crate) async fn execute(
 
     let tenant = service
         .internal()
+        .persistence_facade
         .tenant_repository
         .find_by_id(ctx, invite.tenant_id)
         .await?

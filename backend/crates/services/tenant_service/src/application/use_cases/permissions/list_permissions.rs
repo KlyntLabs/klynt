@@ -12,6 +12,7 @@ pub(crate) async fn execute(
 ) -> Result<Vec<Permission>, TenantError> {
     service
         .internal()
+        .persistence_facade
         .permission_repository
         .list_permissions(ctx)
         .await

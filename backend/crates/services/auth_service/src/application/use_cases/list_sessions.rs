@@ -15,6 +15,7 @@ pub(crate) async fn execute(
 ) -> Result<Vec<SessionSummary>, AuthError> {
     service
         .internal()
+        .persistence_facade
         .session_store
         .list_active_by_user(ctx, user_id)
         .await

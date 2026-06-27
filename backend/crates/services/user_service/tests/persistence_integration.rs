@@ -9,9 +9,8 @@ use base::ports::audit::{AuditLogger, ProfileUpdateSnapshot};
 use base::ports::PasswordHasher;
 use chrono::Utc;
 use domain::{PaginationRequest, UserId, UserStatus};
-use user_service::{
-    application::ports::UserRepository, infrastructure::services::PasswordHasherAdapter,
-};
+use infra_facades::PasswordHasherAdapter;
+use user_service::application::ports::UserRepository;
 
 fn database_url() -> Option<String> {
     std::env::var("DATABASE_URL").ok()

@@ -19,6 +19,7 @@ pub async fn ensure_admin(
     let tenant = crate::application::use_cases::shared::fetch_tenant(service, ctx, slug).await?;
     let membership = service
         .internal()
+        .persistence_facade
         .membership_repository
         .find(ctx, tenant.id, user_id)
         .await?;

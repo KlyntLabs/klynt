@@ -9,7 +9,7 @@ base = { path = "../../../crates/base" }
 domain = { path = "../../shared/domain" }
 
 # === Storage and infrastructure adapters ===
-persistence = { path = "../../../crates/infra/persistence" }
+infra_facades = { path = "../infra_facades" }
 
 # === Async Runtime ===
 tokio = { workspace = true }
@@ -30,4 +30,5 @@ thiserror = { workspace = true }
 [dev-dependencies]
 base = { path = "../../../crates/base", features = ["testkit"] }
 observability = { path = "../../../crates/infra/observability" }
+persistence = { path = "../../../crates/infra/persistence" }
 sqlx = { workspace = true }

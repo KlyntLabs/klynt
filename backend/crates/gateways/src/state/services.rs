@@ -8,8 +8,7 @@ use base::ports::repository::{
     UserRepository,
 };
 use base::ports::{
-    AuditLogger, Clock, EmailSender, PasswordHasher, PermissionRepository, RoleRepository,
-    TokenStore,
+    AuditLogger, Clock, EmailSender, PermissionRepository, RoleRepository, TokenStore,
 };
 use infra_facades::{InfraFacade, PersistenceFacade};
 use ipnet::IpNet;
@@ -109,13 +108,13 @@ impl Services {
             ))) as Arc<dyn AuditLogger>,
         ));
 
-        let password_hasher = Arc::new(auth_service::infrastructure::PasswordHasherAdapter::new(
-            persistence::password_hasher::Argon2PasswordHasher::new(),
-        )) as Arc<dyn PasswordHasher>;
         let email_sender: Arc<dyn EmailSender> =
             Arc::new(persistence::email::MockEmailService::new());
         let clock: Arc<dyn Clock> = Arc::new(base::ports::SystemClock);
-        let infra_facade = Arc::new(InfraFacade::new(password_hasher, email_sender, clock));
+        let infra_facade = Arc::new(InfraFacade::with_default_password_hasher(
+            email_sender,
+            clock,
+        ));
 
         let auth_service = Self::create_auth_service(
             config,
@@ -125,8 +124,11 @@ impl Services {
         )?;
         let user_service =
             Self::create_user_service(config, persistence_facade.clone(), infra_facade.clone())?;
-        let tenant_service =
-            Self::create_tenant_service(persistence_facade.clone(), session_coordinator)?;
+        let tenant_service = Self::create_tenant_service(
+            persistence_facade.clone(),
+            infra_facade.clone(),
+            session_coordinator,
+        )?;
         let desktop_layout_service =
             Self::create_desktop_layout_service(persistence_facade.clone());
         let rate_limiter = Self::create_rate_limiter(config).await?;
@@ -203,10 +205,8 @@ impl Services {
     ) -> Result<user_service::UserService, crate::GatewayError> {
         user_service::UserService::builder()
             .with_config(user_service::UserConfig::default())
-            .with_user_repository(persistence_facade.user_repository.clone())
-            .with_audit_logger(persistence_facade.audit_logger.clone())
-            .with_password_hasher(infra_facade.password_hasher.clone())
-            .with_clock(infra_facade.clock.clone())
+            .with_persistence_facade(persistence_facade)
+            .with_infra_facade(infra_facade)
             .build()
             .map_err(|e| crate::GatewayError::configuration(format!("User service: {e}")))
     }
@@ -225,11 +225,13 @@ impl Services {
 
     fn create_tenant_service(
         persistence_facade: Arc<PersistenceFacade>,
+        infra_facade: Arc<InfraFacade>,
         session_coordinator: Arc<SessionCoordinator>,
     ) -> Result<TenantService, crate::GatewayError> {
         TenantService::builder()
             .with_config(tenant_service::TenantConfig::default())
             .with_persistence_facade(persistence_facade)
+            .with_infra_facade(infra_facade)
             .with_session_coordinator(session_coordinator)
             .build()
             .map_err(|e| crate::GatewayError::configuration(format!("Tenant service: {e}")))

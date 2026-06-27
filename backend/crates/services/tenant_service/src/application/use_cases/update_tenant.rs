@@ -33,12 +33,14 @@ pub(crate) async fn execute(
 
     let updated = service
         .internal()
+        .persistence_facade
         .tenant_repository
         .update(ctx, &tenant)
         .await?;
 
     service
         .internal()
+        .persistence_facade
         .audit_logger
         .log_tenant_updated(ctx, updated.id)
         .await;

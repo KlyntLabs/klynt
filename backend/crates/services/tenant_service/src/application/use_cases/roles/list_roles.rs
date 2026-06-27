@@ -24,6 +24,7 @@ pub(crate) async fn execute(
 
     service
         .internal()
+        .persistence_facade
         .role_repository
         .list_roles_for_tenant(ctx, tenant.id)
         .await

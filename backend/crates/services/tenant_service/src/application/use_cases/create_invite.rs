@@ -39,6 +39,7 @@ pub(crate) async fn execute(
 
     let role = service
         .internal()
+        .persistence_facade
         .role_repository
         .find_role_by_name(ctx, tenant.id, role_name)
         .await?
@@ -62,6 +63,7 @@ pub(crate) async fn execute(
 
     let created = service
         .internal()
+        .persistence_facade
         .invite_repository
         .create(ctx, invite)
         .await
@@ -69,6 +71,7 @@ pub(crate) async fn execute(
 
     service
         .internal()
+        .persistence_facade
         .audit_logger
         .log_member_invited(ctx, tenant.id, created.email.as_str(), role_name)
         .await;

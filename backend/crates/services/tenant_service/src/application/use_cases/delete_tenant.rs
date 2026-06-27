@@ -24,12 +24,14 @@ pub(crate) async fn execute(
 
     service
         .internal()
+        .persistence_facade
         .tenant_repository
         .delete(ctx, tenant.id)
         .await?;
 
     service
         .internal()
+        .persistence_facade
         .audit_logger
         .log_tenant_deleted(ctx, tenant.id)
         .await;

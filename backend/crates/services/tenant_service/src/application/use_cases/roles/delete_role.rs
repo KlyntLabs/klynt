@@ -26,6 +26,7 @@ pub(crate) async fn execute(
 
     let role = service
         .internal()
+        .persistence_facade
         .role_repository
         .find_role_by_id(ctx, tenant.id, role_id)
         .await
@@ -34,6 +35,7 @@ pub(crate) async fn execute(
 
     service
         .internal()
+        .persistence_facade
         .role_repository
         .delete_role(ctx, tenant.id, role_id)
         .await
@@ -41,6 +43,7 @@ pub(crate) async fn execute(
 
     service
         .internal()
+        .persistence_facade
         .audit_logger
         .log_role_deleted(
             ctx,

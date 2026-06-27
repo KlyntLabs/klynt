@@ -40,6 +40,7 @@ pub(crate) async fn execute(
 
     service
         .internal()
+        .persistence_facade
         .role_repository
         .create_role(ctx, role.clone())
         .await
@@ -47,6 +48,7 @@ pub(crate) async fn execute(
 
     service
         .internal()
+        .persistence_facade
         .audit_logger
         .log_role_created(
             ctx,

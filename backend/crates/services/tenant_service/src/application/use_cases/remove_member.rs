@@ -33,6 +33,7 @@ pub(crate) async fn execute(
     let email = Email::parse(&request.email).map_err(DomainError::from)?;
     let target_user = service
         .internal()
+        .persistence_facade
         .user_repository
         .find_by_email(ctx, &email)
         .await
@@ -47,12 +48,14 @@ pub(crate) async fn execute(
 
     service
         .internal()
+        .persistence_facade
         .membership_repository
         .delete(ctx, tenant.id, target_user.id)
         .await?;
 
     service
         .internal()
+        .persistence_facade
         .audit_logger
         .log_member_removed(ctx, tenant.id, target_user.id)
         .await;

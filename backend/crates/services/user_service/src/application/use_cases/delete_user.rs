@@ -14,6 +14,7 @@ pub(crate) async fn execute(
 ) -> Result<(), UserError> {
     let mut user = service
         .internal()
+        .persistence_facade
         .user_repository
         .find_by_id(ctx, user_id)
         .await?
@@ -24,17 +25,19 @@ pub(crate) async fn execute(
         return Err(UserError::SelfDeleteNotAllowed);
     }
 
-    let now = service.internal().clock.now();
+    let now = service.internal().infra_facade.clock.now();
     user.delete(now)?;
 
     service
         .internal()
+        .persistence_facade
         .user_repository
         .delete(ctx, user_id)
         .await?;
 
     service
         .internal()
+        .persistence_facade
         .audit_logger
         .log_user_deleted(ctx, user_id)
         .await;

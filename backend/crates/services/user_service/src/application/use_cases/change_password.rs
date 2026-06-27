@@ -16,6 +16,7 @@ pub(crate) async fn execute(
 ) -> Result<(), UserError> {
     let user = service
         .internal()
+        .persistence_facade
         .user_repository
         .find_by_id(ctx, user_id)
         .await?
@@ -27,6 +28,7 @@ pub(crate) async fn execute(
 
     let password_valid = service
         .internal()
+        .infra_facade
         .password_hasher
         .verify(current_password, &user.password_hash)
         .await?;
@@ -37,18 +39,21 @@ pub(crate) async fn execute(
 
     let new_hash = service
         .internal()
+        .infra_facade
         .password_hasher
         .hash(new_password)
         .await?;
 
     service
         .internal()
+        .persistence_facade
         .user_repository
         .update_password(ctx, user_id, new_hash)
         .await?;
 
     service
         .internal()
+        .persistence_facade
         .audit_logger
         .log_password_changed(
             ctx,

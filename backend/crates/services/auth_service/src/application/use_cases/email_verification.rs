@@ -16,18 +16,21 @@ pub(crate) async fn execute(
 
     let user_id = service
         .internal()
+        .persistence_facade
         .token_store
         .consume(ctx, TokenKind::EmailVerification, token_hash)
         .await?;
 
     service
         .internal()
+        .persistence_facade
         .user_repository
         .activate_user(ctx, user_id)
         .await?;
 
     service
         .internal()
+        .persistence_facade
         .audit_logger
         .log_email_verified(ctx, user_id)
         .await;

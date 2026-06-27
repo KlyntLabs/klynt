@@ -16,6 +16,7 @@ pub(crate) async fn execute(
 ) -> Result<(), AuthError> {
     service
         .internal()
+        .persistence_facade
         .session_store
         .revoke_by_id(ctx, user_id, session_id)
         .await

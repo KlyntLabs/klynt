@@ -2,7 +2,12 @@ use std::sync::Arc;
 
 use auth_service::{AuthConfig, AuthService, Dependencies as AuthDependencies};
 use base::ports::session::SessionStore;
+use base::testkit::{
+    FakePermissionRepository, FakeRoleRepository, FakeTenantDesktopLayoutRepository,
+    FakeTenantInviteRepository, FakeTenantRepository,
+};
 use chrono::Utc;
+use infra_facades::{InfraFacade, PersistenceFacade};
 
 use super::{
     FakeEmailSender, FakeTokenStore, FakeUserRepository, StubAuditLogger, StubMembershipRepository,
@@ -24,18 +29,30 @@ pub fn build_test_auth_service_with_session_store(
         session_service::SessionConfig::default(),
         session_store.clone(),
     ));
+    let clock = Arc::new(FixedClock::new(Utc::now()));
+    let persistence_facade = Arc::new(PersistenceFacade::new(
+        user_repository.clone(),
+        Arc::new(FakeTenantRepository),
+        Arc::new(StubMembershipRepository),
+        Arc::new(FakeTenantInviteRepository::new()),
+        Arc::new(FakePermissionRepository::new()),
+        Arc::new(FakeRoleRepository::new()),
+        Arc::new(FakeTenantDesktopLayoutRepository),
+        session_store,
+        Arc::new(FakeTokenStore::default()),
+        Arc::new(StubAuditLogger),
+    ));
+    let infra_facade = Arc::new(InfraFacade::new(
+        Arc::new(FakePasswordHasher),
+        email_sender.clone(),
+        clock,
+    ));
     let service = AuthService::new(
         AuthConfig::default(),
         AuthDependencies {
-            user_repository: user_repository.clone(),
+            persistence_facade,
+            infra_facade,
             session_service,
-            session_store,
-            token_store: Arc::new(FakeTokenStore::default()),
-            email_sender: email_sender.clone(),
-            audit_logger: Arc::new(StubAuditLogger),
-            password_hasher: Arc::new(FakePasswordHasher),
-            membership_repository: Arc::new(StubMembershipRepository),
-            clock: Arc::new(FixedClock::new(Utc::now())),
         },
     )
     .expect("valid test dependencies");
