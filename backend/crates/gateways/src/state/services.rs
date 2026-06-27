@@ -74,12 +74,6 @@ impl Services {
             .map_err(|e| crate::GatewayError::configuration(format!("Migrations: {e}")))?;
 
         let session_store = Self::create_session_store(config, pool.clone()).await;
-        let session_service = Arc::new(Self::create_session_service(config, session_store.clone()));
-
-        let session_coordinator = Arc::new(Self::create_session_coordinator(
-            config,
-            session_store.clone(),
-        ));
 
         let persistence_facade = Arc::new(PersistenceFacade::new(
             Arc::new(persistence::repositories::user::PgUserRepository::new(pool.clone()))
@@ -114,6 +108,17 @@ impl Services {
         let infra_facade = Arc::new(InfraFacade::with_default_password_hasher(
             email_sender,
             clock,
+        ));
+
+        let session_service = Arc::new(Self::create_session_service(
+            config,
+            session_store.clone(),
+            infra_facade.clock.clone(),
+        ));
+
+        let session_coordinator = Arc::new(Self::create_session_coordinator(
+            config,
+            session_store.clone(),
         ));
 
         let auth_service = Self::create_auth_service(
@@ -186,13 +191,14 @@ impl Services {
     fn create_session_service(
         config: &Config,
         session_store: Arc<dyn base::ports::session::SessionStore>,
+        clock: Arc<dyn Clock>,
     ) -> session_service::SessionService {
         let session_config = session_service::SessionConfig {
             session_duration_secs: config.session.session_duration_secs,
             long_session_duration_secs: config.session.long_session_duration_secs,
             refresh_duration_secs: config.session.refresh_duration_secs,
         };
-        session_service::SessionService::new(session_config, session_store)
+        session_service::SessionService::with_clock(session_config, session_store, clock)
     }
 
     fn create_user_service(

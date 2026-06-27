@@ -1404,6 +1404,7 @@ git commit -m "feat: add infrastructure facade crate"
 **Files:**
 - Modify: `backend/crates/gateways/src/state/services.rs`
 - Modify: `backend/crates/services/auth_service/src/builder.rs`
+- Modify: `backend/crates/services/user_service/src/builder.rs`
 - Modify: `backend/crates/services/tenant_service/src/builder.rs`
 
 **Interfaces:**

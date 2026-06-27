@@ -14,7 +14,6 @@ pub mod application;
 pub mod builder;
 pub mod core;
 pub mod error;
-pub mod infrastructure;
 pub mod models;
 
 use std::sync::Arc;
