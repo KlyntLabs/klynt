@@ -6,7 +6,7 @@
 
 **Architecture:** Consolidate 5 fragmented areas (auth hydration, permissions, desktop windows, subdomain routing, and API layer) into deep modules. Each deep module hides complex implementation behind a small, testable interface.
 
-**Tech Stack:** React 18, TypeScript 5, Zustand 4, React Query 5, Vitest, Testing Library
+**Tech Stack:** React 19, TypeScript 6, Zustand 5, React Query 5, Vitest, Testing Library
 
 ## Global Constraints
 
@@ -82,7 +82,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect, beforeEach } from "vitest";
 import { useAuthModule } from "./auth-module";
-import { AuthStore } from "./auth-store";
+import { useAuthStore } from "./auth-store";
 
 // Test helper to create fresh query client
 function createTestWrapper() {
@@ -97,7 +97,7 @@ function createTestWrapper() {
 describe("auth-module", () => {
   beforeEach(() => {
     // Reset Zustand store before each test
-    AuthStore.getState().reset();
+    useAuthStore.getState().reset();
   });
 
   it("should hydrate user session on mount", async () => {
@@ -133,7 +133,7 @@ describe("auth-module", () => {
 
 ```bash
 cd frontend
-npm test -- auth-module.test.ts --run
+bun run test -- auth-module.test.ts --run
 ```
 
 Expected: FAIL with "Cannot find module './auth-module'" or "useAuthModule is not defined"
@@ -229,7 +229,7 @@ export function useAuthRole(): RoleInfo {
 
 ```bash
 cd frontend
-npm test -- auth-module.test.ts --run
+bun run test -- auth-module.test.ts --run
 ```
 
 Expected: PASS (may need mock for getMe API call in test setup)
@@ -276,7 +276,7 @@ export * from "./types";
 
 ```bash
 cd frontend
-npm test -- auth --run
+bun run test -- auth --run
 ```
 
 Expected: All existing auth tests still pass
@@ -353,7 +353,7 @@ describe("permissions-module", () => {
 
 ```bash
 cd frontend
-npm test -- permissions-module.test.ts --run
+bun run test -- permissions-module.test.ts --run
 ```
 
 Expected: FAIL with "Cannot find module './permissions-module'"
@@ -365,7 +365,7 @@ Expected: FAIL with "Cannot find module './permissions-module'"
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/core/auth/auth-store";
-import { listMyTenants } from "../../api/tenant-api";
+import { listMyTenants } from "../api/tenant-api";
 import { listPermissions, listRoles } from "./api";
 import type { UserRole } from "@/core/auth/types";
 
@@ -462,7 +462,7 @@ export function usePermission(
 
 ```bash
 cd frontend
-npm test -- permissions-module.test.ts --run
+bun run test -- permissions-module.test.ts --run
 ```
 
 Expected: PASS (may need mock for API calls)
@@ -500,7 +500,7 @@ export * from "./types";
 
 ```bash
 cd frontend
-npm test -- permissions --run
+bun run test -- permissions --run
 ```
 
 Expected: All tests pass
@@ -525,7 +525,7 @@ git commit -m "feat(permissions): create deep permissions module, deprecate shal
 
 **Interfaces:**
 - Consumes: React Query for persistence, immer for state updates
-- Produces: `useWindowManager(desktopId)` returning `{ windows, activeWindowId, openApp, closeWindow, focusWindow, minimizeWindow, maximizeWindow, restoreWindow, moveWindow }`
+- Produces: `useWindowManager()` returning the full store with actions (`openApp`, `closeWindow`, `focusWindow`, `minimizeWindow`, `maximizeWindow`, `restoreWindow`, `moveWindow`, etc.); `useDesktopWindows(desktopId)` and `useActiveWindowId(desktopId)` are selectors for common use cases
 
 - [x] **Step 1: Write failing test for window module**
 
@@ -533,7 +533,14 @@ git commit -m "feat(permissions): create deep permissions module, deprecate shal
 // frontend/src/features/desktop/window-manager/window-module.test.ts
 import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, beforeEach } from "vitest";
-import { useWindowManager } from "./window-module";
+import { useWindowManager, useDesktopWindows, useActiveWindowId } from "./window-module";
+
+function useTestManager(desktopId: string) {
+  const manager = useWindowManager();
+  const windows = useDesktopWindows(desktopId);
+  const activeWindowId = useActiveWindowId(desktopId);
+  return { manager, windows, activeWindowId };
+}
 
 describe("window-module", () => {
   beforeEach(() => {
@@ -543,10 +550,10 @@ describe("window-module", () => {
   });
 
   it("should open app window", () => {
-    const { result } = renderHook(() => useWindowManager("test-desktop"));
+    const { result } = renderHook(() => useTestManager("test-desktop"));
 
     act(() => {
-      result.current.openApp("test-app");
+      result.current.manager.openApp("test-desktop", "test-app");
     });
 
     expect(result.current.windows).toHaveLength(1);
@@ -554,40 +561,40 @@ describe("window-module", () => {
   });
 
   it("should focus window and update z-index", () => {
-    const { result } = renderHook(() => useWindowManager("test-desktop"));
+    const { result } = renderHook(() => useTestManager("test-desktop"));
 
     act(() => {
-      result.current.openApp("app1");
+      result.current.manager.openApp("test-desktop", "app1");
     });
     act(() => {
-      result.current.openApp("app2");
+      result.current.manager.openApp("test-desktop", "app2");
     });
 
     const firstWindow = result.current.windows[0];
     const initialZIndex = firstWindow.zIndex;
 
     act(() => {
-      result.current.focusWindow(firstWindow.id);
+      result.current.manager.focusWindow("test-desktop", firstWindow.id);
     });
 
     expect(result.current.windows[0].zIndex).toBeGreaterThan(initialZIndex);
   });
 
   it("should minimize and restore window", () => {
-    const { result } = renderHook(() => useWindowManager("test-desktop"));
+    const { result } = renderHook(() => useTestManager("test-desktop"));
 
     act(() => {
-      result.current.openApp("test-app");
+      result.current.manager.openApp("test-desktop", "test-app");
     });
     const windowId = result.current.windows[0].id;
 
     act(() => {
-      result.current.minimizeWindow(windowId);
+      result.current.manager.minimizeWindow("test-desktop", windowId);
     });
     expect(result.current.windows[0].state).toBe("minimized");
 
     act(() => {
-      result.current.restoreWindow(windowId);
+      result.current.manager.restoreWindow("test-desktop", windowId);
     });
     expect(result.current.windows[0].state).toBe("normal");
   });
@@ -598,12 +605,12 @@ describe("window-module", () => {
 
 ```bash
 cd frontend
-npm test -- window-module.test.ts --run
+bun run test -- window-module.test.ts --run
 ```
 
 Expected: FAIL with "Cannot find module './window-module'"
 
-- [x] **Step 3: Create window module (deep module combining state, operations, persistence)**
+- [x] **Step 3: Create window module (deep module combining state, operations, persistence; `useWindowManager()` exposes the full store and actions, while `useDesktopWindows(desktopId)` and `useActiveWindowId(desktopId)` are selectors for common use cases)**
 
 ```typescript
 // frontend/src/features/desktop/window-manager/window-module.ts
@@ -761,8 +768,8 @@ export const useWindowManager = create<WindowManagerState>()(
             window.state = "maximized";
             window.x = 0;
             window.y = 36;
-            window.width = window.innerWidth;
-            window.height = window.innerHeight - 36;
+            window.width = globalThis.window.innerWidth;
+            window.height = globalThis.window.innerHeight - 36;
           }
         }),
 
@@ -792,7 +799,7 @@ export const useActiveWindowId = (desktopId: string) =>
 
 ```bash
 cd frontend
-npm test -- window-module.test.ts --run
+bun run test -- window-module.test.ts --run
 ```
 
 Expected: PASS
@@ -812,7 +819,7 @@ if (import.meta.env.DEV) {
 
 ```bash
 cd frontend
-npm test -- desktop --run
+bun run test -- desktop --run
 ```
 
 Expected: All tests pass
@@ -889,7 +896,7 @@ describe("subdomain-router", () => {
 
 ```bash
 cd frontend
-npm test -- subdomain-router.test.ts --run
+bun run test -- subdomain-router.test.ts --run
 ```
 
 Expected: FAIL with "Cannot find module './subdomain-router'"
@@ -1044,7 +1051,7 @@ export function isProfileHost(hostname?: string): boolean {
 
 ```bash
 cd frontend
-npm test -- subdomain-router.test.ts --run
+bun run test -- subdomain-router.test.ts --run
 ```
 
 Expected: PASS
@@ -1074,7 +1081,7 @@ export * from "./host-router";
 
 ```bash
 cd frontend
-npm test -- routing --run
+bun run test -- routing --run
 ```
 
 Expected: All tests pass
@@ -1122,7 +1129,7 @@ describe("api-module", () => {
 
 ```bash
 cd frontend
-npm test -- api-module.test.ts --run
+bun run test -- api-module.test.ts --run
 ```
 
 Expected: FAIL with "Cannot find module './api-module'"
@@ -1241,15 +1248,13 @@ export function useIdempotentMutation<T, V = unknown>(
   });
 }
 
-// Re-export existing functions for backward compatibility
-export { apiClient as axiosInstance } from "./api-client";
 ```
 
 - [x] **Step 4: Run test to verify it passes**
 
 ```bash
 cd frontend
-npm test -- api-module.test.ts --run
+bun run test -- api-module.test.ts --run
 ```
 
 Expected: PASS
@@ -1280,7 +1285,7 @@ export * from "./api-error";
 
 ```bash
 cd frontend
-npm test -- api --run
+bun run test -- api --run
 ```
 
 Expected: All tests pass
@@ -1342,7 +1347,7 @@ For each file found:
 
 ```bash
 cd frontend
-npm test -- --run
+bun run test -- --run
 ```
 
 Expected: All tests pass
@@ -1351,7 +1356,7 @@ Expected: All tests pass
 
 ```bash
 cd frontend
-npm run test:e2e
+bun run test:e2e
 ```
 
 Expected: All E2E tests pass
@@ -1367,17 +1372,18 @@ git commit -m "refactor: migrate consumers to deep module interfaces"
 
 ## TASK 7: Cleanup - Remove Deprecated Code
 
-After consumers are migrated and tests pass, remove deprecated code.
+After consumers are migrated and tests pass, remove the deprecated shallow wrappers that have been fully replaced by the deep modules. Files that now live on as thin adapters (e.g., `AuthHydrator`, `route-guards.tsx`, `WindowManager.tsx`) are kept; only the obsolete wrappers and stores are deleted.
 
-- [x] **Step 1: Delete deprecated auth files**
+- [x] **Step 1: Delete deprecated auth wrappers**
 
 ```bash
 cd frontend/src/core/auth
 rm hooks/use-me.ts
 rm hooks/use-auth.ts
 rm auth-identity.tsx
-rm auth-hydrator.tsx
 ```
+
+`auth-hydrator.tsx` remains as a thin provider that consumes `useAuthModule()` to trigger hydration. Route guards have been moved to `route-guards.tsx`.
 
 - [x] **Step 2: Delete deprecated permission hooks**
 
@@ -1393,17 +1399,18 @@ rmdir hooks
 ```bash
 cd frontend/src/features/desktop
 rm -rf store/
-rm components/WindowManager.tsx
 ```
 
-- [x] **Step 4: Delete deprecated routing utilities**
+`components/WindowManager.tsx` remains as the component that consumes the deep module.
+
+- [x] **Step 4: Delete deprecated routing utility**
 
 ```bash
 cd frontend/src/core/routing
 rm subdomain-url.ts
 ```
 
-- [x] **Step 5: Delete deprecated API exports**
+- [x] **Step 5: Delete deprecated API export**
 
 ```bash
 cd frontend/src/core/api
@@ -1412,14 +1419,14 @@ rm query-client.ts
 
 - [x] **Step 6: Update index exports to remove old exports**
 
-Update each `index.ts` to only export from new modules
+Update each `index.ts` to only export from the new deep modules.
 
 - [x] **Step 7: Run final test suite**
 
 ```bash
 cd frontend
-npm test -- --run
-npm run typecheck
+bun run test -- --run
+bun run typecheck
 ```
 
 Expected: All tests pass, no type errors
@@ -1428,7 +1435,7 @@ Expected: All tests pass, no type errors
 
 ```bash
 cd frontend
-npm run build
+bun run build
 ```
 
 Expected: Build succeeds

@@ -87,11 +87,11 @@ The frontend surface is organized around a small number of deep modules. Each mo
 |---|---|---|---|
 | Auth | `frontend/src/core/auth/auth-module.ts` | Hydrate the current user, expose identity/session state, and provide logout/session actions. | `useAuthModule()`, `useAuthRole()` |
 | Permissions | `frontend/src/features/tenant/permissions/permissions-module.ts` | Resolve the user's role for a tenant and answer permission checks against the catalog. | `usePermissions(tenantSlug)`, `usePermission(tenantSlug, permissionName)` |
-| Window manager | `frontend/src/features/desktop/window-manager/window-module.ts` | Own desktop window state: open, close, focus, move, minimize, maximize, restore, plus z-index compaction. | `useWindowManager(desktopId)`, `useDesktopWindows(desktopId)`, `useActiveWindowId(desktopId)` |
+| Window manager | `frontend/src/features/desktop/window-manager/window-module.ts` | Own desktop window state: open, close, focus, move, minimize, maximize, restore, plus z-index compaction. | `useWindowManager()` (store hook), `useDesktopWindows(desktopId)`, `useActiveWindowId(desktopId)` (selectors) |
 | Subdomain router | `frontend/src/core/routing/subdomain-router.ts` | Build subdomain URLs and classify the current host (apex, tenant, login, admin, profile). | `buildTenantUrl`, `buildLoginUrl`, `buildAdminUrl`, `buildApexUrl`, `buildProfileUrl`, `buildSubdomainUrl`, `getHostContext`, `isApexHost`, `isTenantHost`, `isProfileHost` |
 | API | `frontend/src/core/api/api-module.ts` | Provide the configured API client, typed React Query wrappers, idempotent mutations, query-client factory, and auth interceptor wiring. | `useApiQuery`, `useApiMutation`, `useIdempotentMutation`, `apiClient`, `ApiError`, `createApiError`, `generateIdempotencyKey`, `createQueryClient`, `registerAuthInterceptor`, `createAuthInterceptorDeps` |
 
-Shallow wrappers that previously spread this logic across `auth-identity`, `use-me`, permission hooks, the desktop store, `subdomain-url`, and `query-client` have been removed; consumers now import directly from the deep modules above.
+Shallow wrappers that previously spread this logic across `auth-identity`, `use-me`, permission hooks, the desktop store, `subdomain-url`, and `query-client` have been removed; consumers now import directly from the deep modules above. `AuthHydrator` remains as a thin provider that mounts `useAuthModule()` to trigger hydration, while the actual hydration logic lives in the deep module.
 
 ## Notes
 
