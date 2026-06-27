@@ -68,9 +68,10 @@ impl AuthBuilder {
         })?;
 
         let session_service = self.session_service.unwrap_or_else(|| {
-            Arc::new(session_service::SessionService::new(
+            Arc::new(session_service::SessionService::with_clock(
                 session_service::SessionConfig::default(),
                 persistence_facade.session_store.clone(),
+                infra_facade.clock.clone(),
             ))
         });
 

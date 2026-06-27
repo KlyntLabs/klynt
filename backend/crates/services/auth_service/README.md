@@ -46,7 +46,7 @@ src/
 ├── builder.rs          # Fluent builder for production wiring
 ├── core/               # Auth-specific domain (sessions, tokens, password policy)
 ├── application/        # Use case orchestration + ports
-├── infrastructure/     # Adapters for repositories and services
+├── infrastructure/     # External integrations (adapters supplied by composition root)
 ├── models/             # Internal models
 └── error.rs            # Auth-specific errors
 ```

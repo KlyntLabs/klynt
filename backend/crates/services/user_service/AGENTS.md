@@ -20,11 +20,11 @@ Core methods for user profile operations:
 
 | Method | Purpose | Returns |
 |--------|---------|---------|
-| `get_profile()` | Get user profile by ID | `UserProfile` |
+| `get_user()` | Get user profile by ID | `UserProfile` |
 | `update_profile()` | Update user profile fields | `UserProfile` |
 | `change_password()` | Change user password | `()` |
-| `list_users()` | List users with pagination | `Vec<User>` |
-| `soft_delete_user()` | Soft delete a user | `()` |
+| `list_users()` | List users with pagination | `PaginatedResponse<UserProfile>` |
+| `delete_user()` | Soft delete a user | `()` |
 
 ## When to Use This Service
 
