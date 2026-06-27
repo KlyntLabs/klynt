@@ -150,10 +150,7 @@ impl SessionStore for FakeSessionStore {
     /// Add a tenant membership to all active sessions for the user.
     ///
     /// This implementation is idempotent: if a membership for the tenant already
-    /// exists, it is not added again. This is stricter than the current Postgres
-    /// implementation (`PgSessionStore::add_membership`), which appends via
-    /// `tenant_memberships || $1::jsonb` and may create duplicate tenant entries
-    /// if called twice.
+    /// exists, its role is updated in place and no duplicate entry is created.
     async fn add_membership(
         &self,
         _ctx: &ExecutionContext,
@@ -161,10 +158,12 @@ impl SessionStore for FakeSessionStore {
         membership: MembershipSnapshot,
     ) -> Result<(), SessionError> {
         self.mutate_memberships(user_id, |memberships| {
-            if !memberships
-                .iter()
-                .any(|m| m.tenant_id == membership.tenant_id)
+            if let Some(existing) = memberships
+                .iter_mut()
+                .find(|m| m.tenant_id == membership.tenant_id)
             {
+                existing.role = membership.role;
+            } else {
                 memberships.push(membership.clone());
             }
         });
@@ -255,5 +254,49 @@ mod tests {
             .unwrap();
 
         assert!(store.find_valid(&ctx(), &token).await.unwrap().is_none());
+    }
+
+    #[tokio::test]
+    async fn add_membership_is_idempotent_for_same_tenant() {
+        use domain::membership::TenantRole;
+        use uuid::Uuid;
+
+        let store = FakeSessionStore::new();
+        let user_id = UserId::new();
+        let expires_at = Utc::now() + chrono::Duration::hours(1);
+        let tenant_id = Uuid::new_v4();
+
+        let token = store
+            .create_with_kind(&ctx(), user_id, expires_at, SessionKind::Access, None)
+            .await
+            .unwrap();
+
+        store
+            .add_membership(
+                &ctx(),
+                user_id,
+                MembershipSnapshot {
+                    tenant_id,
+                    role: TenantRole::Member,
+                },
+            )
+            .await
+            .unwrap();
+        store
+            .add_membership(
+                &ctx(),
+                user_id,
+                MembershipSnapshot {
+                    tenant_id,
+                    role: TenantRole::Admin,
+                },
+            )
+            .await
+            .unwrap();
+
+        let session = store.find_valid(&ctx(), &token).await.unwrap().unwrap();
+        assert_eq!(session.tenant_memberships.len(), 1);
+        assert_eq!(session.tenant_memberships[0].tenant_id, tenant_id);
+        assert_eq!(session.tenant_memberships[0].role, TenantRole::Admin);
     }
 }

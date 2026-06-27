@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use base::ctx::ExecutionContext;
-use base::ports::session::SessionStore;
+use base::ports::session::{MembershipSnapshot, SessionStore};
 
 use super::config::SessionCoordinatorConfig;
 use super::error::SessionCoordinatorError;
@@ -40,36 +40,31 @@ impl SessionCoordinator {
                 user_id,
                 role,
             } => {
-                use base::ports::session::MembershipSnapshot;
                 let snapshot = MembershipSnapshot {
                     tenant_id: tenant_id.inner(),
                     role,
                 };
                 self.session_store
                     .add_membership(ctx, user_id, snapshot)
-                    .await
-                    .map_err(|e| SessionCoordinatorError::SessionStore(e.to_string()))?;
+                    .await?;
             }
             MembershipEvent::Updated {
                 tenant_id,
                 user_id,
                 role,
             } => {
-                use base::ports::session::MembershipSnapshot;
                 let snapshot = MembershipSnapshot {
                     tenant_id: tenant_id.inner(),
                     role,
                 };
                 self.session_store
                     .update_membership(ctx, user_id, snapshot)
-                    .await
-                    .map_err(|e| SessionCoordinatorError::SessionStore(e.to_string()))?;
+                    .await?;
             }
             MembershipEvent::Removed { tenant_id, user_id } => {
                 self.session_store
                     .remove_membership(ctx, user_id, tenant_id)
-                    .await
-                    .map_err(|e| SessionCoordinatorError::SessionStore(e.to_string()))?;
+                    .await?;
             }
         }
 

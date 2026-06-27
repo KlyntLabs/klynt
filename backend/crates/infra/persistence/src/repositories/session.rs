@@ -241,9 +241,33 @@ impl SessionStore for PgSessionStore {
         membership: MembershipSnapshot,
     ) -> Result<(), SessionError> {
         sqlx::query(
-            "UPDATE sessions SET tenant_memberships = tenant_memberships || $1::jsonb WHERE user_id = $2 AND expires_at > NOW()",
+            r#"
+            UPDATE sessions
+            SET tenant_memberships = COALESCE(
+                (
+                    SELECT jsonb_agg(
+                        CASE
+                            WHEN (elem->>'tenant_id')::uuid = ($1->>'tenant_id')::uuid
+                            THEN $1
+                            ELSE elem
+                        END
+                    )
+                    FROM jsonb_array_elements(tenant_memberships) AS elem
+                ),
+                '[]'::jsonb
+            ) || CASE
+                WHEN EXISTS (
+                    SELECT 1
+                    FROM jsonb_array_elements(tenant_memberships) AS elem
+                    WHERE (elem->>'tenant_id')::uuid = ($1->>'tenant_id')::uuid
+                )
+                THEN '[]'::jsonb
+                ELSE $1
+            END
+            WHERE user_id = $2 AND expires_at > NOW()
+            "#,
         )
-        .bind(Json(vec![membership]))
+        .bind(Json(membership))
         .bind(user_id.inner())
         .execute(&self.pool)
         .await?;
