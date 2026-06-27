@@ -79,6 +79,20 @@ backend/crates/
 └── server                  # Binary entrypoint
 ```
 
+## Frontend Deep Modules
+
+The frontend surface is organized around a small number of deep modules. Each module hides its implementation (React Query, Zustand, axios, host parsing) behind a narrow public API and replaces the previous shallow wrappers.
+
+| Module | File | Responsibility | Primary exports |
+|---|---|---|---|
+| Auth | `frontend/src/core/auth/auth-module.ts` | Hydrate the current user, expose identity/session state, and provide logout/session actions. | `useAuthModule()`, `useAuthRole()` |
+| Permissions | `frontend/src/features/tenant/permissions/permissions-module.ts` | Resolve the user's role for a tenant and answer permission checks against the catalog. | `usePermissions(tenantSlug)`, `usePermission(tenantSlug, permissionName)` |
+| Window manager | `frontend/src/features/desktop/window-manager/window-module.ts` | Own desktop window state: open, close, focus, move, minimize, maximize, restore, plus z-index compaction. | `useWindowManager(desktopId)`, `useDesktopWindows(desktopId)`, `useActiveWindowId(desktopId)` |
+| Subdomain router | `frontend/src/core/routing/subdomain-router.ts` | Build subdomain URLs and classify the current host (apex, tenant, login, admin, profile). | `buildTenantUrl`, `buildLoginUrl`, `buildAdminUrl`, `buildApexUrl`, `buildProfileUrl`, `buildSubdomainUrl`, `getHostContext`, `isApexHost`, `isTenantHost`, `isProfileHost` |
+| API | `frontend/src/core/api/api-module.ts` | Provide the configured API client, typed React Query wrappers, idempotent mutations, query-client factory, and auth interceptor wiring. | `useApiQuery`, `useApiMutation`, `useIdempotentMutation`, `apiClient`, `ApiError`, `createApiError`, `generateIdempotencyKey`, `createQueryClient`, `registerAuthInterceptor`, `createAuthInterceptorDeps` |
+
+Shallow wrappers that previously spread this logic across `auth-identity`, `use-me`, permission hooks, the desktop store, `subdomain-url`, and `query-client` have been removed; consumers now import directly from the deep modules above.
+
 ## Notes
 
 - `klynt_common` was removed. Its domain types moved to `domain`; ports and test fakes moved to `base`.
