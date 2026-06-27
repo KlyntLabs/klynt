@@ -21,8 +21,8 @@ auth_service/
 │   │   ├── password_policy.rs   # Password validation
 │   │   ├── session_token.rs     # Session token generation
 │   │   └── token_store.rs      # Token management
-│   ├── infrastructure/          # External integrations
-│   │   └── email_renderer.rs    # Email content generation
+│   ├── infrastructure/          # External integrations (adapters supplied by composition root)
+│   │   └── mod.rs
 │   ├── models/                   # Request/response DTOs
 │   ├── builder.rs               # Builder pattern
 │   ├── error.rs                 # Service-specific errors
