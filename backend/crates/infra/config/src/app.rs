@@ -31,6 +31,9 @@ pub struct AppConfig {
     /// When empty the gateway falls back to deriving it from the API host.
     #[serde(default)]
     pub base_url: String,
+    /// Whether session synchronization via the session coordinator is enabled.
+    #[serde(default = "default_session_sync_enabled")]
+    pub session_sync_enabled: bool,
 }
 
 fn default_cookie_domain() -> String {
@@ -39,6 +42,10 @@ fn default_cookie_domain() -> String {
 
 fn default_csp_directive() -> String {
     DEFAULT_CONTENT_SECURITY_POLICY.to_string()
+}
+
+fn default_session_sync_enabled() -> bool {
+    true
 }
 
 impl Validated for AppConfig {
@@ -79,6 +86,7 @@ mod tests {
             csp_report_only: false,
             csp_directive: default_csp_directive(),
             base_url: String::new(),
+            session_sync_enabled: true,
         };
         assert!(config.validated().is_ok());
     }
@@ -104,6 +112,7 @@ mod tests {
             csp_report_only: false,
             csp_directive: default_csp_directive(),
             base_url: String::new(),
+            session_sync_enabled: true,
         };
         assert!(config.validated().is_err());
     }
@@ -123,6 +132,7 @@ mod tests {
             csp_report_only: false,
             csp_directive: "\n".to_string(),
             base_url: String::new(),
+            session_sync_enabled: true,
         };
         assert!(matches!(
             config.validated(),

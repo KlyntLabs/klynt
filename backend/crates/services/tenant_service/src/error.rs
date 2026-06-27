@@ -1,6 +1,5 @@
 //! Tenant service errors.
 
-use base::ports::session::SessionError;
 use domain::DomainError;
 
 /// Tenant service-specific error type.
@@ -24,9 +23,6 @@ pub enum TenantError {
     #[error(transparent)]
     Domain(#[from] DomainError),
 
-    #[error("session error: {0}")]
-    Session(#[from] SessionError),
-
     #[error("internal error: {0}")]
     Internal(String),
 }
@@ -46,7 +42,6 @@ impl TenantError {
             Self::NotAdmin => "ADMIN_PRIVILEGES_REQUIRED",
             Self::NotOwner => "OWNER_PRIVILEGES_REQUIRED",
             Self::Domain(err) => err.error_code(),
-            Self::Session(_) => "INTERNAL_SERVER_ERROR",
             Self::Internal(_) => "INTERNAL_SERVER_ERROR",
         }
     }

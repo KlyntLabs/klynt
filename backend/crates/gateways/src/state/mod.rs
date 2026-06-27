@@ -63,6 +63,10 @@ pub struct Config {
     /// Content Security Policy directive string.
     #[serde(default = "default_csp_directive")]
     pub csp_directive: String,
+
+    /// Whether session synchronization via the session coordinator is enabled.
+    #[serde(default)]
+    pub session_sync_enabled: bool,
 }
 
 fn default_log_level() -> String {
@@ -91,6 +95,7 @@ impl Default for Config {
             cookie_secure: false,
             csp_report_only: false,
             csp_directive: default_csp_directive(),
+            session_sync_enabled: true,
         }
     }
 }
@@ -141,6 +146,7 @@ impl From<config::AppConfig> for Config {
             cookie_secure: config.cookie_secure,
             csp_report_only: config.csp_report_only,
             csp_directive: config.csp_directive,
+            session_sync_enabled: config.session_sync_enabled,
         }
     }
 }

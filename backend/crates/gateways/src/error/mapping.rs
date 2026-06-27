@@ -71,7 +71,6 @@ pub(super) fn user_error_status_code(error: &user_service::UserError) -> StatusC
 }
 
 pub(super) fn tenant_error_status_code(error: &tenant_service::TenantError) -> StatusCode {
-    use base::ports::session::SessionError;
     use domain::DomainError;
     use tenant_service::TenantError;
 
@@ -81,8 +80,7 @@ pub(super) fn tenant_error_status_code(error: &tenant_service::TenantError) -> S
         TenantError::NotMember | TenantError::NotAdmin | TenantError::NotOwner => {
             StatusCode::FORBIDDEN
         }
-        TenantError::Session(SessionError::Forbidden) => StatusCode::FORBIDDEN,
-        TenantError::Internal(_) | TenantError::Session(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        TenantError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
         TenantError::Domain(DomainError::InvalidInput(_))
         | TenantError::Domain(DomainError::Validation(_))
         | TenantError::Domain(DomainError::InvalidEmail(_))

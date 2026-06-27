@@ -113,6 +113,7 @@ pub fn load_config() -> Result<AppConfig, LoaderConfigError> {
         .set_default("csp_report_only", false)?
         .set_default("csp_directive", DEFAULT_CONTENT_SECURITY_POLICY)?
         .set_default("base_url", "")?
+        .set_default("session_sync_enabled", true)?
         .build()?;
 
     let app_config: AppConfig = config.try_deserialize()?;

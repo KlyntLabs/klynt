@@ -332,18 +332,6 @@ mod tests {
                 GatewayError::from(tenant_service::TenantError::Internal("oops".to_string())),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ),
-            (
-                GatewayError::from(tenant_service::TenantError::Session(
-                    base::ports::session::SessionError::Forbidden,
-                )),
-                StatusCode::FORBIDDEN,
-            ),
-            (
-                GatewayError::from(tenant_service::TenantError::Session(
-                    base::ports::session::SessionError::NotFound,
-                )),
-                StatusCode::INTERNAL_SERVER_ERROR,
-            ),
         ];
 
         for (error, expected) in cases {

@@ -32,6 +32,7 @@ fn test_config() -> Config {
         cookie_secure: false,
         csp_report_only: false,
         csp_directive: DEFAULT_CONTENT_SECURITY_POLICY.to_string(),
+        session_sync_enabled: true,
     }
 }
 

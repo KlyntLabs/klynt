@@ -68,6 +68,11 @@ impl Services {
         let session_store = Self::create_session_store(config, pool.clone()).await;
         let session_service = Arc::new(Self::create_session_service(config, session_store.clone()));
 
+        let session_coordinator = Arc::new(Self::create_session_coordinator(
+            config,
+            session_store.clone(),
+        ));
+
         let auth_service = Self::create_auth_service(
             config,
             pool.clone(),
@@ -75,7 +80,7 @@ impl Services {
             session_service.clone(),
         )?;
         let user_service = Self::create_user_service(config, pool.clone())?;
-        let tenant_service = Self::create_tenant_service(pool.clone(), session_store.clone())?;
+        let tenant_service = Self::create_tenant_service(pool.clone(), session_coordinator)?;
         let desktop_layout_service = Self::create_desktop_layout_service(pool.clone());
         let rate_limiter = Self::create_rate_limiter(config).await?;
         let trusted_proxies = Arc::new(
@@ -186,9 +191,21 @@ impl Services {
             .map_err(|e| crate::GatewayError::configuration(format!("User service: {e}")))
     }
 
+    fn create_session_coordinator(
+        config: &Config,
+        session_store: Arc<dyn base::ports::session::SessionStore>,
+    ) -> SessionCoordinator {
+        SessionCoordinator::new(
+            session_store,
+            SessionCoordinatorConfig {
+                enabled: config.session_sync_enabled,
+            },
+        )
+    }
+
     fn create_tenant_service(
         pool: sqlx::PgPool,
-        session_store: Arc<dyn base::ports::session::SessionStore>,
+        session_coordinator: Arc<SessionCoordinator>,
     ) -> Result<TenantService, crate::GatewayError> {
         let tenant_repository = Arc::new(
             persistence::repositories::tenant::PgTenantRepository::new(pool.clone()),
@@ -215,11 +232,6 @@ impl Services {
             Arc::new(persistence::repositories::audit_event::PgAuditEventRepository::new(pool));
         let audit_logger = Arc::new(observability::audit::AuditService::new(audit_repo))
             as Arc<dyn base::ports::AuditLogger>;
-
-        let session_coordinator = Arc::new(SessionCoordinator::new(
-            session_store,
-            SessionCoordinatorConfig::default(),
-        ));
 
         TenantService::builder()
             .with_config(tenant_service::TenantConfig::default())

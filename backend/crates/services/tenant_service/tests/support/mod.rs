@@ -3,12 +3,23 @@
 use std::sync::Arc;
 
 use base::ctx::{ActorType, ExecutionContext, RequestContext};
-use chrono::Utc;
+use base::ports::session::{Session, SessionStore, SessionToken};
+use chrono::{Duration, Utc};
 use domain::UserId;
 use tenant_service::TenantService;
 
-/// Build a tenant service wired with Postgres-backed adapters.
-pub async fn build_service(pool: sqlx::PgPool) -> TenantService {
+/// Build a Postgres-backed session store.
+pub fn build_session_store(pool: sqlx::PgPool) -> Arc<dyn SessionStore> {
+    Arc::new(persistence::repositories::session::PgSessionStore::new(
+        pool,
+    ))
+}
+
+/// Build a tenant service wired with Postgres-backed adapters and a provided session store.
+pub fn build_service_with_session_store(
+    pool: sqlx::PgPool,
+    session_store: Arc<dyn SessionStore>,
+) -> TenantService {
     let tenant_repository = Arc::new(persistence::repositories::tenant::PgTenantRepository::new(
         pool.clone(),
     )) as Arc<dyn base::ports::repository::TenantRepository>;
@@ -27,9 +38,6 @@ pub async fn build_service(pool: sqlx::PgPool) -> TenantService {
     let role_repository = Arc::new(persistence::repositories::role::PgRoleRepository::new(
         pool.clone(),
     )) as Arc<dyn base::ports::RoleRepository>;
-    let session_store = Arc::new(persistence::repositories::session::PgSessionStore::new(
-        pool.clone(),
-    )) as Arc<dyn base::ports::session::SessionStore>;
     let session_coordinator = Arc::new(session_coordinator::SessionCoordinator::new(
         session_store,
         session_coordinator::SessionCoordinatorConfig::default(),
@@ -50,6 +58,70 @@ pub async fn build_service(pool: sqlx::PgPool) -> TenantService {
         .with_audit_logger(audit_logger)
         .build()
         .expect("tenant service should build")
+}
+
+/// Build a tenant service wired with Postgres-backed adapters.
+#[allow(dead_code)]
+pub async fn build_service(pool: sqlx::PgPool) -> TenantService {
+    let session_store = build_session_store(pool.clone());
+    build_service_with_session_store(pool, session_store)
+}
+
+/// Create a real session for `user_id` using the provided store.
+#[allow(dead_code)]
+pub async fn create_session(
+    session_store: &Arc<dyn SessionStore>,
+    ctx: &ExecutionContext,
+    user_id: UserId,
+) -> SessionToken {
+    let expires_at = Utc::now() + Duration::hours(1);
+    session_store
+        .create(ctx, user_id, expires_at)
+        .await
+        .expect("session should be created")
+}
+
+/// Find a valid session by token using the provided store.
+#[allow(dead_code)]
+pub async fn find_session(
+    session_store: &Arc<dyn SessionStore>,
+    ctx: &ExecutionContext,
+    token: &SessionToken,
+) -> Option<Session> {
+    session_store
+        .find_valid(ctx, token)
+        .await
+        .expect("session lookup should succeed")
+}
+
+/// Assert that `token` has exactly one membership with the expected tenant and role.
+#[allow(dead_code)]
+pub async fn assert_session_membership(
+    session_store: &Arc<dyn SessionStore>,
+    ctx: &ExecutionContext,
+    token: &SessionToken,
+    tenant_id: domain::TenantId,
+    role: domain::TenantRole,
+) {
+    let session = find_session(session_store, ctx, token)
+        .await
+        .expect("session should be valid");
+    assert_eq!(session.tenant_memberships.len(), 1);
+    assert_eq!(session.tenant_memberships[0].tenant_id, tenant_id.inner());
+    assert_eq!(session.tenant_memberships[0].role, role);
+}
+
+/// Assert that `token` has no tenant memberships.
+#[allow(dead_code)]
+pub async fn assert_session_has_no_memberships(
+    session_store: &Arc<dyn SessionStore>,
+    ctx: &ExecutionContext,
+    token: &SessionToken,
+) {
+    let session = find_session(session_store, ctx, token)
+        .await
+        .expect("session should be valid");
+    assert!(session.tenant_memberships.is_empty());
 }
 
 /// Return `DATABASE_URL` if it is set.
