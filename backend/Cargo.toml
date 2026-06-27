@@ -13,6 +13,7 @@ members = [
     "crates/services/cleanup_job",
     "crates/gateways",
     "crates/server",
+    "crates/services/session_coordinator",
 ]
 
 [workspace.package]

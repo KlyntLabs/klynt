@@ -1,0 +1,12 @@
+[package]
+name = "session_coordinator"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+base = { path = "../../../crates/base" }
+domain = { path = "../../shared/domain" }
+async-trait = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
