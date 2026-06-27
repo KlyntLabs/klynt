@@ -434,6 +434,54 @@ async fn repository_execute_list_for_tenant_returns_membership_list() {
 }
 
 #[tokio::test]
+async fn repository_execute_list_for_user_returns_membership_list() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let membership_repo = PgMembershipRepository::new(pool.clone());
+    let ctx = test_ctx();
+    let owner_id = create_test_user(&pool, "ExecuteListForUserOwner").await;
+    let tenant_a = create_test_tenant(&pool, owner_id).await;
+    let tenant_b = create_test_tenant(&pool, owner_id).await;
+    let member_id = create_test_user(&pool, "ExecuteListForUserMember").await;
+
+    membership_repo
+        .create(
+            &ctx,
+            &Membership::new(tenant_a.id, member_id, TenantRole::Member),
+        )
+        .await
+        .unwrap();
+    membership_repo
+        .create(
+            &ctx,
+            &Membership::new(tenant_b.id, member_id, TenantRole::Admin),
+        )
+        .await
+        .unwrap();
+
+    let result = membership_repo
+        .execute(&ctx, MembershipOp::ListForUser { user_id: member_id })
+        .await
+        .unwrap();
+
+    match result {
+        MembershipOpResult::MembershipList(list) => {
+            assert_eq!(list.len(), 2);
+            let tenant_ids: Vec<_> = list.iter().map(|m| m.tenant_id).collect();
+            assert!(tenant_ids.contains(&tenant_a.id));
+            assert!(tenant_ids.contains(&tenant_b.id));
+            assert!(list.iter().any(|m| m.role == TenantRole::Member));
+            assert!(list.iter().any(|m| m.role == TenantRole::Admin));
+        }
+        _ => panic!("Expected MembershipList result"),
+    }
+
+    cleanup_test_data(&pool, &[owner_id, member_id], &[tenant_a.id, tenant_b.id]).await;
+}
+
+#[tokio::test]
 async fn repository_execute_update_role_and_delete_return_unit() {
     let Some(pool) = setup_pool().await else {
         return;
