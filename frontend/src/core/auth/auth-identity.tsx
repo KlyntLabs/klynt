@@ -6,6 +6,12 @@ import { useAuthStore } from "./auth-store";
 import { ExternalNavigate, isExternalUrl } from "./external-redirect";
 import type { UserRole } from "./types";
 
+if (import.meta.env.DEV) {
+  console.warn(
+    "[DEPRECATED] AuthIdentity exports are deprecated. Use useAuthModule from './auth-module.ts' instead."
+  );
+}
+
 export interface UseAuthResult {
   user: import("./types").User | null;
   isAuthenticated: boolean;
@@ -37,13 +43,16 @@ export function useRole() {
   const { user } = useAuth();
   const role = user?.role ?? null;
 
-  return {
-    role,
-    isAdmin: role === "admin",
-    isInstructor: role === "instructor" || role === "admin",
-    isStudent: role === "student",
-    hasRole: (allowedRoles: UserRole[]) => (role ? allowedRoles.includes(role) : false),
-  };
+  return useMemo(
+    () => ({
+      role,
+      isAdmin: role === "admin",
+      isInstructor: role === "instructor" || role === "admin",
+      isStudent: role === "student",
+      hasRole: (allowedRoles: UserRole[]) => (role ? allowedRoles.includes(role) : false),
+    }),
+    [role]
+  );
 }
 
 interface ProtectedRouteProps {

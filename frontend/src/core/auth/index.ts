@@ -1,6 +1,7 @@
 export * from "./api/auth-api";
 export * from "./auth-hydrator";
 export * from "./auth-identity";
+export * from "./auth-module";
 export * from "./auth-store";
 export * from "./hooks/use-forgot-password";
 export * from "./hooks/use-login";

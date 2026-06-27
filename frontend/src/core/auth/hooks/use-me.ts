@@ -3,10 +3,15 @@ import { useEffect } from "react";
 import { getMe } from "../api/auth-api";
 import { useAuthStore } from "../auth-store";
 
+if (import.meta.env.DEV) {
+  console.warn(
+    "[DEPRECATED] useMe is deprecated. Use useAuthModule from '../auth-module.ts' instead."
+  );
+}
+
 export function useMe() {
   const setSession = useAuthStore((state) => state.setSession);
   const clearSession = useAuthStore((state) => state.clearSession);
-  const setLoading = useAuthStore((state) => state.setLoading);
 
   const query = useQuery({
     queryKey: ["auth", "me"],
@@ -27,9 +32,8 @@ export function useMe() {
   useEffect(() => {
     if (query.isError) {
       clearSession();
-      setLoading(false);
     }
-  }, [query.isError, clearSession, setLoading]);
+  }, [query.isError, clearSession]);
 
   return query;
 }
