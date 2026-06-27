@@ -80,6 +80,7 @@ pub(super) fn tenant_error_status_code(error: &tenant_service::TenantError) -> S
         TenantError::NotMember | TenantError::NotAdmin | TenantError::NotOwner => {
             StatusCode::FORBIDDEN
         }
+        TenantError::SessionCoordinator(_) => StatusCode::INTERNAL_SERVER_ERROR,
         TenantError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
         TenantError::Domain(DomainError::InvalidInput(_))
         | TenantError::Domain(DomainError::Validation(_))

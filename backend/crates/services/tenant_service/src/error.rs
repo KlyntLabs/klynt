@@ -23,6 +23,9 @@ pub enum TenantError {
     #[error(transparent)]
     Domain(#[from] DomainError),
 
+    #[error("session coordinator error: {0}")]
+    SessionCoordinator(String),
+
     #[error("internal error: {0}")]
     Internal(String),
 }
@@ -42,6 +45,7 @@ impl TenantError {
             Self::NotAdmin => "ADMIN_PRIVILEGES_REQUIRED",
             Self::NotOwner => "OWNER_PRIVILEGES_REQUIRED",
             Self::Domain(err) => err.error_code(),
+            Self::SessionCoordinator(_) => "SESSION_COORDINATOR_ERROR",
             Self::Internal(_) => "INTERNAL_SERVER_ERROR",
         }
     }

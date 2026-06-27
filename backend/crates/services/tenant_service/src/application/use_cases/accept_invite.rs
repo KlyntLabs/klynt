@@ -76,7 +76,7 @@ pub(crate) async fn execute(
         .session_coordinator()
         .handle_membership_event(ctx, event)
         .await
-        .map_err(|e| TenantError::Internal(e.to_string()))?;
+        .map_err(|e| TenantError::SessionCoordinator(e.to_string()))?;
 
     let tenant = service
         .internal()

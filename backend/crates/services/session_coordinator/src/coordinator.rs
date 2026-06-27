@@ -25,6 +25,14 @@ impl SessionCoordinator {
     }
 
     /// Handle a membership event by updating affected sessions.
+    #[tracing::instrument(
+        skip(self, ctx),
+        fields(
+            event_kind = %event.kind(),
+            tenant_id = %event.tenant_id(),
+            user_id = %event.user_id(),
+        )
+    )]
     pub async fn handle_membership_event(
         &self,
         ctx: &ExecutionContext,

@@ -332,6 +332,12 @@ mod tests {
                 GatewayError::from(tenant_service::TenantError::Internal("oops".to_string())),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ),
+            (
+                GatewayError::from(tenant_service::TenantError::SessionCoordinator(
+                    "store down".to_string(),
+                )),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ),
         ];
 
         for (error, expected) in cases {

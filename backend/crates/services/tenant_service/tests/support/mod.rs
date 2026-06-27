@@ -1,5 +1,7 @@
 //! Shared test support for tenant service Postgres-backed integration tests.
 
+#![allow(dead_code)]
+
 use std::sync::Arc;
 
 use base::ctx::{ActorType, ExecutionContext, RequestContext};
@@ -61,14 +63,12 @@ pub fn build_service_with_session_store(
 }
 
 /// Build a tenant service wired with Postgres-backed adapters.
-#[allow(dead_code)]
 pub async fn build_service(pool: sqlx::PgPool) -> TenantService {
     let session_store = build_session_store(pool.clone());
     build_service_with_session_store(pool, session_store)
 }
 
 /// Create a real session for `user_id` using the provided store.
-#[allow(dead_code)]
 pub async fn create_session(
     session_store: &Arc<dyn SessionStore>,
     ctx: &ExecutionContext,
@@ -82,7 +82,6 @@ pub async fn create_session(
 }
 
 /// Find a valid session by token using the provided store.
-#[allow(dead_code)]
 pub async fn find_session(
     session_store: &Arc<dyn SessionStore>,
     ctx: &ExecutionContext,
@@ -95,7 +94,6 @@ pub async fn find_session(
 }
 
 /// Assert that `token` has exactly one membership with the expected tenant and role.
-#[allow(dead_code)]
 pub async fn assert_session_membership(
     session_store: &Arc<dyn SessionStore>,
     ctx: &ExecutionContext,
@@ -112,7 +110,6 @@ pub async fn assert_session_membership(
 }
 
 /// Assert that `token` has no tenant memberships.
-#[allow(dead_code)]
 pub async fn assert_session_has_no_memberships(
     session_store: &Arc<dyn SessionStore>,
     ctx: &ExecutionContext,
@@ -146,14 +143,12 @@ pub fn test_ctx(user_id: UserId) -> ExecutionContext {
 }
 
 /// Create a test user and return their ID.
-#[allow(dead_code)]
 pub async fn create_test_user(pool: &sqlx::PgPool, prefix: &str) -> UserId {
     let (user_id, _) = create_test_user_with_email(pool, prefix).await;
     user_id
 }
 
 /// Create a test user and return their ID and email.
-#[allow(dead_code)]
 pub async fn create_test_user_with_email(pool: &sqlx::PgPool, prefix: &str) -> (UserId, String) {
     let user_id = UserId::new();
     let email = format!("{}-{}@example.com", prefix, user_id.inner());

@@ -43,4 +43,13 @@ impl MembershipEvent {
             | Self::Removed { user_id, .. } => *user_id,
         }
     }
+
+    /// Return a stable, human-readable name for the event kind.
+    pub fn kind(&self) -> &'static str {
+        match self {
+            Self::Added { .. } => "added",
+            Self::Updated { .. } => "updated",
+            Self::Removed { .. } => "removed",
+        }
+    }
 }
