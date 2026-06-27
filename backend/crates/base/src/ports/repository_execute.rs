@@ -8,7 +8,7 @@ use crate::ctx::ExecutionContext;
 use crate::ports::repository::{
     MembershipRepository, RepositoryError, TenantRepository, UserRepository,
 };
-use domain::membership::{Membership, TenantMember};
+use domain::membership::Membership;
 use domain::operations::{MembershipOp, TenantOp, UserOp};
 use domain::tenant::{Tenant, TenantMembershipSummary};
 use domain::{DomainResult, User, UserId};
@@ -52,8 +52,6 @@ pub enum MembershipOpResult {
     MembershipOption(Option<Membership>),
     /// List of memberships.
     MembershipList(Vec<Membership>),
-    /// List of tenant members.
-    TenantMemberList(Vec<TenantMember>),
     /// Unit result.
     Unit,
 }
