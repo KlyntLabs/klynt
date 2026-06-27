@@ -7,7 +7,7 @@ use domain::{RoleId, TenantRoleAggregate};
 use crate::error::TenantError;
 use crate::{CreateRoleRequest, TenantService};
 
-use super::super::shared::{fetch_tenant, require_actor, require_member_permission};
+use super::super::shared::{fetch_tenant, require_actor};
 
 pub(crate) async fn execute(
     service: &TenantService,
@@ -18,15 +18,11 @@ pub(crate) async fn execute(
     let user_id = require_actor(ctx)?;
     let tenant = fetch_tenant(service, ctx, slug).await?;
 
-    require_member_permission(
-        service,
-        ctx,
-        tenant.id,
-        user_id,
-        permission::tenant::MANAGE_ROLES,
-        TenantError::NotAdmin,
-    )
-    .await?;
+    service
+        .authorization()
+        .require_permission_with_context(ctx, tenant.id, user_id, permission::tenant::MANAGE_ROLES)
+        .await
+        .map_err(|_| TenantError::NotAdmin)?;
 
     if request.name.trim().is_empty() {
         return Err(TenantError::Domain(domain::DomainError::validation(

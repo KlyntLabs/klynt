@@ -6,7 +6,7 @@ use domain::permission;
 use crate::error::TenantError;
 use crate::TenantService;
 
-use super::shared::{fetch_tenant, require_actor, require_member_permission};
+use super::shared::{fetch_tenant, require_actor};
 
 pub(crate) async fn execute(
     service: &TenantService,
@@ -16,15 +16,11 @@ pub(crate) async fn execute(
     let user_id = require_actor(ctx)?;
     let tenant = fetch_tenant(service, ctx, slug).await?;
 
-    require_member_permission(
-        service,
-        ctx,
-        tenant.id,
-        user_id,
-        permission::tenant::DELETE,
-        TenantError::NotOwner,
-    )
-    .await?;
+    service
+        .authorization()
+        .require_permission_with_context(ctx, tenant.id, user_id, permission::tenant::DELETE)
+        .await
+        .map_err(|_| TenantError::NotOwner)?;
 
     service
         .internal()

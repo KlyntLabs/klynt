@@ -8,7 +8,7 @@ use session_coordinator::event::MembershipEvent;
 use crate::error::TenantError;
 use crate::{TenantService, UpdateMemberRoleRequest};
 
-use super::shared::{fetch_tenant, require_actor, require_member_permission};
+use super::shared::{fetch_tenant, require_actor};
 
 pub(crate) async fn execute(
     service: &TenantService,
@@ -19,15 +19,16 @@ pub(crate) async fn execute(
     let actor_id = require_actor(ctx)?;
     let tenant = fetch_tenant(service, ctx, slug).await?;
 
-    require_member_permission(
-        service,
-        ctx,
-        tenant.id,
-        actor_id,
-        permission::tenant::MANAGE_MEMBERS,
-        TenantError::NotAdmin,
-    )
-    .await?;
+    service
+        .authorization()
+        .require_permission_with_context(
+            ctx,
+            tenant.id,
+            actor_id,
+            permission::tenant::MANAGE_MEMBERS,
+        )
+        .await
+        .map_err(|_| TenantError::NotAdmin)?;
 
     let email = Email::parse(&request.email).map_err(DomainError::from)?;
     let target_user = service

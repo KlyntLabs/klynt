@@ -8,6 +8,7 @@
 //! [`Clock`]: crate::ports::Clock
 //! [`PasswordHasher`]: crate::ports::PasswordHasher
 
+pub mod authorization;
 pub mod clock;
 pub mod context;
 pub mod crypto;
@@ -16,6 +17,7 @@ pub mod repository;
 pub mod session;
 pub mod token;
 
+pub use authorization::{FakeMembershipRepository, FakePermissionRepository, FakeRoleRepository};
 pub use clock::TestClock;
 pub use context::test_ctx;
 pub use crypto::TestPasswordHasher;
