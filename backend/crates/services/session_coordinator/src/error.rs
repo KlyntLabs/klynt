@@ -7,7 +7,4 @@ use thiserror::Error;
 pub enum SessionCoordinatorError {
     #[error("Session store error: {0}")]
     SessionStore(String),
-
-    #[error("Invalid event: {0}")]
-    InvalidEvent(String),
 }

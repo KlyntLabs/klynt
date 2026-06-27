@@ -169,6 +169,21 @@ impl CachedSessionStore {
             .map_err(|e| SessionError::Internal(format!("redis del: {e}")))?;
         Ok(())
     }
+
+    async fn invalidate_active_tokens(&self, ctx: &ExecutionContext, user_id: UserId) {
+        match self.postgres.active_tokens_for_user(ctx, user_id).await {
+            Ok(tokens) => {
+                for token in tokens {
+                    if let Err(e) = self.invalidate_cache(&token).await {
+                        tracing::warn!(error = %e, "failed to invalidate cached session");
+                    }
+                }
+            }
+            Err(e) => {
+                tracing::warn!(error = %e, "failed to list active tokens for cache invalidation");
+            }
+        }
+    }
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -318,20 +333,7 @@ impl SessionStore for CachedSessionStore {
         self.postgres
             .add_membership(ctx, user_id, membership)
             .await?;
-
-        match self.postgres.active_tokens_for_user(ctx, user_id).await {
-            Ok(tokens) => {
-                for token in tokens {
-                    if let Err(e) = self.invalidate_cache(&token).await {
-                        tracing::warn!(error = %e, "failed to invalidate cached session after add_membership");
-                    }
-                }
-            }
-            Err(e) => {
-                tracing::warn!(error = %e, "failed to list active tokens for cache invalidation");
-            }
-        }
-
+        self.invalidate_active_tokens(ctx, user_id).await;
         Ok(())
     }
 
@@ -344,20 +346,7 @@ impl SessionStore for CachedSessionStore {
         self.postgres
             .update_membership_for_user(ctx, user_id, membership)
             .await?;
-
-        match self.postgres.active_tokens_for_user(ctx, user_id).await {
-            Ok(tokens) => {
-                for token in tokens {
-                    if let Err(e) = self.invalidate_cache(&token).await {
-                        tracing::warn!(error = %e, "failed to invalidate cached session after membership update");
-                    }
-                }
-            }
-            Err(e) => {
-                tracing::warn!(error = %e, "failed to list active tokens for cache invalidation");
-            }
-        }
-
+        self.invalidate_active_tokens(ctx, user_id).await;
         Ok(())
     }
 
@@ -370,20 +359,7 @@ impl SessionStore for CachedSessionStore {
         self.postgres
             .remove_membership(ctx, user_id, tenant_id)
             .await?;
-
-        match self.postgres.active_tokens_for_user(ctx, user_id).await {
-            Ok(tokens) => {
-                for token in tokens {
-                    if let Err(e) = self.invalidate_cache(&token).await {
-                        tracing::warn!(error = %e, "failed to invalidate cached session after remove_membership");
-                    }
-                }
-            }
-            Err(e) => {
-                tracing::warn!(error = %e, "failed to list active tokens for cache invalidation");
-            }
-        }
-
+        self.invalidate_active_tokens(ctx, user_id).await;
         Ok(())
     }
 }

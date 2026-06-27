@@ -31,16 +31,6 @@ impl FakeSessionStore {
         Self::default()
     }
 
-    /// Return a snapshot of all stored sessions, including expired ones.
-    pub fn all_sessions(&self) -> Vec<Session> {
-        self.sessions
-            .lock()
-            .unwrap()
-            .values()
-            .map(|stored| stored.session.clone())
-            .collect()
-    }
-
     fn mutate_memberships<F>(&self, user_id: UserId, mut f: F)
     where
         F: FnMut(&mut Vec<MembershipSnapshot>),
@@ -164,12 +154,10 @@ impl SessionStore for FakeSessionStore {
         membership: MembershipSnapshot,
     ) -> Result<(), SessionError> {
         self.mutate_memberships(user_id, |memberships| {
-            if let Some(existing) = memberships
-                .iter_mut()
-                .find(|m| m.tenant_id == membership.tenant_id)
+            if !memberships
+                .iter()
+                .any(|m| m.tenant_id == membership.tenant_id)
             {
-                existing.role = membership.role;
-            } else {
                 memberships.push(membership.clone());
             }
         });

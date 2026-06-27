@@ -14,4 +14,3 @@ tokio = { workspace = true }
 [dev-dependencies]
 base = { path = "../../../crates/base", features = ["testkit"] }
 chrono = { workspace = true }
-tokio = { workspace = true, features = ["rt", "macros"] }

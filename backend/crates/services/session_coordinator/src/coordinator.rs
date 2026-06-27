@@ -10,7 +10,6 @@ use super::error::SessionCoordinatorError;
 use super::event::MembershipEvent;
 
 /// Coordinates session updates in response to membership changes.
-#[allow(dead_code)]
 pub struct SessionCoordinator {
     session_store: Arc<dyn SessionStore>,
     config: SessionCoordinatorConfig,
