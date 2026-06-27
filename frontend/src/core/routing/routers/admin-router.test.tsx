@@ -1,8 +1,12 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render as rtlRender, waitFor } from "@testing-library/react";
+import { HttpResponse, http } from "msw";
+import type { ReactNode } from "react";
 import { RouterProvider } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useAuthStore } from "@/core/auth/auth-store";
 import type { UserRole } from "@/core/auth/types";
+import { server } from "@/test/msw/server";
 import { createAdminRouter } from "./admin-router";
 
 vi.mock("@/features/dashboard/pages/dashboard-page", () => ({
@@ -15,6 +19,15 @@ vi.mock("@/features/admin/pages/admin-page", () => ({
 
 const originalDomain = import.meta.env.VITE_APP_DOMAIN;
 const originalProtocol = import.meta.env.VITE_APP_PROTOCOL;
+
+const mockUser = {
+  id: "u-1",
+  email: "a@b.com",
+  full_name: "Jayden",
+  role: "student" as const,
+  status: "active" as const,
+  created_at: "2024-01-01T00:00:00Z",
+};
 
 function stubLocation(href: string) {
   const url = new URL(href);
@@ -50,6 +63,29 @@ function setAuthenticated(role: UserRole) {
   });
 }
 
+function createWrapper() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  return function Wrapper({ children }: { children: ReactNode }) {
+    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  };
+}
+
+function render(ui: React.ReactElement) {
+  return rtlRender(ui, { wrapper: createWrapper() });
+}
+
+function mockMeResponse(role: UserRole | null) {
+  server.use(
+    http.get("/api/v1/users/me", () =>
+      role
+        ? HttpResponse.json({ data: { ...mockUser, role } })
+        : new HttpResponse(null, { status: 401 })
+    )
+  );
+}
+
 describe("createAdminRouter", () => {
   let originalLocation: Location;
 
@@ -71,25 +107,30 @@ describe("createAdminRouter", () => {
 
   it("renders the dashboard for admins", async () => {
     setAuthenticated("admin");
+    mockMeResponse("admin");
     stubLocation("http://admin.lvh.me:5174/");
     const router = createAdminRouter();
-    const { getByTestId } = rtlRender(<RouterProvider router={router} />);
+    const { getByTestId } = render(<RouterProvider router={router} />);
     await waitFor(() => expect(getByTestId("dashboard-page")).toBeInTheDocument());
   });
 
   it("renders the admin page at /admin for admins", async () => {
     setAuthenticated("admin");
+    mockMeResponse("admin");
     stubLocation("http://admin.lvh.me:5174/admin");
     const router = createAdminRouter();
-    const { getByTestId } = rtlRender(<RouterProvider router={router} />);
+    const { getByTestId } = render(<RouterProvider router={router} />);
     await waitFor(() => expect(getByTestId("admin-page")).toBeInTheDocument());
   });
 
-  it("redirects non-admins to the apex home", () => {
+  it("redirects non-admins to the apex home", async () => {
     setAuthenticated("student");
+    mockMeResponse("student");
     stubLocation("http://admin.lvh.me:5174/");
     const router = createAdminRouter();
-    rtlRender(<RouterProvider router={router} />);
-    expect(window.location.replace).toHaveBeenCalledWith("http://lvh.me:5174/");
+    render(<RouterProvider router={router} />);
+    await waitFor(() =>
+      expect(window.location.replace).toHaveBeenCalledWith("http://lvh.me:5174/")
+    );
   });
 });

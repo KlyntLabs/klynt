@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { usePermission } from "../hooks/use-permission";
+import { usePermission } from "../permissions-module";
 
 interface PermissionGuardProps {
   tenantSlug: string | null;

@@ -1,10 +1,10 @@
-import { useMe } from "./hooks/use-me";
+import { useAuthModule } from "./auth-module";
 
 interface AuthHydratorProps {
   children: React.ReactNode;
 }
 
 export function AuthHydrator({ children }: AuthHydratorProps) {
-  useMe();
+  useAuthModule();
   return <>{children}</>;
 }

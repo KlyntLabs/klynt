@@ -1,7 +1,7 @@
 import { lazy, Suspense } from "react";
 import { createBrowserRouter } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
-import { ProtectedRoute } from "@/core/auth";
+import { ProtectedRoute } from "@/core/auth/route-guards";
 
 const TenantDesktopPage = lazy(() =>
   import("@/features/tenant").then((module) => ({ default: module.TenantDesktopPage }))

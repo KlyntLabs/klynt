@@ -1,66 +1,16 @@
-import { useMemo } from "react";
 import { Navigate } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
 import { buildAdminUrl, buildApexUrl, buildLoginUrl } from "@/core/routing/subdomain-router";
-import { useAuthStore } from "./auth-store";
+import { useAuthModule, useAuthRole } from "./auth-module";
 import { ExternalNavigate, isExternalUrl } from "./external-redirect";
 import type { UserRole } from "./types";
-
-if (import.meta.env.DEV) {
-  console.warn(
-    "[DEPRECATED] AuthIdentity exports are deprecated. Use useAuthModule from './auth-module.ts' instead."
-  );
-}
-
-export interface UseAuthResult {
-  user: import("./types").User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  setSession: (user: import("./types").User) => void;
-  clearSession: () => void;
-}
-
-export function useAuth(): UseAuthResult {
-  const user = useAuthStore((state) => state.user);
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const isLoading = useAuthStore((state) => state.isLoading);
-  const setSession = useAuthStore((state) => state.setSession);
-  const clearSession = useAuthStore((state) => state.clearSession);
-
-  return useMemo(
-    () => ({
-      user,
-      isAuthenticated,
-      isLoading,
-      setSession,
-      clearSession,
-    }),
-    [user, isAuthenticated, isLoading, setSession, clearSession]
-  );
-}
-
-export function useRole() {
-  const { user } = useAuth();
-  const role = user?.role ?? null;
-
-  return useMemo(
-    () => ({
-      role,
-      isAdmin: role === "admin",
-      isInstructor: role === "instructor" || role === "admin",
-      isStudent: role === "student",
-      hasRole: (allowedRoles: UserRole[]) => (role ? allowedRoles.includes(role) : false),
-    }),
-    [role]
-  );
-}
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuthModule();
 
   if (isLoading) {
     return (
@@ -83,7 +33,7 @@ interface GuestRouteProps {
 }
 
 export function GuestRoute({ children }: GuestRouteProps) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuthModule();
 
   if (isLoading) {
     return (
@@ -111,7 +61,7 @@ export function RoleGuard({
   redirectTo = buildAdminUrl(),
   children,
 }: RoleGuardProps) {
-  const { hasRole } = useRole();
+  const { hasRole } = useAuthRole();
 
   if (!hasRole(allowedRoles)) {
     return isExternalUrl(redirectTo) ? (

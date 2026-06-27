@@ -1,4 +1,7 @@
 import {
+  Mutation,
+  MutationCache,
+  QueryClient,
   type UseMutationOptions,
   type UseQueryOptions,
   useMutation,
@@ -7,11 +10,36 @@ import {
 import { apiClient, generateIdempotencyKey } from "./api-client";
 import { ApiError, createApiError } from "./api-error";
 import { createAuthInterceptorDeps, registerAuthInterceptor } from "./auth-interceptor";
-import { createQueryClient } from "./query-client";
 
 export type ApiQueryOptions<T> = Omit<UseQueryOptions<T, ApiError, T>, "queryKey" | "queryFn">;
 
 export type ApiMutationOptions<T, V> = Omit<UseMutationOptions<T, ApiError, V>, "mutationFn">;
+
+export interface QueryClientOptions {
+  onMutationError?: (
+    error: ApiError,
+    mutation: Mutation<unknown, unknown, unknown, unknown>
+  ) => void;
+}
+
+export function createQueryClient({ onMutationError }: QueryClientOptions = {}) {
+  return new QueryClient({
+    mutationCache: new MutationCache({
+      onError: (error, _variables, _context, mutation) => {
+        if (onMutationError && error instanceof ApiError) {
+          onMutationError(error, mutation);
+        }
+      },
+    }),
+    defaultOptions: {
+      queries: {
+        staleTime: 1000 * 60 * 5,
+        retry: 1,
+        refetchOnWindowFocus: false,
+      },
+    },
+  });
+}
 
 export function useApiQuery<T>(
   queryKey: unknown[],
@@ -43,7 +71,6 @@ export {
   apiClient,
   createApiError,
   createAuthInterceptorDeps,
-  createQueryClient,
   generateIdempotencyKey,
   registerAuthInterceptor,
 };
