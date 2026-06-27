@@ -20,10 +20,12 @@ pub fn build_session_store(pool: sqlx::PgPool) -> Arc<dyn SessionStore> {
     ))
 }
 
-/// Build a tenant service wired with Postgres-backed adapters and a provided session store.
-pub fn build_service_with_session_store(
+/// Build a tenant service wired with Postgres-backed adapters, a provided session store,
+/// and a custom session coordinator configuration.
+pub fn build_service_with_session_store_and_config(
     pool: sqlx::PgPool,
     session_store: Arc<dyn SessionStore>,
+    session_coordinator_config: session_coordinator::SessionCoordinatorConfig,
 ) -> TenantService {
     let tenant_repository = Arc::new(persistence::repositories::tenant::PgTenantRepository::new(
         pool.clone(),
@@ -45,7 +47,7 @@ pub fn build_service_with_session_store(
     )) as Arc<dyn base::ports::RoleRepository>;
     let session_coordinator = Arc::new(session_coordinator::SessionCoordinator::new(
         session_store,
-        session_coordinator::SessionCoordinatorConfig::default(),
+        session_coordinator_config,
     ));
     let audit_repo =
         Arc::new(persistence::repositories::audit_event::PgAuditEventRepository::new(pool));
@@ -63,6 +65,18 @@ pub fn build_service_with_session_store(
         .with_audit_logger(audit_logger)
         .build()
         .expect("tenant service should build")
+}
+
+/// Build a tenant service wired with Postgres-backed adapters and a provided session store.
+pub fn build_service_with_session_store(
+    pool: sqlx::PgPool,
+    session_store: Arc<dyn SessionStore>,
+) -> TenantService {
+    build_service_with_session_store_and_config(
+        pool,
+        session_store,
+        session_coordinator::SessionCoordinatorConfig::default(),
+    )
 }
 
 /// Build a tenant service wired with Postgres-backed adapters.

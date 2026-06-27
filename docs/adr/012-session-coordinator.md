@@ -34,6 +34,10 @@ The coordinator maps each event to the corresponding `SessionStore` operation (`
 
 The tenant service depends on the `SessionCoordinator` trait/struct, not on `SessionStore` directly. The coordinator is the only production code that bridges membership events and session persistence. Other services that need to affect session membership should emit `MembershipEvent` through the coordinator rather than calling `SessionStore` directly.
 
+## Behavioral Changes
+
+- **`remove_member` now fully revokes session authorization.** The previous tenant-service implementation called `session_store.update_membership_for_user(..., TenantRole::Guest)` when removing a member, leaving the tenant in the user's active session memberships as a Guest. The new implementation emits `MembershipEvent::Removed`, which the coordinator maps to `SessionStore::remove_membership`. Consequently, a removed member's active sessions no longer contain the tenant at all. This is the intended behavior: removal means the user has no authorization for that tenant until they are explicitly re-added.
+
 ## Consequences
 
 - Tenant service no longer depends on `SessionStore` for membership synchronization.
