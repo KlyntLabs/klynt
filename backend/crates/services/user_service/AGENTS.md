@@ -26,6 +26,12 @@ user_service/
 │   ├── builder.rs          # Builder pattern
 │   ├── error.rs            # Service-specific errors
 │   └── lib.rs
+├── tests/                  # Integration tests
+│   ├── builder.rs
+│   ├── integration.rs
+│   ├── persistence_integration.rs
+│   └── support/
+│       └── mod.rs
 └── Cargo.toml
 ```
 

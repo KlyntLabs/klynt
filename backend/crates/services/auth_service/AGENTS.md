@@ -84,12 +84,12 @@ pub async fn execute(
 }
 ```
 
-### 2. Domain Layer (`domain/`)
+### 2. Domain Layer (`core/`)
 
 Business rules independent of external concerns:
 
 ```rust
-// domain/password_policy.rs
+// core/password_policy.rs
 impl PasswordPolicy {
     pub fn validate(&self, password: &str) -> Result<(), PasswordPolicyError> {
         // Length, complexity, common password checks

@@ -19,7 +19,10 @@ infra_facades/
 ├── src/
 │   ├── lib.rs              # Re-exports `PersistenceFacade` and `InfraFacade`
 │   ├── persistence.rs      # `PersistenceFacade` definition
-│   └── infrastructure.rs   # `InfraFacade` definition
+│   ├── infrastructure.rs   # `InfraFacade` definition
+│   └── tests/              # Unit tests
+│       ├── mod.rs
+│       └── facade_tests.rs
 ├── Cargo.toml
 └── AGENTS.md
 ```
