@@ -3,6 +3,7 @@
 use crate::user::{Email, PaginationRequest, User, UserId, UserRole};
 
 /// User repository operation.
+#[derive(Debug, Clone, PartialEq)]
 pub enum UserOp {
     FindByEmail {
         email: Email,

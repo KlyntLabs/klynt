@@ -187,7 +187,7 @@ impl std::fmt::Display for UserStatus {
 }
 
 /// User aggregate root — canonical domain model shared across services.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct User {
     pub id: UserId,
     pub email: Email,
@@ -252,7 +252,7 @@ impl User {
 }
 
 /// Pagination request.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PaginationRequest {
     pub page: u32,
     pub page_size: u32,

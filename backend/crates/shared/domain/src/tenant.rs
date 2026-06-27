@@ -148,7 +148,7 @@ const DEFAULT_MAX_OWNERS: i32 = 1;
 ///
 /// Returned by list-my-tenants and create/accept-invite flows so the frontend
 /// can render the tenant and the user's role in a single payload.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct TenantMembershipSummary {
     pub id: TenantId,
     pub slug: TenantSlug,
@@ -175,7 +175,7 @@ impl TenantMembershipSummary {
 }
 
 /// A tenant / organization in the platform.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct Tenant {
     pub id: TenantId,
     pub slug: TenantSlug,

@@ -4,7 +4,10 @@
 //! If `DATABASE_URL` is unset, the tests are skipped.
 
 use base::ctx::{ExecutionContext, RequestContext};
-use base::ports::repository::{MembershipRepository, TenantRepository, UserRepository};
+use base::ports::repository::{
+    MembershipOpResult, MembershipRepository, TenantRepository, UserRepository,
+};
+use domain::operations::MembershipOp;
 use domain::{DomainError, Email, Membership, Tenant, TenantRole, TenantSlug, UserRole};
 use persistence::repositories::membership::PgMembershipRepository;
 use persistence::repositories::tenant::PgTenantRepository;
@@ -314,4 +317,47 @@ async fn delete_for_missing_membership_returns_not_found() {
         .await;
 
     assert!(matches!(result, Err(DomainError::NotFound(_))));
+}
+
+#[tokio::test]
+async fn execute_delegates_find() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let membership_repo = PgMembershipRepository::new(pool.clone());
+    let ctx = test_ctx();
+    let owner_id = create_test_user(&pool, "ExecuteOwner").await;
+    let tenant = create_test_tenant(&pool, owner_id).await;
+    let member_id = create_test_user(&pool, "ExecuteMember").await;
+
+    membership_repo
+        .create(
+            &ctx,
+            &Membership::new(tenant.id, member_id, TenantRole::Member),
+        )
+        .await
+        .unwrap();
+
+    let result = membership_repo
+        .execute(
+            &ctx,
+            MembershipOp::Find {
+                tenant_id: tenant.id,
+                user_id: member_id,
+            },
+        )
+        .await
+        .unwrap();
+
+    match result {
+        MembershipOpResult::MembershipOption(Some(membership)) => {
+            assert_eq!(membership.tenant_id, tenant.id);
+            assert_eq!(membership.user_id, member_id);
+            assert_eq!(membership.role, TenantRole::Member);
+        }
+        _ => panic!("Expected Some membership"),
+    }
+
+    cleanup_test_data(&pool, &[owner_id, member_id], &[tenant.id]).await;
 }

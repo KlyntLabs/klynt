@@ -5,6 +5,7 @@ use crate::tenant::TenantId;
 use crate::user::UserId;
 
 /// Membership repository operation.
+#[derive(Debug, Clone, PartialEq)]
 pub enum MembershipOp {
     Create {
         membership: Membership,

@@ -7,12 +7,17 @@
 use crate::ctx::ExecutionContext;
 use async_trait::async_trait;
 use domain::membership::{Membership, TenantMember, TenantRole};
+use domain::operations::{MembershipOp, TenantOp, UserOp};
 use domain::tenant::{Tenant, TenantId, TenantMembershipSummary, TenantSlug};
 use domain::tenant_desktop_layout::{LayoutScope, TenantDesktopLayout};
 use domain::{
     DomainResult, Email, PaginationRequest, RoleId, TenantInvite, User, UserId, UserRole,
 };
 use uuid::Uuid;
+
+#[path = "repository_execute.rs"]
+mod repository_execute;
+pub use repository_execute::{MembershipOpResult, TenantOpResult, UserOpResult};
 
 /// Canonical User repository interface.
 ///
@@ -86,6 +91,22 @@ pub trait UserRepository: Send + Sync {
         ctx: &ExecutionContext,
         pagination: PaginationRequest,
     ) -> Result<(Vec<User>, u64), RepositoryError>;
+
+    /// Execute a user operation command.
+    ///
+    /// This provides a single-entry-point interface that delegates to the
+    /// specific methods above. New operations can be added without changing
+    /// the interface.
+    ///
+    /// The default implementation dispatches to the concrete methods; adapters
+    /// may override it for optimized or batched execution.
+    async fn execute(
+        &self,
+        ctx: &ExecutionContext,
+        op: UserOp,
+    ) -> Result<UserOpResult, RepositoryError> {
+        repository_execute::execute_user(self, ctx, op).await
+    }
 }
 
 /// Canonical Tenant repository interface.
@@ -128,6 +149,18 @@ pub trait TenantRepository: Send + Sync {
         ctx: &ExecutionContext,
         user_id: UserId,
     ) -> DomainResult<i64>;
+
+    /// Execute a tenant operation command.
+    ///
+    /// This provides a single-entry-point interface that delegates to the
+    /// specific methods above. New operations can be added without changing
+    /// the interface.
+    ///
+    /// The default implementation dispatches to the concrete methods; adapters
+    /// may override it for optimized or batched execution.
+    async fn execute(&self, ctx: &ExecutionContext, op: TenantOp) -> DomainResult<TenantOpResult> {
+        repository_execute::execute_tenant(self, ctx, op).await
+    }
 }
 
 /// Canonical Membership repository interface.
@@ -199,6 +232,22 @@ pub trait MembershipRepository: Send + Sync {
         tenant_id: TenantId,
         user_id: UserId,
     ) -> DomainResult<()>;
+
+    /// Execute a membership operation command.
+    ///
+    /// This provides a single-entry-point interface that delegates to the
+    /// specific methods above. New operations can be added without changing
+    /// the interface.
+    ///
+    /// The default implementation dispatches to the concrete methods; adapters
+    /// may override it for optimized or batched execution.
+    async fn execute(
+        &self,
+        ctx: &ExecutionContext,
+        op: MembershipOp,
+    ) -> DomainResult<MembershipOpResult> {
+        repository_execute::execute_membership(self, ctx, op).await
+    }
 }
 
 /// Canonical tenant invite repository interface.

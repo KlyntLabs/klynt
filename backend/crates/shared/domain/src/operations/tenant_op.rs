@@ -4,6 +4,7 @@ use crate::tenant::{Tenant, TenantId, TenantSlug};
 use crate::user::UserId;
 
 /// Tenant repository operation.
+#[derive(Debug, Clone, PartialEq)]
 pub enum TenantOp {
     Create { tenant: Tenant },
     FindById { id: TenantId },

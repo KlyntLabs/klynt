@@ -4,7 +4,10 @@
 //! If `DATABASE_URL` is unset, the tests are skipped.
 
 use base::ctx::{ExecutionContext, RequestContext};
-use base::ports::repository::{MembershipRepository, TenantRepository, UserRepository};
+use base::ports::repository::{
+    MembershipRepository, TenantOpResult, TenantRepository, UserRepository,
+};
+use domain::operations::TenantOp;
 use domain::{DomainError, Email, Membership, Tenant, TenantRole, TenantSlug, UserRole};
 use persistence::repositories::membership::PgMembershipRepository;
 use persistence::repositories::tenant::PgTenantRepository;
@@ -422,4 +425,31 @@ async fn duplicate_slug_returns_conflict() {
     assert!(matches!(result, Err(DomainError::Conflict(_))));
 
     cleanup_test_data(&pool, &[owner_id, other_id], &[tenant.id]).await;
+}
+
+#[tokio::test]
+async fn execute_delegates_find_by_id() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let tenant_repo = PgTenantRepository::new(pool.clone());
+    let ctx = test_ctx();
+    let owner_id = create_test_user(&pool, "ExecuteFinder").await;
+    let tenant = create_test_tenant(&tenant_repo, owner_id, "Execute Findable").await;
+
+    let result = tenant_repo
+        .execute(&ctx, TenantOp::FindById { id: tenant.id })
+        .await
+        .unwrap();
+
+    match result {
+        TenantOpResult::TenantOption(Some(found)) => {
+            assert_eq!(found.id, tenant.id);
+            assert_eq!(found.slug, tenant.slug);
+        }
+        _ => panic!("Expected Some tenant"),
+    }
+
+    cleanup_test_data(&pool, &[owner_id], &[tenant.id]).await;
 }
