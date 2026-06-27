@@ -151,7 +151,7 @@ async fn test_login_with_valid_credentials() {
 ## Dependencies
 
 - `base` — Port interfaces
-- `domain` — Domain types and contracts
+- `core` — Domain types and contracts
 - `chrono` — Time handling
 - `uuid` — ID generation
 
