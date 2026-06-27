@@ -9,6 +9,7 @@ auth_service = { path = "../services/auth_service" }
 user_service = { path = "../services/user_service" }
 session_service = { path = "../services/session_service" }
 tenant_service = { path = "../services/tenant_service" }
+session_coordinator = { path = "../services/session_coordinator" }
 
 # === Phase 1 Foundation ===
 base = { path = "../base" }

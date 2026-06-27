@@ -30,6 +30,10 @@ pub async fn build_service(pool: sqlx::PgPool) -> TenantService {
     let session_store = Arc::new(persistence::repositories::session::PgSessionStore::new(
         pool.clone(),
     )) as Arc<dyn base::ports::session::SessionStore>;
+    let session_coordinator = Arc::new(session_coordinator::SessionCoordinator::new(
+        session_store,
+        session_coordinator::SessionCoordinatorConfig::default(),
+    ));
     let audit_repo =
         Arc::new(persistence::repositories::audit_event::PgAuditEventRepository::new(pool));
     let audit_logger = Arc::new(observability::audit::AuditService::new(audit_repo))
@@ -42,7 +46,7 @@ pub async fn build_service(pool: sqlx::PgPool) -> TenantService {
         .with_invite_repository(invite_repository)
         .with_permission_repository(permission_repository)
         .with_role_repository(role_repository)
-        .with_session_store(session_store)
+        .with_session_coordinator(session_coordinator)
         .with_audit_logger(audit_logger)
         .build()
         .expect("tenant service should build")

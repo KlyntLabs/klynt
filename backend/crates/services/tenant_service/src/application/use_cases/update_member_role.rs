@@ -1,9 +1,9 @@
 //! Update member role use case.
 
 use base::ctx::ExecutionContext;
-use base::ports::session::MembershipSnapshot;
 use domain::permission;
 use domain::{DomainError, Email};
+use session_coordinator::event::MembershipEvent;
 
 use crate::error::TenantError;
 use crate::{TenantService, UpdateMemberRoleRequest};
@@ -71,18 +71,16 @@ pub(crate) async fn execute(
         )
         .await;
 
+    let event = MembershipEvent::Updated {
+        tenant_id: tenant.id,
+        user_id: target_user.id,
+        role: request.role,
+    };
     service
-        .session_store()
-        .update_membership_for_user(
-            ctx,
-            target_user.id,
-            MembershipSnapshot {
-                tenant_id: tenant.id.inner(),
-                role: request.role,
-            },
-        )
+        .session_coordinator()
+        .handle_membership_event(ctx, event)
         .await
-        .map_err(TenantError::Session)?;
+        .map_err(|e| TenantError::Internal(e.to_string()))?;
 
     Ok(())
 }

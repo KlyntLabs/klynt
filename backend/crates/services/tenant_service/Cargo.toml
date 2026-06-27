@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 base = { path = "../../../crates/base" }
 domain = { path = "../../shared/domain" }
+session_coordinator = { path = "../session_coordinator" }
 chrono = { workspace = true }
 rand = { workspace = true }
 thiserror = { workspace = true }

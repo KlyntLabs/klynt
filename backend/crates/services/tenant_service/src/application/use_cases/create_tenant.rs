@@ -1,8 +1,8 @@
 //! Create tenant use case.
 
 use base::ctx::ExecutionContext;
-use base::ports::session::MembershipSnapshot;
 use domain::{Tenant, TenantMembershipSummary};
+use session_coordinator::event::MembershipEvent;
 
 use crate::error::TenantError;
 use crate::CreateTenantRequest;
@@ -33,18 +33,16 @@ pub(crate) async fn execute(
         .log_tenant_created(ctx, created.id)
         .await;
 
+    let event = MembershipEvent::Added {
+        tenant_id: created.id,
+        user_id: owner_id,
+        role: domain::membership::TenantRole::Owner,
+    };
     service
-        .session_store()
-        .add_membership(
-            ctx,
-            owner_id,
-            MembershipSnapshot {
-                tenant_id: created.id.inner(),
-                role: domain::membership::TenantRole::Owner,
-            },
-        )
+        .session_coordinator()
+        .handle_membership_event(ctx, event)
         .await
-        .map_err(TenantError::Session)?;
+        .map_err(|e| TenantError::Internal(e.to_string()))?;
 
     Ok(TenantMembershipSummary::new(
         created,

@@ -7,7 +7,7 @@ use base::ports::permission::{PermissionRepository, RoleRepository};
 use base::ports::repository::{
     MembershipRepository, TenantInviteRepository, TenantRepository, UserRepository,
 };
-use base::ports::session::SessionStore;
+use session_coordinator::SessionCoordinator;
 
 use crate::error::TenantError;
 use crate::{Dependencies, TenantConfig, TenantService};
@@ -26,7 +26,7 @@ pub struct TenantBuilder {
     invite_repository: Option<Arc<dyn TenantInviteRepository>>,
     permission_repository: Option<Arc<dyn PermissionRepository>>,
     role_repository: Option<Arc<dyn RoleRepository>>,
-    session_store: Option<Arc<dyn SessionStore>>,
+    session_coordinator: Option<Arc<SessionCoordinator>>,
     audit_logger: Option<Arc<dyn AuditLogger>>,
 }
 
@@ -78,9 +78,12 @@ impl TenantBuilder {
         self
     }
 
-    /// Set the session store.
-    pub fn with_session_store(mut self, store: Arc<dyn SessionStore>) -> Self {
-        self.session_store = Some(store);
+    /// Set the session coordinator.
+    pub fn with_session_coordinator(
+        mut self,
+        session_coordinator: Arc<SessionCoordinator>,
+    ) -> Self {
+        self.session_coordinator = Some(session_coordinator);
         self
     }
 
@@ -122,9 +125,9 @@ impl TenantBuilder {
             .role_repository
             .ok_or_else(|| TenantError::internal("TenantBuilder requires a role repository"))?;
 
-        let session_store = self
-            .session_store
-            .ok_or_else(|| TenantError::internal("TenantBuilder requires a session store"))?;
+        let session_coordinator = self
+            .session_coordinator
+            .ok_or_else(|| TenantError::internal("TenantBuilder requires a session coordinator"))?;
 
         let audit_logger = self
             .audit_logger
@@ -139,7 +142,7 @@ impl TenantBuilder {
                 invite_repository,
                 permission_repository,
                 role_repository,
-                session_store,
+                session_coordinator,
                 audit_logger,
             },
         )

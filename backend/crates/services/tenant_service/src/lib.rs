@@ -36,7 +36,7 @@ use application::ports::{
     TenantInviteRepository, TenantRepository, UserRepository,
 };
 use application::AuthorizationService;
-use base::ports::session::SessionStore;
+use session_coordinator::SessionCoordinator;
 
 /// Request to create a new tenant.
 #[derive(Debug, Clone)]
@@ -150,7 +150,7 @@ impl TenantService {
                 invite_repository: dependencies.invite_repository,
                 permission_repository: dependencies.permission_repository,
                 role_repository: dependencies.role_repository,
-                session_store: dependencies.session_store,
+                session_coordinator: dependencies.session_coordinator,
                 audit_logger: dependencies.audit_logger,
                 authorization_service,
             },
@@ -355,8 +355,8 @@ impl TenantService {
         &self.internal_state
     }
 
-    pub(crate) fn session_store(&self) -> &Arc<dyn SessionStore> {
-        &self.internal_state.session_store
+    pub(crate) fn session_coordinator(&self) -> &Arc<SessionCoordinator> {
+        &self.internal_state.session_coordinator
     }
 
     pub(crate) fn authorization(&self) -> &AuthorizationService {
@@ -373,7 +373,7 @@ pub struct Dependencies {
     pub invite_repository: Arc<dyn TenantInviteRepository>,
     pub permission_repository: Arc<dyn PermissionRepository>,
     pub role_repository: Arc<dyn RoleRepository>,
-    pub session_store: Arc<dyn SessionStore>,
+    pub session_coordinator: Arc<SessionCoordinator>,
     pub audit_logger: Arc<dyn AuditLogger>,
 }
 
@@ -385,7 +385,7 @@ pub(crate) struct InternalState {
     pub invite_repository: Arc<dyn TenantInviteRepository>,
     pub permission_repository: Arc<dyn PermissionRepository>,
     pub role_repository: Arc<dyn RoleRepository>,
-    pub session_store: Arc<dyn SessionStore>,
+    pub session_coordinator: Arc<SessionCoordinator>,
     pub audit_logger: Arc<dyn AuditLogger>,
     pub authorization_service: AuthorizationService,
 }

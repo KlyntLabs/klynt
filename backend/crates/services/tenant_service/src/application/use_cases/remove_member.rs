@@ -1,9 +1,9 @@
 //! Remove member from tenant use case.
 
 use base::ctx::ExecutionContext;
-use base::ports::session::MembershipSnapshot;
 use domain::permission;
 use domain::{DomainError, Email};
+use session_coordinator::event::MembershipEvent;
 
 use crate::error::TenantError;
 use crate::{RemoveMemberRequest, TenantService};
@@ -56,18 +56,15 @@ pub(crate) async fn execute(
         .log_member_removed(ctx, tenant.id, target_user.id)
         .await;
 
+    let event = MembershipEvent::Removed {
+        tenant_id: tenant.id,
+        user_id: target_user.id,
+    };
     service
-        .session_store()
-        .update_membership_for_user(
-            ctx,
-            target_user.id,
-            MembershipSnapshot {
-                tenant_id: tenant.id.inner(),
-                role: domain::membership::TenantRole::Guest,
-            },
-        )
+        .session_coordinator()
+        .handle_membership_event(ctx, event)
         .await
-        .map_err(TenantError::Session)?;
+        .map_err(|e| TenantError::Internal(e.to_string()))?;
 
     Ok(())
 }

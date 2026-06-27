@@ -14,6 +14,7 @@ use persistence::ports::RateLimiter;
 use persistence::rate_limiter::{NoOpRateLimiter, RedisRateLimiter};
 use persistence::repositories::cached_session_store::CachedSessionStore;
 use persistence::repositories::session::PgSessionStore;
+use session_coordinator::{SessionCoordinator, SessionCoordinatorConfig};
 use tenant_service::{TenantDesktopLayoutService, TenantService};
 
 use super::Config;
@@ -215,6 +216,11 @@ impl Services {
         let audit_logger = Arc::new(observability::audit::AuditService::new(audit_repo))
             as Arc<dyn base::ports::AuditLogger>;
 
+        let session_coordinator = Arc::new(SessionCoordinator::new(
+            session_store,
+            SessionCoordinatorConfig::default(),
+        ));
+
         TenantService::builder()
             .with_config(tenant_service::TenantConfig::default())
             .with_tenant_repository(tenant_repository)
@@ -223,7 +229,7 @@ impl Services {
             .with_invite_repository(invite_repository)
             .with_permission_repository(permission_repository)
             .with_role_repository(role_repository)
-            .with_session_store(session_store)
+            .with_session_coordinator(session_coordinator)
             .with_audit_logger(audit_logger)
             .build()
             .map_err(|e| crate::GatewayError::configuration(format!("Tenant service: {e}")))

@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use base::testkit::FakeSessionStore;
+use session_coordinator::{SessionCoordinator, SessionCoordinatorConfig};
 
 use super::{
     FakeMembershipRepository, FakePermissionRepository, FakeRoleRepository,
@@ -11,6 +12,12 @@ use crate::support::user::{FakeUserServiceRepository, StubUserAuditLogger};
 
 /// Build a fake tenant service for gateway tests.
 pub fn build_test_tenant_service() -> tenant_service::TenantService {
+    let session_store = Arc::new(FakeSessionStore::new());
+    let session_coordinator = Arc::new(SessionCoordinator::new(
+        session_store,
+        SessionCoordinatorConfig::default(),
+    ));
+
     tenant_service::TenantService::new(
         tenant_service::TenantConfig::default(),
         tenant_service::Dependencies {
@@ -20,7 +27,7 @@ pub fn build_test_tenant_service() -> tenant_service::TenantService {
             invite_repository: Arc::new(FakeTenantInviteRepository::default()),
             permission_repository: Arc::new(FakePermissionRepository::default()),
             role_repository: Arc::new(FakeRoleRepository),
-            session_store: Arc::new(FakeSessionStore::new()),
+            session_coordinator,
             audit_logger: Arc::new(StubUserAuditLogger),
         },
     )
@@ -34,6 +41,12 @@ pub fn build_stateful_test_tenant_service(
     invite_repo: Arc<FakeTenantInviteRepository>,
     user_repo: Arc<FakeUserServiceRepository>,
 ) -> tenant_service::TenantService {
+    let session_store = Arc::new(FakeSessionStore::new());
+    let session_coordinator = Arc::new(SessionCoordinator::new(
+        session_store,
+        SessionCoordinatorConfig::default(),
+    ));
+
     tenant_service::TenantService::new(
         tenant_service::TenantConfig::default(),
         tenant_service::Dependencies {
@@ -43,7 +56,7 @@ pub fn build_stateful_test_tenant_service(
             invite_repository: invite_repo,
             permission_repository: Arc::new(FakePermissionRepository::default()),
             role_repository: Arc::new(StatefulFakeRoleRepository::default()),
-            session_store: Arc::new(FakeSessionStore::new()),
+            session_coordinator,
             audit_logger: Arc::new(StubUserAuditLogger),
         },
     )

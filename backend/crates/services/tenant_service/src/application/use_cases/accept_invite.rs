@@ -1,9 +1,9 @@
 //! Accept a tenant invite use case.
 
 use base::ctx::ExecutionContext;
-use base::ports::session::MembershipSnapshot;
 use chrono::Utc;
 use domain::{DomainError, Membership, TenantMembershipSummary, TenantRole};
+use session_coordinator::event::MembershipEvent;
 
 use crate::error::TenantError;
 use crate::TenantService;
@@ -67,18 +67,16 @@ pub(crate) async fn execute(
         .log_member_added(ctx, invite.tenant_id, actor_id)
         .await;
 
+    let event = MembershipEvent::Added {
+        tenant_id: invite.tenant_id,
+        user_id: actor_id,
+        role: created.role,
+    };
     service
-        .session_store()
-        .add_membership(
-            ctx,
-            actor_id,
-            MembershipSnapshot {
-                tenant_id: invite.tenant_id.inner(),
-                role: created.role,
-            },
-        )
+        .session_coordinator()
+        .handle_membership_event(ctx, event)
         .await
-        .map_err(TenantError::Session)?;
+        .map_err(|e| TenantError::Internal(e.to_string()))?;
 
     let tenant = service
         .internal()

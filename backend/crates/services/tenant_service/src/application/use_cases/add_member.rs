@@ -1,9 +1,9 @@
 //! Add member to tenant use case.
 
 use base::ctx::ExecutionContext;
-use base::ports::session::MembershipSnapshot;
 use domain::permission;
 use domain::{DomainError, Email, Membership};
+use session_coordinator::event::MembershipEvent;
 
 use crate::error::TenantError;
 use crate::{AddMemberRequest, TenantService};
@@ -58,18 +58,16 @@ pub(crate) async fn execute(
         .log_member_added(ctx, tenant.id, target_user.id)
         .await;
 
+    let event = MembershipEvent::Added {
+        tenant_id: tenant.id,
+        user_id: target_user.id,
+        role: request.role,
+    };
     service
-        .session_store()
-        .add_membership(
-            ctx,
-            target_user.id,
-            MembershipSnapshot {
-                tenant_id: tenant.id.inner(),
-                role: request.role,
-            },
-        )
+        .session_coordinator()
+        .handle_membership_event(ctx, event)
         .await
-        .map_err(TenantError::Session)?;
+        .map_err(|e| TenantError::Internal(e.to_string()))?;
 
     Ok(created)
 }
