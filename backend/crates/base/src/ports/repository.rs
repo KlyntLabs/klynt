@@ -5,6 +5,7 @@
 //! the need for service-specific adapters and improve testability.
 
 use crate::ctx::ExecutionContext;
+use crate::ports::repository_execute;
 use async_trait::async_trait;
 use domain::membership::{Membership, TenantMember, TenantRole};
 use domain::operations::{MembershipOp, TenantOp, UserOp};
@@ -15,8 +16,6 @@ use domain::{
 };
 use uuid::Uuid;
 
-#[path = "repository_execute.rs"]
-mod repository_execute;
 pub use repository_execute::{MembershipOpResult, TenantOpResult, UserOpResult};
 
 /// Canonical User repository interface.

@@ -7,8 +7,7 @@ use uuid::Uuid;
 
 use super::{role_to_db, status_to_db, PgUserRepository, UserRow};
 use base::ctx::ExecutionContext;
-use base::ports::repository::{RepositoryError, UserOpResult, UserRepository};
-use domain::operations::UserOp;
+use base::ports::repository::{RepositoryError, UserRepository};
 use domain::{DomainError, Email, PaginationRequest, User, UserId, UserRole, UserStatus};
 
 #[async_trait]
@@ -285,67 +284,6 @@ impl UserRepository for PgUserRepository {
         }
 
         Ok((users, total as u64))
-    }
-
-    async fn execute(
-        &self,
-        ctx: &ExecutionContext,
-        op: UserOp,
-    ) -> Result<UserOpResult, RepositoryError> {
-        match op {
-            UserOp::FindByEmail { email } => {
-                let result = self.find_by_email(ctx, &email).await?;
-                Ok(UserOpResult::UserOption(result))
-            }
-            UserOp::FindById { user_id } => {
-                let result = self.find_by_id(ctx, user_id).await?;
-                Ok(UserOpResult::UserOption(result))
-            }
-            UserOp::CreatePendingUser {
-                full_name,
-                username,
-                email,
-                password_hash,
-                role,
-                institution_id,
-            } => {
-                let result = self
-                    .create_pending_user(
-                        ctx,
-                        full_name,
-                        username,
-                        email,
-                        password_hash,
-                        role,
-                        institution_id,
-                    )
-                    .await?;
-                Ok(UserOpResult::UserId(result))
-            }
-            UserOp::ActivateUser { user_id } => {
-                self.activate_user(ctx, user_id).await?;
-                Ok(UserOpResult::Unit(()))
-            }
-            UserOp::UpdatePassword {
-                user_id,
-                password_hash,
-            } => {
-                self.update_password(ctx, user_id, password_hash).await?;
-                Ok(UserOpResult::Unit(()))
-            }
-            UserOp::Update { user } => {
-                let result = self.update(ctx, user).await?;
-                Ok(UserOpResult::User(result))
-            }
-            UserOp::Delete { user_id } => {
-                self.delete(ctx, user_id).await?;
-                Ok(UserOpResult::Unit(()))
-            }
-            UserOp::List { pagination } => {
-                let result = self.list(ctx, pagination).await?;
-                Ok(UserOpResult::UserList(result))
-            }
-        }
     }
 }
 

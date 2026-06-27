@@ -2,8 +2,7 @@
 
 use async_trait::async_trait;
 use base::ctx::ExecutionContext;
-use base::ports::repository::{MembershipOpResult, MembershipRepository};
-use domain::operations::MembershipOp;
+use base::ports::repository::MembershipRepository;
 use domain::{
     DomainError, DomainResult, Membership, RoleId, TenantId, TenantMember, TenantRole, UserId,
 };
@@ -334,42 +333,5 @@ impl MembershipRepository for PgMembershipRepository {
         }
 
         Ok(())
-    }
-
-    async fn execute(
-        &self,
-        ctx: &ExecutionContext,
-        op: MembershipOp,
-    ) -> DomainResult<MembershipOpResult> {
-        match op {
-            MembershipOp::Create { membership } => {
-                let result = self.create(ctx, &membership).await?;
-                Ok(MembershipOpResult::Membership(result))
-            }
-            MembershipOp::Find { tenant_id, user_id } => {
-                let result = self.find(ctx, tenant_id, user_id).await?;
-                Ok(MembershipOpResult::MembershipOption(result))
-            }
-            MembershipOp::ListForUser { user_id } => {
-                let result = self.list_for_user(ctx, user_id).await?;
-                Ok(MembershipOpResult::MembershipList(result))
-            }
-            MembershipOp::ListForTenant { tenant_id } => {
-                let result = self.list_for_tenant(ctx, tenant_id).await?;
-                Ok(MembershipOpResult::MembershipList(result))
-            }
-            MembershipOp::UpdateRole {
-                tenant_id,
-                user_id,
-                role,
-            } => {
-                self.update_role(ctx, tenant_id, user_id, role).await?;
-                Ok(MembershipOpResult::Unit(()))
-            }
-            MembershipOp::Delete { tenant_id, user_id } => {
-                self.delete(ctx, tenant_id, user_id).await?;
-                Ok(MembershipOpResult::Unit(()))
-            }
-        }
     }
 }

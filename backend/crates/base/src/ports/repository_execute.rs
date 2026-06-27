@@ -14,7 +14,7 @@ use domain::tenant::{Tenant, TenantMembershipSummary};
 use domain::{DomainResult, User, UserId};
 
 /// Result of executing a [`UserOp`].
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum UserOpResult {
     /// Optional user result.
     UserOption(Option<User>),
@@ -23,13 +23,13 @@ pub enum UserOpResult {
     /// User result.
     User(User),
     /// Unit result.
-    Unit(()),
+    Unit,
     /// Paginated user list result.
     UserList((Vec<User>, u64)),
 }
 
 /// Result of executing a [`TenantOp`].
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TenantOpResult {
     /// Tenant result.
     Tenant(Tenant),
@@ -38,13 +38,13 @@ pub enum TenantOpResult {
     /// List of tenant membership summaries.
     TenantSummaryList(Vec<TenantMembershipSummary>),
     /// Unit result.
-    Unit(()),
+    Unit,
     /// Integer count result.
     Count(i64),
 }
 
 /// Result of executing a [`MembershipOp`].
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum MembershipOpResult {
     /// Membership result.
     Membership(Membership),
@@ -55,7 +55,7 @@ pub enum MembershipOpResult {
     /// List of tenant members.
     TenantMemberList(Vec<TenantMember>),
     /// Unit result.
-    Unit(()),
+    Unit,
 }
 
 /// Default [`UserRepository::execute`] implementation.
@@ -99,14 +99,14 @@ where
         }
         UserOp::ActivateUser { user_id } => {
             repo.activate_user(ctx, user_id).await?;
-            Ok(UserOpResult::Unit(()))
+            Ok(UserOpResult::Unit)
         }
         UserOp::UpdatePassword {
             user_id,
             password_hash,
         } => {
             repo.update_password(ctx, user_id, password_hash).await?;
-            Ok(UserOpResult::Unit(()))
+            Ok(UserOpResult::Unit)
         }
         UserOp::Update { user } => {
             let result = repo.update(ctx, user).await?;
@@ -114,7 +114,7 @@ where
         }
         UserOp::Delete { user_id } => {
             repo.delete(ctx, user_id).await?;
-            Ok(UserOpResult::Unit(()))
+            Ok(UserOpResult::Unit)
         }
         UserOp::List { pagination } => {
             let result = repo.list(ctx, pagination).await?;
@@ -155,7 +155,7 @@ where
         }
         TenantOp::Delete { id } => {
             repo.delete(ctx, id).await?;
-            Ok(TenantOpResult::Unit(()))
+            Ok(TenantOpResult::Unit)
         }
         TenantOp::CountOwnedByUser { user_id } => {
             let result = repo.count_owned_by_user(ctx, user_id).await?;
@@ -196,11 +196,11 @@ where
             role,
         } => {
             repo.update_role(ctx, tenant_id, user_id, role).await?;
-            Ok(MembershipOpResult::Unit(()))
+            Ok(MembershipOpResult::Unit)
         }
         MembershipOp::Delete { tenant_id, user_id } => {
             repo.delete(ctx, tenant_id, user_id).await?;
-            Ok(MembershipOpResult::Unit(()))
+            Ok(MembershipOpResult::Unit)
         }
     }
 }

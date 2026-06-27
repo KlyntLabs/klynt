@@ -361,3 +361,135 @@ async fn repository_execute_delegates_find() {
 
     cleanup_test_data(&pool, &[owner_id, member_id], &[tenant.id]).await;
 }
+
+#[tokio::test]
+async fn repository_execute_create_returns_membership() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let membership_repo = PgMembershipRepository::new(pool.clone());
+    let ctx = test_ctx();
+    let owner_id = create_test_user(&pool, "ExecuteCreateOwner").await;
+    let tenant = create_test_tenant(&pool, owner_id).await;
+    let member_id = create_test_user(&pool, "ExecuteCreateMember").await;
+
+    let membership = Membership::new(tenant.id, member_id, TenantRole::Member);
+    let result = membership_repo
+        .execute(&ctx, MembershipOp::Create { membership })
+        .await
+        .unwrap();
+
+    match result {
+        MembershipOpResult::Membership(created) => {
+            assert_eq!(created.tenant_id, tenant.id);
+            assert_eq!(created.user_id, member_id);
+            assert_eq!(created.role, TenantRole::Member);
+        }
+        _ => panic!("Expected Membership result"),
+    }
+
+    cleanup_test_data(&pool, &[owner_id, member_id], &[tenant.id]).await;
+}
+
+#[tokio::test]
+async fn repository_execute_list_for_tenant_returns_membership_list() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let membership_repo = PgMembershipRepository::new(pool.clone());
+    let ctx = test_ctx();
+    let owner_id = create_test_user(&pool, "ExecuteListOwner").await;
+    let tenant = create_test_tenant(&pool, owner_id).await;
+    let member_id = create_test_user(&pool, "ExecuteListMember").await;
+
+    membership_repo
+        .create(
+            &ctx,
+            &Membership::new(tenant.id, member_id, TenantRole::Member),
+        )
+        .await
+        .unwrap();
+
+    let result = membership_repo
+        .execute(
+            &ctx,
+            MembershipOp::ListForTenant {
+                tenant_id: tenant.id,
+            },
+        )
+        .await
+        .unwrap();
+
+    match result {
+        MembershipOpResult::MembershipList(list) => {
+            assert_eq!(list.len(), 2); // owner + member
+            assert!(list.iter().any(|m| m.user_id == member_id));
+        }
+        _ => panic!("Expected MembershipList result"),
+    }
+
+    cleanup_test_data(&pool, &[owner_id, member_id], &[tenant.id]).await;
+}
+
+#[tokio::test]
+async fn repository_execute_update_role_and_delete_return_unit() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let membership_repo = PgMembershipRepository::new(pool.clone());
+    let ctx = test_ctx();
+    let owner_id = create_test_user(&pool, "ExecuteUpdateOwner").await;
+    let tenant = create_test_tenant(&pool, owner_id).await;
+    let member_id = create_test_user(&pool, "ExecuteUpdateMember").await;
+
+    membership_repo
+        .create(
+            &ctx,
+            &Membership::new(tenant.id, member_id, TenantRole::Member),
+        )
+        .await
+        .unwrap();
+
+    let update_result = membership_repo
+        .execute(
+            &ctx,
+            MembershipOp::UpdateRole {
+                tenant_id: tenant.id,
+                user_id: member_id,
+                role: TenantRole::Admin,
+            },
+        )
+        .await
+        .unwrap();
+    assert_eq!(update_result, MembershipOpResult::Unit);
+
+    let found = membership_repo
+        .find(&ctx, tenant.id, member_id)
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(found.role, TenantRole::Admin);
+
+    let delete_result = membership_repo
+        .execute(
+            &ctx,
+            MembershipOp::Delete {
+                tenant_id: tenant.id,
+                user_id: member_id,
+            },
+        )
+        .await
+        .unwrap();
+    assert_eq!(delete_result, MembershipOpResult::Unit);
+
+    let found = membership_repo
+        .find(&ctx, tenant.id, member_id)
+        .await
+        .unwrap();
+    assert!(found.is_none());
+
+    cleanup_test_data(&pool, &[owner_id, member_id], &[tenant.id]).await;
+}

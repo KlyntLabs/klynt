@@ -453,3 +453,108 @@ async fn repository_execute_delegates_find_by_id() {
 
     cleanup_test_data(&pool, &[owner_id], &[tenant.id]).await;
 }
+
+#[tokio::test]
+async fn repository_execute_create_returns_tenant_and_count_returns_count() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let tenant_repo = PgTenantRepository::new(pool.clone());
+    let ctx = test_ctx();
+    let owner_id = create_test_user(&pool, "ExecuteCreateOwner").await;
+
+    let count_before = tenant_repo
+        .execute(&ctx, TenantOp::CountOwnedByUser { user_id: owner_id })
+        .await
+        .unwrap();
+    assert_eq!(count_before, TenantOpResult::Count(0));
+
+    let tenant = create_test_tenant(&tenant_repo, owner_id, "Execute Created").await;
+    let create_result = tenant_repo
+        .execute(
+            &ctx,
+            TenantOp::Create {
+                tenant: tenant.clone(),
+            },
+        )
+        .await;
+    assert!(matches!(create_result, Err(DomainError::Conflict(_))));
+
+    let count_after = tenant_repo
+        .execute(&ctx, TenantOp::CountOwnedByUser { user_id: owner_id })
+        .await
+        .unwrap();
+    assert_eq!(count_after, TenantOpResult::Count(1));
+
+    cleanup_test_data(&pool, &[owner_id], &[tenant.id]).await;
+}
+
+#[tokio::test]
+async fn repository_execute_list_for_user_returns_summary_list() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let tenant_repo = PgTenantRepository::new(pool.clone());
+    let ctx = test_ctx();
+    let owner_id = create_test_user(&pool, "ExecuteListOwner").await;
+    let tenant = create_test_tenant(&tenant_repo, owner_id, "Execute Listed").await;
+
+    let result = tenant_repo
+        .execute(&ctx, TenantOp::ListForUser { user_id: owner_id })
+        .await
+        .unwrap();
+
+    match result {
+        TenantOpResult::TenantSummaryList(summaries) => {
+            assert_eq!(summaries.len(), 1);
+            assert_eq!(summaries[0].id, tenant.id);
+            assert_eq!(summaries[0].role, TenantRole::Owner);
+        }
+        _ => panic!("Expected TenantSummaryList result"),
+    }
+
+    cleanup_test_data(&pool, &[owner_id], &[tenant.id]).await;
+}
+
+#[tokio::test]
+async fn repository_execute_update_returns_tenant_and_delete_returns_unit() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let tenant_repo = PgTenantRepository::new(pool.clone());
+    let ctx = test_ctx();
+    let owner_id = create_test_user(&pool, "ExecuteUpdateOwner").await;
+    let mut tenant = create_test_tenant(&tenant_repo, owner_id, "Execute Update").await;
+
+    tenant.rename("Execute Updated".to_string()).unwrap();
+    let update_result = tenant_repo
+        .execute(
+            &ctx,
+            TenantOp::Update {
+                tenant: tenant.clone(),
+            },
+        )
+        .await
+        .unwrap();
+    match update_result {
+        TenantOpResult::Tenant(updated) => {
+            assert_eq!(updated.id, tenant.id);
+            assert_eq!(updated.name, "Execute Updated");
+        }
+        _ => panic!("Expected Tenant result"),
+    }
+
+    let delete_result = tenant_repo
+        .execute(&ctx, TenantOp::Delete { id: tenant.id })
+        .await
+        .unwrap();
+    assert_eq!(delete_result, TenantOpResult::Unit);
+
+    let found = tenant_repo.find_by_id(&ctx, tenant.id).await.unwrap();
+    assert!(found.is_none());
+
+    cleanup_test_data(&pool, &[owner_id], &[tenant.id]).await;
+}

@@ -7,6 +7,7 @@ pub mod http_error;
 pub mod password_hasher;
 pub mod permission;
 pub mod repository;
+pub mod repository_execute;
 pub mod session;
 pub mod token;
 

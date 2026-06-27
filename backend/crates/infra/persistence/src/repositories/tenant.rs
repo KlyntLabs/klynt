@@ -2,16 +2,12 @@
 
 use async_trait::async_trait;
 use base::ctx::ExecutionContext;
-use base::ports::repository::{TenantOpResult, TenantRepository};
-use domain::operations::TenantOp;
+use base::ports::repository::TenantRepository;
 use domain::{
     membership::TenantRole, DomainError, DomainResult, Tenant, TenantId, TenantMembershipSummary,
     TenantSlug, TenantStatus, UserId,
 };
 use sqlx::{Error as SqlxError, PgPool};
-
-#[path = "tenant_execute.rs"]
-mod tenant_execute;
 
 /// PostgreSQL implementation of the tenant repository.
 pub struct PgTenantRepository {
@@ -313,10 +309,6 @@ impl TenantRepository for PgTenantRepository {
         .map_err(DomainError::internal)?;
 
         Ok(count)
-    }
-
-    async fn execute(&self, ctx: &ExecutionContext, op: TenantOp) -> DomainResult<TenantOpResult> {
-        tenant_execute::execute(self, ctx, op).await
     }
 }
 
