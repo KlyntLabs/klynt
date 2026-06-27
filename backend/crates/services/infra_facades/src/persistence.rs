@@ -8,6 +8,11 @@ use base::ports::TokenStore;
 use std::sync::Arc;
 
 /// Persistence facade — single access point to all persistence adapters.
+///
+/// The grouped adapters are intentionally exposed as public fields so the
+/// composition root can wire the facade once and services can reach only the
+/// adapters they need. Consumers should not reach through this facade into
+/// unrelated adapters; keep each service's dependencies narrow.
 pub struct PersistenceFacade {
     // Repositories
     pub user_repository: Arc<dyn UserRepository>,

@@ -10,20 +10,28 @@ Service handling all **authentication flows**: registration, login, email verifi
 auth_service/
 ├── src/
 │   ├── application/              # Use cases (orchestration)
+│   │   ├── mod.rs
 │   │   ├── ports.rs             # Local port definitions (layer-specific)
+│   │   ├── services/            # Shared application services
+│   │   │   ├── mod.rs
+│   │   │   └── token_email.rs
 │   │   └── use_cases/
+│   │       ├── mod.rs
+│   │       ├── email_verification.rs
+│   │       ├── list_sessions.rs
 │   │       ├── login.rs
-│   │       ├── register.rs
-│   │       ├── verify_email.rs
+│   │       ├── logout.rs
 │   │       ├── password_reset.rs
-│   │       └── logout.rs
-│   ├── domain/                   # Domain logic (business rules)
+│   │       ├── registration.rs
+│   │       └── revoke_session.rs
+│   ├── core/                     # Domain logic (business rules)
+│   │   ├── mod.rs
 │   │   ├── password_policy.rs   # Password validation
-│   │   ├── session_token.rs     # Session token generation
-│   │   └── token_store.rs      # Token management
-│   ├── infrastructure/          # External integrations (adapters supplied by composition root)
-│   │   └── mod.rs
+│   │   ├── password_policy/tests.rs
+│   │   ├── session.rs           # Session token generation
+│   │   └── tokens.rs            # Token management
 │   ├── models/                   # Request/response DTOs
+│   │   └── mod.rs
 │   ├── builder.rs               # Builder pattern
 │   ├── error.rs                 # Service-specific errors
 │   └── lib.rs

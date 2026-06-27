@@ -9,8 +9,23 @@ Service responsible for **user profile management**: viewing profiles, updating 
 ```
 user_service/
 ├── src/
-│   ├── lib.rs              # Service definition
-│   └── error.rs           # Service-specific errors
+│   ├── application/        # Use cases (orchestration)
+│   │   ├── mod.rs
+│   │   ├── ports.rs
+│   │   └── use_cases/
+│   │       ├── mod.rs
+│   │       ├── change_password.rs
+│   │       ├── delete_user.rs
+│   │       ├── get_user.rs
+│   │       ├── list_users.rs
+│   │       └── update_profile.rs
+│   ├── core/               # Shared domain helpers
+│   │   └── mod.rs
+│   ├── models/             # Request/response DTOs
+│   │   └── mod.rs
+│   ├── builder.rs          # Builder pattern
+│   ├── error.rs            # Service-specific errors
+│   └── lib.rs
 └── Cargo.toml
 ```
 
