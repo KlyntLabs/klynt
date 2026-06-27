@@ -65,8 +65,12 @@ pub struct Config {
     pub csp_directive: String,
 
     /// Whether session synchronization via the session coordinator is enabled.
-    #[serde(default)]
+    #[serde(default = "default_session_sync_enabled")]
     pub session_sync_enabled: bool,
+}
+
+fn default_session_sync_enabled() -> bool {
+    true
 }
 
 fn default_log_level() -> String {

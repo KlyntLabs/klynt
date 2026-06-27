@@ -29,6 +29,7 @@ fn config_can_be_loaded_from_env() {
         std::env::set_var("KLYNT_API__HOST", "127.0.0.1");
         std::env::set_var("KLYNT_API__PORT", "3001");
         std::env::set_var("KLYNT_LOG_LEVEL", "warn");
+        std::env::set_var("KLYNT_SESSION_SYNC_ENABLED", "false");
     }
 
     let config = Config::from_env().expect("config should load from env");
@@ -37,6 +38,7 @@ fn config_can_be_loaded_from_env() {
     assert_eq!(config.database_url, database_url());
     assert_eq!(config.redis_url, Some(redis_url()));
     assert_eq!(config.log_level, "warn");
+    assert!(!config.session_sync_enabled);
 
     unsafe {
         std::env::remove_var("KLYNT_DATABASE_URL");
@@ -44,5 +46,6 @@ fn config_can_be_loaded_from_env() {
         std::env::remove_var("KLYNT_API__HOST");
         std::env::remove_var("KLYNT_API__PORT");
         std::env::remove_var("KLYNT_LOG_LEVEL");
+        std::env::remove_var("KLYNT_SESSION_SYNC_ENABLED");
     }
 }
