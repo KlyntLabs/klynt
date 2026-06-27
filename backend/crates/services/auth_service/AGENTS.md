@@ -89,19 +89,6 @@ impl PasswordPolicy {
 }
 ```
 
-### 3. Infrastructure Layer (`infrastructure/`)
-
-External integrations (email rendering, etc.):
-
-```rust
-// infrastructure/email_renderer.rs
-impl EmailRenderer {
-    pub fn render_verification_email(&self, token: &str) -> Email {
-        // HTML generation
-    }
-}
-```
-
 ## Builder Pattern
 
 Construct the service with infrastructure facades. Persistence and infrastructure adapters are supplied by the composition root; the builder no longer accepts a `sqlx` pool:
