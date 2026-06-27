@@ -1,11 +1,30 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render as rtlRender, waitFor } from "@testing-library/react";
+import { HttpResponse, http } from "msw";
+import { type ReactNode, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { useAuthStore } from "@/core/auth/auth-store";
 import type { UserRole } from "@/core/auth/types";
+import { server } from "@/test/msw/server";
 import { HostRouter } from "./host-router";
 
 const originalDomain = import.meta.env.VITE_APP_DOMAIN;
 const originalProtocol = import.meta.env.VITE_APP_PROTOCOL;
+
+function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+}
+
+function Wrapper({ children }: { children: ReactNode }) {
+  const [queryClient] = useState(createTestQueryClient);
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+}
+
+function render(ui: React.ReactElement) {
+  return rtlRender(<Wrapper>{ui}</Wrapper>);
+}
 
 function stubLocation(href: string) {
   const url = new URL(href);
@@ -62,45 +81,45 @@ describe("HostRouter", () => {
 
   it("redirects apex tenant path to tenant subdomain", () => {
     stubLocation("http://lvh.me:5174/tenants/acme/members");
-    rtlRender(<HostRouter />);
+    render(<HostRouter />);
     expect(window.location.replace).toHaveBeenCalledWith("http://acme.lvh.me:5174/members");
   });
 
   it("redirects apex username path to profile subdomain", () => {
     stubLocation("http://lvh.me:5174/jayden");
-    rtlRender(<HostRouter />);
+    render(<HostRouter />);
     expect(window.location.replace).toHaveBeenCalledWith("http://u.jayden.lvh.me:5174/");
   });
 
   it("redirects apex login path to login subdomain", () => {
     stubLocation("http://lvh.me:5174/login");
-    rtlRender(<HostRouter />);
+    render(<HostRouter />);
     expect(window.location.replace).toHaveBeenCalledWith("http://login.lvh.me:5174/");
   });
 
   it("redirects apex dashboard path to admin subdomain", () => {
     stubLocation("http://lvh.me:5174/dashboard");
-    rtlRender(<HostRouter />);
+    render(<HostRouter />);
     expect(window.location.replace).toHaveBeenCalledWith("http://admin.lvh.me:5174/");
   });
 
   it("redirects authenticated login subdomain to apex dashboard", () => {
     setAuthenticated();
     stubLocation("http://login.lvh.me:5174/");
-    rtlRender(<HostRouter />);
+    render(<HostRouter />);
     expect(window.location.replace).toHaveBeenCalledWith("http://lvh.me:5174/dashboard");
   });
 
   it("redirects non-admin admin subdomain to apex home", () => {
     setAuthenticated("student");
     stubLocation("http://admin.lvh.me:5174/");
-    rtlRender(<HostRouter />);
+    render(<HostRouter />);
     expect(window.location.replace).toHaveBeenCalledWith("http://lvh.me:5174/");
   });
 
   it("redirects unauthenticated tenant subdomain to login subdomain", () => {
     stubLocation("http://acme.lvh.me:5174/members");
-    rtlRender(<HostRouter />);
+    render(<HostRouter />);
     expect(window.location.replace).toHaveBeenCalledWith(
       expect.stringContaining("login.lvh.me:5174/?from=")
     );
@@ -109,7 +128,22 @@ describe("HostRouter", () => {
   it("renders profile subdomain for the owner", async () => {
     setAuthenticated();
     stubLocation("http://u.jayden.lvh.me:5174/");
-    const { getByText } = rtlRender(<HostRouter />);
+    server.use(
+      http.get("/api/v1/users/me", () =>
+        HttpResponse.json({
+          data: {
+            id: "u-1",
+            email: "a@b.com",
+            username: "jayden",
+            full_name: "Jayden",
+            role: "student",
+            status: "active",
+            created_at: "2024-01-01T00:00:00Z",
+          },
+        })
+      )
+    );
+    const { getByText } = render(<HostRouter />);
     await waitFor(() => expect(getByText("This is your public profile.")).toBeInTheDocument());
   });
 });

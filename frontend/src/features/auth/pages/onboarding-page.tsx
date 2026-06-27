@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { navigateExternal } from "@/core/auth/external-redirect";
-import { buildAdminUrl } from "@/core/routing/subdomain-url";
+import { buildAdminUrl } from "@/core/routing/subdomain-router";
 import { CreateTenantForm } from "@/features/tenant";
 import { JoinTenantForm } from "../components/join-tenant-form";
 

@@ -1,11 +1,11 @@
-import { useAuth } from "@/core/auth/auth-identity";
+import { useAuthModule } from "@/core/auth/auth-module";
 
 export interface PublicProfilePageProps {
   username: string;
 }
 
 export function PublicProfilePage({ username }: PublicProfilePageProps) {
-  const { user } = useAuth();
+  const { user } = useAuthModule();
   const isOwner = user?.username === username;
 
   return (

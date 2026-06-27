@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/core/auth/auth-identity";
+import { useAuthModule } from "@/core/auth/auth-module";
 import { getTenant } from "../api/tenant-api";
 
 export function useTenant(slug: string) {
-  const { user } = useAuth();
+  const { user } = useAuthModule();
   return useQuery({
     // Include the user id so the cache is scoped to the current identity; a
     // different user may have different tenant memberships/roles.

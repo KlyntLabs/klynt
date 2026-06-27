@@ -29,7 +29,7 @@ import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { createApiError } from "@/core/api/api-error";
 import { navigateExternal } from "@/core/auth/external-redirect";
-import { buildAdminUrl } from "@/core/routing/subdomain-url";
+import { buildAdminUrl } from "@/core/routing/subdomain-router";
 import { useRemoveTenant } from "../hooks/use-remove-tenant";
 import { useTenant } from "../hooks/use-tenant";
 import { useUpdateTenant } from "../hooks/use-update-tenant";

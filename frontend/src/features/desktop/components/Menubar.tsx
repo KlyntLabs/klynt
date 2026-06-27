@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
+import { useWindowManager } from "@/features/desktop/window-manager/window-module";
 import type { DesktopAction } from "../apps/types";
 import type { DesktopConfig } from "../factory/types";
 import type { MenubarItem, MenubarSchema } from "../menubar/types";
@@ -63,7 +63,7 @@ export default function Menubar({ config }: MenubarProps) {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation("home");
-  const { openApp } = useDesktopStore();
+  const { openApp } = useWindowManager();
   const navigate = useNavigate();
 
   useEffect(() => {

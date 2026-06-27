@@ -1,7 +1,7 @@
 import { ExternalLink, Monitor } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
+import { useWindowManager } from "@/features/desktop/window-manager/window-module";
 import type { AppManifest } from "../apps/types";
 import type { DesktopConfig } from "../factory/types";
 
@@ -29,7 +29,7 @@ function DesktopIconItem({ icon, label, onClick }: DesktopIconItemProps) {
 }
 
 function AppIcon({ app, desktopId }: { app: AppManifest; desktopId: string }) {
-  const { openApp } = useDesktopStore();
+  const { openApp } = useWindowManager();
   const { t } = useTranslation("home");
   const Icon = app.icon;
   return (
@@ -63,7 +63,7 @@ interface DesktopIconsProps {
 }
 
 export default function DesktopIcons({ config }: DesktopIconsProps) {
-  const { setViewMode } = useDesktopStore();
+  const { setViewMode } = useWindowManager();
   const { t } = useTranslation("home");
   const navigate = useNavigate();
   const isMarketing = config.id === "marketing";

@@ -19,11 +19,15 @@ export interface Window {
 
 export type WindowGeometry = Pick<Window, "x" | "y" | "width" | "height">;
 
+type ViewMode = "desktop" | "website";
+
 type WindowManagerState = {
   windows: Record<string, Window[]>;
   activeWindowId: Record<string, string | null>;
   nextZIndex: number;
   preMaximizeRects: Record<string, WindowGeometry>;
+  activeDesktopId: string | null;
+  viewMode: ViewMode;
 
   openApp: (desktopId: string, appId: string, defaultRect?: Partial<Window>) => void;
   closeWindow: (desktopId: string, windowId: string) => void;
@@ -32,6 +36,8 @@ type WindowManagerState = {
   minimizeWindow: (desktopId: string, windowId: string) => void;
   maximizeWindow: (desktopId: string, windowId: string) => void;
   restoreWindow: (desktopId: string, windowId: string) => void;
+  setActiveDesktop: (id: string) => void;
+  setViewMode: (mode: ViewMode) => void;
   reset: () => void;
 };
 
@@ -86,12 +92,16 @@ const initialState: Omit<
   | "minimizeWindow"
   | "maximizeWindow"
   | "restoreWindow"
+  | "setActiveDesktop"
+  | "setViewMode"
   | "reset"
 > = {
   windows: {},
   activeWindowId: {},
   nextZIndex: Z_INDEX_BASE,
   preMaximizeRects: {},
+  activeDesktopId: null,
+  viewMode: "desktop",
 };
 
 export const useWindowManager = create<WindowManagerState>()(
@@ -102,6 +112,16 @@ export const useWindowManager = create<WindowManagerState>()(
       openApp: (desktopId, appId, defaultRect) =>
         set((draft) => {
           const desktopWindows = draft.windows[desktopId] ?? [];
+          const existing = desktopWindows.find((w) => w.appId === appId);
+
+          if (existing) {
+            existing.state = "normal";
+            existing.zIndex = draft.nextZIndex;
+            draft.nextZIndex += 1;
+            maybeCompactZIndexes(draft);
+            draft.activeWindowId[desktopId] = existing.id;
+            return;
+          }
 
           const width = defaultRect?.width ?? DEFAULT_WINDOW_WIDTH;
           const height = defaultRect?.height ?? DEFAULT_WINDOW_HEIGHT;
@@ -214,6 +234,16 @@ export const useWindowManager = create<WindowManagerState>()(
             win.height = prevRect.height;
             delete draft.preMaximizeRects[windowId];
           }
+        }),
+
+      setActiveDesktop: (id) =>
+        set((draft) => {
+          draft.activeDesktopId = id;
+        }),
+
+      setViewMode: (mode) =>
+        set((draft) => {
+          draft.viewMode = mode;
         }),
 
       reset: () => set(initialState),

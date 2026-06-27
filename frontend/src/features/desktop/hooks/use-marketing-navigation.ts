@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { marketingRegistry } from "@/features/desktop/apps";
-import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
+import { useWindowManager } from "@/features/desktop/window-manager/window-module";
 
 export interface MarketingNavigation {
   /** Navigate to a marketing route, opening a window in desktop mode. */
@@ -14,7 +14,7 @@ export interface MarketingNavigation {
 
 export function useMarketingNavigation(): MarketingNavigation {
   const navigate = useNavigate();
-  const { viewMode, openApp } = useDesktopStore();
+  const { viewMode, openApp } = useWindowManager();
 
   const goTo = useCallback(
     (route: string) => {

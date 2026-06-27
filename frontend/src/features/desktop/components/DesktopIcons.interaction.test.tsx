@@ -2,12 +2,12 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { marketingDesktopConfig } from "@/features/desktop/factory/marketing-config";
-import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
 import {
   createTestApp,
   createTestConfig,
   resetDesktopStore,
 } from "@/features/desktop/test-helpers";
+import { useWindowManager } from "@/features/desktop/window-manager/window-module";
 import { render } from "@/test/render";
 import DesktopIcons from "./DesktopIcons";
 
@@ -32,12 +32,12 @@ describe("DesktopIcons interactions", () => {
     await user.click(screen.getByRole("button", { name: /^pricing$/i }));
 
     await waitFor(() => {
-      expect(useDesktopStore.getState().windows.marketing).toHaveLength(1);
+      expect(useWindowManager.getState().windows.marketing).toHaveLength(1);
     });
 
-    const windowState = useDesktopStore.getState().windows.marketing?.[0];
+    const windowState = useWindowManager.getState().windows.marketing?.[0];
     expect(windowState?.appId).toBe("pricing");
-    expect(useDesktopStore.getState().activeWindowId.marketing).toBe(windowState?.id);
+    expect(useWindowManager.getState().activeWindowId.marketing).toBe(windowState?.id);
   });
 
   it("focuses an existing window when clicked", async () => {
@@ -48,7 +48,7 @@ describe("DesktopIcons interactions", () => {
         createTestApp({ id: "pricing", title: "Pricing", dock: { position: "left", order: 1 } }),
       ],
     });
-    useDesktopStore.setState({
+    useWindowManager.setState({
       windows: {
         "test-dock": [
           {
@@ -72,7 +72,7 @@ describe("DesktopIcons interactions", () => {
     await user.click(screen.getByRole("button", { name: /^pricing$/i }));
 
     await waitFor(() => {
-      const state = useDesktopStore.getState();
+      const state = useWindowManager.getState();
       expect(state.activeWindowId["test-dock"]).toBe("win-pricing");
       const focused = state.windows["test-dock"]?.find((w) => w.id === "win-pricing");
       expect(focused?.zIndex).toBeGreaterThan(101);
@@ -97,7 +97,7 @@ describe("DesktopIcons interactions", () => {
     await user.click(screen.getByRole("button", { name: /switch to website/i }));
 
     await waitFor(() => {
-      expect(useDesktopStore.getState().viewMode).toBe("website");
+      expect(useWindowManager.getState().viewMode).toBe("website");
     });
   });
 });

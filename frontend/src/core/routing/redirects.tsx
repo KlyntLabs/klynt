@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { ExternalNavigate } from "@/core/auth/external-redirect";
-import { buildAdminUrl, buildLoginUrl, buildProfileUrl, buildTenantUrl } from "./subdomain-url";
+import { buildAdminUrl, buildLoginUrl, buildProfileUrl, buildTenantUrl } from "./subdomain-router";
 
 export function RedirectToLogin() {
   return <ExternalNavigate to={buildLoginUrl()} />;

@@ -2,8 +2,8 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import { marketingDesktopConfig } from "@/features/desktop/factory/marketing-config";
-import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
 import { resetDesktopStore } from "@/features/desktop/test-helpers";
+import { useWindowManager } from "@/features/desktop/window-manager/window-module";
 import { render } from "@/test/render";
 import Menubar from "./Menubar";
 
@@ -25,7 +25,7 @@ describe("Menubar interactions", () => {
     await user.click(item);
 
     await waitFor(() => {
-      const state = useDesktopStore.getState();
+      const state = useWindowManager.getState();
       expect(state.windows.marketing).toHaveLength(1);
       expect(state.windows.marketing?.[0]?.appId).toBe("pricing");
       expect(state.activeWindowId.marketing).toBe(state.windows.marketing?.[0]?.id);
@@ -53,7 +53,7 @@ describe("Menubar interactions", () => {
     await user.click(screen.getByRole("button", { name: /klynt logo/i }));
 
     await waitFor(() => {
-      const state = useDesktopStore.getState();
+      const state = useWindowManager.getState();
       expect(state.windows.marketing).toHaveLength(1);
       expect(state.windows.marketing?.[0]?.appId).toBe("home");
     });

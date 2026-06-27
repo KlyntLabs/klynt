@@ -2,12 +2,12 @@ import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { WindowState } from "@/features/desktop/store/use-desktop-store";
-import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
+import type { Window } from "@/features/desktop/window-manager/window-module";
+import { useWindowManager } from "@/features/desktop/window-manager/window-module";
 import { render } from "@/test/render";
 import WindowComponent from "./Window";
 
-const sampleWindow: WindowState = {
+const sampleWindow: Window = {
   id: "win-1",
   appId: "test-app",
   x: 100,
@@ -21,7 +21,7 @@ const sampleWindow: WindowState = {
 const DESKTOP_ID = "test-desktop";
 
 function resetStore() {
-  useDesktopStore.setState({
+  useWindowManager.setState({
     viewMode: "desktop",
     windows: { [DESKTOP_ID]: [sampleWindow] },
     activeWindowId: { [DESKTOP_ID]: null },
@@ -30,7 +30,7 @@ function resetStore() {
 }
 
 function WindowWrapper({ windowId, children }: { windowId: string; children?: ReactNode }) {
-  const w = useDesktopStore((state) =>
+  const w = useWindowManager((state) =>
     state.windows[DESKTOP_ID]?.find((win) => win.id === windowId)
   );
   if (!w) return null;
@@ -42,7 +42,7 @@ function WindowWrapper({ windowId, children }: { windowId: string; children?: Re
 }
 
 function LockedWindowWrapper({ windowId, children }: { windowId: string; children?: ReactNode }) {
-  const w = useDesktopStore((state) =>
+  const w = useWindowManager((state) =>
     state.windows[DESKTOP_ID]?.find((win) => win.id === windowId)
   );
   if (!w) return null;
@@ -66,7 +66,7 @@ describe("Window interactions", () => {
     await user.click(title);
 
     await waitFor(() => {
-      const state = useDesktopStore.getState();
+      const state = useWindowManager.getState();
       expect(state.activeWindowId[DESKTOP_ID]).toBe("win-1");
       const focused = state.windows[DESKTOP_ID]?.find((w) => w.id === "win-1");
       expect(focused?.zIndex).toBeGreaterThan(101);
@@ -75,7 +75,7 @@ describe("Window interactions", () => {
 
   it("does not refocus an already active window", async () => {
     const user = userEvent.setup();
-    useDesktopStore.setState({
+    useWindowManager.setState({
       windows: { [DESKTOP_ID]: [{ ...sampleWindow, zIndex: 102 }] },
       activeWindowId: { [DESKTOP_ID]: "win-1" },
       nextZIndex: 103,
@@ -83,10 +83,10 @@ describe("Window interactions", () => {
 
     render(<WindowWrapper windowId="win-1">Content</WindowWrapper>);
 
-    const initialZIndex = useDesktopStore.getState().windows[DESKTOP_ID]?.[0]?.zIndex;
+    const initialZIndex = useWindowManager.getState().windows[DESKTOP_ID]?.[0]?.zIndex;
     await user.click(screen.getByText("Test Window"));
 
-    expect(useDesktopStore.getState().windows[DESKTOP_ID]?.[0]?.zIndex).toBe(initialZIndex);
+    expect(useWindowManager.getState().windows[DESKTOP_ID]?.[0]?.zIndex).toBe(initialZIndex);
   });
 
   it("closes the window when the close button is clicked", async () => {
@@ -95,8 +95,8 @@ describe("Window interactions", () => {
     fireEvent.click(screen.getByRole("button", { name: /close/i }));
 
     await waitFor(() => {
-      expect(useDesktopStore.getState().windows[DESKTOP_ID]).toHaveLength(0);
-      expect(useDesktopStore.getState().activeWindowId[DESKTOP_ID]).toBeNull();
+      expect(useWindowManager.getState().windows[DESKTOP_ID]).toHaveLength(0);
+      expect(useWindowManager.getState().activeWindowId[DESKTOP_ID]).toBeNull();
     });
   });
 
@@ -106,7 +106,7 @@ describe("Window interactions", () => {
     fireEvent.click(screen.getByRole("button", { name: /minimize/i }));
 
     await waitFor(() => {
-      const minimized = useDesktopStore
+      const minimized = useWindowManager
         .getState()
         .windows[DESKTOP_ID]?.find((w) => w.id === "win-1");
       expect(minimized?.state).toBe("minimized");
@@ -119,13 +119,13 @@ describe("Window interactions", () => {
     fireEvent.click(screen.getByRole("button", { name: /maximize/i }));
 
     await waitFor(() => {
-      expect(useDesktopStore.getState().windows[DESKTOP_ID]?.[0]?.state).toBe("maximized");
+      expect(useWindowManager.getState().windows[DESKTOP_ID]?.[0]?.state).toBe("maximized");
     });
 
     fireEvent.click(screen.getByRole("button", { name: /restore/i }));
 
     await waitFor(() => {
-      const restored = useDesktopStore.getState().windows[DESKTOP_ID]?.[0];
+      const restored = useWindowManager.getState().windows[DESKTOP_ID]?.[0];
       expect(restored?.state).toBe("normal");
     });
   });
@@ -134,13 +134,13 @@ describe("Window interactions", () => {
     render(<WindowWrapper windowId="win-1">Content</WindowWrapper>);
 
     act(() => {
-      useDesktopStore
+      useWindowManager
         .getState()
         .moveWindow(DESKTOP_ID, "win-1", { x: 250, y: 180, width: 400, height: 300 });
     });
 
     await waitFor(() => {
-      const state = useDesktopStore.getState();
+      const state = useWindowManager.getState();
       expect(state.windows[DESKTOP_ID]?.[0]).toMatchObject({ x: 250, y: 180 });
     });
   });
@@ -161,7 +161,7 @@ describe("Window interactions", () => {
     });
 
     await waitFor(() => {
-      const moved = useDesktopStore.getState().windows[DESKTOP_ID]?.find((w) => w.id === "win-1");
+      const moved = useWindowManager.getState().windows[DESKTOP_ID]?.find((w) => w.id === "win-1");
       expect(moved?.x).not.toBe(100);
       expect(moved?.y).not.toBe(100);
     });
@@ -219,7 +219,9 @@ describe("Window interactions", () => {
       });
 
       await waitFor(() => {
-        const moved = useDesktopStore.getState().windows[DESKTOP_ID]?.find((w) => w.id === "win-1");
+        const moved = useWindowManager
+          .getState()
+          .windows[DESKTOP_ID]?.find((w) => w.id === "win-1");
         expect(moved?.x).toBe(100);
         expect(moved?.y).toBe(100);
       });

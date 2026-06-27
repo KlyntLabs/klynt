@@ -1,15 +1,15 @@
 import { act, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
-import type { WindowState } from "@/features/desktop/store/use-desktop-store";
-import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
+import type { Window } from "@/features/desktop/window-manager/window-module";
+import { useWindowManager } from "@/features/desktop/window-manager/window-module";
 import { render } from "@/test/render";
 import { createTestApp, createTestConfig } from "../test-helpers";
 import WindowManager from "./WindowManager";
 
 const DESKTOP_ID = "test-wm";
 
-const homeWindow: WindowState = {
+const homeWindow: Window = {
   id: "win-home",
   appId: "home",
   x: 100,
@@ -20,7 +20,7 @@ const homeWindow: WindowState = {
   state: "normal",
 };
 
-const pricingWindow: WindowState = {
+const pricingWindow: Window = {
   id: "win-pricing",
   appId: "pricing",
   x: 150,
@@ -42,7 +42,7 @@ const config = createTestConfig({
 });
 
 function resetStore() {
-  useDesktopStore.setState({
+  useWindowManager.setState({
     viewMode: "desktop",
     windows: {},
     activeWindowId: {},
@@ -57,7 +57,7 @@ describe("WindowManager interactions", () => {
 
   it("renders multiple windows and switches focus between them", async () => {
     const user = userEvent.setup();
-    useDesktopStore.setState({
+    useWindowManager.setState({
       windows: { [DESKTOP_ID]: [homeWindow, pricingWindow] },
       activeWindowId: { [DESKTOP_ID]: pricingWindow.id },
       nextZIndex: 102,
@@ -72,7 +72,7 @@ describe("WindowManager interactions", () => {
     await user.click(homeTitle);
 
     await waitFor(() => {
-      const state = useDesktopStore.getState();
+      const state = useWindowManager.getState();
       expect(state.activeWindowId[DESKTOP_ID]).toBe(homeWindow.id);
       const focused = state.windows[DESKTOP_ID]?.find((w) => w.id === homeWindow.id);
       expect(focused?.zIndex).toBeGreaterThan(pricingWindow.zIndex);
@@ -80,7 +80,7 @@ describe("WindowManager interactions", () => {
   });
 
   it("reflects minimized state by hiding the window", async () => {
-    useDesktopStore.setState({
+    useWindowManager.setState({
       windows: { [DESKTOP_ID]: [{ ...pricingWindow, state: "minimized" }] },
       activeWindowId: { [DESKTOP_ID]: null },
       nextZIndex: 101,
@@ -92,7 +92,7 @@ describe("WindowManager interactions", () => {
   });
 
   it("reflects closed windows by removing them from view", async () => {
-    useDesktopStore.setState({
+    useWindowManager.setState({
       windows: { [DESKTOP_ID]: [homeWindow, pricingWindow] },
       activeWindowId: { [DESKTOP_ID]: pricingWindow.id },
       nextZIndex: 102,
@@ -102,19 +102,19 @@ describe("WindowManager interactions", () => {
     expect(screen.getByText("Pricing")).toBeInTheDocument();
 
     act(() => {
-      useDesktopStore.getState().closeWindow(DESKTOP_ID, pricingWindow.id);
+      useWindowManager.getState().closeWindow(DESKTOP_ID, pricingWindow.id);
     });
 
     await waitFor(() => {
       expect(screen.queryByText("Pricing")).not.toBeInTheDocument();
-      const state = useDesktopStore.getState();
+      const state = useWindowManager.getState();
       expect(state.windows[DESKTOP_ID]).toHaveLength(1);
       expect(state.activeWindowId[DESKTOP_ID]).toBe(homeWindow.id);
     });
   });
 
   it("reflects maximized state by expanding the window", async () => {
-    useDesktopStore.setState({
+    useWindowManager.setState({
       windows: { [DESKTOP_ID]: [homeWindow] },
       activeWindowId: { [DESKTOP_ID]: homeWindow.id },
       nextZIndex: 101,
@@ -127,7 +127,7 @@ describe("WindowManager interactions", () => {
     expect((windowEl as HTMLElement).style.width).toBe("400px");
 
     act(() => {
-      useDesktopStore.getState().maximizeWindow(DESKTOP_ID, homeWindow.id);
+      useWindowManager.getState().maximizeWindow(DESKTOP_ID, homeWindow.id);
     });
 
     await waitFor(() => {
@@ -137,7 +137,7 @@ describe("WindowManager interactions", () => {
   });
 
   it("renders windows for different routes", async () => {
-    useDesktopStore.setState({
+    useWindowManager.setState({
       windows: {
         [DESKTOP_ID]: [
           homeWindow,

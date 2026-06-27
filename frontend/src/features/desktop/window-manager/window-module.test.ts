@@ -191,6 +191,8 @@ describe("useWindowManager", () => {
     const { result } = renderHook(() => useWindowManager());
 
     act(() => {
+      result.current.setActiveDesktop("desktop-1");
+      result.current.setViewMode("website");
       result.current.openApp("desktop-1", "app-pricing");
       result.current.focusWindow("desktop-1", "unknown");
     });
@@ -199,8 +201,50 @@ describe("useWindowManager", () => {
       result.current.reset();
     });
 
+    expect(result.current.activeDesktopId).toBeNull();
+    expect(result.current.viewMode).toBe("desktop");
     expect(result.current.windows).toEqual({});
     expect(result.current.activeWindowId).toEqual({});
+  });
+
+  it("focuses an existing window instead of duplicating", () => {
+    const { result } = renderHook(() => useWindowManager());
+
+    act(() => {
+      result.current.openApp("desktop-1", "app-pricing");
+    });
+
+    const firstId = result.current.windows["desktop-1"]?.[0]?.id;
+
+    act(() => {
+      result.current.openApp("desktop-1", "app-docs");
+      result.current.openApp("desktop-1", "app-pricing");
+    });
+
+    expect(result.current.windows["desktop-1"]).toHaveLength(2);
+    expect(result.current.activeWindowId["desktop-1"]).toBe(firstId);
+    expect(result.current.windows["desktop-1"]?.find((w) => w.id === firstId)?.state).toBe(
+      "normal"
+    );
+  });
+
+  it("tracks the active desktop and view mode", () => {
+    const { result } = renderHook(() => useWindowManager());
+
+    act(() => {
+      result.current.setActiveDesktop("desktop-1");
+    });
+    expect(result.current.activeDesktopId).toBe("desktop-1");
+
+    act(() => {
+      result.current.setViewMode("website");
+    });
+    expect(result.current.viewMode).toBe("website");
+
+    act(() => {
+      result.current.setActiveDesktop("desktop-2");
+    });
+    expect(result.current.activeDesktopId).toBe("desktop-2");
   });
 
   it("selectors return desktop-scoped state", () => {

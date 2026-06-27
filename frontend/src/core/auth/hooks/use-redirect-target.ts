@@ -1,6 +1,6 @@
 import { useSearchParams } from "react-router-dom";
 import { getBaseDomain } from "@/core/routing/host-context";
-import { buildApexUrl } from "@/core/routing/subdomain-url";
+import { buildApexUrl } from "@/core/routing/subdomain-router";
 
 export function isAllowedRedirectUrl(url: string): boolean {
   if (url.startsWith("/")) {

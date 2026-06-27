@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { buildApexUrl } from "@/core/routing/subdomain-url";
+import { buildApexUrl } from "@/core/routing/subdomain-router";
 import { LoginForm } from "./login-form";
 
 export function LoginApp() {

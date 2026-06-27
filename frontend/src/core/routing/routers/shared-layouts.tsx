@@ -3,7 +3,7 @@ import { Outlet } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
 import type { UserRole } from "@/core/auth";
 import { GuestRoute, ProtectedRoute, RoleGuard } from "@/core/auth";
-import { buildApexUrl } from "@/core/routing/subdomain-url";
+import { buildApexUrl } from "@/core/routing/subdomain-router";
 
 export function PublicLayout() {
   return (

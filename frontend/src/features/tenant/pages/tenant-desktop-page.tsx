@@ -2,12 +2,12 @@ import { isAxiosError } from "axios";
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
-import { useAuth } from "@/core/auth/auth-identity";
+import { useAuthModule } from "@/core/auth/auth-module";
 import { navigateExternal } from "@/core/auth/external-redirect";
-import { buildApexUrl } from "@/core/routing/subdomain-url";
+import { buildApexUrl } from "@/core/routing/subdomain-router";
 import { DesktopEnvironment } from "@/features/desktop/components/DesktopEnvironment";
 import { buildTenantDesktop } from "@/features/desktop/factory/tenant-desktop";
-import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
+import { useWindowManager } from "@/features/desktop/window-manager/window-module";
 import { useTenant } from "../hooks/use-tenant";
 
 const DEEP_LINK_APP_MAP: Record<string, string> = {
@@ -26,8 +26,8 @@ function isTenantNotFound(error: unknown): boolean {
 
 export default function TenantDesktopPage({ slug: propSlug }: TenantDesktopPageProps = {}) {
   const { slug: paramSlug, "*": deepPath } = useParams<{ slug: string; "*": string }>();
-  const { user } = useAuth();
-  const openApp = useDesktopStore((s) => s.openApp);
+  const { user } = useAuthModule();
+  const openApp = useWindowManager((s) => s.openApp);
 
   const tenantSlug = propSlug ?? paramSlug ?? "";
   const { data: tenant, isLoading, error } = useTenant(tenantSlug);

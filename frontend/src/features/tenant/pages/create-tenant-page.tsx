@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { navigateExternal } from "@/core/auth/external-redirect";
-import { buildAdminUrl } from "@/core/routing/subdomain-url";
+import { buildAdminUrl } from "@/core/routing/subdomain-router";
 import { CreateTenantForm } from "../components/CreateTenantForm";
 
 export default function CreateTenantPage() {

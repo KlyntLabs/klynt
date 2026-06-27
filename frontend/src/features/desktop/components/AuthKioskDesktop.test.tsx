@@ -2,19 +2,19 @@ import { screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { render } from "@/test/render";
 import { buildAuthKioskDesktop } from "../factory/auth-kiosk-desktop";
-import { useDesktopStore } from "../store/use-desktop-store";
+import { useWindowManager } from "../window-manager/window-module";
 import { AuthKioskDesktop } from "./AuthKioskDesktop";
 
 describe("AuthKioskDesktop", () => {
   it("renders the desktop environment and opens the single app centered", () => {
-    useDesktopStore.setState({ windows: {}, activeWindowId: {} });
+    useWindowManager.setState({ windows: {}, activeWindowId: {} });
     const config = buildAuthKioskDesktop("login");
 
     render(<AuthKioskDesktop config={config} />);
 
     expect(screen.getByText("Klynt")).toBeInTheDocument();
 
-    const windows = useDesktopStore.getState().windows[config.id];
+    const windows = useWindowManager.getState().windows[config.id];
     expect(windows).toHaveLength(1);
     expect(windows?.[0]?.appId).toBe("login");
     expect(windows?.[0]?.width).toBe(config.apps[0]?.defaultSize.width);

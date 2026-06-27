@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Navigate } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
-import { buildAdminUrl, buildApexUrl, buildLoginUrl } from "@/core/routing/subdomain-url";
+import { buildAdminUrl, buildApexUrl, buildLoginUrl } from "@/core/routing/subdomain-router";
 import { useAuthStore } from "./auth-store";
 import { ExternalNavigate, isExternalUrl } from "./external-redirect";
 import type { UserRole } from "./types";

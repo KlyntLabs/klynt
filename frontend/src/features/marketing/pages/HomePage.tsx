@@ -1,5 +1,5 @@
 import { marketingRegistry } from "@/features/desktop/apps";
-import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
+import { useWindowManager } from "@/features/desktop/window-manager/window-module";
 import {
   ContentTabsSection,
   CustomerLogosSection,
@@ -9,7 +9,7 @@ import {
 } from "@/features/marketing/sections";
 
 export default function HomePage() {
-  const { openApp } = useDesktopStore();
+  const { openApp } = useWindowManager();
 
   const handleOpenApp = (route: string) => {
     const app = marketingRegistry.apps.find((app) => app.route === route);

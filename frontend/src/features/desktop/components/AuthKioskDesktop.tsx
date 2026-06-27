@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import type { DesktopConfig } from "../factory/types";
-import { useDesktopStore } from "../store/use-desktop-store";
+import { useWindowManager } from "../window-manager/window-module";
 import { DesktopEnvironment } from "./DesktopEnvironment";
 
 interface AuthKioskDesktopProps {
@@ -8,7 +8,7 @@ interface AuthKioskDesktopProps {
 }
 
 export function AuthKioskDesktop({ config }: AuthKioskDesktopProps) {
-  const openApp = useDesktopStore((s) => s.openApp);
+  const openApp = useWindowManager((s) => s.openApp);
 
   useEffect(() => {
     if (config.singleApp && config.apps[0]) {

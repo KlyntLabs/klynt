@@ -4,7 +4,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { useToastStore } from "@/core/notifications/toast-store";
 import { getPresetById } from "@/features/desktop/backgrounds/presets";
 import type { DesktopLayout } from "@/features/desktop/persistence/types";
-import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
+import { useWindowManager } from "@/features/desktop/window-manager/window-module";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import type { DesktopConfig } from "../factory/types";
 import CookieBanner from "./CookieBanner";
@@ -18,7 +18,7 @@ interface DesktopEnvironmentProps {
 }
 
 export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
-  const { windows, openApp } = useDesktopStore();
+  const { windows, openApp } = useWindowManager();
   const desktopWindows = windows[config.id] ?? [];
   const [backgroundPresetId, setBackgroundPresetId] = useState(config.background.presetId);
   const [isLoading, setIsLoading] = useState(true);

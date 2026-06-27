@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { useAuthStore } from "@/core/auth/auth-store";
-import { buildLoginUrl } from "@/core/routing/subdomain-url";
+import { buildLoginUrl } from "@/core/routing/subdomain-router";
 import { server } from "@/test/msw/server";
 import { navigateExternal } from "../external-redirect";
 import { useLogout } from "./use-logout";

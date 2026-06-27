@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuthStore } from "@/core/auth/auth-store";
-import { buildTenantUrl } from "@/core/routing/subdomain-url";
+import { buildTenantUrl } from "@/core/routing/subdomain-router";
 import { listMyTenants } from "../api/tenant-api";
 
 export function TenantSwitcher() {

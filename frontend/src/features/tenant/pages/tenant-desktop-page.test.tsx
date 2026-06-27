@@ -4,8 +4,8 @@ import { Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { buildTenantDesktop } from "@/features/desktop/factory/tenant-desktop";
 import type { DesktopConfig } from "@/features/desktop/factory/types";
-import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
 import { resetDesktopStore } from "@/features/desktop/test-helpers";
+import { useWindowManager } from "@/features/desktop/window-manager/window-module";
 import { resetTenantHandlers } from "@/test/msw/handlers/tenant.handlers";
 import { server } from "@/test/msw/server";
 import { render } from "@/test/render";
@@ -86,7 +86,7 @@ describe("TenantDesktopPage", () => {
     });
 
     await waitFor(() => {
-      const windows = useDesktopStore.getState().windows["tenant:acme"];
+      const windows = useWindowManager.getState().windows["tenant:acme"];
       expect(windows).toHaveLength(1);
       expect(windows?.[0]?.appId).toBe("tenant-members");
     });
@@ -98,7 +98,7 @@ describe("TenantDesktopPage", () => {
     });
 
     await waitFor(() => {
-      const windows = useDesktopStore.getState().windows["tenant:acme"];
+      const windows = useWindowManager.getState().windows["tenant:acme"];
       expect(windows).toHaveLength(1);
       expect(windows?.[0]?.appId).toBe("tenant-roles");
     });
@@ -110,7 +110,7 @@ describe("TenantDesktopPage", () => {
     });
 
     await waitFor(() => {
-      const windows = useDesktopStore.getState().windows["tenant:acme"];
+      const windows = useWindowManager.getState().windows["tenant:acme"];
       expect(windows).toHaveLength(1);
       expect(windows?.[0]?.appId).toBe("tenant-settings");
     });

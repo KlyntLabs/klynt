@@ -1,5 +1,5 @@
 import { type UseMutationResult, useMutation, useQueryClient } from "@tanstack/react-query";
-import { buildLoginUrl } from "@/core/routing/subdomain-url";
+import { buildLoginUrl } from "@/core/routing/subdomain-router";
 import { logout } from "../api/auth-api";
 import { useAuthStore } from "../auth-store";
 import { navigateExternal } from "../external-redirect";

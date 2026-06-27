@@ -1,8 +1,8 @@
 import { screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { marketingDesktopConfig } from "@/features/desktop/factory/marketing-config";
-import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
 import { resetDesktopStore } from "@/features/desktop/test-helpers";
+import { useWindowManager } from "@/features/desktop/window-manager/window-module";
 import { render } from "@/test/render";
 import DesktopEnvironment from "./DesktopEnvironment";
 
@@ -27,7 +27,7 @@ describe("DesktopEnvironment interactions", () => {
       expect(screen.getAllByText("Home").length).toBeGreaterThanOrEqual(1);
     });
 
-    const state = useDesktopStore.getState();
+    const state = useWindowManager.getState();
     expect(state.windows.marketing).toHaveLength(1);
     expect(state.windows.marketing?.[0]?.appId).toBe("home");
   });

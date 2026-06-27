@@ -20,15 +20,15 @@ import type { ComponentType, ReactNode } from "react";
 import { Suspense, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Spinner } from "@/components/ui/spinner";
-import type { WindowState } from "@/features/desktop/store/use-desktop-store";
-import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
+import type { Window } from "@/features/desktop/window-manager/window-module";
+import { useWindowManager } from "@/features/desktop/window-manager/window-module";
 import { AppErrorBoundary } from "./AppErrorBoundary";
 
 type ErrorFallbackProps = { error: Error; retry: () => void };
 
 interface WindowProps {
   desktopId: string;
-  window: WindowState;
+  window: Window;
   title: string;
   children?: ReactNode;
   errorFallback?: ComponentType<ErrorFallbackProps>;
@@ -72,7 +72,7 @@ export default function WindowComponent({
     restoreWindow,
     moveWindow,
     activeWindowId,
-  } = useDesktopStore();
+  } = useWindowManager();
   const { t } = useTranslation("home");
   const isActive = activeWindowId[desktopId] === w.id;
   const isMaximized = w.state === "maximized";

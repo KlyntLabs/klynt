@@ -2,10 +2,10 @@ import { FileText } from "lucide-react";
 import type { AppManifest } from "./apps/types";
 import type { DesktopConfig } from "./factory/types";
 import { createNoOpAdapter } from "./persistence/no-op-adapter";
-import { useDesktopStore } from "./store/use-desktop-store";
+import { useWindowManager } from "./window-manager/window-module";
 
 export function resetDesktopStore() {
-  useDesktopStore.getState().reset();
+  useWindowManager.getState().reset();
 }
 
 export function createTestApp(overrides: Partial<AppManifest> = {}): AppManifest {
