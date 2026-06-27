@@ -221,8 +221,7 @@ async fn remove_membership_removes_snapshot_for_tenant_and_leaves_others() {
     let user_id = create_test_user(&pool).await;
     let store = PgSessionStore::new(pool);
     let ctx = ExecutionContext::new(RequestContext::new());
-    let active_expires_at = Utc::now() + Duration::hours(1);
-    let expired_expires_at = Utc::now() - Duration::hours(1);
+    let expires_at = Utc::now() + Duration::hours(1);
     let tenant_a = Uuid::new_v4();
     let tenant_b = Uuid::new_v4();
     let snapshot_a = MembershipSnapshot {
@@ -234,21 +233,21 @@ async fn remove_membership_removes_snapshot_for_tenant_and_leaves_others() {
         role: TenantRole::Admin,
     };
 
-    let active_token = store
-        .create_with_kind(&ctx, user_id, active_expires_at, SessionKind::Access, None)
+    let token_a = store
+        .create_with_kind(&ctx, user_id, expires_at, SessionKind::Access, None)
         .await
         .unwrap();
-    let expired_token = store
-        .create_with_kind(&ctx, user_id, expired_expires_at, SessionKind::Access, None)
+    let token_b = store
+        .create_with_kind(&ctx, user_id, expires_at, SessionKind::Access, None)
         .await
         .unwrap();
 
     store
-        .add_membership(&ctx, user_id, snapshot_a.clone())
+        .update_memberships(&ctx, &token_a, vec![snapshot_a.clone()])
         .await
         .unwrap();
     store
-        .add_membership(&ctx, user_id, snapshot_b.clone())
+        .update_memberships(&ctx, &token_b, vec![snapshot_b.clone()])
         .await
         .unwrap();
 
@@ -257,13 +256,9 @@ async fn remove_membership_removes_snapshot_for_tenant_and_leaves_others() {
         .await
         .unwrap();
 
-    let active = store
-        .find_valid(&ctx, &active_token)
-        .await
-        .unwrap()
-        .unwrap();
-    assert_eq!(active.tenant_memberships, vec![snapshot_b.clone()]);
+    let session_a = store.find_valid(&ctx, &token_a).await.unwrap().unwrap();
+    assert!(session_a.tenant_memberships.is_empty());
 
-    let expired = store.find_valid(&ctx, &expired_token).await.unwrap();
-    assert!(expired.is_none());
+    let session_b = store.find_valid(&ctx, &token_b).await.unwrap().unwrap();
+    assert_eq!(session_b.tenant_memberships, vec![snapshot_b.clone()]);
 }
