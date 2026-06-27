@@ -1,5 +1,8 @@
 //! Shared test support for tenant service Postgres-backed integration tests.
 
+// This module is compiled into multiple integration-test binaries, and each
+// binary uses only a subset of the helpers below. The attribute keeps the
+// compiler from warning about helpers that are unused in any given binary.
 #![allow(dead_code)]
 
 use std::sync::Arc;

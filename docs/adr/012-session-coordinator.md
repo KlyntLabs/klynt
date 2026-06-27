@@ -1,4 +1,4 @@
-# ADR-012: SessionCoordinator Membership Synchronization
+# ADR 012: SessionCoordinator Membership Synchronization
 
 ## Status
 
