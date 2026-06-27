@@ -3,13 +3,12 @@
 use std::sync::Arc;
 
 use base::ctx::{ActorType, ExecutionContext, RequestContext};
-use base::ports::SystemClock;
 use base::testkit::{
-    FakeEmailSender, FakePermissionRepository, FakeRoleRepository, FakeSessionStore,
+    FakePermissionRepository, FakeRoleRepository, FakeSessionStore,
     FakeTenantDesktopLayoutRepository, FakeTenantInviteRepository, FakeTenantRepository,
-    FakeTokenStore, FakeUserRepository, TestPasswordHasher,
+    FakeTokenStore, FakeUserRepository,
 };
-use infra_facades::{InfraFacade, PersistenceFacade};
+use infra_facades::PersistenceFacade;
 use session_coordinator::{SessionCoordinator, SessionCoordinatorConfig};
 use tenant_service::{CreateTenantRequest, TenantService};
 
@@ -36,11 +35,6 @@ async fn builder_with_facades_creates_tenant() {
         Arc::new(FakeTokenStore::new()),
         Arc::new(base::testkit::FakeAuditLogger),
     ));
-    let infra_facade = Arc::new(InfraFacade::new(
-        Arc::new(TestPasswordHasher::new()),
-        Arc::new(FakeEmailSender::new()),
-        Arc::new(SystemClock),
-    ));
     let session_coordinator = Arc::new(SessionCoordinator::new(
         session_store,
         SessionCoordinatorConfig::default(),
@@ -48,7 +42,6 @@ async fn builder_with_facades_creates_tenant() {
 
     let service = TenantService::builder()
         .with_persistence_facade(persistence_facade)
-        .with_infra_facade(infra_facade)
         .with_session_coordinator(session_coordinator)
         .build()
         .expect("tenant service should build from facades");

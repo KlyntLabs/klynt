@@ -1,10 +1,7 @@
 use std::sync::Arc;
 
-use base::testkit::{
-    FakeEmailSender, FakeSessionStore, FakeTenantDesktopLayoutRepository, FakeTokenStore,
-    TestPasswordHasher,
-};
-use infra_facades::{InfraFacade, PersistenceFacade};
+use base::testkit::{FakeSessionStore, FakeTenantDesktopLayoutRepository, FakeTokenStore};
+use infra_facades::PersistenceFacade;
 use session_coordinator::{SessionCoordinator, SessionCoordinatorConfig};
 
 use super::{
@@ -39,14 +36,6 @@ fn build_persistence_facade(
     ))
 }
 
-fn build_infra_facade() -> Arc<InfraFacade> {
-    Arc::new(InfraFacade::new(
-        Arc::new(TestPasswordHasher::new()),
-        Arc::new(FakeEmailSender::new()),
-        Arc::new(base::ports::SystemClock),
-    ))
-}
-
 /// Build a fake tenant service for gateway tests.
 pub fn build_test_tenant_service() -> tenant_service::TenantService {
     let session_store = Arc::new(FakeSessionStore::new());
@@ -70,7 +59,6 @@ pub fn build_test_tenant_service() -> tenant_service::TenantService {
         tenant_service::TenantConfig::default(),
         tenant_service::Dependencies {
             persistence_facade,
-            infra_facade: build_infra_facade(),
             session_coordinator,
         },
     )
@@ -105,7 +93,6 @@ pub fn build_stateful_test_tenant_service(
         tenant_service::TenantConfig::default(),
         tenant_service::Dependencies {
             persistence_facade,
-            infra_facade: build_infra_facade(),
             session_coordinator,
         },
     )

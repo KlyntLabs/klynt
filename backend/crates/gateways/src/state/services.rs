@@ -124,11 +124,8 @@ impl Services {
         )?;
         let user_service =
             Self::create_user_service(config, persistence_facade.clone(), infra_facade.clone())?;
-        let tenant_service = Self::create_tenant_service(
-            persistence_facade.clone(),
-            infra_facade.clone(),
-            session_coordinator,
-        )?;
+        let tenant_service =
+            Self::create_tenant_service(persistence_facade.clone(), session_coordinator)?;
         let desktop_layout_service =
             Self::create_desktop_layout_service(persistence_facade.clone());
         let rate_limiter = Self::create_rate_limiter(config).await?;
@@ -225,13 +222,11 @@ impl Services {
 
     fn create_tenant_service(
         persistence_facade: Arc<PersistenceFacade>,
-        infra_facade: Arc<InfraFacade>,
         session_coordinator: Arc<SessionCoordinator>,
     ) -> Result<TenantService, crate::GatewayError> {
         TenantService::builder()
             .with_config(tenant_service::TenantConfig::default())
             .with_persistence_facade(persistence_facade)
-            .with_infra_facade(infra_facade)
             .with_session_coordinator(session_coordinator)
             .build()
             .map_err(|e| crate::GatewayError::configuration(format!("Tenant service: {e}")))

@@ -26,7 +26,7 @@ use domain::{
     Permission, PermissionId, RoleId, Tenant, TenantId, TenantMembershipSummary,
     TenantRoleAggregate, TenantSlug, UserId,
 };
-use infra_facades::{InfraFacade, PersistenceFacade};
+use infra_facades::PersistenceFacade;
 
 pub use builder::TenantBuilder;
 pub use config::TenantConfig;
@@ -148,7 +148,6 @@ impl TenantService {
         Ok(Self {
             internal_state: InternalState {
                 persistence_facade: dependencies.persistence_facade,
-                infra_facade: dependencies.infra_facade,
                 session_coordinator: dependencies.session_coordinator,
                 authorization_service,
             },
@@ -368,16 +367,12 @@ impl TenantService {
 #[derive(Clone)]
 pub struct Dependencies {
     pub persistence_facade: Arc<PersistenceFacade>,
-    pub infra_facade: Arc<InfraFacade>,
     pub session_coordinator: Arc<SessionCoordinator>,
 }
 
 /// Internal state — not part of the public interface.
 pub(crate) struct InternalState {
     pub persistence_facade: Arc<PersistenceFacade>,
-    /// Retained for dependency injection; not currently used by tenant use cases.
-    #[allow(dead_code)]
-    pub infra_facade: Arc<InfraFacade>,
     pub session_coordinator: Arc<SessionCoordinator>,
     pub authorization_service: AuthorizationService,
 }
