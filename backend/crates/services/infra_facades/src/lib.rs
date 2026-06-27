@@ -3,7 +3,7 @@
 pub mod infrastructure;
 pub mod persistence;
 
-pub use infrastructure::{InfraFacade, PasswordHasherAdapter};
+pub use infrastructure::InfraFacade;
 pub use persistence::PersistenceFacade;
 
 #[cfg(test)]

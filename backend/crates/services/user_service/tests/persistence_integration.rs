@@ -9,7 +9,7 @@ use base::ports::audit::{AuditLogger, ProfileUpdateSnapshot};
 use base::ports::PasswordHasher;
 use chrono::Utc;
 use domain::{PaginationRequest, UserId, UserStatus};
-use infra_facades::PasswordHasherAdapter;
+use persistence::PasswordHasherAdapter;
 use user_service::application::ports::UserRepository;
 
 fn database_url() -> Option<String> {

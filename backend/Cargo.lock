@@ -1192,9 +1192,7 @@ dependencies = [
 name = "infra_facades"
 version = "0.1.0"
 dependencies = [
- "async-trait",
  "base",
- "persistence",
  "tokio",
 ]
 

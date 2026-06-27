@@ -8,7 +8,8 @@ use base::ports::repository::{
     UserRepository,
 };
 use base::ports::{
-    AuditLogger, Clock, EmailSender, PermissionRepository, RoleRepository, TokenStore,
+    AuditLogger, Clock, EmailSender, PasswordHasher, PermissionRepository, RoleRepository,
+    TokenStore,
 };
 use infra_facades::{InfraFacade, PersistenceFacade};
 use ipnet::IpNet;
@@ -22,6 +23,7 @@ use persistence::ports::RateLimiter;
 use persistence::rate_limiter::{NoOpRateLimiter, RedisRateLimiter};
 use persistence::repositories::cached_session_store::CachedSessionStore;
 use persistence::repositories::session::PgSessionStore;
+use persistence::PasswordHasherAdapter;
 use session_coordinator::{SessionCoordinator, SessionCoordinatorConfig};
 use tenant_service::{TenantDesktopLayoutService, TenantService};
 
@@ -105,10 +107,10 @@ impl Services {
         let email_sender: Arc<dyn EmailSender> =
             Arc::new(persistence::email::MockEmailService::new());
         let clock: Arc<dyn Clock> = Arc::new(base::ports::SystemClock);
-        let infra_facade = Arc::new(InfraFacade::with_default_password_hasher(
-            email_sender,
-            clock,
+        let password_hasher: Arc<dyn PasswordHasher> = Arc::new(PasswordHasherAdapter::new(
+            persistence::password_hasher::Argon2PasswordHasher::new(),
         ));
+        let infra_facade = Arc::new(InfraFacade::new(password_hasher, email_sender, clock));
 
         let session_service = Arc::new(Self::create_session_service(
             config,
