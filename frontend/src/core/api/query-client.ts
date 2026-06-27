@@ -1,6 +1,12 @@
 import { Mutation, MutationCache, QueryClient } from "@tanstack/react-query";
 import { ApiError } from "./api-error";
 
+if (import.meta.env.DEV) {
+  console.warn(
+    "[DEPRECATED] Query client export is deprecated. Use useApiQuery from './api-module.ts' instead."
+  );
+}
+
 export interface QueryClientOptions {
   onMutationError?: (
     error: ApiError,
