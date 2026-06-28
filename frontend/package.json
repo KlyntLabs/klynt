@@ -111,7 +111,7 @@
     "lefthook": "^2.1.9",
     "msw": "^2.7.0",
     "pg": "^8.22.0",
-    "playwright": "^1.54.0",
+    "playwright": "^1.61.1",
     "rollup-plugin-visualizer": "^7.0.1",
     "storybook": "^10.4.6",
     "tailwindcss": "^4.3.1",
