@@ -1,0 +1,51 @@
+{
+  "menubar": {
+    "tenant": "Tenant"
+  },
+  "members": {
+    "title": "Thành viên",
+    "inviteTitle": "Mở thành viên",
+    "inviteButton": "Mở thành viên",
+    "emailLabel": "Email",
+    "roleLabel": "Vai trò",
+    "nameLabel": "Tên",
+    "joinedAtLabel": "Ngày tham gia",
+    "noMembers": "Không tìm thấy thành viên nào.",
+    "accessDenied": "Bạn không có quyền quản lý thành viên.",
+    "removeButton": "Xóa",
+    "removeConfirmTitle": "Xóa thành viên",
+    "removeConfirmMessage": "Bạn có chắc chắn muốn xóa {{email}}?",
+    "cancelButton": "Hủy",
+    "inviteError": "Không thể mở thành viên: {{message}}",
+    "updateRoleError": "Không thể cập nhật vai trò: {{message}}",
+    "removeError": "Không thể xóa thành viên: {{message}}",
+    "roles": {
+      "owner": "Chủ sở hữu",
+      "admin": "Quản trị viên",
+      "member": "Thành viên",
+      "guest": "Khách"
+    }
+  },
+  "roles": {
+    "title": "Vai trò"
+  },
+  "settings": {
+    "title": "Cài đặt tenant",
+    "generalTitle": "Chung",
+    "generalDescription": "Cập nhật tên của tenant.",
+    "nameLabel": "Tên",
+    "nameRequired": "Tên là bắt buộc.",
+    "slugLabel": "Slug",
+    "saveButton": "Lưu thay đổi",
+    "updateError": "Không thể cập nhật tenant: {{message}}",
+    "loadErrorTitle": "Không thể tải tenant",
+    "loadErrorMessage": "Không thể tải cài đặt tenant. Vui lòng thử lại.",
+    "dangerTitle": "Vùng nguy hiểm",
+    "dangerDescription": "Xóa tenant không thể hoàn tác. Tất cả dữ liệu sẽ bị xóa vĩnh viễn.",
+    "deleteButton": "Xóa tenant",
+    "deleteConfirmTitle": "Xóa tenant?",
+    "deleteConfirmMessage": "Bạn có chắc chắn muốn xóa vĩnh viễn tenant này không? Hành động này không thể hoàn tác.",
+    "cancelButton": "Hủy",
+    "removeError": "Không thể xóa tenant: {{message}}"
+  }
+}

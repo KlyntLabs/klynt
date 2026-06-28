@@ -1,7 +1,8 @@
 //! Change password use case.
 
-use klynt_core::ctx::ExecutionContext;
-use klynt_utils::UserId;
+use base::ctx::ExecutionContext;
+use base::ports::audit::PasswordChangeSnapshot;
+use domain::UserId;
 
 use crate::error::UserError;
 use crate::UserService;
@@ -13,8 +14,9 @@ pub(crate) async fn execute(
     current_password: &str,
     new_password: &str,
 ) -> Result<(), UserError> {
-    let mut user = service
+    let user = service
         .internal()
+        .persistence_facade
         .user_repository
         .find_by_id(ctx, user_id)
         .await?
@@ -26,6 +28,7 @@ pub(crate) async fn execute(
 
     let password_valid = service
         .internal()
+        .infra_facade
         .password_hasher
         .verify(current_password, &user.password_hash)
         .await?;
@@ -36,21 +39,28 @@ pub(crate) async fn execute(
 
     let new_hash = service
         .internal()
+        .infra_facade
         .password_hasher
         .hash(new_password)
         .await?;
-    user.password_hash = new_hash;
 
     service
         .internal()
+        .persistence_facade
         .user_repository
-        .update(ctx, &user)
+        .update_password(ctx, user_id, new_hash)
         .await?;
 
     service
         .internal()
+        .persistence_facade
         .audit_logger
-        .log_password_changed(ctx, user_id)
+        .log_password_changed(
+            ctx,
+            user_id,
+            PasswordChangeSnapshot { changed: false },
+            PasswordChangeSnapshot { changed: true },
+        )
         .await;
 
     Ok(())

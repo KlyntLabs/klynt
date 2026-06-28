@@ -1,90 +1,27 @@
 //! Test support utilities for user_service integration tests.
+//!
+//! Cross-cutting test doubles come from [`base::testkit`]; this module
+//! keeps only the user-service-specific fakes.
 
-use std::collections::HashMap;
+#![allow(dead_code)]
+
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
 
-use klynt_core::ctx::{ExecutionContext, RequestContext};
-use klynt_shared_domain::{Email, PaginationRequest, UserRole, UserStatus};
-use klynt_utils::UserId;
-use user_service::application::ports::{AuditLogger, Clock, PasswordHasher, UserRepository};
-use user_service::domain::User;
-use user_service::error::UserError;
+use base::ctx::ExecutionContext;
+use base::ports::audit::{PasswordChangeSnapshot, ProfileUpdateSnapshot, RoleMetadataSnapshot};
+use base::testkit::{sample_user as base_sample_user, FakeUserRepository};
+use domain::{PermissionId, RoleId, TenantId, User, UserId, UserStatus};
+use infra_facades::{InfraFacade, PersistenceFacade};
+use user_service::application::ports::AuditLogger;
 use user_service::{Dependencies, UserConfig, UserService};
 
-/// In-memory user repository for testing.
-pub struct TestUserRepo {
-    users: Mutex<HashMap<UserId, User>>,
-}
+pub use base::testkit::{test_ctx, TestClock, TestPasswordHasher};
 
-impl TestUserRepo {
-    pub fn new() -> Self {
-        Self {
-            users: Mutex::new(HashMap::new()),
-        }
-    }
-
-    pub fn insert(&self, user: User) {
-        self.users.lock().unwrap().insert(user.id, user);
-    }
-}
-
-impl Default for TestUserRepo {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-#[async_trait]
-impl UserRepository for TestUserRepo {
-    async fn find_by_id(
-        &self,
-        _ctx: &ExecutionContext,
-        id: UserId,
-    ) -> Result<Option<User>, UserError> {
-        Ok(self.users.lock().unwrap().get(&id).cloned())
-    }
-
-    async fn update(&self, _ctx: &ExecutionContext, user: &User) -> Result<(), UserError> {
-        let mut users = self.users.lock().unwrap();
-        if !users.contains_key(&user.id) {
-            return Err(UserError::NotFound);
-        }
-        users.insert(user.id, user.clone());
-        Ok(())
-    }
-
-    async fn delete(&self, _ctx: &ExecutionContext, id: UserId) -> Result<(), UserError> {
-        let mut users = self.users.lock().unwrap();
-        let mut user = users.get(&id).ok_or(UserError::NotFound)?.clone();
-        user.deleted_at = Some(Utc::now());
-        users.insert(id, user);
-        Ok(())
-    }
-
-    async fn list(
-        &self,
-        _ctx: &ExecutionContext,
-        pagination: PaginationRequest,
-    ) -> Result<(Vec<User>, u64), UserError> {
-        let users: Vec<User> = self
-            .users
-            .lock()
-            .unwrap()
-            .values()
-            .filter(|u| !u.is_deleted())
-            .cloned()
-            .collect();
-
-        let total = users.len() as u64;
-        let offset = pagination.offset() as usize;
-        let limit = pagination.page_size as usize;
-        let items = users.into_iter().skip(offset).take(limit).collect();
-
-        Ok((items, total))
-    }
+/// Create an active sample user for tests.
+pub fn sample_user(email: &str, full_name: &str, password_hash: &str) -> User {
+    base_sample_user(email, full_name, password_hash, UserStatus::Active)
 }
 
 /// In-memory audit logger that captures event names.
@@ -112,14 +49,44 @@ impl Default for TestAuditLogger {
 
 #[async_trait]
 impl AuditLogger for TestAuditLogger {
-    async fn log_profile_updated(&self, _ctx: &ExecutionContext, _user_id: UserId) {
+    async fn log_login_success(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
+
+    async fn log_login_failed(&self, _ctx: &ExecutionContext, _email: &str, _error: &str) {}
+
+    async fn log_user_registered(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
+
+    async fn log_email_verified(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
+
+    async fn log_password_reset(&self, _ctx: &ExecutionContext, _user_id: UserId) {}
+
+    async fn log_session_created(
+        &self,
+        _ctx: &ExecutionContext,
+        _user_id: UserId,
+        _session_id: String,
+    ) {
+    }
+
+    async fn log_profile_updated(
+        &self,
+        _ctx: &ExecutionContext,
+        _user_id: UserId,
+        _before: ProfileUpdateSnapshot,
+        _after: ProfileUpdateSnapshot,
+    ) {
         self.events
             .lock()
             .unwrap()
             .push("profile_updated".to_string());
     }
 
-    async fn log_password_changed(&self, _ctx: &ExecutionContext, _user_id: UserId) {
+    async fn log_password_changed(
+        &self,
+        _ctx: &ExecutionContext,
+        _user_id: UserId,
+        _before: PasswordChangeSnapshot,
+        _after: PasswordChangeSnapshot,
+    ) {
         self.events
             .lock()
             .unwrap()
@@ -129,73 +96,121 @@ impl AuditLogger for TestAuditLogger {
     async fn log_user_deleted(&self, _ctx: &ExecutionContext, _user_id: UserId) {
         self.events.lock().unwrap().push("user_deleted".to_string());
     }
-}
 
-/// Test password hasher that stores passwords in plain text (tests only).
-pub struct TestPasswordHasher;
+    async fn log_tenant_created(&self, _ctx: &ExecutionContext, _tenant_id: TenantId) {}
 
-#[async_trait]
-impl PasswordHasher for TestPasswordHasher {
-    async fn verify(&self, password: &str, hash: &str) -> Result<bool, UserError> {
-        Ok(password == hash)
+    async fn log_tenant_updated(&self, _ctx: &ExecutionContext, _tenant_id: TenantId) {}
+
+    async fn log_tenant_deleted(&self, _ctx: &ExecutionContext, _tenant_id: TenantId) {}
+
+    async fn log_member_added(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _user_id: UserId,
+    ) {
     }
 
-    async fn hash(&self, password: &str) -> Result<String, UserError> {
-        Ok(password.to_string())
+    async fn log_member_invited(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _email: &str,
+        _role_name: &str,
+    ) {
     }
-}
 
-/// Test clock that returns a fixed timestamp.
-pub struct TestClock {
-    now: DateTime<Utc>,
-}
-
-impl TestClock {
-    pub fn new(now: DateTime<Utc>) -> Self {
-        Self { now }
+    async fn log_member_role_changed(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _user_id: UserId,
+        _old_role: &str,
+        _new_role: &str,
+    ) {
     }
-}
 
-impl Clock for TestClock {
-    fn now(&self) -> DateTime<Utc> {
-        self.now
+    async fn log_member_removed(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _user_id: UserId,
+    ) {
+    }
+
+    async fn log_role_created(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _role_id: RoleId,
+        _name: &str,
+        _description: &str,
+        _permission_ids: Vec<PermissionId>,
+    ) {
+    }
+
+    async fn log_role_updated(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _role_id: RoleId,
+        _before: RoleMetadataSnapshot,
+        _after: RoleMetadataSnapshot,
+    ) {
+    }
+
+    async fn log_role_permissions_updated(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _role_id: RoleId,
+        _before_permission_ids: Vec<PermissionId>,
+        _after_permission_ids: Vec<PermissionId>,
+    ) {
+    }
+
+    async fn log_role_deleted(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: TenantId,
+        _role_id: RoleId,
+        _before_name: &str,
+        _before_description: &str,
+        _before_permission_ids: Vec<PermissionId>,
+    ) {
     }
 }
 
 /// Build a user service and its backing test repository.
-pub fn build_test_service() -> (UserService, Arc<TestUserRepo>, Arc<TestAuditLogger>) {
-    let repo = Arc::new(TestUserRepo::new());
+pub fn build_test_service() -> (UserService, Arc<FakeUserRepository>, Arc<TestAuditLogger>) {
+    let repo = Arc::new(FakeUserRepository::new());
     let audit = Arc::new(TestAuditLogger::new());
+    let clock = Arc::new(TestClock::new());
+    let persistence_facade = Arc::new(PersistenceFacade::new(
+        repo.clone(),
+        Arc::new(base::testkit::FakeTenantRepository),
+        Arc::new(base::testkit::FakeMembershipRepository::new()),
+        Arc::new(base::testkit::FakeTenantInviteRepository::new()),
+        Arc::new(base::testkit::FakePermissionRepository::new()),
+        Arc::new(base::testkit::FakeRoleRepository::new()),
+        Arc::new(base::testkit::FakeTenantDesktopLayoutRepository),
+        Arc::new(base::testkit::FakeSessionStore::new()),
+        Arc::new(base::testkit::FakeTokenStore::new()),
+        audit.clone(),
+    ));
+    let infra_facade = Arc::new(InfraFacade::new(
+        Arc::new(TestPasswordHasher::with_prefix("")),
+        Arc::new(base::testkit::FakeEmailSender::new()),
+        clock,
+    ));
     let service = UserService::new(
         UserConfig::default(),
         Dependencies {
-            user_repository: repo.clone(),
-            audit_logger: audit.clone(),
-            password_hasher: Arc::new(TestPasswordHasher),
-            clock: Arc::new(TestClock::new(Utc::now())),
+            persistence_facade,
+            infra_facade,
         },
     )
     .expect("service construction should succeed");
 
     (service, repo, audit)
-}
-
-/// Create a test execution context.
-pub fn test_ctx() -> ExecutionContext {
-    ExecutionContext::new(RequestContext::new())
-}
-
-/// Create a sample domain user with the given password hash.
-pub fn sample_user(email: &str, full_name: &str, password_hash: &str) -> User {
-    User {
-        id: UserId::new(),
-        email: Email::new(email.to_string()),
-        full_name: Some(full_name.to_string()),
-        password_hash: password_hash.to_string(),
-        status: UserStatus::Active,
-        role: UserRole::Student,
-        created_at: Utc::now(),
-        updated_at: None,
-        deleted_at: None,
-    }
 }

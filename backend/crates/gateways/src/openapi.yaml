@@ -18,6 +18,26 @@ paths:
         '200':
           description: Gateway is alive
 
+  /health/live:
+    get:
+      summary: Liveness probe
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Gateway process is alive
+
+  /health/ready:
+    get:
+      summary: Readiness probe
+      tags:
+        - Health
+      responses:
+        '200':
+          description: All dependencies are healthy
+        '503':
+          description: One or more dependencies are unhealthy
+
   /auth/register:
     post:
       summary: Register a new user
@@ -35,7 +55,9 @@ paths:
         '400':
           description: Invalid input
         '409':
-          description: Email already registered
+          description: Email or username already registered
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
 
   /auth/verify-email:
     post:
@@ -89,6 +111,10 @@ paths:
   /auth/login:
     post:
       summary: Create session (login)
+      description: |
+        Authenticate a user and create a session. On success, the response
+        contains the session token in the JSON body and also sets an
+        `HttpOnly` `session_token` cookie scoped to the configured SSO domain.
       tags:
         - Authentication
       requestBody:
@@ -100,16 +126,32 @@ paths:
       responses:
         '200':
           description: Login successful
+          headers:
+            Set-Cookie:
+              description: |
+                HttpOnly `session_token` cookie for cross-subdomain SSO.
+                Clients may also read `access_token` from the response body.
+              schema:
+                type: string
         '401':
           description: Invalid credentials
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
 
   /auth/logout:
     post:
       summary: End session (logout)
+      description: |
+        Invalidate the current session. The token is read from the JSON body
+        when provided; otherwise the `session_token` cookie is used. On success
+        the `session_token` cookie is cleared.
       tags:
         - Authentication
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
       requestBody:
-        required: true
+        required: false
         content:
           application/json:
             schema:
@@ -117,6 +159,13 @@ paths:
       responses:
         '200':
           description: Logged out successfully
+          headers:
+            Set-Cookie:
+              description: Clears the `session_token` cookie.
+              schema:
+                type: string
+        '400':
+          description: Missing session token
 
 components:
   schemas:
@@ -124,16 +173,28 @@ components:
       type: object
       required:
         - email
+        - username
         - password
       properties:
         email:
           type: string
           format: email
+        username:
+          type: string
+          minLength: 1
+          maxLength: 50
         password:
           type: string
           minLength: 8
         full_name:
           type: [string, "null"]
+        role:
+          type: string
+          enum: [student, instructor, admin]
+          default: student
+        institution_id:
+          type: [string, "null"]
+          format: uuid
 
     VerifyEmailRequest:
       type: object
@@ -213,15 +274,62 @@ components:
           type: [string, "null"]
         role:
           type: string
-          enum: [student, teacher, admin, parent]
+          enum: [student, instructor, admin]
 
     LogoutRequest:
       type: object
-      required:
-        - session_token
       properties:
         session_token:
           type: string
+          description: |
+            Optional session token. If omitted, the `session_token` cookie is
+            used instead.
+
+    RateLimitError:
+      type: object
+      required:
+        - success
+        - error
+        - code
+        - retry_after
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+        error:
+          type: string
+        code:
+          type: string
+          enum: [RATE_LIMITED]
+        retry_after:
+          type: integer
+          minimum: 0
+
+  responses:
+    TooManyRequests:
+      description: Rate limit exceeded
+      headers:
+        Retry-After:
+          description: Number of seconds to wait before retrying
+          schema:
+            type: integer
+            minimum: 0
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RateLimitError'
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Session token provided in the `Authorization` header.
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: session_token
+      description: |
+        Session token provided as an `HttpOnly` cookie for cross-subdomain SSO.
 
 tags:
   - name: Health

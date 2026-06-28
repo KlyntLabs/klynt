@@ -1,11 +1,27 @@
+# Default configuration for Klynt backend
+
 [api]
 host = "127.0.0.1"
-port = 3001
-allowed_origins = ["http://localhost:5174"]
-
-log_level = "info"
+port = 3000
+allowed_origins = ["http://localhost:5174", "http://lvh.me:5174", "http://*.lvh.me:5174"]
 
 [rate_limiter]
 enabled = false
-max_requests = 5
-window_seconds = 900
+max_requests = 100
+window_seconds = 60
+
+[session]
+session_duration_secs = 86400
+long_session_duration_secs = 2592000
+refresh_duration_secs = 2592000
+
+log_level = "debug"
+hsts_enabled = false
+cookie_domain = ""
+# WARNING: cookie_secure must be true in production with TLS termination.
+# Leaving it false sends session cookies over plaintext HTTP.
+cookie_secure = false
+
+# Public base URL used for links in emails (verification/reset). When empty the
+# gateway derives it from the API host.
+base_url = ""

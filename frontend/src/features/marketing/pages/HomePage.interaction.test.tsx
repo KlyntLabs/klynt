@@ -42,7 +42,7 @@ describe("HomePage interactions", () => {
 
     const shuffleButton = screen.getByRole("button", { name: "Shuffle companies" });
     await user.click(shuffleButton);
-    expect(screen.getByText("Who's using PostHog?")).toBeInTheDocument();
+    expect(screen.getByText("Who's using Klynt?")).toBeInTheDocument();
   });
 
   it("clicks hero action links without crashing", async () => {

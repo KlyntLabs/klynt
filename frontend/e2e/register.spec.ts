@@ -7,16 +7,14 @@ test.describe("/register", () => {
     await page.goto("/register");
 
     await page.getByLabel("Full name").fill("Ada Lovelace");
+    await page.getByLabel("Username").fill(`ada_${Date.now()}`);
     await page.getByLabel("Email").fill(email);
-    await page.getByLabel("Password").fill("str0ng!passphrase");
-    await page.getByLabel("I am a").selectOption("student");
-    await page.getByLabel(/i agree/i).check();
+    await page.getByLabel("Password").fill("Str0ng!passphrase");
 
     await page.getByRole("button", { name: "Create account" }).click();
 
     await expect(page).toHaveURL("/register/success");
     await expect(page.getByText("Account created")).toBeVisible();
-    await expect(page.getByText(/Welcome, Ada Lovelace/i)).toBeVisible();
     await expect(page.getByText(email)).toBeVisible();
   });
 
@@ -25,22 +23,20 @@ test.describe("/register", () => {
 
     await page.goto("/register");
     await page.getByLabel("Full name").fill("Ada Lovelace");
+    await page.getByLabel("Username").fill(`ada_dup_${Date.now()}`);
     await page.getByLabel("Email").fill(email);
-    await page.getByLabel("Password").fill("str0ng!passphrase");
-    await page.getByLabel("I am a").selectOption("student");
-    await page.getByLabel(/i agree/i).check();
+    await page.getByLabel("Password").fill("Str0ng!passphrase");
     await page.getByRole("button", { name: "Create account" }).click();
 
     await expect(page).toHaveURL("/register/success");
 
     await page.goto("/register");
     await page.getByLabel("Full name").fill("Ada Lovelace");
+    await page.getByLabel("Username").fill(`ada_dup2_${Date.now()}`);
     await page.getByLabel("Email").fill(email);
-    await page.getByLabel("Password").fill("str0ng!passphrase");
-    await page.getByLabel("I am a").selectOption("student");
-    await page.getByLabel(/i agree/i).check();
+    await page.getByLabel("Password").fill("Str0ng!passphrase");
     await page.getByRole("button", { name: "Create account" }).click();
 
-    await expect(page.getByText(/email already registered/i)).toBeVisible();
+    await expect(page.getByRole("alert")).toHaveText(/email already registered/i);
   });
 });

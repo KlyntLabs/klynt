@@ -55,6 +55,7 @@ services:
       - KLYNT_API__PORT=3001
       - KLYNT_DATABASE_URL=${KLYNT_DATABASE_URL:-postgresql://klynt:klynt@postgres:5432/klynt}
       - KLYNT_REDIS_URL=${KLYNT_REDIS_URL:-redis://redis:6379}
+      - KLYNT_BASE_URL=${KLYNT_BASE_URL:-http://lvh.me:5174}
     ports:
       - "127.0.0.1:${KLYNT_BACKEND_PORT:-3001}:3001"
     depends_on:
@@ -63,7 +64,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:3001/api/v1/health/live"]
+      test: ["CMD", "curl", "-fsS", "http://localhost:3001/health/live"]
       interval: 10s
       timeout: 5s
       retries: 10

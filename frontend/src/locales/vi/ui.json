@@ -18,6 +18,28 @@
     "welcome": "Chào mừng trở lại.",
     "placeholder": "Nội dung bảng điều khiển của bạn sẽ hiển thị tại đây."
   },
+  "tenant": {
+    "loading": "Đang tải...",
+    "noTenant": "Không có tổ chức",
+    "nameLabel": "Tên tổ chức",
+    "slugLabel": "Mã tổ chức",
+    "createTitle": "Tạo tổ chức",
+    "createButton": "Tạo tổ chức",
+    "createError": "Không thể tạo tổ chức. Vui lòng thử lại."
+  },
+  "roles": {
+    "title": "Vai trò",
+    "createTitle": "Tạo vai trò",
+    "editTitle": "Chỉnh sửa vai trò",
+    "nameLabel": "Tên vai trò",
+    "descriptionLabel": "Mô tả",
+    "permissionsLabel": "Quyền hạn",
+    "systemBadge": "Hệ thống",
+    "createButton": "Tạo vai trò",
+    "saveButton": "Lưu",
+    "deleteButton": "Xóa",
+    "noRoles": "Không tìm thấy vai trò nào."
+  },
   "admin": {
     "title": "Quản trị",
     "description": "Tổng quan quản trị viên",

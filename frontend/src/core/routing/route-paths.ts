@@ -1,7 +1,16 @@
 export const routePaths = {
   home: "/",
+  login: "/login",
   register: "/register",
   registerSuccess: "/register/success",
+  verifyEmail: "/verify/:token",
+  onboarding: "/onboarding",
+  forgotPassword: "/forgot-password",
+  resetPassword: "/reset-password/:token",
   dashboard: "/dashboard",
+  tenantsNew: "/tenants/new",
+  tenantBase: "/tenants/:slug",
   admin: "/admin",
+  settingsSessions: "/settings/sessions",
+  userDesktop: "/u/:profileId",
 } as const;

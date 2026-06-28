@@ -1,7 +1,7 @@
 //! List users use case.
 
-use klynt_core::ctx::ExecutionContext;
-use klynt_shared_domain::{PaginatedResponse, PaginationRequest};
+use base::ctx::ExecutionContext;
+use domain::{PaginatedResponse, PaginationRequest};
 
 use crate::error::UserError;
 use crate::models::UserProfile;
@@ -14,6 +14,7 @@ pub(crate) async fn execute(
 ) -> Result<PaginatedResponse<UserProfile>, UserError> {
     let (users, total) = service
         .internal()
+        .persistence_facade
         .user_repository
         .list(ctx, pagination.clone())
         .await?;

@@ -10,6 +10,7 @@
 //! - **Implementation**: All HTTP complexity (routing, middleware, services) hidden inside
 //! - **Composition Root**: Services are wired together in [`state::Services`]
 
+pub mod constants;
 pub mod error;
 pub mod middleware;
 pub mod response;
@@ -17,6 +18,7 @@ pub mod routes;
 pub mod state;
 
 use axum::Router;
+use std::net::SocketAddr;
 
 pub use error::{GatewayError, GatewayResult};
 pub use state::{Config, Services};
@@ -37,7 +39,7 @@ pub use state::{Config, Services};
 ///
 /// Returns `Ok(())` when server shuts down gracefully, or error on failure.
 pub async fn run(config: Config, services: Services) -> Result<(), GatewayError> {
-    klynt_tracing::subscriber::init_tracing(&config.service_name);
+    observability::tracing::subscriber::init_tracing(&config.service_name);
 
     let app = routes::create_router(config.clone(), services);
 
@@ -49,9 +51,12 @@ pub async fn run(config: Config, services: Services) -> Result<(), GatewayError>
 
     tracing::info!("API Gateway listening on {}", config.bind_address);
 
-    axum::serve(listener, app)
-        .await
-        .map_err(|e| GatewayError::internal(format!("Server error: {e}")))?;
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await
+    .map_err(|e| GatewayError::internal(format!("Server error: {e}")))?;
 
     Ok(())
 }

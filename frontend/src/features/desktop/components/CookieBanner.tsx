@@ -2,32 +2,51 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
+
+const COOKIE_DISMISSED_KEY = "cookie-dismissed";
+
+function getStorage() {
+  if (typeof window === "undefined") return null;
+  return window.localStorage ?? null;
+}
+
+function isCookieDismissed(): boolean {
+  const storage = getStorage();
+  if (!storage) return false;
+  return storage.getItem(COOKIE_DISMISSED_KEY) === "true";
+}
+
+function dismissCookie(): void {
+  const storage = getStorage();
+  if (!storage) return;
+  storage.setItem(COOKIE_DISMISSED_KEY, "true");
+}
 
 export default function CookieBanner() {
-  const { cookieDismissed, dismissCookie } = useDesktopStore();
+  const [dismissed, setDismissed] = useState(isCookieDismissed);
   const [isVisible, setIsVisible] = useState(false);
   const { t } = useTranslation("home");
 
   useEffect(() => {
-    if (!cookieDismissed) {
+    if (!dismissed) {
       const timer = setTimeout(() => {
         setIsVisible(true);
       }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [cookieDismissed]);
+  }, [dismissed]);
 
   const handleDismiss = () => {
     setIsVisible(false);
     setTimeout(() => {
       dismissCookie();
+      setDismissed(true);
     }, 300);
   };
 
   return (
     <AnimatePresence>
-      {isVisible && !cookieDismissed && (
+      {isVisible && !dismissed && (
         <motion.div
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}

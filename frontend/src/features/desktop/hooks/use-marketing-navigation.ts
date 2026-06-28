@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { getAppByRoute, marketingRegistry } from "@/features/desktop/apps";
-import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
+import { marketingRegistry } from "@/features/desktop/apps";
+import { useWindowManager } from "@/features/desktop/window-manager/window-module";
 
 export interface MarketingNavigation {
   /** Navigate to a marketing route, opening a window in desktop mode. */
@@ -14,27 +14,28 @@ export interface MarketingNavigation {
 
 export function useMarketingNavigation(): MarketingNavigation {
   const navigate = useNavigate();
-  const { viewMode, openWindow } = useDesktopStore();
+  const { viewMode, openApp } = useWindowManager();
 
   const goTo = useCallback(
     (route: string) => {
       if (viewMode === "desktop") {
-        const app = getAppByRoute(marketingRegistry, route);
+        const app = marketingRegistry.apps.find((app) => app.route === route);
         if (!app) {
           return;
         }
-        openWindow(app.manifest.route, app.manifest.title, {
-          size: app.manifest.defaultSize,
+        openApp("marketing", app.id, {
+          width: app.defaultSize.width,
+          height: app.defaultSize.height,
         });
       } else {
         navigate(route);
       }
     },
-    [navigate, openWindow, viewMode]
+    [navigate, openApp, viewMode]
   );
 
   const goToHome = useCallback(() => {
-    goTo(marketingRegistry.defaultApp.manifest.route);
+    goTo(marketingRegistry.defaultApp.route ?? "/");
   }, [goTo]);
 
   const goToPricing = useCallback(() => {

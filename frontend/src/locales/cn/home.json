@@ -28,8 +28,27 @@
     "body": "为教师、家长和幼儿提供的简单工具——无需设置，没有杂乱。",
     "cta": "免费开始"
   },
+  "admin": {
+    "userManagement": {
+      "title": "用户管理",
+      "description": "管理员用户管理迷你应用。"
+    },
+    "tenantManagement": {
+      "title": "租户管理",
+      "description": "管理员租户管理迷你应用。"
+    },
+    "reports": {
+      "title": "报表",
+      "description": "管理员报表迷你应用。"
+    }
+  },
   "desktop": {
     "navLabel": "桌面应用",
+    "backgrounds": {
+      "fabric": "织物",
+      "graphPaper": "方格纸",
+      "dotsDark": "深色圆点"
+    },
     "apps": {
       "home": {
         "label": "首页"
@@ -39,11 +58,16 @@
       },
       "dashboard": {
         "label": "仪表板"
-      }
+      },
+      "userManagement": "用户管理",
+      "tenantManagement": "租户管理",
+      "reports": "报表",
+      "profile": "个人资料",
+      "myCourses": "我的课程"
     },
     "menubar": {
-      "logo": "PostHog",
-      "logoAlt": "PostHog logo",
+      "logo": "Klynt",
+      "logoAlt": "Klynt logo",
       "getStarted": "Get started – free",
       "menus": {
         "productOS": {
@@ -85,7 +109,18 @@
       },
       "search": "Search",
       "notifications": "Notifications",
-      "profile": "Profile"
+      "profile": "Profile",
+      "file": "文件",
+      "edit": "编辑",
+      "view": "查看",
+      "window": "窗口",
+      "settings": "设置",
+      "help": "帮助",
+      "newWindow": "新建窗口",
+      "closeWindow": "关闭窗口",
+      "showDesktop": "显示桌面",
+      "changeBackground": "更换背景",
+      "adminSettings": "管理设置"
     },
     "icons": {
       "switchToWebsite": "Switch to website",
@@ -98,7 +133,7 @@
         "signUp": "Sign up"
       },
       "right": {
-        "whyPostHog": "Why PostHog?",
+        "whyKlynt": "Why Klynt?",
         "changelog": "Changelog",
         "companyHandbook": "Company handbook",
         "store": "Store",
@@ -106,10 +141,23 @@
         "trash": "Trash"
       }
     },
+    "mobileFallback": {
+      "title": "仅限桌面端",
+      "message": "此体验针对桌面端优化。请使用更大的屏幕。"
+    },
+    "toast": {
+      "layoutLoadError": "无法加载您的桌面布局。",
+      "layoutSaveError": "无法保存您的桌面布局。"
+    },
+    "errorFallback": {
+      "title": "出错了",
+      "retry": "重试",
+      "description": "请重试。"
+    },
     "cookieBanner": {
       "dismiss": "Dismiss cookie banner",
       "heading": "Legally-required cookie banner",
-      "body": "PostHog.com doesn't use third-party cookies, only a single in-house cookie. No data is sent to a third party.",
+      "body": "Klynt.com doesn't use third-party cookies, only a single in-house cookie. No data is sent to a third party.",
       "aside": "(Ursula von der Leyen would be so proud.)",
       "ursulaAlt": "Ursula von der Leyen",
       "footer": "No cookies were harmed in the making of this banner."
@@ -133,6 +181,41 @@
         "bookmark": "Bookmark",
         "settings": "Settings"
       }
+    },
+    "marketing": {
+      "apps": {
+        "home": "首页",
+        "demo": "演示",
+        "products": "产品操作系统",
+        "productAnalytics": "产品分析",
+        "webAnalytics": "网站分析",
+        "sessionReplay": "会话回放",
+        "featureFlags": "功能标志",
+        "experiments": "实验",
+        "surveys": "调查",
+        "dataWarehouse": "数据仓库",
+        "pricing": "价格",
+        "customers": "客户",
+        "docs": "文档",
+        "about": "关于",
+        "careers": "招聘",
+        "handbook": "手册",
+        "merch": "商店",
+        "community": "社区",
+        "changelog": "更新日志",
+        "talkToHuman": "联系客服",
+        "trash": "垃圾桶"
+      }
+    }
+  },
+  "user": {
+    "profile": {
+      "title": "个人资料",
+      "description": "查看并管理您的个人资料。"
+    },
+    "myCourses": {
+      "title": "我的课程",
+      "description": "浏览您已注册的课程。"
     }
   }
 }

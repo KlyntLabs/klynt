@@ -18,6 +18,28 @@
     "welcome": "欢迎回来。",
     "placeholder": "您的仪表板内容将显示在这里。"
   },
+  "tenant": {
+    "loading": "加载中...",
+    "noTenant": "没有租户",
+    "nameLabel": "租户名称",
+    "slugLabel": "租户标识",
+    "createTitle": "创建租户",
+    "createButton": "创建租户",
+    "createError": "创建租户失败，请重试。"
+  },
+  "roles": {
+    "title": "角色",
+    "createTitle": "创建角色",
+    "editTitle": "编辑角色",
+    "nameLabel": "角色名称",
+    "descriptionLabel": "描述",
+    "permissionsLabel": "权限",
+    "systemBadge": "系统",
+    "createButton": "创建角色",
+    "saveButton": "保存",
+    "deleteButton": "删除",
+    "noRoles": "未找到角色。"
+  },
   "admin": {
     "title": "管理员",
     "description": "管理员概览",

@@ -4,14 +4,29 @@ Authentication service for the Klynt platform — a deep module with a small pub
 
 ## Public Interface
 
-```rust
-use auth_service::{AuthService, AuthConfig, Dependencies};
-use klynt_contracts::auth::{LoginRequest, RegistrationRequest};
-use klynt_core::ctx::ExecutionContext;
+### Builder (recommended for production)
 
-let service = AuthService::new(config, dependencies)?;
+```rust
+use auth_service::{AuthService, AuthConfig};
+use domain::contracts::{LoginRequest, RegistrationRequest};
+use base::ctx::ExecutionContext;
+
+let service = AuthService::builder()
+    .with_config(AuthConfig { ... })
+    .with_persistence_facade(persistence_facade)
+    .with_infra_facade(infra_facade)
+    .with_session_service(session_service)
+    .build()?;
 let response = service.login(&ctx, LoginRequest { ... }).await?;
 let user_id = service.register(&ctx, RegistrationRequest { ... }).await?;
+```
+
+### Manual constructor
+
+```rust
+use auth_service::{AuthService, AuthConfig, Dependencies};
+
+let service = AuthService::new(config, dependencies)?;
 ```
 
 ### Core Methods
@@ -28,9 +43,10 @@ let user_id = service.register(&ctx, RegistrationRequest { ... }).await?;
 ```
 src/
 ├── lib.rs              # Public interface
-├── domain/             # Auth-specific domain (sessions, tokens, password policy)
+├── builder.rs          # Fluent builder for production wiring
+├── core/               # Auth-specific domain (sessions, tokens, password policy)
 ├── application/        # Use case orchestration + ports
-├── infrastructure/     # Adapters for repositories and services
+├── infrastructure/     # External integrations (adapters supplied by composition root)
 ├── models/             # Internal models
 └── error.rs            # Auth-specific errors
 ```

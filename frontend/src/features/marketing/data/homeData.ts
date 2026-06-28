@@ -264,5 +264,5 @@ export const engineerCustomers: Customer[] = [
   { id: "grepitile", name: "Grepitile", logo: "Grepitile", category: "engineer" },
   { id: "flow", name: "Flow", logo: "Flow", category: "engineer" },
   { id: "paper", name: "Paper", logo: "Paper", category: "engineer" },
-  { id: "posthog", name: "PostHog", logo: "PostHog", category: "engineer" },
+  { id: "klynt", name: "Klynt", logo: "Klynt", category: "engineer" },
 ];

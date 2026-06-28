@@ -1,20 +1,59 @@
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
+import { HttpResponse, http } from "msw";
 import { Route, Routes } from "react-router-dom";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { server } from "@/test/msw/server";
 import { render } from "@/test/render";
-import { GuestRoute, ProtectedRoute, RoleGuard } from "./auth-identity";
 import { useAuthStore } from "./auth-store";
+import { GuestRoute, ProtectedRoute, RoleGuard } from "./route-guards";
+import type { User, UserRole } from "./types";
+
+vi.mock("./external-redirect", () => ({
+  isExternalUrl: (url: string) => /^https?:/.test(url),
+  navigateExternal: vi.fn(),
+  ExternalNavigate: ({ to }: { to: string }) => <div data-testid="external-navigate">{to}</div>,
+}));
+
+const baseUser: User = {
+  id: "u-1",
+  email: "a@b.com",
+  username: "a",
+  name: "A",
+  role: "student",
+  status: "active",
+  createdAt: "2024-01-01T00:00:00Z",
+};
 
 function setup() {
   useAuthStore.getState().reset();
+  useAuthStore.getState().setLoading(false);
+}
+
+function setAuthenticated(role: UserRole = "student") {
+  useAuthStore.getState().setSession({ ...baseUser, role });
+}
+
+function mockMeResponse(role: UserRole | null) {
+  server.use(
+    http.get("/api/v1/users/me", () =>
+      role
+        ? HttpResponse.json({ data: { ...baseUser, role } })
+        : new HttpResponse(null, { status: 401 })
+    )
+  );
+}
+
+function mockMeUnauthorized() {
+  mockMeResponse(null);
 }
 
 describe("route guards", () => {
-  it("ProtectedRoute redirects when unauthenticated", () => {
+  it("ProtectedRoute redirects to login subdomain when unauthenticated", async () => {
     setup();
+    mockMeUnauthorized();
     render(
       <Routes>
-        <Route path="/register" element={<div>Register page</div>} />
+        <Route path="/login" element={<div>Login page</div>} />
         <Route
           path="/dashboard"
           element={
@@ -26,14 +65,17 @@ describe("route guards", () => {
       </Routes>,
       { initialEntries: ["/dashboard"] }
     );
-    expect(screen.getByText("Register page")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByTestId("external-navigate")).toHaveTextContent(
+        /login\.localhost(:\d+)?\/\?from=/
+      )
+    );
   });
 
-  it("GuestRoute redirects when authenticated", () => {
+  it("GuestRoute redirects to apex dashboard when authenticated", async () => {
     setup();
-    useAuthStore
-      .getState()
-      .setSession({ id: "u-1", email: "a@b.com", name: "A", role: "student" }, "token");
+    setAuthenticated();
+    mockMeResponse("student");
     render(
       <Routes>
         <Route path="/dashboard" element={<div>Dashboard</div>} />
@@ -48,14 +90,17 @@ describe("route guards", () => {
       </Routes>,
       { initialEntries: ["/register"] }
     );
-    expect(screen.getByText("Dashboard")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByTestId("external-navigate")).toHaveTextContent(
+        /localhost(:\d+)?\/dashboard/
+      )
+    );
   });
 
-  it("RoleGuard blocks non-admins from admin route", () => {
+  it("RoleGuard blocks non-admins from admin route", async () => {
     setup();
-    useAuthStore
-      .getState()
-      .setSession({ id: "u-1", email: "a@b.com", name: "A", role: "student" }, "token");
+    setAuthenticated("student");
+    mockMeResponse("student");
     render(
       <Routes>
         <Route path="/dashboard" element={<div>Dashboard</div>} />
@@ -70,7 +115,9 @@ describe("route guards", () => {
       </Routes>,
       { initialEntries: ["/admin"] }
     );
-    expect(screen.getByText("Dashboard")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByTestId("external-navigate")).toHaveTextContent(/admin\.localhost(:\d+)?\//)
+    );
   });
 
   it("ProtectedRoute shows loading state", () => {
@@ -92,11 +139,10 @@ describe("route guards", () => {
     expect(screen.getByLabelText(/loading/i)).toBeInTheDocument();
   });
 
-  it("ProtectedRoute renders children when authenticated", () => {
+  it("ProtectedRoute renders children when authenticated", async () => {
     setup();
-    useAuthStore
-      .getState()
-      .setSession({ id: "u-1", email: "a@b.com", name: "A", role: "student" }, "token");
+    setAuthenticated();
+    mockMeResponse("student");
     render(
       <Routes>
         <Route
@@ -110,11 +156,12 @@ describe("route guards", () => {
       </Routes>,
       { initialEntries: ["/dashboard"] }
     );
-    expect(screen.getByText("Dashboard")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("Dashboard")).toBeInTheDocument());
   });
 
-  it("GuestRoute renders children when unauthenticated", () => {
+  it("GuestRoute renders children when unauthenticated", async () => {
     setup();
+    mockMeUnauthorized();
     render(
       <Routes>
         <Route
@@ -128,14 +175,13 @@ describe("route guards", () => {
       </Routes>,
       { initialEntries: ["/register"] }
     );
-    expect(screen.getByText("Register page")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("Register page")).toBeInTheDocument());
   });
 
-  it("RoleGuard renders children for allowed role", () => {
+  it("RoleGuard renders children for allowed role", async () => {
     setup();
-    useAuthStore
-      .getState()
-      .setSession({ id: "u-1", email: "a@b.com", name: "A", role: "admin" }, "token");
+    setAuthenticated("admin");
+    mockMeResponse("admin");
     render(
       <Routes>
         <Route
@@ -149,6 +195,6 @@ describe("route guards", () => {
       </Routes>,
       { initialEntries: ["/admin"] }
     );
-    expect(screen.getByText("Admin")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("Admin")).toBeInTheDocument());
   });
 });

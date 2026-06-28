@@ -10,15 +10,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { routePaths } from "@/core/routing/route-paths";
 
 const locationStateSchema = z.object({
-  user: z
-    .object({
-      name: z.string(),
-      email: z.string(),
-    })
-    .optional(),
+  email: z.string().optional(),
 });
 
 export default function RegisterSuccessPage() {
@@ -32,18 +26,15 @@ export default function RegisterSuccessPage() {
         <CardHeader>
           <CardTitle>{t("auth:register.success.title")}</CardTitle>
           <CardDescription>
-            {state?.user
-              ? t("auth:register.success.messageWithName", {
-                  name: state.user.name,
-                  email: state.user.email,
-                })
+            {state?.email
+              ? t("auth:register.success.messageWithEmail", { email: state.email })
               : t("auth:register.success.message")}
           </CardDescription>
         </CardHeader>
         <CardContent />
         <CardFooter>
           <Button asChild className="w-full">
-            <Link to={routePaths.home}>{t("common:actions.goHome")}</Link>
+            <Link to="/login">{t("auth:register.success.goToLogin")}</Link>
           </Button>
         </CardFooter>
       </Card>

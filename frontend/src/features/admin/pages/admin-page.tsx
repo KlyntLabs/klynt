@@ -1,20 +1,9 @@
-import { useTranslation } from "react-i18next";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuthModule } from "@/core/auth/auth-module";
+import { DesktopEnvironment } from "@/features/desktop/components/DesktopEnvironment";
+import { buildAdminDesktop } from "@/features/desktop/factory/admin-desktop";
 
 export default function AdminPage() {
-  const { t } = useTranslation("ui");
-
-  return (
-    <div className="p-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("admin.title")}</CardTitle>
-          <CardDescription>{t("admin.description")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">{t("admin.placeholder")}</p>
-        </CardContent>
-      </Card>
-    </div>
-  );
+  const { user } = useAuthModule();
+  const config = buildAdminDesktop({ user });
+  return <DesktopEnvironment config={config} />;
 }

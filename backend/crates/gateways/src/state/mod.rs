@@ -4,10 +4,10 @@ pub mod services;
 
 pub use services::Services;
 
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 /// Gateway configuration.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Config {
     /// Service name for tracing.
     pub service_name: String,
@@ -24,6 +24,12 @@ pub struct Config {
     /// Redis URL.
     pub redis_url: Option<String>,
 
+    /// Rate limiter configuration.
+    pub rate_limiter: config::RateLimiterConfig,
+
+    /// Session lifetime configuration.
+    pub session: config::SessionConfig,
+
     /// Whether to emit the HSTS security header.
     #[serde(default)]
     pub hsts_enabled: bool,
@@ -32,13 +38,47 @@ pub struct Config {
     #[serde(default)]
     pub allowed_origins: Vec<String>,
 
+    /// Trusted proxy CIDRs or IPs used to resolve the real client IP from
+    /// the `X-Forwarded-For` header.
+    #[serde(default)]
+    pub trusted_proxies: Vec<String>,
+
     /// Log level for tracing.
     #[serde(default = "default_log_level")]
     pub log_level: String,
+
+    /// Domain attribute for session cookies. Leading dot enables cross-subdomain SSO.
+    #[serde(default = "default_cookie_domain")]
+    pub cookie_domain: String,
+
+    /// Whether session cookies require HTTPS.
+    #[serde(default)]
+    pub cookie_secure: bool,
+
+    /// When true, serve the CSP in `Content-Security-Policy-Report-Only`
+    /// instead of enforcing it.
+    #[serde(default)]
+    pub csp_report_only: bool,
+
+    /// Content Security Policy directive string.
+    #[serde(default = "default_csp_directive")]
+    pub csp_directive: String,
+
+    /// Whether session synchronization via the session coordinator is enabled.
+    #[serde(default = "default_session_sync_enabled")]
+    pub session_sync_enabled: bool,
+}
+
+fn default_session_sync_enabled() -> bool {
+    true
 }
 
 fn default_log_level() -> String {
     "info".to_string()
+}
+
+fn default_csp_directive() -> String {
+    config::DEFAULT_CONTENT_SECURITY_POLICY.to_string()
 }
 
 impl Default for Config {
@@ -49,34 +89,50 @@ impl Default for Config {
             base_url: "https://klynt.edu".to_string(),
             database_url: String::new(),
             redis_url: None,
+            rate_limiter: config::RateLimiterConfig::default(),
+            session: config::SessionConfig::default(),
             hsts_enabled: false,
             allowed_origins: Vec::new(),
+            trusted_proxies: Vec::new(),
             log_level: default_log_level(),
+            cookie_domain: default_cookie_domain(),
+            cookie_secure: false,
+            csp_report_only: false,
+            csp_directive: default_csp_directive(),
+            session_sync_enabled: true,
         }
     }
+}
+
+fn default_cookie_domain() -> String {
+    String::new()
 }
 
 impl Config {
     /// Load configuration from the environment using the existing Klynt config
     /// loader, then map it to the gateway-specific shape.
-    pub fn from_env() -> Result<Self, config::ConfigError> {
-        let app_config = klynt_infrastructure::config::load_config()?;
+    pub fn from_env() -> Result<Self, config_crate::ConfigError> {
+        let app_config = config::load_config()?;
         Ok(Self::from(app_config))
     }
 }
 
-impl From<klynt_infrastructure::config::AppConfig> for Config {
-    fn from(config: klynt_infrastructure::config::AppConfig) -> Self {
+impl From<config::AppConfig> for Config {
+    fn from(config: config::AppConfig) -> Self {
         let bind_address = format!("{}:{}", config.api.host, config.api.port);
-        let base_url = format!(
-            "{}://{}",
-            if config.api.host.contains("localhost") || config.api.host == "127.0.0.1" {
-                "http"
-            } else {
-                "https"
-            },
-            config.api.host
-        );
+        let base_url = if config.base_url.is_empty() {
+            format!(
+                "{}://{}",
+                if config.api.host.contains("localhost") || config.api.host == "127.0.0.1" {
+                    "http"
+                } else {
+                    "https"
+                },
+                config.api.host
+            )
+        } else {
+            config.base_url.clone()
+        };
 
         Self {
             service_name: "api-gateway".to_string(),
@@ -84,9 +140,17 @@ impl From<klynt_infrastructure::config::AppConfig> for Config {
             base_url,
             database_url: config.database_url.unwrap_or_default(),
             redis_url: config.redis_url,
+            rate_limiter: config.rate_limiter,
+            session: config.session,
             hsts_enabled: config.hsts_enabled,
             allowed_origins: config.api.allowed_origins,
+            trusted_proxies: config.api.trusted_proxies,
             log_level: config.log_level,
+            cookie_domain: config.cookie_domain,
+            cookie_secure: config.cookie_secure,
+            csp_report_only: config.csp_report_only,
+            csp_directive: config.csp_directive,
+            session_sync_enabled: config.session_sync_enabled,
         }
     }
 }

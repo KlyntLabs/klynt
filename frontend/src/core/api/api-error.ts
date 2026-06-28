@@ -25,11 +25,13 @@ export class ApiError extends Error {
 export function createApiError(error: unknown): ApiError {
   if (isAxiosError(error)) {
     const status = error.response?.status ?? 0;
-    const data = error.response?.data as { code?: string; message?: string } | undefined;
+    const data = error.response?.data as
+      | { code?: string; message?: string; error?: string }
+      | undefined;
     return new ApiError({
-      message: data?.message ?? error.message ?? "An unexpected error occurred",
+      message: data?.message ?? data?.error ?? error.message ?? "An unexpected error occurred",
       status,
-      code: data?.code ?? "UNKNOWN_ERROR",
+      code: data?.code?.toLowerCase() ?? "UNKNOWN_ERROR",
     });
   }
 

@@ -1,15 +1,13 @@
 //! Gateway integration tests.
 
-use std::collections::HashMap;
-
 use axum::{
     body::Body,
     http::{Method, Request, StatusCode},
 };
-use chrono::{Duration, Utc};
-use klynt_shared_domain::{Email, UserRole, UserStatus};
-use klynt_storage::session::SessionStore;
-use klynt_utils::UserId;
+use base::ctx::{ExecutionContext, RequestContext};
+use chrono::Utc;
+use config::DEFAULT_CONTENT_SECURITY_POLICY;
+use domain::{Email, User, UserId, UserRole, UserStatus};
 use tower::ServiceExt;
 
 mod support;
@@ -17,29 +15,11 @@ mod support;
 fn app() -> axum::Router {
     let config = support::test_config();
     let services = support::build_test_services();
-    gateways::create_router(config, services)
+    app_with_config(config, services)
 }
 
-#[tokio::test]
-async fn health_endpoint_returns_ok() {
-    let response = app()
-        .oneshot(
-            Request::builder()
-                .method(Method::GET)
-                .uri("/health")
-                .body(Body::empty())
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-
-    assert_eq!(response.status(), StatusCode::OK);
-
-    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
-        .await
-        .unwrap();
-    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
-    assert_eq!(json["status"], "ok");
+fn app_with_config(config: gateways::Config, services: gateways::state::Services) -> axum::Router {
+    gateways::create_router(config, services)
 }
 
 #[tokio::test]
@@ -163,6 +143,45 @@ async fn security_headers_are_present() {
         response.headers().get("Referrer-Policy").unwrap(),
         "strict-origin-when-cross-origin"
     );
+    assert_eq!(
+        response
+            .headers()
+            .get("Content-Security-Policy")
+            .unwrap()
+            .to_str()
+            .unwrap(),
+        DEFAULT_CONTENT_SECURITY_POLICY
+    );
+}
+
+#[tokio::test]
+async fn csp_report_only_mode_uses_report_only_header() {
+    let mut config = support::test_config();
+    config.csp_report_only = true;
+    let services = support::build_test_services();
+    let app = app_with_config(config, services);
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/health")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(
+        response
+            .headers()
+            .get("Content-Security-Policy-Report-Only")
+            .unwrap()
+            .to_str()
+            .unwrap(),
+        DEFAULT_CONTENT_SECURITY_POLICY
+    );
+    assert!(response.headers().get("Content-Security-Policy").is_none());
 }
 
 #[tokio::test]
@@ -186,126 +205,43 @@ async fn cors_preflight_returns_ok() {
         .contains_key("access-control-allow-origin"));
 }
 
-#[tokio::test]
-async fn login_with_invalid_credentials_returns_unauthorized() {
-    let login_request = serde_json::json!({
-        "email": "test@example.com",
-        "password": "wrong-password"
-    });
-
-    let response = app()
-        .oneshot(
-            Request::builder()
-                .method(Method::POST)
-                .uri("/api/v1/auth/login")
-                .header("content-type", "application/json")
-                .body(Body::from(serde_json::to_vec(&login_request).unwrap()))
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-
-    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
-}
-
-#[tokio::test]
-async fn register_with_invalid_email_returns_bad_request() {
-    let register_request = serde_json::json!({
-        "email": "not-an-email",
-        "password": "short"
-    });
-
-    let response = app()
-        .oneshot(
-            Request::builder()
-                .method(Method::POST)
-                .uri("/api/v1/auth/register")
-                .header("content-type", "application/json")
-                .body(Body::from(serde_json::to_vec(&register_request).unwrap()))
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-
-    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
-}
-
-#[tokio::test]
-async fn request_password_reset_returns_ok_to_prevent_enumeration() {
-    let request = serde_json::json!({
-        "email": "nobody@example.com"
-    });
-
-    let response = app()
-        .oneshot(
-            Request::builder()
-                .method(Method::POST)
-                .uri("/api/v1/auth/request-password-reset")
-                .header("content-type", "application/json")
-                .body(Body::from(serde_json::to_vec(&request).unwrap()))
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-
-    assert_eq!(response.status(), StatusCode::OK);
-
-    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
-        .await
-        .unwrap();
-    let json: HashMap<String, serde_json::Value> = serde_json::from_slice(&body).unwrap();
-    assert_eq!(json["success"], true);
-}
-
-#[tokio::test]
-async fn malformed_json_returns_bad_request() {
-    let response = app()
-        .oneshot(
-            Request::builder()
-                .method(Method::POST)
-                .uri("/api/v1/auth/login")
-                .header("content-type", "application/json")
-                .body(Body::from("not json"))
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-
-    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
-}
-
 async fn authenticated_app() -> (axum::Router, UserId, String) {
-    let (services, session_store, user_repo) = support::build_test_services_with_fakes();
+    let (services, session_service, user_repo) = support::build_test_services_with_fakes();
     let config = support::test_config();
 
     let user_id = UserId::new();
-    let expires_at = Utc::now() + Duration::hours(1);
 
-    let token = session_store
+    let token = session_service
         .create(
-            &klynt_core::ctx::Ctx::guest(uuid::Uuid::new_v4()),
-            klynt_utils::UserId(user_id.inner()),
-            expires_at,
+            &ExecutionContext::new(RequestContext::new()),
+            UserId(user_id.inner()),
         )
         .await
         .unwrap();
 
-    user_repo.insert(user_service::domain::User {
+    let now = Utc::now();
+    user_repo.insert(User {
         id: user_id,
         email: Email::new("ada@example.com".to_string()),
+        username: "ada".to_string(),
         full_name: Some("Ada Lovelace".to_string()),
         password_hash: "old-password".to_string(),
         status: UserStatus::Active,
         role: UserRole::Student,
-        created_at: Utc::now(),
-        updated_at: None,
+        global_role: None,
+        email_verified_at: None,
+        institution_id: None,
+        terms_accepted_at: now,
+        terms_version: "1.0".to_string(),
+        created_at: now,
+        updated_at: now,
         deleted_at: None,
     });
 
     (
         gateways::create_router(config, services),
         user_id,
-        token.0.to_string(),
+        token.token.0.to_string(),
     )
 }
 

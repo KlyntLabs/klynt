@@ -11,24 +11,26 @@
 //! - **Tests**: Cross the same interface as callers
 
 pub mod application;
-pub mod domain;
+pub mod builder;
+pub mod core;
 pub mod error;
-pub mod infrastructure;
 pub mod models;
 
 use std::sync::Arc;
 
-use chrono::Duration;
-use klynt_contracts::auth::{LoginRequest, LoginResponse, RegistrationRequest, UserSessionInfo};
-use klynt_core::ctx::ExecutionContext;
-use klynt_utils::UserId;
+use base::ctx::ExecutionContext;
+use domain::contracts::auth::{LoginRequest, LoginResponse, RegistrationRequest};
+use domain::session::SessionSummary;
+use domain::UserId;
+use infra_facades::{InfraFacade, PersistenceFacade};
+use uuid::Uuid;
 
 // Public exports
-pub use domain::{PasswordPolicy, SessionToken};
+pub use builder::AuthBuilder;
+pub use core::{PasswordPolicy, SessionToken};
 pub use error::{AuthError, AuthResult};
 
-use application::ports::{AuditLogger, Clock, EmailSender, PasswordHasher, UserRepository};
-use domain::{SessionStore, TokenStore};
+use application::services::token_email::TokenEmailService;
 
 /// Authentication service — deep module with small interface.
 ///
@@ -55,30 +57,37 @@ use domain::{SessionStore, TokenStore};
 ///
 /// Tests cross the same interface as production code — no testing past the interface.
 pub struct AuthService {
-    config: AuthConfig,
     password_policy: PasswordPolicy,
     internal_state: InternalState,
 }
 
 impl AuthService {
+    /// Return a builder for constructing the service with sensible defaults.
+    pub fn builder() -> AuthBuilder {
+        AuthBuilder::new()
+    }
+
     /// Create a new auth service with given configuration and dependencies.
     ///
-    /// This is the **only** way to construct the service — all dependencies
-    /// are wired here (composition root responsibility).
+    /// Prefer [`AuthService::builder`] for production wiring; this constructor
+    /// remains available for tests and custom dependency injection.
     pub fn new(config: AuthConfig, dependencies: Dependencies) -> Result<Self, AuthError> {
         let password_policy = config.password_policy.clone().unwrap_or_default();
+        let base_url = config.base_url.clone();
+
+        let token_email_service = TokenEmailService::new(
+            dependencies.persistence_facade.token_store.clone(),
+            dependencies.infra_facade.email_sender.clone(),
+            base_url,
+        );
 
         Ok(Self {
-            config,
             password_policy,
             internal_state: InternalState {
-                user_repository: dependencies.user_repository,
-                session_store: dependencies.session_store,
-                token_store: dependencies.token_store,
-                email_sender: dependencies.email_sender,
-                audit_logger: dependencies.audit_logger,
-                password_hasher: dependencies.password_hasher,
-                clock: dependencies.clock,
+                persistence_facade: dependencies.persistence_facade,
+                infra_facade: dependencies.infra_facade,
+                session_service: dependencies.session_service,
+                token_email_service,
             },
         })
     }
@@ -140,12 +149,27 @@ impl AuthService {
         application::use_cases::logout::execute(self, ctx, session_token).await
     }
 
-    pub(crate) fn internal(&self) -> &InternalState {
-        &self.internal_state
+    /// List active sessions for a user.
+    pub async fn list_sessions(
+        &self,
+        ctx: &ExecutionContext,
+        user_id: UserId,
+    ) -> Result<Vec<SessionSummary>, AuthError> {
+        application::use_cases::list_sessions::execute(self, ctx, user_id).await
     }
 
-    pub(crate) fn config(&self) -> &AuthConfig {
-        &self.config
+    /// Revoke a session after verifying it belongs to the user.
+    pub async fn revoke_session(
+        &self,
+        ctx: &ExecutionContext,
+        user_id: UserId,
+        session_id: Uuid,
+    ) -> Result<(), AuthError> {
+        application::use_cases::revoke_session::execute(self, ctx, user_id, session_id).await
+    }
+
+    pub(crate) fn internal(&self) -> &InternalState {
+        &self.internal_state
     }
 
     pub(crate) fn password_policy(&self) -> &PasswordPolicy {
@@ -161,9 +185,6 @@ pub struct AuthConfig {
     /// Base URL for email links.
     pub base_url: String,
 
-    /// Session duration in seconds.
-    pub session_duration_secs: u64,
-
     /// Token duration in seconds (for future access tokens).
     pub token_duration_secs: u64,
 
@@ -171,19 +192,11 @@ pub struct AuthConfig {
     pub password_policy: Option<PasswordPolicy>,
 }
 
-impl AuthConfig {
-    /// Session duration as a chrono duration.
-    pub fn session_duration(&self) -> Duration {
-        Duration::seconds(self.session_duration_secs as i64)
-    }
-}
-
 impl Default for AuthConfig {
     fn default() -> Self {
         Self {
             base_url: "https://klynt.edu".to_string(),
-            session_duration_secs: 86400, // 24 hours
-            token_duration_secs: 3600,    // 1 hour
+            token_duration_secs: 3600, // 1 hour
             password_policy: None,
         }
     }
@@ -191,37 +204,19 @@ impl Default for AuthConfig {
 
 /// Dependencies wired into the auth service.
 ///
-/// All concrete adapters are supplied at construction time, keeping the
-/// service testable and framework-agnostic.
+/// Adapters are supplied through infrastructure facades, keeping the service
+/// testable and framework-agnostic.
 #[derive(Clone)]
 pub struct Dependencies {
-    pub user_repository: Arc<dyn UserRepository>,
-    pub session_store: Arc<dyn SessionStore>,
-    pub token_store: Arc<dyn TokenStore>,
-    pub email_sender: Arc<dyn EmailSender>,
-    pub audit_logger: Arc<dyn AuditLogger>,
-    pub password_hasher: Arc<dyn PasswordHasher>,
-    pub clock: Arc<dyn Clock>,
+    pub persistence_facade: Arc<PersistenceFacade>,
+    pub infra_facade: Arc<InfraFacade>,
+    pub session_service: Arc<session_service::SessionService>,
 }
 
 /// Internal state — not part of the public interface.
 pub(crate) struct InternalState {
-    pub user_repository: Arc<dyn UserRepository>,
-    pub session_store: Arc<dyn SessionStore>,
-    pub token_store: Arc<dyn TokenStore>,
-    pub email_sender: Arc<dyn EmailSender>,
-    pub audit_logger: Arc<dyn AuditLogger>,
-    pub password_hasher: Arc<dyn PasswordHasher>,
-    pub clock: Arc<dyn Clock>,
-}
-
-impl From<crate::models::User> for UserSessionInfo {
-    fn from(user: crate::models::User) -> Self {
-        Self {
-            id: user.id,
-            email: user.email,
-            full_name: user.full_name,
-            role: user.role,
-        }
-    }
+    pub persistence_facade: Arc<PersistenceFacade>,
+    pub infra_facade: Arc<InfraFacade>,
+    pub session_service: Arc<session_service::SessionService>,
+    pub token_email_service: TokenEmailService,
 }

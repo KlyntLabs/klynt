@@ -1,0 +1,11 @@
+[package]
+name = "infra_facades"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+base = { path = "../../base" }
+
+[dev-dependencies]
+base = { path = "../../base", features = ["testkit"] }
+tokio = { workspace = true }

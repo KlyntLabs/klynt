@@ -1,8 +1,9 @@
 //! Password reset use cases - request and complete reset.
 
-use klynt_core::ctx::ExecutionContext;
+use base::ctx::ExecutionContext;
+use domain::{DomainError, Email};
 
-use crate::domain::{Token, TokenKind};
+use crate::core::{Token, TokenKind};
 use crate::error::AuthError;
 use crate::AuthService;
 
@@ -14,33 +15,25 @@ pub(crate) async fn request(
     ctx: &ExecutionContext,
     email: &str,
 ) -> Result<(), AuthError> {
+    let parsed_email = Email::parse(email)
+        .map_err(|e| AuthError::Domain(DomainError::InvalidInput(e.to_string())))?;
+
     let user = match service
         .internal()
+        .persistence_facade
         .user_repository
-        .find_by_email(ctx, email)
+        .find_by_email(ctx, &parsed_email)
         .await?
     {
         Some(user) => user,
         None => return Ok(()),
     };
 
-    let token = Token::generate(TokenKind::PasswordReset, user.id);
-    service
-        .internal()
-        .token_store
-        .save(
-            TokenKind::PasswordReset,
-            user.id,
-            &token.hash,
-            token.expires_at,
-        )
-        .await?;
-
     // Swallow email errors to prevent account enumeration during outages.
     if let Err(e) = service
         .internal()
-        .email_sender
-        .send_password_reset(ctx, email, &token.plaintext, &service.config().base_url)
+        .token_email_service
+        .send_password_reset(ctx, &parsed_email, user.id)
         .await
     {
         tracing::warn!(
@@ -66,23 +59,27 @@ pub(crate) async fn reset(
     let token_hash = Token::sha256_hash(token);
     let user_id = service
         .internal()
+        .persistence_facade
         .token_store
-        .consume(TokenKind::PasswordReset, &token_hash)
+        .consume(ctx, TokenKind::PasswordReset, token_hash)
         .await?;
 
     let password_hash = service
         .internal()
+        .infra_facade
         .password_hasher
         .hash(new_password)
         .await?;
     service
         .internal()
+        .persistence_facade
         .user_repository
-        .update_password(ctx, user_id, &password_hash)
+        .update_password(ctx, user_id, password_hash)
         .await?;
 
     service
         .internal()
+        .persistence_facade
         .audit_logger
         .log_password_reset(ctx, user_id)
         .await;

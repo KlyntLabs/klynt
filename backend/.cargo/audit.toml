@@ -5,4 +5,8 @@ ignore = [
     # uses the Postgres feature of sqlx, so the RSA code path is not exercised.
     # No fixed upgrade is currently available.
     "RUSTSEC-2023-0071",
+    # `proc-macro-error2` is flagged as unmaintained. It is a transitive
+    # dependency of `validator` (via `validator_derive`) and there is no
+    # fixed release of `validator` that removes it yet.
+    "RUSTSEC-2026-0173",
 ]

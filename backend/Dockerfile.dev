@@ -12,4 +12,4 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl \
 
 WORKDIR /app/backend
 
-CMD ["cargo", "watch", "-x", "run --bin klynt-server"]
+CMD ["cargo", "watch", "-x", "run --bin server"]

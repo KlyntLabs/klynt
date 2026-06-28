@@ -109,7 +109,7 @@ jobs:
         run: cargo llvm-cov --locked --workspace --all-features --no-clean --fail-under-lines 84 -- --include-ignored
 
       - name: Build release binary
-        run: cargo build --locked --release --bin klynt-server
+        run: cargo build --locked --release --bin server
 
   frontend-checks:
     name: Frontend checks

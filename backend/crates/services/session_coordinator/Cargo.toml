@@ -1,0 +1,16 @@
+[package]
+name = "session_coordinator"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+base = { path = "../../../crates/base" }
+domain = { path = "../../shared/domain" }
+serde = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+base = { path = "../../../crates/base", features = ["testkit"] }
+chrono = { workspace = true }

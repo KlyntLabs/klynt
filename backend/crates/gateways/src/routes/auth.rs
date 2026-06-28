@@ -1,36 +1,46 @@
 //! Authentication HTTP handlers.
 
-use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
+use axum::{
+    body::Bytes,
+    extract::{FromRequest, Path, Request, State},
+    http::{header, StatusCode},
+    response::{IntoResponse, Json},
+};
+use base::ctx::{ExecutionContext, RequestContext};
+use chrono::Utc;
+use domain::contracts::auth::{LoginRequest, RegistrationRequest};
+use domain::session::SessionSummary;
+use tower_cookies::{Cookie, Cookies};
+use uuid::Uuid;
 
-use klynt_contracts::auth::{LoginRequest, RegistrationRequest};
-use klynt_core::ctx::{ExecutionContext, RequestContext};
-
+use crate::constants::SESSION_TOKEN_COOKIE;
+use crate::middleware::auth::AuthContext;
 use crate::response::SuccessResponse;
 use crate::state::Services;
-
-/// Auth router — handles login, register, password reset, etc.
-pub fn routes() -> axum::Router<Services> {
-    axum::Router::new()
-        .route("/login", axum::routing::post(login))
-        .route("/register", axum::routing::post(register))
-        .route("/verify-email", axum::routing::post(verify_email))
-        .route(
-            "/request-password-reset",
-            axum::routing::post(request_password_reset),
-        )
-        .route("/reset-password", axum::routing::post(reset_password))
-        .route("/logout", axum::routing::post(logout))
-}
 
 fn execution_context() -> ExecutionContext {
     ExecutionContext::new(RequestContext::new())
 }
 
+/// Apply common cookie attributes. The `Domain` attribute is omitted when the
+/// configured `cookie_domain` is empty so that browsers use the current host,
+/// which is required for local development on `localhost`.
+fn apply_cookie_attributes(cookie: &mut Cookie, services: &Services) {
+    if !services.config.cookie_domain.is_empty() {
+        cookie.set_domain(services.config.cookie_domain.clone());
+    }
+    cookie.set_path("/");
+    cookie.set_http_only(true);
+    cookie.set_secure(services.config.cookie_secure);
+    cookie.set_same_site(tower_cookies::cookie::SameSite::Lax);
+}
+
 /// POST /api/v1/auth/login
 ///
 /// Authenticate a user and return a session token.
-async fn login(
+pub(crate) async fn login(
     State(services): State<Services>,
+    cookies: Cookies,
     Json(request): Json<LoginRequest>,
 ) -> Result<impl IntoResponse, crate::GatewayError> {
     let response = services
@@ -39,13 +49,25 @@ async fn login(
         .await
         .map_err(crate::GatewayError::from)?;
 
+    let mut cookie = Cookie::new(SESSION_TOKEN_COOKIE, response.access_token.clone());
+    apply_cookie_attributes(&mut cookie, &services);
+
+    let ttl_seconds = response
+        .expires_at
+        .signed_duration_since(Utc::now())
+        .num_seconds()
+        .max(0);
+    cookie.set_max_age(tower_cookies::cookie::time::Duration::seconds(ttl_seconds));
+
+    cookies.add(cookie);
+
     Ok((StatusCode::OK, Json(SuccessResponse::ok(response))))
 }
 
 /// POST /api/v1/auth/register
 ///
 /// Register a new user.
-async fn register(
+pub(crate) async fn register(
     State(services): State<Services>,
     Json(request): Json<RegistrationRequest>,
 ) -> Result<impl IntoResponse, crate::GatewayError> {
@@ -63,16 +85,36 @@ async fn register(
 
 /// POST /api/v1/auth/verify-email
 ///
-/// Verify email with token.
-async fn verify_email(
+/// Verify email with token and establish an authenticated session.
+pub(crate) async fn verify_email(
     State(services): State<Services>,
+    cookies: Cookies,
     Json(request): Json<VerifyEmailRequest>,
 ) -> Result<impl IntoResponse, crate::GatewayError> {
-    services
+    let user_id = services
         .auth
         .verify_email(&execution_context(), &request.token)
         .await
         .map_err(crate::GatewayError::from)?;
+
+    let ctx = execution_context();
+    let session = services
+        .session
+        .create(&ctx, user_id)
+        .await
+        .map_err(|e| crate::GatewayError::Internal(format!("Failed to create session: {e}")))?;
+
+    let mut cookie = Cookie::new(SESSION_TOKEN_COOKIE, session.token.to_string());
+    apply_cookie_attributes(&mut cookie, &services);
+
+    let ttl_seconds = session
+        .expires_at
+        .signed_duration_since(Utc::now())
+        .num_seconds()
+        .max(0);
+    cookie.set_max_age(tower_cookies::cookie::time::Duration::seconds(ttl_seconds));
+
+    cookies.add(cookie);
 
     Ok(Json(SuccessResponse::message(
         "Email verified successfully",
@@ -80,14 +122,14 @@ async fn verify_email(
 }
 
 #[derive(serde::Deserialize)]
-struct VerifyEmailRequest {
+pub(crate) struct VerifyEmailRequest {
     token: String,
 }
 
 /// POST /api/v1/auth/request-password-reset
 ///
 /// Request password reset email.
-async fn request_password_reset(
+pub(crate) async fn request_password_reset(
     State(services): State<Services>,
     Json(request): Json<RequestPasswordResetRequest>,
 ) -> Result<impl IntoResponse, crate::GatewayError> {
@@ -104,14 +146,14 @@ async fn request_password_reset(
 }
 
 #[derive(serde::Deserialize)]
-struct RequestPasswordResetRequest {
+pub(crate) struct RequestPasswordResetRequest {
     email: String,
 }
 
 /// POST /api/v1/auth/reset-password
 ///
 /// Reset password with token.
-async fn reset_password(
+pub(crate) async fn reset_password(
     State(services): State<Services>,
     Json(request): Json<ResetPasswordRequest>,
 ) -> Result<impl IntoResponse, crate::GatewayError> {
@@ -127,28 +169,129 @@ async fn reset_password(
 }
 
 #[derive(serde::Deserialize)]
-struct ResetPasswordRequest {
+pub(crate) struct ResetPasswordRequest {
     token: String,
     new_password: String,
 }
 
 /// POST /api/v1/auth/logout
 ///
-/// Logout and invalidate session.
-async fn logout(
+/// Logout and invalidate session. Uses the session token from the JSON body if
+/// provided, otherwise falls back to the `session_token` cookie. The cookie is
+/// cleared on success.
+pub(crate) async fn logout(
     State(services): State<Services>,
-    Json(request): Json<LogoutRequest>,
+    cookies: Cookies,
+    OptionalJson(request): OptionalJson<LogoutRequest>,
 ) -> Result<impl IntoResponse, crate::GatewayError> {
+    let token = request
+        .and_then(|r| r.session_token)
+        .or_else(|| {
+            cookies
+                .get(SESSION_TOKEN_COOKIE)
+                .map(|c| c.value().to_string())
+        })
+        .ok_or_else(|| crate::GatewayError::BadRequest("Missing session token".to_string()))?;
+
     services
         .auth
-        .logout(&execution_context(), &request.session_token)
+        .logout(&execution_context(), &token)
         .await
         .map_err(crate::GatewayError::from)?;
+
+    let mut removal = Cookie::new(SESSION_TOKEN_COOKIE, "");
+    apply_cookie_attributes(&mut removal, &services);
+    cookies.remove(removal);
 
     Ok(Json(SuccessResponse::message("Logged out successfully")))
 }
 
 #[derive(serde::Deserialize)]
-struct LogoutRequest {
-    session_token: String,
+pub(crate) struct LogoutRequest {
+    session_token: Option<String>,
+}
+
+/// GET /api/v1/auth/sessions
+///
+/// List active sessions for the authenticated user.
+pub(crate) async fn list_sessions(
+    State(services): State<Services>,
+    AuthContext(ctx): AuthContext,
+) -> Result<impl IntoResponse, crate::GatewayError> {
+    let user_id = ctx
+        .actor_id
+        .ok_or_else(|| crate::GatewayError::Unauthorized("Authentication required".to_string()))?;
+
+    let sessions = services
+        .auth
+        .list_sessions(&ctx, domain::UserId(user_id))
+        .await
+        .map_err(crate::GatewayError::from)?;
+
+    Ok(Json(SuccessResponse::ok(ListSessionsResponse { sessions })))
+}
+
+#[derive(serde::Serialize)]
+struct ListSessionsResponse {
+    sessions: Vec<SessionSummary>,
+}
+
+/// DELETE /api/v1/auth/sessions/:session_id
+///
+/// Revoke a single session belonging to the authenticated user.
+pub(crate) async fn revoke_session(
+    State(services): State<Services>,
+    AuthContext(ctx): AuthContext,
+    Path(session_id): Path<Uuid>,
+) -> Result<impl IntoResponse, crate::GatewayError> {
+    let user_id = ctx
+        .actor_id
+        .ok_or_else(|| crate::GatewayError::Unauthorized("Authentication required".to_string()))?;
+
+    services
+        .auth
+        .revoke_session(&ctx, domain::UserId(user_id), session_id)
+        .await
+        .map_err(crate::GatewayError::from)?;
+
+    Ok(Json(SuccessResponse::message("Session revoked")))
+}
+
+/// JSON body extractor that returns `None` when the body is missing, empty, or
+/// the content-type is not `application/json`.
+///
+/// This is useful for endpoints that accept an optional JSON payload while also
+/// reading state from cookies or headers.
+pub(crate) struct OptionalJson<T>(Option<T>);
+
+impl<T, S> FromRequest<S> for OptionalJson<T>
+where
+    T: serde::de::DeserializeOwned + Send + Sync,
+    S: Send + Sync,
+{
+    type Rejection = crate::GatewayError;
+
+    async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
+        let content_type = req
+            .headers()
+            .get(header::CONTENT_TYPE)
+            .and_then(|v| v.to_str().ok());
+        let is_json = content_type
+            .map(|ct| ct.starts_with("application/json"))
+            .unwrap_or(false);
+        if !is_json {
+            return Ok(OptionalJson(None));
+        }
+
+        let bytes = Bytes::from_request(req, state)
+            .await
+            .map_err(|_| crate::GatewayError::BadRequest("Failed to read body".to_string()))?;
+        if bytes.is_empty() {
+            return Ok(OptionalJson(None));
+        }
+
+        let value = serde_json::from_slice(&bytes)
+            .map_err(|_| crate::GatewayError::BadRequest("Invalid JSON body".to_string()))?;
+        Ok(OptionalJson(Some(value)))
+    }
 }

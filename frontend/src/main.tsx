@@ -1,11 +1,10 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { RouterProvider } from "react-router-dom";
 import { AppProviders } from "@/app/providers";
 import { apiClient } from "@/core/api/api-client";
 import { createAuthInterceptorDeps, registerAuthInterceptor } from "@/core/api/auth-interceptor";
 import { reportWebVitals } from "@/core/performance/web-vitals";
-import { router } from "@/core/routing/route-tree";
+import { HostRouter } from "@/core/routing/host-router";
 import "@/index.css";
 
 registerAuthInterceptor(apiClient, createAuthInterceptorDeps());
@@ -18,7 +17,7 @@ if (!rootElement) {
 createRoot(rootElement).render(
   <StrictMode>
     <AppProviders>
-      <RouterProvider router={router} />
+      <HostRouter />
     </AppProviders>
   </StrictMode>
 );

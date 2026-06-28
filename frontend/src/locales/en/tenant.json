@@ -1,0 +1,51 @@
+{
+  "menubar": {
+    "tenant": "Tenant"
+  },
+  "members": {
+    "title": "Members",
+    "inviteTitle": "Invite member",
+    "inviteButton": "Invite member",
+    "emailLabel": "Email",
+    "roleLabel": "Role",
+    "nameLabel": "Name",
+    "joinedAtLabel": "Joined",
+    "noMembers": "No members found.",
+    "accessDenied": "You don't have permission to manage members.",
+    "removeButton": "Remove",
+    "removeConfirmTitle": "Remove member",
+    "removeConfirmMessage": "Are you sure you want to remove {{email}}?",
+    "cancelButton": "Cancel",
+    "inviteError": "Failed to invite member: {{message}}",
+    "updateRoleError": "Failed to update role: {{message}}",
+    "removeError": "Failed to remove member: {{message}}",
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "member": "Member",
+      "guest": "Guest"
+    }
+  },
+  "roles": {
+    "title": "Roles"
+  },
+  "settings": {
+    "title": "Tenant settings",
+    "generalTitle": "General",
+    "generalDescription": "Update your tenant's name.",
+    "nameLabel": "Name",
+    "nameRequired": "Name is required.",
+    "slugLabel": "Slug",
+    "saveButton": "Save changes",
+    "updateError": "Failed to update tenant: {{message}}",
+    "loadErrorTitle": "Failed to load tenant",
+    "loadErrorMessage": "Could not load tenant settings. Please try again.",
+    "dangerTitle": "Danger zone",
+    "dangerDescription": "Deleting a tenant cannot be undone. All data will be permanently removed.",
+    "deleteButton": "Delete tenant",
+    "deleteConfirmTitle": "Delete tenant?",
+    "deleteConfirmMessage": "Are you sure you want to permanently delete this tenant? This action cannot be undone.",
+    "cancelButton": "Cancel",
+    "removeError": "Failed to delete tenant: {{message}}"
+  }
+}

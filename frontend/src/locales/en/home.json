@@ -28,20 +28,71 @@
     "body": "Simple tools for teachers, parents, and young learners — no setup, no clutter.",
     "cta": "Get started free"
   },
+  "admin": {
+    "userManagement": {
+      "title": "User Management",
+      "description": "Admin user management mini-app."
+    },
+    "tenantManagement": {
+      "title": "Tenant Management",
+      "description": "Admin tenant management mini-app."
+    },
+    "reports": {
+      "title": "Reports",
+      "description": "Admin reports mini-app."
+    }
+  },
+  "user": {
+    "profile": {
+      "title": "Profile",
+      "description": "View and manage your profile."
+    },
+    "myCourses": {
+      "title": "My Courses",
+      "description": "Browse the courses you are enrolled in."
+    }
+  },
   "desktop": {
     "navLabel": "Desktop apps",
+    "backgrounds": {
+      "fabric": "Fabric",
+      "graphPaper": "Graph paper",
+      "dotsDark": "Dots dark"
+    },
     "apps": {
-      "home": { "label": "Home" },
-      "register": { "label": "Register" },
-      "dashboard": { "label": "Dashboard" }
+      "home": {
+        "label": "Home"
+      },
+      "register": {
+        "label": "Register"
+      },
+      "dashboard": {
+        "label": "Dashboard"
+      },
+      "userManagement": "User Management",
+      "tenantManagement": "Tenant Management",
+      "reports": "Reports",
+      "profile": "Profile",
+      "myCourses": "My Courses"
     },
     "menubar": {
-      "logo": "PostHog",
-      "logoAlt": "PostHog logo",
+      "logo": "Klynt",
+      "logoAlt": "Klynt logo",
       "getStarted": "Get started – free",
       "search": "Search",
       "notifications": "Notifications",
       "profile": "Profile",
+      "file": "File",
+      "edit": "Edit",
+      "view": "View",
+      "window": "Window",
+      "settings": "Settings",
+      "help": "Help",
+      "newWindow": "New Window",
+      "closeWindow": "Close Window",
+      "showDesktop": "Show Desktop",
+      "changeBackground": "Change Background",
+      "adminSettings": "Admin Settings",
       "menus": {
         "productOS": {
           "label": "Product OS",
@@ -92,7 +143,7 @@
         "signUp": "Sign up"
       },
       "right": {
-        "whyPostHog": "Why PostHog?",
+        "whyKlynt": "Why Klynt?",
         "changelog": "Changelog",
         "companyHandbook": "Company handbook",
         "store": "Store",
@@ -100,10 +151,23 @@
         "trash": "Trash"
       }
     },
+    "mobileFallback": {
+      "title": "Desktop only",
+      "message": "This experience is optimized for desktop. Please use a larger screen."
+    },
+    "toast": {
+      "layoutLoadError": "Could not load your desktop layout.",
+      "layoutSaveError": "Could not save your desktop layout."
+    },
+    "errorFallback": {
+      "title": "Something went wrong",
+      "retry": "Try again",
+      "description": "Please try again."
+    },
     "cookieBanner": {
       "dismiss": "Dismiss cookie banner",
       "heading": "Legally-required cookie banner",
-      "body": "PostHog.com doesn't use third-party cookies, only a single in-house cookie. No data is sent to a third party.",
+      "body": "Klynt.com doesn't use third-party cookies, only a single in-house cookie. No data is sent to a third party.",
       "aside": "(Ursula von der Leyen would be so proud.)",
       "ursulaAlt": "Ursula von der Leyen",
       "footer": "No cookies were harmed in the making of this banner."
@@ -126,6 +190,31 @@
         "search": "Search",
         "bookmark": "Bookmark",
         "settings": "Settings"
+      }
+    },
+    "marketing": {
+      "apps": {
+        "home": "Home",
+        "demo": "Demo",
+        "products": "Product OS",
+        "productAnalytics": "Product Analytics",
+        "webAnalytics": "Web Analytics",
+        "sessionReplay": "Session Replay",
+        "featureFlags": "Feature Flags",
+        "experiments": "Experiments",
+        "surveys": "Surveys",
+        "dataWarehouse": "Data Warehouse",
+        "pricing": "Pricing",
+        "customers": "Customers",
+        "docs": "Documentation",
+        "about": "About",
+        "careers": "Careers",
+        "handbook": "Handbook",
+        "merch": "Store",
+        "community": "Community",
+        "changelog": "Changelog",
+        "talkToHuman": "Talk to a human",
+        "trash": "Trash"
       }
     }
   }

@@ -6,10 +6,12 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Response},
 };
+use base::ctx::{ActorType, ExecutionContext, RequestContext, RequestId};
+use base::ports::session::SessionToken;
+use tower_cookies::Cookies;
+use uuid::Uuid;
 
-use klynt_core::ctx::{ActorType, ExecutionContext, RequestContext};
-use klynt_storage::session::SessionToken;
-
+use crate::constants::SESSION_TOKEN_COOKIE;
 use crate::state::Services;
 
 const BEARER_PREFIX: &str = "Bearer ";
@@ -35,45 +37,66 @@ impl<S: Send + Sync> FromRequestParts<S> for AuthContext {
     }
 }
 
-/// Middleware that requires a valid bearer session token.
+/// Middleware that requires a valid session token.
 ///
-/// On success, the resolved [`ExecutionContext`] is inserted into request
-/// extensions for handlers to extract. On failure, a 401 response is returned.
+/// The token is read from the `Authorization: Bearer <token>` header if present,
+/// otherwise from the `session_token` cookie. On success, the resolved
+/// [`ExecutionContext`] is inserted into request extensions for handlers to
+/// extract. On failure, a 401 response is returned.
 pub async fn require_auth(
     axum::extract::State(services): axum::extract::State<Services>,
+    cookies: Cookies,
     mut request: Request,
     next: Next,
 ) -> Result<Response, crate::GatewayError> {
     let request_id = request
         .extensions()
-        .get::<klynt_core::ctx::RequestId>()
+        .get::<RequestId>()
         .copied()
         .unwrap_or_default();
 
-    let token = extract_bearer_token(request.headers())
-        .ok_or_else(|| crate::GatewayError::Unauthorized("Missing bearer token".to_string()))?;
+    let token = extract_session_token(request.headers(), &cookies)
+        .ok_or_else(|| crate::GatewayError::Unauthorized("Missing session token".to_string()))?;
+
+    let ctx = ExecutionContext::new(RequestContext::with_request_id(RequestId(request_id.0)));
 
     let session = services
-        .session_store
-        .find_valid(&klynt_core::ctx::Ctx::guest(request_id.0), &token)
+        .session
+        .validate_access(&ctx, &token)
         .await
-        .map_err(|e| crate::GatewayError::Internal(format!("Session lookup failed: {e}")))?
-        .ok_or_else(|| {
-            crate::GatewayError::Unauthorized("Invalid or expired session".to_string())
+        .map_err(|e| match e {
+            session_service::SessionError::InvalidToken => {
+                crate::GatewayError::Unauthorized("Invalid or expired session".to_string())
+            }
+            session_service::SessionError::StoreError(msg) => {
+                crate::GatewayError::Internal(format!("Session lookup failed: {msg}"))
+            }
         })?;
 
-    let ctx = ExecutionContext::new(RequestContext::with_request_id(request_id))
-        .with_actor(session.user_id.0, ActorType::User);
+    let ctx = ctx.with_actor(session.user_id.0, ActorType::User);
 
     request.extensions_mut().insert(ctx);
     Ok(next.run(request).await)
+}
+
+fn extract_session_token(
+    headers: &axum::http::HeaderMap,
+    cookies: &Cookies,
+) -> Option<SessionToken> {
+    if let Some(token) = extract_bearer_token(headers) {
+        return Some(token);
+    }
+    cookies
+        .get(SESSION_TOKEN_COOKIE)
+        .and_then(|c| Uuid::parse_str(c.value()).ok())
+        .map(SessionToken)
 }
 
 fn extract_bearer_token(headers: &axum::http::HeaderMap) -> Option<SessionToken> {
     let header = headers.get(AUTHORIZATION)?;
     let text = header.to_str().ok()?;
     let token = text.strip_prefix(BEARER_PREFIX)?;
-    SessionToken::parse(token).ok()
+    Uuid::parse_str(token).map(SessionToken).ok()
 }
 
 /// Rejection response used when authentication is required.

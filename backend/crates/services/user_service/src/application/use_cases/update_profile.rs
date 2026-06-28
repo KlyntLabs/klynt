@@ -1,9 +1,11 @@
 //! Update profile use case.
 
-use klynt_core::ctx::ExecutionContext;
-use klynt_utils::UserId;
+use base::ctx::ExecutionContext;
+use base::ports::audit::ProfileUpdateSnapshot;
+use domain::UserId;
 use validator::Validate;
 
+use crate::core::UserExt;
 use crate::error::UserError;
 use crate::models::{ProfileUpdate, UserProfile};
 use crate::UserService;
@@ -20,23 +22,35 @@ pub(crate) async fn execute(
 
     let mut user = service
         .internal()
+        .persistence_facade
         .user_repository
         .find_by_id(ctx, user_id)
         .await?
         .ok_or(UserError::NotFound)?;
 
+    let full_name_changed = user.full_name != updates.full_name;
+
     user.update_profile(updates.full_name)?;
 
-    service
+    let user = service
         .internal()
+        .persistence_facade
         .user_repository
-        .update(ctx, &user)
+        .update(ctx, user)
         .await?;
 
     service
         .internal()
+        .persistence_facade
         .audit_logger
-        .log_profile_updated(ctx, user_id)
+        .log_profile_updated(
+            ctx,
+            user_id,
+            ProfileUpdateSnapshot {
+                full_name_changed: false,
+            },
+            ProfileUpdateSnapshot { full_name_changed },
+        )
         .await;
 
     Ok(UserProfile::from(user))

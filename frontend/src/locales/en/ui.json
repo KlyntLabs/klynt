@@ -18,6 +18,28 @@
     "welcome": "Welcome back.",
     "placeholder": "Your dashboard content will appear here."
   },
+  "tenant": {
+    "loading": "Loading...",
+    "noTenant": "No tenant",
+    "nameLabel": "Tenant name",
+    "slugLabel": "Tenant slug",
+    "createTitle": "Create tenant",
+    "createButton": "Create tenant",
+    "createError": "Failed to create tenant. Please try again."
+  },
+  "roles": {
+    "title": "Roles",
+    "createTitle": "Create role",
+    "editTitle": "Edit role",
+    "nameLabel": "Role name",
+    "descriptionLabel": "Description",
+    "permissionsLabel": "Permissions",
+    "systemBadge": "System",
+    "createButton": "Create role",
+    "saveButton": "Save",
+    "deleteButton": "Delete",
+    "noRoles": "No roles found."
+  },
   "admin": {
     "title": "Admin",
     "description": "Administrator overview",

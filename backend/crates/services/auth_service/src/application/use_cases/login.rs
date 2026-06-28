@@ -1,7 +1,10 @@
 //! Login use case - authenticate user and create session.
 
-use klynt_contracts::auth::{LoginRequest, LoginResponse};
-use klynt_core::ctx::ExecutionContext;
+use base::ctx::ExecutionContext;
+use base::ports::session::MembershipSnapshot;
+use domain::contracts::auth::{LoginRequest, LoginResponse};
+use domain::{DomainError, Email};
+use uuid::Uuid;
 use validator::Validate;
 
 use crate::error::AuthError;
@@ -17,18 +20,23 @@ pub(crate) async fn execute(
         .validate()
         .map_err(|e| AuthError::validation(e.to_string()))?;
 
+    let email = Email::parse(&request.email)
+        .map_err(|e| AuthError::Domain(DomainError::InvalidInput(e.to_string())))?;
+
     let user = match service
         .internal()
+        .persistence_facade
         .user_repository
-        .find_by_email(ctx, &request.email)
+        .find_by_email(ctx, &email)
         .await?
     {
         Some(user) => user,
         None => {
             service
                 .internal()
+                .persistence_facade
                 .audit_logger
-                .log_login_failed(ctx, &request.email, "invalid credentials".to_string())
+                .log_login_failed(ctx, &request.email, "invalid credentials")
                 .await;
             return Err(AuthError::invalid_credentials());
         }
@@ -36,6 +44,7 @@ pub(crate) async fn execute(
 
     let password_valid = service
         .internal()
+        .infra_facade
         .password_hasher
         .verify(&request.password, &user.password_hash)
         .await?;
@@ -43,8 +52,9 @@ pub(crate) async fn execute(
     if !password_valid {
         service
             .internal()
+            .persistence_facade
             .audit_logger
-            .log_login_failed(ctx, &request.email, "invalid credentials".to_string())
+            .log_login_failed(ctx, &request.email, "invalid credentials")
             .await;
         return Err(AuthError::invalid_credentials());
     }
@@ -52,30 +62,74 @@ pub(crate) async fn execute(
     if !user.is_active() {
         service
             .internal()
+            .persistence_facade
             .audit_logger
-            .log_login_failed(ctx, &request.email, "account inactive".to_string())
+            .log_login_failed(ctx, &request.email, "account inactive")
             .await;
         return Err(AuthError::account_inactive());
     }
 
-    let expires_at = service.internal().clock.now() + service.config().session_duration();
-    let session_token = service
+    let remember_me = request.remember_me.unwrap_or(false);
+    let pair_id = Uuid::new_v4();
+
+    let access = service
         .internal()
+        .session_service
+        .create_access(ctx, user.id, remember_me, Some(pair_id))
+        .await?;
+
+    let refresh = match service
+        .internal()
+        .session_service
+        .create_refresh(ctx, user.id, Some(pair_id))
+        .await
+    {
+        Ok(session) => session,
+        Err(err) => {
+            // Best-effort rollback: don't leave a valid access token behind
+            // if we cannot complete the token pair.
+            let _ = service
+                .internal()
+                .session_service
+                .invalidate(ctx, &access.token)
+                .await;
+            return Err(err.into());
+        }
+    };
+
+    let memberships = service
+        .internal()
+        .persistence_facade
+        .membership_repository
+        .list_for_user(ctx, user.id)
+        .await?;
+
+    let snapshots: Vec<MembershipSnapshot> = memberships
+        .into_iter()
+        .map(|m| MembershipSnapshot {
+            tenant_id: m.tenant_id.inner(),
+            role: m.role,
+        })
+        .collect();
+
+    service
+        .internal()
+        .persistence_facade
         .session_store
-        .create(ctx, user.id, expires_at)
+        .update_memberships(ctx, &access.token, snapshots)
         .await?;
 
     service
         .internal()
+        .persistence_facade
         .audit_logger
-        .log_session_created(ctx, user.id, session_token.0)
+        .log_session_created(ctx, user.id, access.token.to_string())
         .await;
 
-    let token_string = session_token.to_string();
     Ok(LoginResponse {
-        access_token: token_string.clone(),
-        refresh_token: token_string,
-        expires_at,
+        access_token: access.token.to_string(),
+        refresh_token: refresh.token.to_string(),
+        expires_at: access.expires_at,
         user: user.into(),
     })
 }

@@ -1,8 +1,8 @@
 //! Email verification use case - verify email from token.
 
-use klynt_core::ctx::ExecutionContext;
+use base::ctx::ExecutionContext;
 
-use crate::domain::{Token, TokenKind};
+use crate::core::{Token, TokenKind};
 use crate::error::AuthError;
 use crate::AuthService;
 
@@ -11,23 +11,26 @@ pub(crate) async fn execute(
     service: &AuthService,
     ctx: &ExecutionContext,
     token: &str,
-) -> Result<klynt_utils::UserId, AuthError> {
+) -> Result<domain::UserId, AuthError> {
     let token_hash = Token::sha256_hash(token);
 
     let user_id = service
         .internal()
+        .persistence_facade
         .token_store
-        .consume(TokenKind::EmailVerification, &token_hash)
+        .consume(ctx, TokenKind::EmailVerification, token_hash)
         .await?;
 
     service
         .internal()
+        .persistence_facade
         .user_repository
         .activate_user(ctx, user_id)
         .await?;
 
     service
         .internal()
+        .persistence_facade
         .audit_logger
         .log_email_verified(ctx, user_id)
         .await;

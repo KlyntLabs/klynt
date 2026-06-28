@@ -11,21 +11,20 @@
 //! - **Tests**: Cross the same interface as callers
 
 pub mod application;
-pub mod domain;
+pub mod builder;
+pub mod core;
 pub mod error;
-pub mod infrastructure;
 pub mod models;
 
 use std::sync::Arc;
 
-use klynt_core::ctx::ExecutionContext;
-use klynt_shared_domain::PaginationRequest;
-use klynt_utils::UserId;
+use base::ctx::ExecutionContext;
+use domain::{PaginationRequest, UserId};
+use infra_facades::{InfraFacade, PersistenceFacade};
 
+pub use builder::UserBuilder;
 pub use error::{UserError, UserResult};
 pub use models::{ProfileUpdate, UserProfile};
-
-use application::ports::{AuditLogger, Clock, PasswordHasher, UserRepository};
 
 /// User service — deep module with small interface.
 ///
@@ -55,15 +54,21 @@ pub struct UserService {
 }
 
 impl UserService {
+    /// Return a builder for constructing the service with sensible defaults.
+    pub fn builder() -> UserBuilder {
+        UserBuilder::new()
+    }
+
     /// Create a new user service.
+    ///
+    /// Prefer [`UserService::builder`] for production wiring; this constructor
+    /// remains available for tests and custom dependency injection.
     pub fn new(config: UserConfig, dependencies: Dependencies) -> Result<Self, UserError> {
         Ok(Self {
             config,
             internal_state: InternalState {
-                user_repository: dependencies.user_repository,
-                audit_logger: dependencies.audit_logger,
-                password_hasher: dependencies.password_hasher,
-                clock: dependencies.clock,
+                persistence_facade: dependencies.persistence_facade,
+                infra_facade: dependencies.infra_facade,
             },
         })
     }
@@ -119,7 +124,7 @@ impl UserService {
         &self,
         ctx: &ExecutionContext,
         pagination: PaginationRequest,
-    ) -> Result<klynt_shared_domain::PaginatedResponse<UserProfile>, UserError> {
+    ) -> Result<domain::PaginatedResponse<UserProfile>, UserError> {
         application::use_cases::list_users::execute(self, ctx, pagination).await
     }
 
@@ -142,16 +147,12 @@ pub struct UserConfig {
 /// Dependencies wired into the user service.
 #[derive(Clone)]
 pub struct Dependencies {
-    pub user_repository: Arc<dyn UserRepository>,
-    pub audit_logger: Arc<dyn AuditLogger>,
-    pub password_hasher: Arc<dyn PasswordHasher>,
-    pub clock: Arc<dyn Clock>,
+    pub persistence_facade: Arc<PersistenceFacade>,
+    pub infra_facade: Arc<InfraFacade>,
 }
 
 /// Internal state — not part of the public interface.
 pub(crate) struct InternalState {
-    pub user_repository: Arc<dyn UserRepository>,
-    pub audit_logger: Arc<dyn AuditLogger>,
-    pub password_hasher: Arc<dyn PasswordHasher>,
-    pub clock: Arc<dyn Clock>,
+    pub persistence_facade: Arc<PersistenceFacade>,
+    pub infra_facade: Arc<InfraFacade>,
 }

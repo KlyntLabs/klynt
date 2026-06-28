@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import { Spinner } from "@/components/ui/spinner";
-import { getAppByRoute, marketingRegistry } from "@/features/desktop/apps";
+import { marketingRegistry } from "@/features/desktop/apps";
 
 const NotFoundPage = lazy(() => import("@/core/routing/not-found-page"));
 
@@ -9,7 +9,7 @@ interface MarketingShellProps {
 }
 
 export function MarketingShell({ route }: MarketingShellProps) {
-  const app = getAppByRoute(marketingRegistry, route);
+  const app = marketingRegistry.apps.find((app) => app.route === route);
 
   if (!app) {
     return (

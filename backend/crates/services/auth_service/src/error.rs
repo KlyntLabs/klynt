@@ -1,8 +1,9 @@
 //! Auth service errors.
 
-use klynt_shared_domain::DomainError;
+use base::ports::{EmailError, PasswordHashError, RepositoryError, SessionError, TokenError};
+use domain::DomainError;
 
-use crate::domain::PasswordPolicyError;
+use crate::core::PasswordPolicyError;
 
 /// Auth service-specific error type.
 #[derive(thiserror::Error, Debug)]
@@ -31,6 +32,9 @@ pub enum AuthError {
     #[error("Too many attempts")]
     RateLimited,
 
+    #[error("Forbidden")]
+    Forbidden,
+
     #[error("Internal error: {0}")]
     Internal(String),
 
@@ -42,6 +46,59 @@ pub enum AuthError {
 impl From<PasswordPolicyError> for AuthError {
     fn from(err: PasswordPolicyError) -> Self {
         Self::PasswordPolicy(err.to_string())
+    }
+}
+
+impl From<PasswordHashError> for AuthError {
+    fn from(err: PasswordHashError) -> Self {
+        match err {
+            PasswordHashError::Internal(msg) => Self::Domain(DomainError::internal_msg(msg)),
+        }
+    }
+}
+
+impl From<RepositoryError> for AuthError {
+    fn from(err: RepositoryError) -> Self {
+        match err {
+            RepositoryError::NotFound => Self::UserNotFound,
+            RepositoryError::Conflict(msg) => Self::Domain(DomainError::Conflict(msg)),
+            RepositoryError::Validation(msg) => Self::Domain(DomainError::InvalidInput(msg)),
+            RepositoryError::Database(msg) | RepositoryError::Internal(msg) => Self::Internal(msg),
+        }
+    }
+}
+
+impl From<SessionError> for AuthError {
+    fn from(err: SessionError) -> Self {
+        match err {
+            SessionError::NotFound | SessionError::Expired => Self::InvalidToken,
+            SessionError::Forbidden => Self::Forbidden,
+            SessionError::Database(msg) | SessionError::Internal(msg) => Self::Internal(msg),
+        }
+    }
+}
+
+impl From<session_service::SessionError> for AuthError {
+    fn from(err: session_service::SessionError) -> Self {
+        match err {
+            session_service::SessionError::InvalidToken => Self::InvalidToken,
+            session_service::SessionError::StoreError(msg) => Self::Internal(msg),
+        }
+    }
+}
+
+impl From<TokenError> for AuthError {
+    fn from(err: TokenError) -> Self {
+        match err {
+            TokenError::Invalid | TokenError::AlreadyUsed => Self::InvalidToken,
+            TokenError::Database(msg) | TokenError::Internal(msg) => Self::Internal(msg),
+        }
+    }
+}
+
+impl From<EmailError> for AuthError {
+    fn from(err: EmailError) -> Self {
+        Self::Domain(DomainError::internal_msg(err.to_string()))
     }
 }
 
@@ -61,6 +118,23 @@ impl AuthError {
 
     pub fn internal(msg: String) -> Self {
         Self::Internal(msg)
+    }
+
+    /// Stable machine-readable error code for gateway mapping.
+    pub fn error_code(&self) -> &'static str {
+        match self {
+            Self::InvalidCredentials => "INVALID_CREDENTIALS",
+            Self::AccountInactive => "ACCOUNT_INACTIVE",
+            Self::AccountLocked => "ACCOUNT_LOCKED",
+            Self::PasswordResetRequired => "PASSWORD_RESET_REQUIRED",
+            Self::InvalidToken => "INVALID_TOKEN",
+            Self::PasswordPolicy(_) => "PASSWORD_POLICY_VIOLATION",
+            Self::UserNotFound => "USER_NOT_FOUND",
+            Self::RateLimited => "RATE_LIMITED",
+            Self::Forbidden => "FORBIDDEN",
+            Self::Internal(_) => "INTERNAL_SERVER_ERROR",
+            Self::Domain(err) => err.error_code(),
+        }
     }
 }
 

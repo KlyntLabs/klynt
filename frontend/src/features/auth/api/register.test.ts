@@ -1,52 +1,48 @@
 import { HttpResponse, http } from "msw";
 import { describe, expect, it } from "vitest";
+import { register } from "@/core/auth/api/auth-api";
 import { server } from "@/test/msw/server";
-import { registerUser } from "./register";
 
 const input = {
   name: "Ada Lovelace",
+  username: "ada_lovelace",
   email: "ada@example.com",
-  password: "str0ng!passphrase",
-  role: "student" as const,
-  termsAccepted: true,
-  termsVersion: "2026-06-18",
+  password: "Str0ng!pass",
 };
 
-describe("registerUser", () => {
-  it("sends the provided idempotency key", async () => {
-    let capturedKey: string | null = null;
-
+describe("register", () => {
+  it("returns the created user id", async () => {
     server.use(
-      http.post("/api/v1/users", async ({ request }) => {
-        capturedKey = request.headers.get("Idempotency-Key");
-        return HttpResponse.json(
-          {
-            id: "550e8400-e29b-41d4-a716-446655440000",
-            name: input.name,
-            email: input.email,
-            role: input.role,
-            status: "pending_verification",
-            created_at: "2026-06-18T04:24:34Z",
-          },
-          { status: 201 }
-        );
+      http.post("/api/v1/auth/register", async ({ request }) => {
+        const body = (await request.json()) as {
+          email: string;
+          username: string;
+          full_name?: string;
+        };
+        expect(body.email).toBe(input.email);
+        expect(body.username).toBe(input.username);
+        expect(body.full_name).toBe(input.name);
+        return HttpResponse.json({ data: "550e8400-e29b-41d4-a716-446655440000" }, { status: 201 });
       })
     );
 
-    await registerUser(input, "my-stable-key");
-    expect(capturedKey).toBe("my-stable-key");
+    const result = await register(input);
+    expect(result.userId).toBe("550e8400-e29b-41d4-a716-446655440000");
   });
 
-  it("throws an ApiError for rate limited response", async () => {
+  it("throws an ApiError for conflict response", async () => {
     server.use(
-      http.post("/api/v1/users", () =>
-        HttpResponse.json({ code: "rate_limited", message: "too many requests" }, { status: 429 })
+      http.post("/api/v1/auth/register", () =>
+        HttpResponse.json(
+          { success: false, code: "conflict", error: "email exists" },
+          { status: 409 }
+        )
       )
     );
 
-    await expect(registerUser(input, "key")).rejects.toMatchObject({
-      status: 429,
-      code: "rate_limited",
+    await expect(register(input)).rejects.toMatchObject({
+      status: 409,
+      code: "conflict",
     });
   });
 });

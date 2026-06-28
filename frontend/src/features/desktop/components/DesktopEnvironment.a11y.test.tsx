@@ -1,16 +1,18 @@
 import { run } from "axe-core";
 import { beforeEach, describe, expect, it } from "vitest";
-import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
+import { createTestConfig, resetDesktopStore } from "@/features/desktop/test-helpers";
 import { render } from "@/test/render";
 import DesktopEnvironment from "./DesktopEnvironment";
 
+const config = createTestConfig();
+
 describe("DesktopEnvironment accessibility", () => {
   beforeEach(() => {
-    useDesktopStore.setState({ windows: [], activeWindowId: null, cookieDismissed: true });
+    resetDesktopStore();
   });
 
   it("has no accessibility violations", async () => {
-    const { baseElement } = render(<DesktopEnvironment />);
+    const { baseElement } = render(<DesktopEnvironment config={config} />);
     const results = await run(baseElement, {
       rules: {
         "color-contrast": { enabled: false },

@@ -1,7 +1,7 @@
 //! Request ID middleware.
 
 use axum::{extract::Request, middleware::Next, response::Response};
-use klynt_core::ctx::RequestId;
+use base::ctx::RequestId;
 
 const REQUEST_ID_HEADER: &str = "x-request-id";
 

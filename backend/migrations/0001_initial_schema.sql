@@ -1,6 +1,9 @@
 -- Initial schema for multi-tenant authentication system
 -- Phase 1: Core Auth Foundation
 
+-- Uses gen_random_uuid(), which is built-in on PostgreSQL 13+.
+-- Migration 0005 explicitly enables pgcrypto for compatibility with older versions and for other crypto helpers.
+
 -- ============================================================================
 -- Users Table
 -- ============================================================================

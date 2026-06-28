@@ -9,28 +9,38 @@ function Wrapper({ children }: { children: React.ReactNode }) {
 }
 
 describe("useRegisterSchema", () => {
-  it("requires institutionId for teacher and admin roles", () => {
+  it("validates a complete registration", () => {
     const { result } = renderHook(() => useRegisterSchema(), { wrapper: Wrapper });
 
-    const teacherResult = result.current.safeParse({
+    const parseResult = result.current.safeParse({
       name: "Ada Lovelace",
+      username: "ada_lovelace",
       email: "ada@example.com",
-      password: "str0ng!passphrase",
-      role: "teacher",
-      termsAccepted: true,
-      termsVersion: "2026-06-18",
+      password: "Str0ng!pass",
     });
-    expect(teacherResult.success).toBe(false);
+    expect(parseResult.success).toBe(true);
+  });
 
-    const adminResult = result.current.safeParse({
+  it("rejects missing username", () => {
+    const { result } = renderHook(() => useRegisterSchema(), { wrapper: Wrapper });
+
+    const parseResult = result.current.safeParse({
       name: "Ada Lovelace",
       email: "ada@example.com",
-      password: "str0ng!passphrase",
-      role: "admin",
-      institutionId: "550e8400-e29b-41d4-a716-446655440000",
-      termsAccepted: true,
-      termsVersion: "2026-06-18",
+      password: "Str0ng!pass",
     });
-    expect(adminResult.success).toBe(true);
+    expect(parseResult.success).toBe(false);
+  });
+
+  it("rejects weak passwords", () => {
+    const { result } = renderHook(() => useRegisterSchema(), { wrapper: Wrapper });
+
+    const parseResult = result.current.safeParse({
+      name: "Ada Lovelace",
+      username: "ada_lovelace",
+      email: "ada@example.com",
+      password: "weak",
+    });
+    expect(parseResult.success).toBe(false);
   });
 });

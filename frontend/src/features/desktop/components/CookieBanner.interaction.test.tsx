@@ -1,6 +1,5 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useDesktopStore } from "@/features/desktop/store/use-desktop-store";
 import { render } from "@/test/render";
 import CookieBanner from "./CookieBanner";
 
@@ -20,23 +19,12 @@ function createStorage() {
   };
 }
 
-function resetStore() {
-  useDesktopStore.setState({
-    viewMode: "desktop",
-    windows: [],
-    activeWindowId: null,
-    cookieDismissed: false,
-    nextZIndex: 100,
-  });
-}
-
 describe("CookieBanner interactions", () => {
   beforeEach(() => {
     Object.defineProperty(globalThis, "localStorage", {
       value: createStorage(),
       writable: true,
     });
-    resetStore();
   });
 
   it("shows the banner after the entrance delay and dismisses it", async () => {
@@ -63,16 +51,14 @@ describe("CookieBanner interactions", () => {
 
     await waitFor(
       () => {
-        expect(useDesktopStore.getState().cookieDismissed).toBe(true);
+        expect(localStorage.setItem).toHaveBeenCalledWith("cookie-dismissed", "true");
       },
       { timeout: 1000 }
     );
-
-    expect(localStorage.setItem).toHaveBeenCalledWith("cookie-dismissed", "true");
   }, 10000);
 
   it("does not show the banner when it has already been dismissed", async () => {
-    useDesktopStore.setState({ cookieDismissed: true });
+    (localStorage.getItem as ReturnType<typeof vi.fn>).mockReturnValue("true");
     render(<CookieBanner />);
 
     await waitFor(() => {

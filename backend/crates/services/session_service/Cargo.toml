@@ -1,0 +1,16 @@
+[package]
+name = "session_service"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+base = { path = "../../../crates/base" }
+domain = { path = "../../shared/domain" }
+chrono = { workspace = true }
+thiserror = { workspace = true }
+uuid = { workspace = true }
+
+[dev-dependencies]
+base = { path = "../../../crates/base", features = ["testkit"] }
+async-trait = { workspace = true }
+tokio = { workspace = true }

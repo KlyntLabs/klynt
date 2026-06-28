@@ -7,23 +7,24 @@ edition = "2021"
 # === Services ===
 auth_service = { path = "../services/auth_service" }
 user_service = { path = "../services/user_service" }
+session_service = { path = "../services/session_service" }
+tenant_service = { path = "../services/tenant_service" }
+session_coordinator = { path = "../services/session_coordinator" }
+infra_facades = { path = "../services/infra_facades" }
 
 # === Phase 1 Foundation ===
-klynt_core = { path = "../core/klynt_core" }
-klynt_contracts = { path = "../shared/klynt_contracts" }
-klynt_shared_domain = { path = "../shared/klynt_domain" }
-klynt_utils = { path = "../shared/klynt_utils" }
-klynt_tracing = { path = "../infrastructure/klynt_tracing" }
+base = { path = "../base" }
+domain = { path = "../shared/domain" }
 
 # === Storage and infrastructure adapters ===
-klynt_storage = { path = "../infrastructure/klynt_storage" }
-klynt-infrastructure = { path = "../klynt-infrastructure" }
-klynt_audit = { path = "../infrastructure/klynt_audit" }
+persistence = { path = "../infra/persistence" }
+observability = { path = "../infra/observability" }
 
 # === Web Framework ===
 axum = { workspace = true }
 tower = { workspace = true }
 tower-http = { workspace = true }
+tower-cookies = { workspace = true }
 
 # === Async Runtime ===
 tokio = { workspace = true }
@@ -41,6 +42,7 @@ anyhow = { workspace = true }
 tracing = { workspace = true }
 
 # === Configuration ===
+config_crate = { workspace = true }
 config = { workspace = true }
 
 # === Time ===
@@ -49,7 +51,17 @@ chrono = { workspace = true }
 # === IDs ===
 uuid = { workspace = true }
 
+# === Metrics ===
+metrics = { workspace = true }
+
+# === Cache (used by Redis health check wiring) ===
+redis = { workspace = true }
+
+# === Networking ===
+ipnet = { workspace = true }
+
 # === Database ===
 sqlx = { workspace = true }
 
 [dev-dependencies]
+base = { path = "../base", features = ["testkit"] }

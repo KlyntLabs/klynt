@@ -1,20 +1,17 @@
-import { useTranslation } from "react-i18next";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Navigate } from "react-router-dom";
+import { useAuthModule } from "@/core/auth/auth-module";
+import { DesktopEnvironment } from "@/features/desktop/components/DesktopEnvironment";
+import { buildAdminDesktop } from "@/features/desktop/factory/admin-desktop";
 
-export default function DashboardPage() {
-  const { t } = useTranslation("ui");
+export function DashboardPage() {
+  const { user } = useAuthModule();
 
-  return (
-    <div className="p-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("dashboard.title")}</CardTitle>
-          <CardDescription>{t("dashboard.welcome")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">{t("dashboard.placeholder")}</p>
-        </CardContent>
-      </Card>
-    </div>
-  );
+  if (user?.role !== "admin") {
+    return <Navigate to={user ? `/u/${user.id}` : "/"} replace />;
+  }
+
+  const config = buildAdminDesktop({ user });
+  return <DesktopEnvironment config={config} />;
 }
+
+export default DashboardPage;

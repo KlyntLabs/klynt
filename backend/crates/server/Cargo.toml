@@ -1,0 +1,22 @@
+[package]
+name = "server"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "server"
+path = "src/main.rs"
+
+doctest = false
+
+[lints]
+workspace = true
+
+[dependencies]
+gateways = { workspace = true }
+cleanup_job = { workspace = true }
+
+tokio = { workspace = true }
+dotenvy = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }

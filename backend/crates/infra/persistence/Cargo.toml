@@ -1,0 +1,51 @@
+[package]
+name = "persistence"
+version.workspace = true
+edition.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+# Internal crates
+base = { path = "../../base" }
+config = { path = "../config" }
+domain = { path = "../../shared/domain" }
+observability = { path = "../observability" }
+
+# Database
+sqlx = { workspace = true }
+
+# Cache / rate limiter
+redis = { workspace = true }
+
+# Async
+async-trait = { workspace = true }
+tokio = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+
+# Tracing
+tracing = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Password hashing
+argon2 = { workspace = true }
+
+# Crypto (tokens)
+rand = { workspace = true }
+rand_core = { workspace = true }
+base64 = { workspace = true }
+
+# Time
+chrono = { workspace = true }
+
+# IDs
+uuid = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }

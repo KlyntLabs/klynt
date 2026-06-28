@@ -14,24 +14,49 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Each crate manifest is copied individually so Docker preserves the directory
 # structure and cargo can resolve the workspace dependency graph.
 COPY Cargo.toml Cargo.lock ./
-COPY crates/klynt-domain/Cargo.toml crates/klynt-domain/
-COPY crates/klynt-application/Cargo.toml crates/klynt-application/
-COPY crates/klynt-infrastructure/Cargo.toml crates/klynt-infrastructure/
-COPY crates/klynt-api/Cargo.toml crates/klynt-api/
-COPY crates/klynt-server/Cargo.toml crates/klynt-server/
+COPY crates/base/Cargo.toml crates/base/
+COPY crates/shared/domain/Cargo.toml crates/shared/domain/
+COPY crates/infra/config/Cargo.toml crates/infra/config/
+COPY crates/infra/persistence/Cargo.toml crates/infra/persistence/
+COPY crates/infra/observability/Cargo.toml crates/infra/observability/
+COPY crates/services/auth_service/Cargo.toml crates/services/auth_service/
+COPY crates/services/session_service/Cargo.toml crates/services/session_service/
+COPY crates/services/user_service/Cargo.toml crates/services/user_service/
+COPY crates/services/tenant_service/Cargo.toml crates/services/tenant_service/
+COPY crates/services/cleanup_job/Cargo.toml crates/services/cleanup_job/
+COPY crates/gateways/Cargo.toml crates/gateways/
+COPY crates/server/Cargo.toml crates/server/
 
 # Create stub source files so cargo can build the dependency graph and cache deps
-RUN mkdir -p crates/klynt-domain/src crates/klynt-application/src \
-    crates/klynt-infrastructure/src crates/klynt-api/src crates/klynt-server/src && \
-    echo 'fn main() {}' > crates/klynt-server/src/main.rs && \
-    echo '' > crates/klynt-domain/src/lib.rs && \
-    echo '' > crates/klynt-application/src/lib.rs && \
-    echo '' > crates/klynt-infrastructure/src/lib.rs && \
-    echo '' > crates/klynt-api/src/lib.rs && \
-    echo '' > crates/klynt-server/src/lib.rs
+RUN mkdir -p \
+    crates/base/src \
+    crates/shared/domain/src \
+    crates/infra/config/src \
+    crates/infra/persistence/src \
+    crates/infra/observability/src \
+    crates/services/auth_service/src \
+    crates/services/session_service/src \
+    crates/services/user_service/src \
+    crates/services/tenant_service/src \
+    crates/services/cleanup_job/src \
+    crates/gateways/src \
+    crates/server/src && \
+    echo 'fn main() {}' > crates/server/src/main.rs && \
+    echo '' > crates/base/src/lib.rs && \
+    echo '' > crates/shared/domain/src/lib.rs && \
+    echo '' > crates/infra/config/src/lib.rs && \
+    echo '' > crates/infra/persistence/src/lib.rs && \
+    echo '' > crates/infra/observability/src/lib.rs && \
+    echo '' > crates/services/auth_service/src/lib.rs && \
+    echo '' > crates/services/session_service/src/lib.rs && \
+    echo '' > crates/services/user_service/src/lib.rs && \
+    echo '' > crates/services/tenant_service/src/lib.rs && \
+    echo '' > crates/services/cleanup_job/src/lib.rs && \
+    echo '' > crates/gateways/src/lib.rs && \
+    echo '' > crates/server/src/lib.rs
 
 # Build dependencies (this layer is cached unless Cargo manifests change)
-RUN cargo build --release --bin klynt-server
+RUN cargo build --release --bin server
 
 # Now copy the real source code, config, and migrations
 COPY crates ./crates
@@ -43,7 +68,7 @@ COPY migrations ./migrations
 RUN find crates -type f -exec touch {} +
 
 # Build the release binary
-RUN cargo build --release --bin klynt-server
+RUN cargo build --release --bin server
 
 # ── Runtime stage ────────────────────────────────────────────────────────────
 FROM debian:bookworm-slim
@@ -57,15 +82,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the compiled binary and default config
-COPY --from=builder /usr/src/klynt/target/release/klynt-server ./klynt-server
+COPY --from=builder /usr/src/klynt/target/release/server ./server
 COPY --from=builder /usr/src/klynt/config ./config
 
-# The backend must bind to all interfaces inside the container
-ENV KLYNT_API_HOST=0.0.0.0
-ENV KLYNT_API_PORT=3001
+# The backend must bind to all interfaces inside the container.
+# The config loader uses "__" as the nested-key separator.
+ENV KLYNT_API__HOST=0.0.0.0
+ENV KLYNT_API__PORT=3001
 
 EXPOSE 3001
 
 USER nobody
 
-CMD ["./klynt-server"]
+CMD ["./server"]

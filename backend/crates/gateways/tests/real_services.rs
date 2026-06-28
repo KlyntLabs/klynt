@@ -3,6 +3,7 @@
 //! These tests require Postgres and Redis running locally. The pre-push hook sets
 //! the standard test URLs; for local runs use docker compose from the repo root.
 
+use config::DEFAULT_CONTENT_SECURITY_POLICY;
 use gateways::{Config, Services};
 
 fn database_url() -> String {
@@ -21,9 +22,17 @@ fn test_config() -> Config {
         base_url: "http://localhost".to_string(),
         database_url: database_url(),
         redis_url: Some(redis_url()),
+        rate_limiter: config::RateLimiterConfig::default(),
+        session: config::SessionConfig::default(),
         hsts_enabled: false,
-        allowed_origins: vec!["http://localhost:5173".to_string()],
+        allowed_origins: vec!["http://localhost:5174".to_string()],
+        trusted_proxies: Vec::new(),
         log_level: "warn".to_string(),
+        cookie_domain: ".klynt.edu".to_string(),
+        cookie_secure: false,
+        csp_report_only: false,
+        csp_directive: DEFAULT_CONTENT_SECURITY_POLICY.to_string(),
+        session_sync_enabled: true,
     }
 }
 
@@ -53,6 +62,28 @@ async fn services_requires_database_url() {
     };
     assert!(
         err.contains("DATABASE_URL is required"),
+        "unexpected error: {err}"
+    );
+}
+
+#[tokio::test]
+async fn services_requires_redis_url_when_rate_limiting_enabled() {
+    let mut config = test_config();
+    config.redis_url = None;
+    config.rate_limiter = config::RateLimiterConfig {
+        enabled: true,
+        ..Default::default()
+    };
+
+    let result = Services::from_config(&config).await;
+
+    assert!(result.is_err());
+    let err = match result {
+        Err(e) => e.to_string(),
+        Ok(_) => panic!("expected error"),
+    };
+    assert!(
+        err.contains("REDIS_URL is not configured"),
         "unexpected error: {err}"
     );
 }

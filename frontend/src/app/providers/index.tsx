@@ -4,7 +4,8 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useState } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import { I18nextProvider } from "react-i18next";
-import { createQueryClient } from "@/core/api/query-client";
+import { createQueryClient } from "@/core/api/api-module";
+import { AuthHydrator } from "@/core/auth";
 import { ErrorBoundary } from "@/core/error-boundary";
 import i18n from "@/core/i18n/config";
 import { HtmlLang } from "@/core/i18n/html-lang";
@@ -34,7 +35,7 @@ export function AppProviders({ children }: AppProvidersProps) {
         <HtmlLang />
         <ErrorBoundary>
           <QueryClientProvider client={queryClient}>
-            {children}
+            <AuthHydrator>{children}</AuthHydrator>
             <ToastContainer />
             <ReactQueryDevtools initialIsOpen={false} />
           </QueryClientProvider>
