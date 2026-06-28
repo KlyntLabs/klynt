@@ -34,28 +34,28 @@ impl TokenStore for PgTokenStore {
     ) -> Result<(), TokenError> {
         let result = match kind {
             TokenKind::EmailVerification => {
-                sqlx::query(
+                sqlx::query!(
                     r#"
                     INSERT INTO email_verification_tokens (user_id, token_hash, expires_at)
                     VALUES ($1, $2, $3)
                     "#,
+                    user_id.0,
+                    &token_hash,
+                    expires_at
                 )
-                .bind(user_id.0)
-                .bind(&token_hash)
-                .bind(expires_at)
                 .execute(&self.pool)
                 .await
             }
             TokenKind::PasswordReset => {
-                sqlx::query(
+                sqlx::query!(
                     r#"
                     INSERT INTO password_reset_tokens (user_id, token_hash, expires_at)
                     VALUES ($1, $2, $3)
                     "#,
+                    user_id.0,
+                    &token_hash,
+                    expires_at
                 )
-                .bind(user_id.0)
-                .bind(&token_hash)
-                .bind(expires_at)
                 .execute(&self.pool)
                 .await
             }
@@ -73,32 +73,32 @@ impl TokenStore for PgTokenStore {
     ) -> Result<UserId, TokenError> {
         let result = match kind {
             TokenKind::EmailVerification => {
-                sqlx::query_scalar::<_, uuid::Uuid>(
+                sqlx::query_scalar!(
                     r#"
                     UPDATE email_verification_tokens
                     SET used_at = NOW()
                     WHERE token_hash = $1
                       AND used_at IS NULL
                       AND expires_at > NOW()
-                    RETURNING user_id
+                    RETURNING user_id as "user_id!"
                     "#,
+                    &token_hash
                 )
-                .bind(&token_hash)
                 .fetch_optional(&self.pool)
                 .await
             }
             TokenKind::PasswordReset => {
-                sqlx::query_scalar::<_, uuid::Uuid>(
+                sqlx::query_scalar!(
                     r#"
                     UPDATE password_reset_tokens
                     SET used_at = NOW()
                     WHERE token_hash = $1
                       AND used_at IS NULL
                       AND expires_at > NOW()
-                    RETURNING user_id
+                    RETURNING user_id as "user_id!"
                     "#,
+                    &token_hash
                 )
-                .bind(&token_hash)
                 .fetch_optional(&self.pool)
                 .await
             }
@@ -129,21 +129,21 @@ mod tests {
         let user_id = UserId::new();
         let email = format!("test-{}@example.com", user_id.0);
         let username = format!("test-{}", user_id.0);
-        sqlx::query(
+        sqlx::query!(
             r#"
             INSERT INTO users (id, email, username, name, password_hash, status, terms_accepted_at, terms_version, role)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             "#,
+            user_id.0,
+            &email,
+            &username,
+            "Test User",
+            "hash",
+            "active",
+            Utc::now(),
+            "1.0",
+            "student"
         )
-        .bind(user_id.0)
-        .bind(&email)
-        .bind(&username)
-        .bind("Test User")
-        .bind("hash")
-        .bind("active")
-        .bind(Utc::now())
-        .bind("1.0")
-        .bind("student")
         .execute(pool)
         .await
         .unwrap();
