@@ -79,7 +79,7 @@ ipnet = "2"
 sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "postgres", "uuid", "chrono", "migrate", "json"] }
 
 # Cache / rate limiter
-redis = { version = "0.27", features = ["tokio-comp"] }
+redis = { version = "1.3", features = ["tokio-comp"] }
 
 # Metrics
 metrics = "0.24"
