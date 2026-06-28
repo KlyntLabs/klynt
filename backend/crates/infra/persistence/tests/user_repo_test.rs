@@ -5,7 +5,7 @@
 
 use base::ctx::{ExecutionContext, RequestContext};
 use base::ports::repository::{RepositoryError, UserRepository};
-use chrono::Utc;
+use chrono::{SubsecRound, Utc};
 use domain::{Email, GlobalRole, PaginationRequest, User, UserId, UserRole, UserStatus};
 use persistence::repositories::user::PgUserRepository;
 
@@ -368,7 +368,9 @@ async fn update_persists_schema_aligned_fields() {
     let ctx = test_ctx();
     let email = unique_email();
     let institution_id = UserId::new().inner();
-    let now = Utc::now();
+    // Postgres TIMESTAMPTZ stores microsecond precision. Truncate to
+    // microseconds so round-trip comparisons are exact.
+    let now = Utc::now().trunc_subsecs(6);
 
     let user_id = repo
         .create_pending_user(
