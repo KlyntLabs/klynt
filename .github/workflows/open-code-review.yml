@@ -1,0 +1,172 @@
+# Open Code Review — AI code review for Pull Requests into `dev`.
+#
+# Triggers:
+#   - When a PR targeting `dev` is opened, synchronized, reopened, or marked ready.
+#   - When a PR comment starts with `/open-code-review` or `@open-code-review`.
+#
+# Required repository secrets (Settings -> Secrets and variables -> Actions):
+#   OCR_LLM_URL         LLM API endpoint URL.
+#                       Examples:
+#                         https://api.openai.com/v1/chat/completions
+#                         https://api.anthropic.com/v1/messages
+#   OCR_LLM_TOKEN       API key / auth token for the LLM endpoint.
+#
+# Optional repository secrets:
+#   OCR_LLM_MODEL       Model name (default: gpt-4o).
+#   OCR_USE_ANTHROPIC   Set to "true" when using an Anthropic-compatible endpoint.
+#   OCR_LLM_AUTH_HEADER Auth header: "x-api-key" or "authorization" (default: authorization).
+#
+# Why `pull_request_target` instead of `pull_request`?
+#   The workflow needs LLM secrets to run OCR. `pull_request_target` makes secrets
+#   available for fork PRs while running in the base repository context. OCR only
+#   reads the diff and project files; it does not execute code from the PR.
+#   The workflow file must already exist in the target branch (`dev`) before it
+#   will trigger on a PR.
+#
+# Based on the upstream example:
+#   https://github.com/alibaba/open-code-review/tree/main/examples/github_actions
+
+name: Open Code Review
+
+on:
+  pull_request_target:
+    branches: [dev]
+    types: [opened, synchronize, reopened, ready_for_review]
+  issue_comment:
+    types: [created]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.issue.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    name: AI code review
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'pull_request_target' ||
+      (
+        github.event_name == 'issue_comment' &&
+        github.event.issue.pull_request &&
+        (
+          startsWith(github.event.comment.body, '/open-code-review') ||
+          startsWith(github.event.comment.body, '@open-code-review')
+        )
+      )
+
+    steps:
+      - name: Resolve PR context from comment
+        if: github.event_name == 'issue_comment'
+        id: pr-context
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+            core.setOutput('base_ref', pr.base.ref);
+            core.setOutput('head_sha', pr.head.sha);
+            core.setOutput('title', pr.title);
+
+      - name: Normalize review context
+        id: ctx
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          COMMENT_BASE_REF: ${{ steps.pr-context.outputs.base_ref }}
+          COMMENT_HEAD_SHA: ${{ steps.pr-context.outputs.head_sha }}
+          COMMENT_TITLE: ${{ steps.pr-context.outputs.title }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request_target" ]; then
+            echo "base_ref=$PR_BASE_REF" >> "$GITHUB_OUTPUT"
+            echo "head_sha=$PR_HEAD_SHA" >> "$GITHUB_OUTPUT"
+            echo "title=$PR_TITLE" >> "$GITHUB_OUTPUT"
+          else
+            echo "base_ref=$COMMENT_BASE_REF" >> "$GITHUB_OUTPUT"
+            echo "head_sha=$COMMENT_HEAD_SHA" >> "$GITHUB_OUTPUT"
+            echo "title=$COMMENT_TITLE" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ steps.ctx.outputs.head_sha }}
+
+      - name: Fetch PR head ref
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+        run: git fetch origin "pull/$PR_NUMBER/head"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install OpenCodeReview
+        run: |
+          npm install -g @alibaba-group/open-code-review
+          ocr version
+
+      - name: Verify OCR secrets are configured
+        run: |
+          if [ -z "${OCR_LLM_URL}" ]; then
+            echo "::error::Repository secret OCR_LLM_URL is not set."
+            exit 1
+          fi
+          if [ -z "${OCR_LLM_TOKEN}" ]; then
+            echo "::error::Repository secret OCR_LLM_TOKEN is not set."
+            exit 1
+          fi
+        env:
+          OCR_LLM_URL: ${{ secrets.OCR_LLM_URL }}
+          OCR_LLM_TOKEN: ${{ secrets.OCR_LLM_TOKEN }}
+
+      - name: Run OpenCodeReview
+        id: ocr
+        env:
+          BASE_REF: ${{ steps.ctx.outputs.base_ref }}
+          HEAD_SHA: ${{ steps.ctx.outputs.head_sha }}
+          TITLE: ${{ steps.ctx.outputs.title }}
+          OCR_LLM_URL: ${{ secrets.OCR_LLM_URL }}
+          OCR_LLM_TOKEN: ${{ secrets.OCR_LLM_TOKEN }}
+          OCR_LLM_MODEL: ${{ secrets.OCR_LLM_MODEL || 'gpt-4o' }}
+          OCR_USE_ANTHROPIC: ${{ secrets.OCR_USE_ANTHROPIC || 'false' }}
+          OCR_LLM_AUTH_HEADER: ${{ secrets.OCR_LLM_AUTH_HEADER || 'authorization' }}
+        run: |
+          echo "Reviewing $HEAD_SHA against origin/$BASE_REF"
+
+          # Review the PR diff. The workflow uses `|| true` so OCR failures do not
+          # block the PR; any stderr is surfaced in the job logs.
+          ocr review \
+            --from "origin/$BASE_REF" \
+            --to "$HEAD_SHA" \
+            --format json \
+            --audience agent \
+            --background "$TITLE" \
+            --concurrency 4 \
+            > /tmp/ocr-result.json 2>/tmp/ocr-stderr.log || true
+
+          echo "::group::OCR stderr"
+          cat /tmp/ocr-stderr.log
+          echo "::endgroup::"
+
+          echo "::group::OCR result (raw JSON)"
+          cat /tmp/ocr-result.json
+          echo "::endgroup::"
+
+      - name: Post review comments to PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const postComments = require('${{ github.workspace }}/.github/scripts/ocr-post-comments.js');
+            await postComments({ github, context });
