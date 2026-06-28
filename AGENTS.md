@@ -156,6 +156,7 @@ Cargo workspace with dependency direction enforced by the compiler:
 - Branches: `main` (production), `dev` (integration), feature branches `feature/*`, `fix/*`, `chore/*`.
 - Workflow: branch from `dev` → make changes → run `just check` and `just test-coverage` → PR to `dev` → merge → promote to `main`.
 - Never use `--no-verify`.
+- **Never push with `--no-verify`.** If a pre-push hook fails, resolve the underlying issue (fix code, start local infrastructure, or ask the user). Bypassing hooks is not an acceptable shortcut.
 
 ### Pre-commit (Lefthook)
 
