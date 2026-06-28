@@ -59,14 +59,11 @@ async fn find_role_id_by_name(
     tenant_id: TenantId,
     name: &str,
 ) -> DomainResult<RoleId> {
-    let id: Option<uuid::Uuid> = sqlx::query_scalar(
-        r#"
-        SELECT id FROM tenant_roles
-        WHERE tenant_id = $1 AND name = $2
-        "#,
+    let id: Option<uuid::Uuid> = sqlx::query_scalar!(
+        "SELECT id as \"id!\" FROM tenant_roles WHERE tenant_id = $1 AND name = $2",
+        tenant_id.inner(),
+        name
     )
-    .bind(tenant_id.inner())
-    .bind(name)
     .fetch_optional(pool)
     .await
     .map_err(DomainError::internal)?;
@@ -104,18 +101,19 @@ impl MembershipRepository for PgMembershipRepository {
                 .await
                 .map_err(|_| DomainError::not_found("tenant"))?;
 
-        let row: MembershipRow = match sqlx::query_as(
+        let row: MembershipRow = match sqlx::query_as!(
+            MembershipRow,
             r#"
             INSERT INTO user_tenant_memberships (tenant_id, user_id, role, joined_at, tenant_role_id, status)
             VALUES ($1, $2, $3, $4, $5, 'active')
             RETURNING tenant_id, user_id, role, joined_at
             "#,
+            membership.tenant_id.inner(),
+            membership.user_id.inner(),
+            membership.role.as_str(),
+            membership.joined_at,
+            tenant_role_id.0
         )
-        .bind(membership.tenant_id.inner())
-        .bind(membership.user_id.inner())
-        .bind(membership.role.as_str())
-        .bind(membership.joined_at)
-        .bind(tenant_role_id.0)
         .fetch_one(&self.pool)
         .await
         {
@@ -146,18 +144,19 @@ impl MembershipRepository for PgMembershipRepository {
         membership: &Membership,
         tenant_role_id: RoleId,
     ) -> DomainResult<Membership> {
-        let row: MembershipRow = match sqlx::query_as(
+        let row: MembershipRow = match sqlx::query_as!(
+            MembershipRow,
             r#"
             INSERT INTO user_tenant_memberships (tenant_id, user_id, role, joined_at, tenant_role_id, status)
             VALUES ($1, $2, $3, $4, $5, 'active')
             RETURNING tenant_id, user_id, role, joined_at
             "#,
+            membership.tenant_id.inner(),
+            membership.user_id.inner(),
+            membership.role.as_str(),
+            membership.joined_at,
+            tenant_role_id.0
         )
-        .bind(membership.tenant_id.inner())
-        .bind(membership.user_id.inner())
-        .bind(membership.role.as_str())
-        .bind(membership.joined_at)
-        .bind(tenant_role_id.0)
         .fetch_one(&self.pool)
         .await
         {
@@ -185,15 +184,16 @@ impl MembershipRepository for PgMembershipRepository {
         tenant_id: TenantId,
         user_id: UserId,
     ) -> DomainResult<Option<Membership>> {
-        let row: Option<MembershipRow> = sqlx::query_as(
+        let row: Option<MembershipRow> = sqlx::query_as!(
+            MembershipRow,
             r#"
             SELECT tenant_id, user_id, role, joined_at
             FROM user_tenant_memberships
             WHERE tenant_id = $1 AND user_id = $2
             "#,
+            tenant_id.inner(),
+            user_id.inner()
         )
-        .bind(tenant_id.inner())
-        .bind(user_id.inner())
         .fetch_optional(&self.pool)
         .await
         .map_err(DomainError::internal)?;
@@ -206,15 +206,16 @@ impl MembershipRepository for PgMembershipRepository {
         _ctx: &ExecutionContext,
         user_id: UserId,
     ) -> DomainResult<Vec<Membership>> {
-        let rows: Vec<MembershipRow> = sqlx::query_as(
+        let rows: Vec<MembershipRow> = sqlx::query_as!(
+            MembershipRow,
             r#"
             SELECT tenant_id, user_id, role, joined_at
             FROM user_tenant_memberships
             WHERE user_id = $1
             ORDER BY joined_at DESC
             "#,
+            user_id.inner()
         )
-        .bind(user_id.inner())
         .fetch_all(&self.pool)
         .await
         .map_err(DomainError::internal)?;
@@ -230,15 +231,16 @@ impl MembershipRepository for PgMembershipRepository {
         _ctx: &ExecutionContext,
         tenant_id: TenantId,
     ) -> DomainResult<Vec<Membership>> {
-        let rows: Vec<MembershipRow> = sqlx::query_as(
+        let rows: Vec<MembershipRow> = sqlx::query_as!(
+            MembershipRow,
             r#"
             SELECT tenant_id, user_id, role, joined_at
             FROM user_tenant_memberships
             WHERE tenant_id = $1
             ORDER BY joined_at DESC
             "#,
+            tenant_id.inner()
         )
-        .bind(tenant_id.inner())
         .fetch_all(&self.pool)
         .await
         .map_err(DomainError::internal)?;
@@ -254,7 +256,8 @@ impl MembershipRepository for PgMembershipRepository {
         _ctx: &ExecutionContext,
         tenant_id: TenantId,
     ) -> DomainResult<Vec<TenantMember>> {
-        let rows: Vec<TenantMemberRow> = sqlx::query_as(
+        let rows: Vec<TenantMemberRow> = sqlx::query_as!(
+            TenantMemberRow,
             r#"
             SELECT m.user_id, u.email, u.name, m.role, m.joined_at
             FROM user_tenant_memberships m
@@ -262,8 +265,8 @@ impl MembershipRepository for PgMembershipRepository {
             WHERE m.tenant_id = $1
             ORDER BY m.joined_at DESC
             "#,
+            tenant_id.inner()
         )
-        .bind(tenant_id.inner())
         .fetch_all(&self.pool)
         .await
         .map_err(DomainError::internal)?;
@@ -288,17 +291,17 @@ impl MembershipRepository for PgMembershipRepository {
 
         let tenant_role_id = find_role_id_by_name(&self.pool, tenant_id, role.as_str()).await?;
 
-        let result = sqlx::query(
+        let result = sqlx::query!(
             r#"
             UPDATE user_tenant_memberships
             SET role = $1, tenant_role_id = $4
             WHERE tenant_id = $2 AND user_id = $3
             "#,
+            role.as_str(),
+            tenant_id.inner(),
+            user_id.inner(),
+            tenant_role_id.0
         )
-        .bind(role.as_str())
-        .bind(tenant_id.inner())
-        .bind(user_id.inner())
-        .bind(tenant_role_id.0)
         .execute(&self.pool)
         .await
         .map_err(DomainError::internal)?;
@@ -316,14 +319,14 @@ impl MembershipRepository for PgMembershipRepository {
         tenant_id: TenantId,
         user_id: UserId,
     ) -> DomainResult<()> {
-        let result = sqlx::query(
+        let result = sqlx::query!(
             r#"
             DELETE FROM user_tenant_memberships
             WHERE tenant_id = $1 AND user_id = $2
             "#,
+            tenant_id.inner(),
+            user_id.inner()
         )
-        .bind(tenant_id.inner())
-        .bind(user_id.inner())
         .execute(&self.pool)
         .await
         .map_err(DomainError::internal)?;
