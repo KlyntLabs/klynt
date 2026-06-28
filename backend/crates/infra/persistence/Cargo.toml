@@ -49,3 +49,12 @@ uuid = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true }
+criterion = { workspace = true }
+
+[[bench]]
+name = "password_hasher"
+harness = false
+
+[[bench]]
+name = "role_permissions"
+harness = false

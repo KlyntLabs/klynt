@@ -138,6 +138,34 @@ async fn cached_store_falls_back_to_postgres_and_rehydrates_cache() {
 }
 
 #[tokio::test]
+async fn long_lived_session_is_cached() {
+    let pool = setup_pool().await;
+    let mut inspect_conn = setup_redis().await;
+    let user_id = create_test_user(&pool).await;
+    let postgres = PgSessionStore::new(pool);
+    let store = CachedSessionStore::connect(postgres, &redis_url()).await;
+    let ctx = ExecutionContext::new(RequestContext::new());
+    let expires_at = chrono::Utc::now() + chrono::Duration::days(30);
+
+    let token = store
+        .create_with_kind(&ctx, user_id, expires_at, SessionKind::LongLived, None)
+        .await
+        .unwrap();
+    let key = cache_key(&token);
+
+    // Long-lived tokens authorize API requests and should be cached.
+    assert!(redis_has_key(&mut inspect_conn, &key).await);
+
+    let session = store.find_valid(&ctx, &token).await.unwrap().unwrap();
+    assert_eq!(session.user_id, user_id);
+    assert_eq!(session.kind, SessionKind::LongLived);
+    assert!(redis_has_key(&mut inspect_conn, &key).await);
+
+    store.revoke(&ctx, &token).await.unwrap();
+    assert!(!redis_has_key(&mut inspect_conn, &key).await);
+}
+
+#[tokio::test]
 async fn cached_store_round_trips_through_postgres_when_redis_is_unreachable() {
     let pool = setup_pool().await;
     let user_id = create_test_user(&pool).await;

@@ -85,6 +85,9 @@ redis = { version = "0.27", features = ["tokio-comp"] }
 metrics = "0.24"
 metrics-exporter-prometheus = { version = "0.16", default-features = false }
 
+# Benchmarks
+criterion = { version = "0.5", features = ["async_tokio"] }
+
 # Internal crates
 base = { path = "crates/base" }
 domain = { path = "crates/shared/domain" }

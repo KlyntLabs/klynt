@@ -18,9 +18,11 @@ Phase 1 requires a session store that:
 
 ## Decision
 
-Add a `CachedSessionStore` adapter in `infra/persistence` that wraps `PgSessionStore` and caches access-token sessions in Redis with a 15-minute TTL. Refresh and long-lived tokens are not cached to keep invalidation simple and security-sensitive tokens out of Redis.
+Add a `CachedSessionStore` adapter in `infra/persistence` that wraps `PgSessionStore` and caches access-token sessions (including long-lived "remember me" tokens) in Redis with a 15-minute TTL. Refresh tokens are not cached to keep invalidation simple and security-sensitive tokens out of Redis.
 
 Redis failures are logged and fall back to Postgres; they never fail the user request.
+
+Bulk invalidation uses a Redis pipeline instead of sequential `DEL` calls to reduce round trips when membership changes affect many active sessions.
 
 ## Alternatives Considered
 
