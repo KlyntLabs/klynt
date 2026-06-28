@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                    DELETE FROM sessions\n                    WHERE id IN (\n                        SELECT id FROM sessions\n                        WHERE expires_at < $1\n                        ORDER BY id\n                        LIMIT $2\n                    )\n                    ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "4e60b63201f01a6fe14c0312d99a87b2e5f993a25fa1ce9d30e243c7e64680a1"
+}

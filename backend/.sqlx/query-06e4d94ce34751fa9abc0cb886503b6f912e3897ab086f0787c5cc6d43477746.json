@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT\n                r.id,\n                r.tenant_id,\n                r.name,\n                r.description AS \"description!\",\n                r.is_custom,\n                r.is_system,\n                r.created_at,\n                r.updated_at,\n                COALESCE(\n                    array_agg(rp.permission_id)\n                    FILTER (WHERE rp.permission_id IS NOT NULL),\n                    '{}'\n                ) AS \"permission_ids!\"\n            FROM tenant_roles r\n            LEFT JOIN role_permissions rp ON rp.role_id = r.id\n            WHERE r.tenant_id = $1 AND r.name = $2\n            GROUP BY r.id\n            ",
+  "query": "\n            SELECT\n                r.id,\n                r.tenant_id,\n                r.name,\n                r.description AS \"description!\",\n                r.is_custom,\n                r.is_system,\n                r.created_at,\n                r.updated_at,\n                COALESCE(\n                    array_agg(rp.permission_id ORDER BY rp.permission_id)\n                    FILTER (WHERE rp.permission_id IS NOT NULL),\n                    '{}'\n                ) AS \"permission_ids!\"\n            FROM tenant_roles r\n            LEFT JOIN role_permissions rp ON rp.role_id = r.id\n            WHERE r.tenant_id = $1 AND r.id = $2\n            GROUP BY r.id\n            ",
   "describe": {
     "columns": [
       {
@@ -52,7 +52,7 @@
     "parameters": {
       "Left": [
         "Uuid",
-        "Text"
+        "Uuid"
       ]
     },
     "nullable": [
@@ -67,5 +67,5 @@
       null
     ]
   },
-  "hash": "e25880ede4cede73d495d29d3e3574616ae96a322a6f65baad047c7b24cd9dc6"
+  "hash": "06e4d94ce34751fa9abc0cb886503b6f912e3897ab086f0787c5cc6d43477746"
 }

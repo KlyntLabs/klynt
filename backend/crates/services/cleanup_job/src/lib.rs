@@ -39,13 +39,14 @@ impl CleanupJob {
         let now = Utc::now();
 
         let sessions_deleted = self
-            .purge_batched(|| async {
+            .purge_batched("sessions", || async {
                 sqlx::query!(
                     r#"
                     DELETE FROM sessions
                     WHERE id IN (
                         SELECT id FROM sessions
                         WHERE expires_at < $1
+                        ORDER BY id
                         LIMIT $2
                     )
                     "#,
@@ -60,13 +61,14 @@ impl CleanupJob {
 
         let token_cutoff = now - Duration::days(self.token_retention_days);
         let tokens_deleted = self
-            .purge_batched(|| async {
+            .purge_batched("email_verification_tokens", || async {
                 sqlx::query!(
                     r#"
                     DELETE FROM email_verification_tokens
                     WHERE id IN (
                         SELECT id FROM email_verification_tokens
                         WHERE expires_at < $1
+                        ORDER BY id
                         LIMIT $2
                     )
                     "#,
@@ -81,13 +83,14 @@ impl CleanupJob {
 
         let audit_cutoff = now - Duration::days(self.audit_retention_days);
         let audit_deleted = self
-            .purge_batched(|| async {
+            .purge_batched("audit_events", || async {
                 sqlx::query!(
                     r#"
                     DELETE FROM audit_events
                     WHERE id IN (
                         SELECT id FROM audit_events
                         WHERE created_at < $1
+                        ORDER BY id
                         LIMIT $2
                     )
                     "#,
@@ -113,7 +116,11 @@ impl CleanupJob {
     /// Run `run_one_batch` repeatedly until it deletes fewer than `batch_size`
     /// rows, accumulating the total. Each `run_one_batch` closure owns a static
     /// SQL literal so every statement is checked by sqlx at compile time.
-    async fn purge_batched<F, Fut>(&self, mut run_one_batch: F) -> Result<u64, sqlx::Error>
+    async fn purge_batched<F, Fut>(
+        &self,
+        table_name: &'static str,
+        mut run_one_batch: F,
+    ) -> Result<u64, sqlx::Error>
     where
         F: FnMut() -> Fut,
         Fut: Future<Output = Result<u64, sqlx::Error>>,
@@ -133,6 +140,7 @@ impl CleanupJob {
 
         tracing::warn!(
             total_deleted,
+            table = table_name,
             "cleanup batch deletion reached iteration limit; remaining rows may still exist"
         );
 

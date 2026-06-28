@@ -74,7 +74,7 @@ impl RoleRepository for PgRoleRepository {
                 r.created_at,
                 r.updated_at,
                 COALESCE(
-                    array_agg(rp.permission_id)
+                    array_agg(rp.permission_id ORDER BY rp.permission_id)
                     FILTER (WHERE rp.permission_id IS NOT NULL),
                     '{}'
                 ) AS "permission_ids!"
@@ -114,7 +114,7 @@ impl RoleRepository for PgRoleRepository {
                 r.created_at,
                 r.updated_at,
                 COALESCE(
-                    array_agg(rp.permission_id)
+                    array_agg(rp.permission_id ORDER BY rp.permission_id)
                     FILTER (WHERE rp.permission_id IS NOT NULL),
                     '{}'
                 ) AS "permission_ids!"
@@ -152,7 +152,7 @@ impl RoleRepository for PgRoleRepository {
                 r.created_at,
                 r.updated_at,
                 COALESCE(
-                    array_agg(rp.permission_id)
+                    array_agg(rp.permission_id ORDER BY rp.permission_id)
                     FILTER (WHERE rp.permission_id IS NOT NULL),
                     '{}'
                 ) AS "permission_ids!"
@@ -322,8 +322,8 @@ async fn insert_role_permissions(
         INSERT INTO role_permissions (role_id, permission_id)
         SELECT * FROM UNNEST($1::uuid[], $2::uuid[])
         "#,
-        role_ids as _,
-        permission_uuids as _
+        role_ids.as_slice(),
+        permission_uuids.as_slice()
     )
     .execute(&mut **tx)
     .await
