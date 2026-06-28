@@ -209,3 +209,36 @@ async fn cleanup_removes_expired_and_retained_rows() {
         "recent audit event should remain"
     );
 }
+
+#[tokio::test]
+async fn cleanup_deletes_large_expired_session_set_in_batches() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let user_id = create_test_user(&pool, "cleanup-batch").await;
+    let now = Utc::now();
+
+    // Insert more expired sessions than a single batch so the loop must run
+    // more than once.
+    for _ in 0..1502 {
+        insert_session(&pool, user_id, now - Duration::hours(1)).await;
+    }
+
+    CleanupJob::new(pool.clone())
+        .run_once()
+        .await
+        .expect("cleanup should succeed");
+
+    let after_count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM sessions WHERE user_id = $1 AND expires_at < $2")
+            .bind(user_id)
+            .bind(now)
+            .fetch_one(&pool)
+            .await
+            .expect("count should succeed");
+    assert_eq!(
+        after_count, 0,
+        "all expired sessions should be deleted in batches"
+    );
+}

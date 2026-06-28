@@ -3,6 +3,10 @@
 //! Postgres remains the authoritative store. Redis is used only to reduce
 //! read latency; any Redis failure is logged and falls back to Postgres.
 //!
+//! Access tokens (including long-lived "remember me" tokens) are cached.
+//! Refresh tokens are used infrequently and are excluded to keep invalidation
+//! simple.
+//!
 //! # Best-effort invalidation note
 //!
 //! `revoke` deletes the session from Postgres and then attempts to delete the
@@ -151,6 +155,15 @@ impl CachedSessionStore {
         Ok(())
     }
 
+    /// Returns true if sessions of this kind should be cached.
+    ///
+    /// Access and long-lived tokens authorize API requests and are read on
+    /// every call, so caching them reduces database load. Refresh tokens are
+    /// used infrequently and are excluded to keep invalidation simple.
+    fn should_cache(kind: SessionKind) -> bool {
+        kind.is_access()
+    }
+
     async fn invalidate_cache(&self, token: &SessionToken) -> Result<(), SessionError> {
         let mut conn = match self.redis.as_ref() {
             Some(conn) => conn.clone(),
@@ -173,10 +186,27 @@ impl CachedSessionStore {
     async fn invalidate_active_tokens(&self, ctx: &ExecutionContext, user_id: UserId) {
         match self.postgres.active_tokens_for_user(ctx, user_id).await {
             Ok(tokens) => {
-                for token in tokens {
-                    if let Err(e) = self.invalidate_cache(&token).await {
-                        tracing::warn!(error = %e, "failed to invalidate cached session");
+                if tokens.is_empty() {
+                    return;
+                }
+
+                let mut conn = match self.redis.as_ref() {
+                    Some(conn) => conn.clone(),
+                    None => {
+                        tracing::warn!(
+                            "redis session cache unavailable, skipping bulk invalidation"
+                        );
+                        return;
                     }
+                };
+
+                let mut pipe = redis::pipe();
+                for token in &tokens {
+                    pipe.del(Self::cache_key(token));
+                }
+
+                if let Err(e) = pipe.query_async::<()>(&mut conn).await {
+                    tracing::warn!(error = %e, "failed to invalidate cached sessions in pipeline");
                 }
             }
             Err(e) => {
@@ -210,11 +240,7 @@ impl SessionStore for CachedSessionStore {
             .create_with_kind(ctx, user_id, expires_at, kind, pair_id)
             .await?;
 
-        // Only cache access tokens. Refresh tokens are security-sensitive and
-        // low-read; caching them would complicate invalidation (we can't
-        // enumerate cached tokens by pair_id). Long-lived access tokens are
-        // treated the same way here to keep invalidation simple.
-        if kind == SessionKind::Access {
+        if Self::should_cache(kind) {
             let session = Session {
                 user_id,
                 expires_at,
@@ -244,7 +270,7 @@ impl SessionStore for CachedSessionStore {
 
         let session = self.postgres.find_valid(ctx, token).await?;
         if let Some(ref s) = session {
-            if s.kind == SessionKind::Access {
+            if Self::should_cache(s.kind) {
                 if let Err(e) = self.write_cache(token, s).await {
                     tracing::warn!(error = %e, "failed to write session back to cache");
                 }

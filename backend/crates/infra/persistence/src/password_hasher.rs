@@ -17,21 +17,32 @@ impl Argon2PasswordHasher {
 #[async_trait::async_trait]
 impl PasswordHasher for Argon2PasswordHasher {
     async fn hash(&self, plaintext: &str) -> Result<HashedPassword, DomainError> {
-        let salt = SaltString::generate(&mut OsRng);
-        let argon2 = Argon2::default();
-        let hash = argon2
-            .hash_password(plaintext.as_bytes(), &salt)
-            .map_err(DomainError::internal)?;
-        Ok(HashedPassword::from(hash.to_string()))
+        let plaintext = plaintext.to_string();
+        tokio::task::spawn_blocking(move || {
+            let salt = SaltString::generate(&mut OsRng);
+            let argon2 = Argon2::default();
+            argon2
+                .hash_password(plaintext.as_bytes(), &salt)
+                .map(|hash| HashedPassword::from(hash.to_string()))
+                .map_err(DomainError::internal)
+        })
+        .await
+        .map_err(DomainError::internal)?
     }
 
     async fn verify(&self, plaintext: &str, hash: &HashedPassword) -> Result<bool, DomainError> {
-        let parsed_hash = PasswordHash::new(hash.as_str()).map_err(DomainError::internal)?;
-        match Argon2::default().verify_password(plaintext.as_bytes(), &parsed_hash) {
-            Ok(()) => Ok(true),
-            Err(argon2::password_hash::Error::Password) => Ok(false),
-            Err(e) => Err(DomainError::internal(e)),
-        }
+        let plaintext = plaintext.to_string();
+        let hash = hash.as_str().to_string();
+        tokio::task::spawn_blocking(move || {
+            let parsed_hash = PasswordHash::new(&hash).map_err(DomainError::internal)?;
+            match Argon2::default().verify_password(plaintext.as_bytes(), &parsed_hash) {
+                Ok(()) => Ok(true),
+                Err(argon2::password_hash::Error::Password) => Ok(false),
+                Err(e) => Err(DomainError::internal(e)),
+            }
+        })
+        .await
+        .map_err(DomainError::internal)?
     }
 }
 
@@ -63,5 +74,37 @@ mod tests {
         assert_ne!(hash1, hash2);
         assert!(hasher.verify("same-password", &hash1).await.unwrap());
         assert!(hasher.verify("same-password", &hash2).await.unwrap());
+    }
+
+    #[tokio::test]
+    async fn hashing_does_not_block_runtime() {
+        use std::sync::atomic::{AtomicBool, Ordering};
+        use std::sync::Arc;
+        use std::time::Duration;
+
+        let hasher = Arc::new(Argon2PasswordHasher::new());
+        let progress_flag = Arc::new(AtomicBool::new(false));
+        let progress_flag_clone = Arc::clone(&progress_flag);
+
+        // Start a slow hash on a blocking thread.
+        let hash_task = tokio::spawn(async move {
+            hasher.hash("long-running-password").await.unwrap();
+        });
+
+        // Start a tiny async task that should make progress while the hash
+        // runs. If hashing ran directly on the Tokio runtime, this task would
+        // be blocked until the hash finished.
+        let quick_task = tokio::spawn(async move {
+            tokio::time::sleep(Duration::from_millis(10)).await;
+            progress_flag_clone.store(true, Ordering::SeqCst);
+        });
+
+        tokio::time::timeout(Duration::from_millis(200), quick_task)
+            .await
+            .expect("quick async task should run while hash is on blocking thread")
+            .unwrap();
+
+        hash_task.await.unwrap();
+        assert!(progress_flag.load(Ordering::SeqCst));
     }
 }

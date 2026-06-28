@@ -301,21 +301,27 @@ async fn insert_role_permissions(
     role_id: RoleId,
     permission_ids: &[PermissionId],
 ) -> DomainResult<()> {
-    for permission_id in permission_ids {
-        if let Err(err) = sqlx::query(
-            r#"
-            INSERT INTO role_permissions (role_id, permission_id)
-            VALUES ($1, $2)
-            "#,
-        )
-        .bind(role_id.0)
-        .bind(permission_id.0)
-        .execute(&mut **tx)
-        .await
-        {
-            return Err(map_role_db_error(err));
-        }
+    if permission_ids.is_empty() {
+        return Ok(());
     }
+
+    let role_ids: Vec<uuid::Uuid> = std::iter::repeat_n(role_id.0, permission_ids.len()).collect();
+    let permission_uuids: Vec<uuid::Uuid> = permission_ids
+        .iter()
+        .map(|permission_id| permission_id.0)
+        .collect();
+
+    sqlx::query(
+        r#"
+        INSERT INTO role_permissions (role_id, permission_id)
+        SELECT * FROM UNNEST($1::uuid[], $2::uuid[])
+        "#,
+    )
+    .bind(role_ids)
+    .bind(permission_uuids)
+    .execute(&mut **tx)
+    .await
+    .map_err(map_role_db_error)?;
 
     Ok(())
 }
