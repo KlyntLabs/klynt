@@ -76,7 +76,7 @@ validator = { version = "0.19", features = ["derive"] }
 ipnet = "2"
 
 # Database
-sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "postgres", "uuid", "chrono", "migrate", "json"] }
+sqlx = { version = "0.9", features = ["runtime-tokio", "tls-rustls", "postgres", "uuid", "chrono", "migrate", "json"] }
 
 # Cache / rate limiter
 redis = { version = "1.3", features = ["tokio-comp"] }
