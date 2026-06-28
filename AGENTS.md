@@ -220,3 +220,17 @@ Before claiming complete:
 - `docs/SECURITY_BASELINE.md` — threat model and gates
 - `docs/VALIDATION_REPORT.md` — what was implemented and validated
 - `docs/adr/` — architecture decision records
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues for this repo (`KlyntLabs/klynt`), via the `gh` CLI. External PRs are not a triage surface. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Five canonical triage roles mapped 1:1 to label strings (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: root `CONTEXT.md` (with `UBIQUITOUS_LANGUAGE.md` as a complementary glossary) and `docs/adr/`. See `docs/agents/domain.md`.
