@@ -53,7 +53,7 @@ impl Token {
 fn generate_csprng_token() -> String {
     // 43 bytes of random data = 344 bits (more than 256 required)
     // Base64URL encoding = ~58 characters
-    use rand::Rng;
+    use rand::RngExt;
     let mut rng = rand::rng();
     let mut bytes = [0u8; 43];
     for byte in bytes.iter_mut() {

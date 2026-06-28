@@ -3,7 +3,7 @@
 use base::ctx::ExecutionContext;
 use chrono::{Duration, Utc};
 use domain::{DomainError, Email, TenantInvite};
-use rand::Rng;
+use rand::RngExt;
 use uuid::Uuid;
 
 use crate::error::TenantError;
