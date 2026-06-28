@@ -24,5 +24,8 @@ pub async fn create_pool(database_url: &str) -> Result<DbPool, StorageError> {
 
 /// Health check for database
 pub async fn health_check(pool: &DbPool) -> bool {
-    sqlx::query("SELECT 1").fetch_one(pool).await.is_ok()
+    sqlx::query!("SELECT 1 as \"one!\"")
+        .fetch_one(pool)
+        .await
+        .is_ok()
 }

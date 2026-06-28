@@ -148,7 +148,9 @@ impl HealthCheck for PostgresHealthCheck {
 
     async fn check(&self) -> ComponentHealth {
         let start = Instant::now();
-        let result = sqlx::query("SELECT 1").fetch_one(&self.pool).await;
+        let result = sqlx::query!("SELECT 1 as \"one!\"")
+            .fetch_one(&self.pool)
+            .await;
         let latency_ms = start.elapsed().as_secs_f64() * 1000.0;
 
         match result {
