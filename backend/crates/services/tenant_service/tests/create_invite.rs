@@ -43,11 +43,13 @@ async fn owner_can_create_invite() {
     assert!(!invite.token.is_empty());
     assert!(invite.expires_at > invite.created_at);
 
-    sqlx::query("DELETE FROM tenant_invites WHERE tenant_id = $1")
-        .bind(tenant.id.inner())
-        .execute(&pool)
-        .await
-        .ok();
+    sqlx::query!(
+        "DELETE FROM tenant_invites WHERE tenant_id = $1",
+        tenant.id.inner()
+    )
+    .execute(&pool)
+    .await
+    .ok();
     service
         .delete_tenant(&owner_ctx, tenant.slug.as_str())
         .await

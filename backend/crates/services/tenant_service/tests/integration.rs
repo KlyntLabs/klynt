@@ -30,27 +30,28 @@ async fn assert_membership_role_id(
     user_id: UserId,
     expected_role_name: &str,
 ) {
-    let role_id: Option<uuid::Uuid> = sqlx::query_scalar(
+    let role_id: Option<uuid::Uuid> = sqlx::query_scalar!(
         r#"
         SELECT tenant_role_id
         FROM user_tenant_memberships
         WHERE tenant_id = $1 AND user_id = $2
         "#,
+        tenant_id.inner(),
+        user_id.inner(),
     )
-    .bind(tenant_id.inner())
-    .bind(user_id.inner())
     .fetch_one(pool)
     .await
-    .ok();
+    .ok()
+    .flatten();
 
     assert!(role_id.is_some(), "membership should have a tenant_role_id");
 
-    let role_name: String = sqlx::query_scalar(
+    let role_name: String = sqlx::query_scalar!(
         r#"
         SELECT name FROM tenant_roles WHERE id = $1
         "#,
+        role_id.unwrap(),
     )
-    .bind(role_id.unwrap())
     .fetch_one(pool)
     .await
     .expect("role should exist");

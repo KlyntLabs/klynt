@@ -8,14 +8,14 @@ use uuid::Uuid;
 mod support;
 
 async fn find_role_id(pool: &sqlx::PgPool, tenant_id: domain::TenantId, name: &str) -> RoleId {
-    let id: Uuid = sqlx::query_scalar(
+    let id: Uuid = sqlx::query_scalar!(
         r#"
         SELECT id FROM tenant_roles
         WHERE tenant_id = $1 AND name = $2
         "#,
+        tenant_id.inner(),
+        name,
     )
-    .bind(tenant_id.inner())
-    .bind(name)
     .fetch_one(pool)
     .await
     .unwrap();
@@ -37,7 +37,7 @@ async fn create_invite(
     let expires_at = Utc::now() + expires_in;
     let accepted_at = if accepted { Some(Utc::now()) } else { None };
 
-    sqlx::query(
+    sqlx::query!(
         r#"
         INSERT INTO tenant_invites (
             id, tenant_id, email, tenant_role_id, invited_by,
@@ -45,25 +45,24 @@ async fn create_invite(
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         "#,
+        Uuid::new_v4(),
+        tenant_id.inner(),
+        email,
+        role_id.0,
+        invited_by.inner(),
+        expires_at,
+        accepted_at,
+        token,
+        Utc::now(),
+        Utc::now(),
     )
-    .bind(Uuid::new_v4())
-    .bind(tenant_id.inner())
-    .bind(email)
-    .bind(role_id.0)
-    .bind(invited_by.inner())
-    .bind(expires_at)
-    .bind(accepted_at)
-    .bind(token)
-    .bind(Utc::now())
-    .bind(Utc::now())
     .execute(pool)
     .await
     .expect("invite should insert");
 }
 
 async fn delete_tenant(pool: &sqlx::PgPool, tenant_id: domain::TenantId) {
-    sqlx::query("DELETE FROM tenants WHERE id = $1")
-        .bind(tenant_id.inner())
+    sqlx::query!("DELETE FROM tenants WHERE id = $1", tenant_id.inner())
         .execute(pool)
         .await
         .ok();
