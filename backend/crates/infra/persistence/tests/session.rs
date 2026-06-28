@@ -28,18 +28,18 @@ async fn create_test_user(pool: &PgPool) -> UserId {
 
     let username = email.as_str().split('@').next().unwrap().to_string();
 
-    sqlx::query(
+    sqlx::query!(
         r#"
         INSERT INTO users (id, email, username, password_hash, name, status, email_verified_at, terms_accepted_at)
         VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
         "#,
+        user_id.0,
+        email.as_str(),
+        &username,
+        "hashed",
+        "Test User",
+        UserStatus::Active.as_str(),
     )
-    .bind(user_id.0)
-    .bind(email.as_str())
-    .bind(&username)
-    .bind("hashed")
-    .bind("Test User")
-    .bind(UserStatus::Active.as_str())
     .execute(pool)
     .await
     .unwrap();

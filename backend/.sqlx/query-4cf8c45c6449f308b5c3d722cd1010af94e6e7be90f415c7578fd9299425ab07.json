@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE sessions SET tenant_memberships = $1 WHERE token = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Jsonb",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "4cf8c45c6449f308b5c3d722cd1010af94e6e7be90f415c7578fd9299425ab07"
+}

@@ -38,18 +38,18 @@ async fn create_test_user(pool: &PgPool) -> UserId {
 
     let username = email.as_str().split('@').next().unwrap().to_string();
 
-    sqlx::query(
+    sqlx::query!(
         r#"
         INSERT INTO users (id, email, username, password_hash, name, status, email_verified_at, terms_accepted_at)
         VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
         "#,
+        user_id.0,
+        email.as_str(),
+        &username,
+        "hashed",
+        "Test User",
+        UserStatus::Active.as_str(),
     )
-    .bind(user_id.0)
-    .bind(email.as_str())
-    .bind(&username)
-    .bind("hashed")
-    .bind("Test User")
-    .bind(UserStatus::Active.as_str())
     .execute(pool)
     .await
     .unwrap();
@@ -135,6 +135,34 @@ async fn cached_store_falls_back_to_postgres_and_rehydrates_cache() {
     let session = store.find_valid(&ctx, &token).await.unwrap().unwrap();
     assert_eq!(session.user_id, user_id);
     assert!(redis_has_key(&mut inspect_conn, &key).await);
+}
+
+#[tokio::test]
+async fn long_lived_session_is_cached() {
+    let pool = setup_pool().await;
+    let mut inspect_conn = setup_redis().await;
+    let user_id = create_test_user(&pool).await;
+    let postgres = PgSessionStore::new(pool);
+    let store = CachedSessionStore::connect(postgres, &redis_url()).await;
+    let ctx = ExecutionContext::new(RequestContext::new());
+    let expires_at = chrono::Utc::now() + chrono::Duration::days(30);
+
+    let token = store
+        .create_with_kind(&ctx, user_id, expires_at, SessionKind::LongLived, None)
+        .await
+        .unwrap();
+    let key = cache_key(&token);
+
+    // Long-lived tokens authorize API requests and should be cached.
+    assert!(redis_has_key(&mut inspect_conn, &key).await);
+
+    let session = store.find_valid(&ctx, &token).await.unwrap().unwrap();
+    assert_eq!(session.user_id, user_id);
+    assert_eq!(session.kind, SessionKind::LongLived);
+    assert!(redis_has_key(&mut inspect_conn, &key).await);
+
+    store.revoke(&ctx, &token).await.unwrap();
+    assert!(!redis_has_key(&mut inspect_conn, &key).await);
 }
 
 #[tokio::test]

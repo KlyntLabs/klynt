@@ -11,7 +11,7 @@ impl TokenGenerator {
     /// Returns a base64URL-encoded string without padding.
     /// 43 random bytes → 344 bits → ~58 character string.
     pub fn generate() -> String {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let mut bytes = [0u8; 43];
         rng.fill(&mut bytes[..]);
         base64_url_encode(&bytes)
@@ -19,7 +19,7 @@ impl TokenGenerator {
 
     /// Generate a token of specific byte length.
     pub fn generate_with_bytes(byte_length: usize) -> String {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let mut bytes = vec![0u8; byte_length];
         rng.fill(bytes.as_mut_slice());
         base64_url_encode(&bytes)

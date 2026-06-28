@@ -8,6 +8,7 @@ default:
 setup:
     rustup component add rustfmt clippy llvm-tools-preview
     cargo install cargo-watch cargo-nextest cargo-llvm-cov cargo-audit cargo-machete --locked
+    cargo install sqlx-cli --no-default-features --features postgres,rustls --locked
     cd frontend && bun install
     @echo "Optional security tools (CI also runs these): brew install gitleaks semgrep trivy"
 
@@ -56,6 +57,11 @@ backend-audit:
 # Find unused Rust dependencies (requires cargo-machete)
 backend-machete:
     cd backend && cargo machete
+
+# Regenerate the committed backend/.sqlx offline cache (run after changing any query or migration).
+# Requires a migrated local Postgres at DATABASE_URL.
+sqlx-prepare:
+    cd backend && DATABASE_URL=${DATABASE_URL:-postgresql://klynt:klynt@localhost:5432/klynt} cargo sqlx prepare --workspace -- --all-targets
 
 # Format everything (mutating)
 fmt:

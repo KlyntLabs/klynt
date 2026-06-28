@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id as \"id!\" FROM tenant_roles WHERE tenant_id = $1 AND name = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id!",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "b1a96a7adcc33bafe2f64dccfbc9ba0bb693caa3deb7470caeeaa250724ee8e4"
+}

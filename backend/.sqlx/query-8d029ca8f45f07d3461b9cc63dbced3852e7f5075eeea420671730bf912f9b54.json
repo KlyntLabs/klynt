@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO audit_events (\n                id, actor_user_id, actor_ip_address,\n                action, resource_type, resource_id,\n                tenant_id, before_data, after_data,\n                success, error_message, request_id\n            )\n            VALUES ($1, $2, $3::INET, $4, $5, $6, $7, $8, $9, $10, $11, $12)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Inet",
+        "Varchar",
+        "Varchar",
+        "Uuid",
+        "Uuid",
+        "Jsonb",
+        "Jsonb",
+        "Bool",
+        "Text",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "8d029ca8f45f07d3461b9cc63dbced3852e7f5075eeea420671730bf912f9b54"
+}

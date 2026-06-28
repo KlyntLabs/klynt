@@ -68,16 +68,17 @@ impl TenantDesktopLayoutRepository for PgTenantDesktopLayoutRepository {
         scope: LayoutScope,
         user_id: Option<Uuid>,
     ) -> DomainResult<Option<TenantDesktopLayout>> {
-        let row: Option<LayoutRow> = sqlx::query_as(
+        let row = sqlx::query_as!(
+            LayoutRow,
             r#"
             SELECT id, tenant_id, scope, user_id, version, background_preset_id, icons, windows, etag
             FROM tenant_desktop_layouts
             WHERE tenant_id = $1 AND scope = $2 AND user_id IS NOT DISTINCT FROM $3
             "#,
+            tenant_id,
+            scope.as_str(),
+            user_id
         )
-        .bind(tenant_id)
-        .bind(scope.as_str())
-        .bind(user_id)
         .fetch_optional(&self.pool)
         .await
         .map_err(DomainError::internal)?;
@@ -95,7 +96,8 @@ impl TenantDesktopLayoutRepository for PgTenantDesktopLayoutRepository {
         let windows = serde_json::to_value(&layout.windows)
             .map_err(|e| DomainError::internal_msg(format!("failed to serialize windows: {e}")))?;
 
-        let row: LayoutRow = sqlx::query_as(
+        let row = sqlx::query_as!(
+            LayoutRow,
             r#"
             INSERT INTO tenant_desktop_layouts (
                 id, tenant_id, scope, user_id, version, background_preset_id, icons, windows, etag, created_at, updated_at
@@ -111,16 +113,16 @@ impl TenantDesktopLayoutRepository for PgTenantDesktopLayoutRepository {
                 updated_at = NOW()
             RETURNING id, tenant_id, scope, user_id, version, background_preset_id, icons, windows, etag
             "#,
+            layout.id,
+            layout.tenant_id,
+            layout.scope.as_str(),
+            layout.user_id,
+            layout.version,
+            &layout.background_preset_id,
+            icons,
+            windows,
+            &layout.etag
         )
-        .bind(layout.id)
-        .bind(layout.tenant_id)
-        .bind(layout.scope.as_str())
-        .bind(layout.user_id)
-        .bind(layout.version)
-        .bind(&layout.background_preset_id)
-        .bind(icons)
-        .bind(windows)
-        .bind(&layout.etag)
         .fetch_one(&self.pool)
         .await
         .map_err(DomainError::internal)?;

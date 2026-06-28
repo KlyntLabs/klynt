@@ -17,19 +17,23 @@ async fn find_audit_events(
     Option<serde_json::Value>,
     Option<serde_json::Value>,
 )> {
-    sqlx::query_as(
+    let rows = sqlx::query!(
         r#"
         SELECT action, resource_type, before_data, after_data
         FROM audit_events
         WHERE tenant_id = $1 AND action = $2
         ORDER BY created_at
         "#,
+        tenant_id.inner(),
+        action,
     )
-    .bind(tenant_id.inner())
-    .bind(action)
     .fetch_all(pool)
     .await
-    .unwrap()
+    .unwrap();
+
+    rows.into_iter()
+        .map(|r| (r.action, r.resource_type, r.before_data, r.after_data))
+        .collect()
 }
 
 #[tokio::test]

@@ -57,4 +57,57 @@ describe("ProductAnalyticsPage interactions", () => {
     await user.click(screen.getByRole("button", { name: "Get started — free" }));
     expect(screen.getByText("1 / 8")).toBeInTheDocument();
   });
+
+  it("visits every slide to render all slide components", async () => {
+    const user = userEvent.setup();
+    render(<Default />);
+
+    const slideExpectations = [
+      "Press → to start",
+      "Track everything that matters",
+      "Everything you need",
+      "Autocapture — data without the setup",
+      "Your data, your rules",
+      "Simple, usage-based pricing",
+      "Works with your stack",
+      "Ready to understand your users?",
+    ];
+
+    for (let i = 0; i < slideExpectations.length; i++) {
+      if (i > 0) {
+        await user.click(screen.getByRole("button", { name: "Next" }));
+      }
+      await waitFor(() => {
+        expect(screen.getByText(`${i + 1} / 8`)).toBeInTheDocument();
+      });
+      expect(screen.getByText(slideExpectations[i])).toBeInTheDocument();
+    }
+  });
+
+  it("navigates slides with keyboard shortcuts", async () => {
+    const user = userEvent.setup();
+    render(<Default />);
+
+    expect(screen.getByText("1 / 8")).toBeInTheDocument();
+
+    await user.keyboard("{ArrowRight}");
+    await waitFor(() => {
+      expect(screen.getByText("2 / 8")).toBeInTheDocument();
+    });
+
+    await user.keyboard("{End}");
+    await waitFor(() => {
+      expect(screen.getByText("8 / 8")).toBeInTheDocument();
+    });
+
+    await user.keyboard("{Home}");
+    await waitFor(() => {
+      expect(screen.getByText("1 / 8")).toBeInTheDocument();
+    });
+
+    await user.keyboard("{ArrowLeft}");
+    await waitFor(() => {
+      expect(screen.getByText("1 / 8")).toBeInTheDocument();
+    });
+  });
 });

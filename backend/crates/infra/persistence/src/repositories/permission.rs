@@ -48,12 +48,13 @@ fn map_permission_row(row: PermissionRow) -> DomainResult<Permission> {
 #[async_trait]
 impl PermissionRepository for PgPermissionRepository {
     async fn list_permissions(&self, _ctx: &ExecutionContext) -> DomainResult<Vec<Permission>> {
-        let rows: Vec<PermissionRow> = sqlx::query_as(
+        let rows = sqlx::query_as!(
+            PermissionRow,
             r#"
-            SELECT id, name, description, category
+            SELECT id, name AS "name!", description AS "description!", category AS "category!"
             FROM permissions
             ORDER BY category, name
-            "#,
+            "#
         )
         .fetch_all(&self.pool)
         .await
@@ -69,14 +70,15 @@ impl PermissionRepository for PgPermissionRepository {
         _ctx: &ExecutionContext,
         name: &str,
     ) -> DomainResult<Option<Permission>> {
-        let row: Option<PermissionRow> = sqlx::query_as(
+        let row = sqlx::query_as!(
+            PermissionRow,
             r#"
-            SELECT id, name, description, category
+            SELECT id, name AS "name!", description AS "description!", category AS "category!"
             FROM permissions
             WHERE name = $1
             "#,
+            name
         )
-        .bind(name)
         .fetch_optional(&self.pool)
         .await
         .map_err(DomainError::internal)?;

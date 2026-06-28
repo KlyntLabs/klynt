@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT COUNT(*) AS \"count!\"\n            FROM tenants\n            WHERE owner_id = $1 AND status = 'active'\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "97d8d1a05cc759108ee547fbc9bf984ffe61f93ee93a6bc2d8748ca8b8f6e466"
+}

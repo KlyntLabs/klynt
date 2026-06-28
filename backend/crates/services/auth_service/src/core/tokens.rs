@@ -54,10 +54,10 @@ fn generate_csprng_token() -> String {
     // 43 bytes of random data = 344 bits (more than 256 required)
     // Base64URL encoding = ~58 characters
     use rand::Rng;
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let mut bytes = [0u8; 43];
     for byte in bytes.iter_mut() {
-        *byte = rng.gen();
+        *byte = rng.random();
     }
     base64_url_encode(&bytes)
 }
@@ -67,7 +67,7 @@ fn sha256_hash_inner(token: &str) -> String {
     use sha2::{Digest, Sha256};
     let mut hasher = Sha256::new();
     hasher.update(token.as_bytes());
-    format!("{:x}", hasher.finalize())
+    hex::encode(hasher.finalize())
 }
 
 /// Base64URL-encode without padding (URL-safe).

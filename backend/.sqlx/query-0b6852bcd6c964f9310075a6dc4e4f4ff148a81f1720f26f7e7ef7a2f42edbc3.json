@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO tenants (id, name, slug, owner_id)\n        VALUES ($1, 'Benchmark Tenant', $2, $3)\n        ON CONFLICT (slug) DO NOTHING\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Varchar",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0b6852bcd6c964f9310075a6dc4e4f4ff148a81f1720f26f7e7ef7a2f42edbc3"
+}

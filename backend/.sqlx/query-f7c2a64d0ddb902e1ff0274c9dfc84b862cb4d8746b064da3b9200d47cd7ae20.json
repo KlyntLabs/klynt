@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT id, name AS \"name!\", description AS \"description!\", category AS \"category!\"\n            FROM permissions\n            WHERE name = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name!",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "description!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "category!",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "f7c2a64d0ddb902e1ff0274c9dfc84b862cb4d8746b064da3b9200d47cd7ae20"
+}

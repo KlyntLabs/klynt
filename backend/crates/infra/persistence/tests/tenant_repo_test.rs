@@ -35,20 +35,20 @@ async fn cleanup_test_data(
     tenant_ids: &[domain::TenantId],
 ) {
     for tenant_id in tenant_ids {
-        sqlx::query("DELETE FROM user_tenant_memberships WHERE tenant_id = $1")
-            .bind(tenant_id.inner())
-            .execute(pool)
-            .await
-            .ok();
-        sqlx::query("DELETE FROM tenants WHERE id = $1")
-            .bind(tenant_id.inner())
+        sqlx::query!(
+            r#"DELETE FROM user_tenant_memberships WHERE tenant_id = $1"#,
+            tenant_id.inner()
+        )
+        .execute(pool)
+        .await
+        .ok();
+        sqlx::query!(r#"DELETE FROM tenants WHERE id = $1"#, tenant_id.inner())
             .execute(pool)
             .await
             .ok();
     }
     for user_id in user_ids {
-        sqlx::query("DELETE FROM users WHERE id = $1")
-            .bind(user_id.inner())
+        sqlx::query!(r#"DELETE FROM users WHERE id = $1"#, user_id.inner())
             .execute(pool)
             .await
             .ok();
@@ -121,11 +121,11 @@ async fn create_makes_creator_an_owner_member() {
     assert_eq!(membership.user_id, owner_id);
     assert_eq!(membership.role, TenantRole::Owner);
 
-    let role_id: Option<uuid::Uuid> = sqlx::query_scalar(
-        "SELECT tenant_role_id FROM user_tenant_memberships WHERE tenant_id = $1 AND user_id = $2",
+    let role_id: Option<uuid::Uuid> = sqlx::query_scalar!(
+        r#"SELECT tenant_role_id AS "tenant_role_id!" FROM user_tenant_memberships WHERE tenant_id = $1 AND user_id = $2"#,
+        tenant.id.inner(),
+        owner_id.inner()
     )
-    .bind(tenant.id.inner())
-    .bind(owner_id.inner())
     .fetch_one(&pool)
     .await
     .ok();

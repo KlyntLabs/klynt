@@ -81,10 +81,10 @@ pub(crate) async fn execute(
 
 fn generate_secure_token() -> String {
     const ALPHABET: &[u8] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     (0..INVITE_TOKEN_BYTES)
         .map(|_| {
-            let idx = rng.gen_range(0..ALPHABET.len());
+            let idx = rng.random_range(0..ALPHABET.len());
             ALPHABET[idx] as char
         })
         .collect()

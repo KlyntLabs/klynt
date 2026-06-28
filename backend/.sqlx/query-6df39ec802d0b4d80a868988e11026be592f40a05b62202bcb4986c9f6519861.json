@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO tenant_invites (\n            id, tenant_id, email, tenant_role_id, invited_by,\n            expires_at, accepted_at, token, created_at, updated_at\n        )\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Varchar",
+        "Uuid",
+        "Uuid",
+        "Timestamptz",
+        "Timestamptz",
+        "Varchar",
+        "Timestamptz",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6df39ec802d0b4d80a868988e11026be592f40a05b62202bcb4986c9f6519861"
+}

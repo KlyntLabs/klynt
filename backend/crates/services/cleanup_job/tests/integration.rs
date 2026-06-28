@@ -25,7 +25,7 @@ async fn create_test_user(pool: &sqlx::PgPool, prefix: &str) -> uuid::Uuid {
 
     let username = format!("{}-{}", prefix, user_id);
 
-    sqlx::query(
+    sqlx::query!(
         r#"
         INSERT INTO users (
             id, email, username, name, password_hash,
@@ -33,15 +33,15 @@ async fn create_test_user(pool: &sqlx::PgPool, prefix: &str) -> uuid::Uuid {
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         "#,
+        user_id,
+        &email,
+        &username,
+        prefix,
+        "hash",
+        "active",
+        Utc::now(),
+        "1.0",
     )
-    .bind(user_id)
-    .bind(&email)
-    .bind(&username)
-    .bind(prefix)
-    .bind("hash")
-    .bind("active")
-    .bind(Utc::now())
-    .bind("1.0")
     .execute(pool)
     .await
     .expect("user should insert");
@@ -55,13 +55,15 @@ async fn insert_session(
     expires_at: chrono::DateTime<Utc>,
 ) -> uuid::Uuid {
     let token = uuid::Uuid::new_v4();
-    sqlx::query("INSERT INTO sessions (token, user_id, expires_at) VALUES ($1, $2, $3)")
-        .bind(token)
-        .bind(user_id)
-        .bind(expires_at)
-        .execute(pool)
-        .await
-        .expect("session should insert");
+    sqlx::query!(
+        "INSERT INTO sessions (token, user_id, expires_at) VALUES ($1, $2, $3)",
+        token,
+        user_id,
+        expires_at,
+    )
+    .execute(pool)
+    .await
+    .expect("session should insert");
     token
 }
 
@@ -71,12 +73,12 @@ async fn insert_email_token(
     expires_at: chrono::DateTime<Utc>,
 ) -> String {
     let token_hash = format!("{:064x}", rand::random::<u128>());
-    sqlx::query(
+    sqlx::query!(
         "INSERT INTO email_verification_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)",
+        user_id,
+        &token_hash,
+        expires_at,
     )
-    .bind(user_id)
-    .bind(&token_hash)
-    .bind(expires_at)
     .execute(pool)
     .await
     .expect("email token should insert");
@@ -85,34 +87,48 @@ async fn insert_email_token(
 
 async fn insert_audit_event(pool: &sqlx::PgPool, created_at: chrono::DateTime<Utc>) -> uuid::Uuid {
     let id = uuid::Uuid::new_v4();
-    sqlx::query(
+    sqlx::query!(
         "INSERT INTO audit_events (id, action, resource_type, success, created_at) VALUES ($1, $2, $3, $4, $5)",
+        id,
+        "test_action",
+        "test_resource",
+        true,
+        created_at,
     )
-    .bind(id)
-    .bind("test_action")
-    .bind("test_resource")
-    .bind(true)
-    .bind(created_at)
     .execute(pool)
     .await
     .expect("audit event should insert");
     id
 }
 
-async fn row_exists(
-    pool: &sqlx::PgPool,
-    table: &str,
-    column: &str,
-    value: &str,
-    cast: Option<&str>,
-) -> bool {
-    let cast_expr = cast.map_or_else(|| "".to_string(), |c| format!("::{c}"));
-    let query = format!("SELECT EXISTS(SELECT 1 FROM {table} WHERE {column} = $1{cast_expr})");
-    sqlx::query_scalar(&query)
-        .bind(value)
-        .fetch_one(pool)
-        .await
-        .expect("existence check should succeed")
+async fn session_exists(pool: &sqlx::PgPool, token: uuid::Uuid) -> bool {
+    sqlx::query_scalar!(
+        r#"SELECT EXISTS(SELECT 1 FROM sessions WHERE token = $1) AS "exists!""#,
+        token,
+    )
+    .fetch_one(pool)
+    .await
+    .expect("existence check should succeed")
+}
+
+async fn email_token_exists(pool: &sqlx::PgPool, token_hash: &str) -> bool {
+    sqlx::query_scalar!(
+        r#"SELECT EXISTS(SELECT 1 FROM email_verification_tokens WHERE token_hash = $1) AS "exists!""#,
+        token_hash,
+    )
+    .fetch_one(pool)
+    .await
+    .expect("existence check should succeed")
+}
+
+async fn audit_event_exists(pool: &sqlx::PgPool, id: uuid::Uuid) -> bool {
+    sqlx::query_scalar!(
+        r#"SELECT EXISTS(SELECT 1 FROM audit_events WHERE id = $1) AS "exists!""#,
+        id,
+    )
+    .fetch_one(pool)
+    .await
+    .expect("existence check should succeed")
 }
 
 #[tokio::test]
@@ -141,71 +157,63 @@ async fn cleanup_removes_expired_and_retained_rows() {
         .expect("cleanup should succeed");
 
     assert!(
-        !row_exists(
-            &pool,
-            "sessions",
-            "token",
-            &expired_session.to_string(),
-            Some("uuid")
-        )
-        .await,
+        !session_exists(&pool, expired_session).await,
         "expired session should be deleted"
     );
     assert!(
-        row_exists(
-            &pool,
-            "sessions",
-            "token",
-            &active_session.to_string(),
-            Some("uuid")
-        )
-        .await,
+        session_exists(&pool, active_session).await,
         "active session should remain"
     );
 
     assert!(
-        !row_exists(
-            &pool,
-            "email_verification_tokens",
-            "token_hash",
-            &expired_token,
-            None
-        )
-        .await,
+        !email_token_exists(&pool, &expired_token).await,
         "expired email token should be deleted"
     );
     assert!(
-        row_exists(
-            &pool,
-            "email_verification_tokens",
-            "token_hash",
-            &active_token,
-            None
-        )
-        .await,
+        email_token_exists(&pool, &active_token).await,
         "active email token should remain"
     );
 
     assert!(
-        !row_exists(
-            &pool,
-            "audit_events",
-            "id",
-            &old_audit.to_string(),
-            Some("uuid")
-        )
-        .await,
+        !audit_event_exists(&pool, old_audit).await,
         "old audit event should be deleted"
     );
     assert!(
-        row_exists(
-            &pool,
-            "audit_events",
-            "id",
-            &recent_audit.to_string(),
-            Some("uuid")
-        )
-        .await,
+        audit_event_exists(&pool, recent_audit).await,
         "recent audit event should remain"
+    );
+}
+
+#[tokio::test]
+async fn cleanup_deletes_large_expired_session_set_in_batches() {
+    let Some(pool) = setup_pool().await else {
+        return;
+    };
+
+    let user_id = create_test_user(&pool, "cleanup-batch").await;
+    let now = Utc::now();
+
+    // Insert more expired sessions than a single batch so the loop must run
+    // more than once.
+    for _ in 0..1502 {
+        insert_session(&pool, user_id, now - Duration::hours(1)).await;
+    }
+
+    CleanupJob::new(pool.clone())
+        .run_once()
+        .await
+        .expect("cleanup should succeed");
+
+    let after_count: i64 = sqlx::query_scalar!(
+        r#"SELECT COUNT(*) AS "count!" FROM sessions WHERE user_id = $1 AND expires_at < $2"#,
+        user_id,
+        now,
+    )
+    .fetch_one(&pool)
+    .await
+    .expect("count should succeed");
+    assert_eq!(
+        after_count, 0,
+        "all expired sessions should be deleted in batches"
     );
 }
