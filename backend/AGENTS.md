@@ -133,6 +133,12 @@ cargo llvm-cov --workspace --all-features --no-clean --fail-under-lines 84
 cargo run --bin server
 ```
 
+## Rust Conventions
+
+- **SQLx: always use the compile-time-checked macros** (`sqlx::query!`, `query_as!`, `query_scalar!`). Never the runtime `sqlx::query(...)` / `query_as(...)` / `query_scalar(...)` API with `.bind()`. Runtime queries are only checked at runtime; macros type-check every query against the schema at `cargo build`. Enforced by the `backend-sqlx-macros` pre-commit hook and by macro compilation itself.
+- After changing any query string or migration, regenerate the committed offline cache: `just sqlx-prepare`, then commit `backend/.sqlx/`. CI builds with `SQLX_OFFLINE=true` (a query with no cache entry fails the build).
+- A genuine dynamic-SQL exception (e.g. `QueryBuilder`) is rare and must be marked `// allow(non-sqlx-macro)` on the offending line.
+
 ## Key Architectural Decisions
 
 See [`docs/ARCHITECTURE_DEEPENING.md`](./docs/ARCHITECTURE_DEEPENING.md) for full context on:
@@ -152,6 +158,7 @@ See [`docs/ARCHITECTURE_DEEPENING.md`](./docs/ARCHITECTURE_DEEPENING.md) for ful
 | `KLYNT_SESSION__SESSION_DURATION_SECS` | Default access session TTL | `86400` (24h) |
 | `KLYNT_SESSION__LONG_SESSION_DURATION_SECS` | "Remember me" access session TTL | `2592000` (30d) |
 | `KLYNT_SESSION__REFRESH_DURATION_SECS` | Refresh session TTL | `2592000` (30d) |
+| `SQLX_OFFLINE` | Set to `true` for offline/CI builds; requires the committed `backend/.sqlx/` query cache. Regenerate the cache after any query string or migration change with `just sqlx-prepare`. | `false` |
 
 ## Related Documentation
 
