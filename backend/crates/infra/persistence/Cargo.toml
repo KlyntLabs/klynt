@@ -14,7 +14,7 @@ domain = { path = "../../shared/domain" }
 observability = { path = "../observability" }
 
 # Database
-sqlx = { workspace = true }
+sqlx = { workspace = true, features = ["ipnetwork"] }
 
 # Cache / rate limiter
 redis = { workspace = true }
