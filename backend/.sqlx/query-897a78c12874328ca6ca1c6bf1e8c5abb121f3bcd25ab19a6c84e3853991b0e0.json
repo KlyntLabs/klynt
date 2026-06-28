@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT token as \"token!\"\n            FROM sessions\n            WHERE user_id = $1\n              AND expires_at > NOW()\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "token!",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "897a78c12874328ca6ca1c6bf1e8c5abb121f3bcd25ab19a6c84e3853991b0e0"
+}

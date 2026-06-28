@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE tenant_roles\n            SET updated_at = NOW()\n            WHERE tenant_id = $1 AND id = $2\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "30734ac958b4381a50bfe3f8a52ee4017a2a93b8b18e3ba53326962fa1d303ab"
+}
