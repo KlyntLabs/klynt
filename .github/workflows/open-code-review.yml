@@ -1,7 +1,7 @@
 # Open Code Review — AI code review for Pull Requests into `dev`.
 #
 # Triggers:
-#   - When a PR targeting `dev` is opened, synchronized, reopened, or marked ready.
+#   - When a PR targeting `dev` is opened (one-time automatic review).
 #   - When a PR comment starts with `/open-code-review` or `@open-code-review`.
 #
 # Required repository secrets (Settings -> Secrets and variables -> Actions):
@@ -31,7 +31,7 @@ name: Open Code Review
 on:
   pull_request_target:
     branches: [dev]
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened]
   issue_comment:
     types: [created]
 
@@ -153,6 +153,7 @@ jobs:
             --audience agent \
             --background "$TITLE" \
             --concurrency 4 \
+            --exclude "**/.sqlx/**" \
             > /tmp/ocr-result.json 2>/tmp/ocr-stderr.log || true
 
           echo "::group::OCR stderr"
