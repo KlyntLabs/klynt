@@ -108,6 +108,18 @@ async fn create_custom_role_with_all_permissions_succeeds() {
         .unwrap();
     assert_eq!(fetched.permission_ids.len(), permission_ids.len());
 
+    assert_eq!(
+        fetched
+            .permission_ids
+            .iter()
+            .copied()
+            .collect::<std::collections::HashSet<_>>(),
+        permission_ids
+            .iter()
+            .copied()
+            .collect::<std::collections::HashSet<_>>()
+    );
+
     service
         .delete_tenant(&owner_ctx, tenant.slug.as_str())
         .await

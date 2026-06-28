@@ -18,6 +18,7 @@ use uuid::Uuid;
 struct BenchFixture {
     pool: PgPool,
     tenant_id: TenantId,
+    owner_id: uuid::Uuid,
     permission_ids: Vec<PermissionId>,
 }
 
@@ -82,18 +83,54 @@ async fn setup_fixture() -> BenchFixture {
         }
     }
 
+    assert!(
+        permission_ids.len() >= 100,
+        "benchmark needs at least 100 permissions, got {}",
+        permission_ids.len()
+    );
+
     BenchFixture {
         pool,
         tenant_id,
+        owner_id,
         permission_ids,
     }
 }
 
-fn make_role(tenant_id: TenantId, permission_ids: &[PermissionId]) -> TenantRoleAggregate {
+async fn teardown_fixture(fixture: &BenchFixture) {
+    sqlx::query("DELETE FROM roles WHERE tenant_id = $1")
+        .bind(fixture.tenant_id.0)
+        .execute(&fixture.pool)
+        .await
+        .unwrap();
+
+    sqlx::query("DELETE FROM tenants WHERE id = $1")
+        .bind(fixture.tenant_id.0)
+        .execute(&fixture.pool)
+        .await
+        .unwrap();
+
+    sqlx::query("DELETE FROM users WHERE id = $1")
+        .bind(fixture.owner_id)
+        .execute(&fixture.pool)
+        .await
+        .unwrap();
+
+    sqlx::query("DELETE FROM permissions WHERE name LIKE 'bench.permission.%'")
+        .execute(&fixture.pool)
+        .await
+        .unwrap();
+}
+
+fn make_role(
+    tenant_id: TenantId,
+    permission_ids: &[PermissionId],
+    index: usize,
+) -> TenantRoleAggregate {
     TenantRoleAggregate {
         id: RoleId::from_uuid(Uuid::new_v4()),
         tenant_id,
-        name: format!("bench-role-{}", Uuid::new_v4()),
+        name: format!("bench-role-{index}"),
         description: "benchmark role".to_string(),
         is_custom: true,
         is_system: false,
@@ -106,7 +143,7 @@ fn make_role(tenant_id: TenantId, permission_ids: &[PermissionId]) -> TenantRole
 fn bench_role_create(c: &mut Criterion) {
     let rt = tokio::runtime::Runtime::new().unwrap();
     let fixture = rt.block_on(setup_fixture());
-    let repo = Arc::new(PgRoleRepository::new(fixture.pool));
+    let repo = Arc::new(PgRoleRepository::new(fixture.pool.clone()));
     let ctx = ExecutionContext::new(RequestContext::new());
 
     let mut group = c.benchmark_group("role_create_permissions");
@@ -117,22 +154,32 @@ fn bench_role_create(c: &mut Criterion) {
             .copied()
             .take(count)
             .collect::<Vec<_>>();
+        let mut role_index = 0usize;
         group.bench_with_input(
             criterion::BenchmarkId::new("permissions", count),
             &count,
             |b, &_count| {
-                b.to_async(&rt).iter(|| {
-                    let repo = Arc::clone(&repo);
-                    let ctx = ctx.clone();
-                    let role = make_role(fixture.tenant_id, &permissions);
-                    async move {
-                        repo.create_role(&ctx, role).await.unwrap();
-                    }
-                });
+                b.to_async(&rt).iter_batched(
+                    || {
+                        let role = make_role(fixture.tenant_id, &permissions, role_index);
+                        role_index += 1;
+                        role
+                    },
+                    |role| {
+                        let repo = Arc::clone(&repo);
+                        let ctx = ctx.clone();
+                        async move {
+                            repo.create_role(&ctx, role).await.unwrap();
+                        }
+                    },
+                    criterion::BatchSize::SmallInput,
+                );
             },
         );
     }
     group.finish();
+
+    rt.block_on(teardown_fixture(&fixture));
 }
 
 criterion_group!(benches, bench_role_create);

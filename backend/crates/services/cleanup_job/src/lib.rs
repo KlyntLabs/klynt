@@ -74,9 +74,21 @@ impl CleanupJob {
         column: &str,
         before: chrono::DateTime<Utc>,
     ) -> Result<u64, sqlx::Error> {
-        let mut total_deleted = 0u64;
+        // Validate identifiers to prevent SQL injection. Only known table/column
+        // names used by this cleanup job are allowed.
+        const ALLOWED_TABLES: &[&str] = &["sessions", "email_verification_tokens", "audit_events"];
+        const ALLOWED_COLUMNS: &[&str] = &["expires_at", "created_at"];
+        if !ALLOWED_TABLES.contains(&table) || !ALLOWED_COLUMNS.contains(&column) {
+            return Err(sqlx::Error::Io(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "invalid table or column name for cleanup",
+            )));
+        }
 
-        loop {
+        let mut total_deleted = 0u64;
+        let max_iterations = 1000usize;
+
+        for _ in 0..max_iterations {
             let deleted = sqlx::query(&format!(
                 r#"
                 DELETE FROM {table}
@@ -96,9 +108,16 @@ impl CleanupJob {
             total_deleted += deleted;
 
             if deleted < self.batch_size as u64 {
-                break;
+                return Ok(total_deleted);
             }
         }
+
+        tracing::warn!(
+            table,
+            column,
+            total_deleted,
+            "cleanup batch deletion reached iteration limit; remaining rows may still exist"
+        );
 
         Ok(total_deleted)
     }

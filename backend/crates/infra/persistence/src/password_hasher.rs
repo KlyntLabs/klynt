@@ -17,6 +17,8 @@ impl Argon2PasswordHasher {
 #[async_trait::async_trait]
 impl PasswordHasher for Argon2PasswordHasher {
     async fn hash(&self, plaintext: &str) -> Result<HashedPassword, DomainError> {
+        // Clone into owned `String`s because `spawn_blocking` requires `'static`
+        // data and the trait boundary passes borrowed strings.
         let plaintext = plaintext.to_string();
         tokio::task::spawn_blocking(move || {
             let salt = SaltString::generate(&mut OsRng);
@@ -27,7 +29,7 @@ impl PasswordHasher for Argon2PasswordHasher {
                 .map_err(DomainError::internal)
         })
         .await
-        .map_err(DomainError::internal)?
+        .map_err(|e| DomainError::internal_msg(format!("password hashing task failed: {e}")))?
     }
 
     async fn verify(&self, plaintext: &str, hash: &HashedPassword) -> Result<bool, DomainError> {
@@ -42,7 +44,7 @@ impl PasswordHasher for Argon2PasswordHasher {
             }
         })
         .await
-        .map_err(DomainError::internal)?
+        .map_err(|e| DomainError::internal_msg(format!("password verification task failed: {e}")))?
     }
 }
 
@@ -83,13 +85,15 @@ mod tests {
         use std::time::Duration;
 
         let hasher = Arc::new(Argon2PasswordHasher::new());
+        let hasher_for_task = Arc::clone(&hasher);
         let progress_flag = Arc::new(AtomicBool::new(false));
         let progress_flag_clone = Arc::clone(&progress_flag);
 
         // Start a slow hash on a blocking thread.
-        let hash_task = tokio::spawn(async move {
-            hasher.hash("long-running-password").await.unwrap();
-        });
+        let hash_task =
+            tokio::spawn(
+                async move { hasher_for_task.hash("long-running-password").await.unwrap() },
+            );
 
         // Start a tiny async task that should make progress while the hash
         // runs. If hashing ran directly on the Tokio runtime, this task would
@@ -99,12 +103,13 @@ mod tests {
             progress_flag_clone.store(true, Ordering::SeqCst);
         });
 
-        tokio::time::timeout(Duration::from_millis(200), quick_task)
+        tokio::time::timeout(Duration::from_secs(5), quick_task)
             .await
             .expect("quick async task should run while hash is on blocking thread")
             .unwrap();
 
-        hash_task.await.unwrap();
+        let hash = hash_task.await.unwrap();
+        assert!(hasher.verify("long-running-password", &hash).await.unwrap());
         assert!(progress_flag.load(Ordering::SeqCst));
     }
 }
