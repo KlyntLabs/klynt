@@ -79,13 +79,14 @@ impl CleanupJob {
         const ALLOWED_TABLES: &[&str] = &["sessions", "email_verification_tokens", "audit_events"];
         const ALLOWED_COLUMNS: &[&str] = &["expires_at", "created_at"];
         if !ALLOWED_TABLES.contains(&table) || !ALLOWED_COLUMNS.contains(&column) {
-            return Err(sqlx::Error::Io(std::io::Error::new(
-                std::io::ErrorKind::InvalidInput,
-                "invalid table or column name for cleanup",
-            )));
+            return Err(sqlx::Error::Protocol(
+                "invalid table or column name for cleanup".into(),
+            ));
         }
 
         let mut total_deleted = 0u64;
+        // Cap at 1M rows per table per run to prevent the cleanup job from
+        // running indefinitely and monopolizing the database.
         let max_iterations = 1000usize;
 
         for _ in 0..max_iterations {
@@ -95,6 +96,7 @@ impl CleanupJob {
                 WHERE id IN (
                     SELECT id FROM {table}
                     WHERE {column} < $1
+                    ORDER BY id
                     LIMIT $2
                 )
                 "#,

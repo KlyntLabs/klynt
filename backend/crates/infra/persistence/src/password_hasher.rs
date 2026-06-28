@@ -34,9 +34,9 @@ impl PasswordHasher for Argon2PasswordHasher {
 
     async fn verify(&self, plaintext: &str, hash: &HashedPassword) -> Result<bool, DomainError> {
         let plaintext = plaintext.to_string();
-        let hash = hash.as_str().to_string();
+        let hash = hash.clone();
         tokio::task::spawn_blocking(move || {
-            let parsed_hash = PasswordHash::new(&hash).map_err(DomainError::internal)?;
+            let parsed_hash = PasswordHash::new(hash.as_str()).map_err(DomainError::internal)?;
             match Argon2::default().verify_password(plaintext.as_bytes(), &parsed_hash) {
                 Ok(()) => Ok(true),
                 Err(argon2::password_hash::Error::Password) => Ok(false),

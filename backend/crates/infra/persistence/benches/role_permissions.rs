@@ -68,7 +68,7 @@ async fn setup_fixture() -> BenchFixture {
         let result = sqlx::query(
             r#"
             INSERT INTO permissions (id, name, description, category)
-            VALUES ($1, $2, 'benchmark permission', 'benchmark')
+            VALUES ($1, $2, 'benchmark permission', 'platform')
             ON CONFLICT (name) DO NOTHING
             "#,
         )
@@ -98,7 +98,7 @@ async fn setup_fixture() -> BenchFixture {
 }
 
 async fn teardown_fixture(fixture: &BenchFixture) {
-    sqlx::query("DELETE FROM roles WHERE tenant_id = $1")
+    sqlx::query("DELETE FROM tenant_roles WHERE tenant_id = $1")
         .bind(fixture.tenant_id.0)
         .execute(&fixture.pool)
         .await
@@ -154,6 +154,11 @@ fn bench_role_create(c: &mut Criterion) {
             .copied()
             .take(count)
             .collect::<Vec<_>>();
+        // Pre-build a pool of roles so UUID/time generation does not add noise
+        // to the measured loop.
+        let roles: Vec<TenantRoleAggregate> = (0..128)
+            .map(|i| make_role(fixture.tenant_id, &permissions, i))
+            .collect();
         let mut role_index = 0usize;
         group.bench_with_input(
             criterion::BenchmarkId::new("permissions", count),
@@ -161,15 +166,24 @@ fn bench_role_create(c: &mut Criterion) {
             |b, &_count| {
                 b.to_async(&rt).iter_batched(
                     || {
-                        let role = make_role(fixture.tenant_id, &permissions, role_index);
+                        let role = roles[role_index % roles.len()].clone();
                         role_index += 1;
                         role
                     },
                     |role| {
                         let repo = Arc::clone(&repo);
                         let ctx = ctx.clone();
+                        let pool = fixture.pool.clone();
                         async move {
+                            let role_id = role.id.0;
                             repo.create_role(&ctx, role).await.unwrap();
+                            // Delete the role immediately so the table size
+                            // stays stable across iterations.
+                            sqlx::query("DELETE FROM tenant_roles WHERE id = $1")
+                                .bind(role_id)
+                                .execute(&pool)
+                                .await
+                                .unwrap();
                         }
                     },
                     criterion::BatchSize::SmallInput,

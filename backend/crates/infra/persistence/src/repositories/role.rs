@@ -305,11 +305,14 @@ async fn insert_role_permissions(
         return Ok(());
     }
 
-    let role_ids: Vec<uuid::Uuid> = std::iter::repeat_n(role_id.0, permission_ids.len()).collect();
     let permission_uuids: Vec<uuid::Uuid> = permission_ids
         .iter()
         .map(|permission_id| permission_id.0)
+        .collect::<std::collections::HashSet<_>>()
+        .into_iter()
         .collect();
+    let role_ids: Vec<uuid::Uuid> =
+        std::iter::repeat_n(role_id.0, permission_uuids.len()).collect();
 
     sqlx::query(
         r#"

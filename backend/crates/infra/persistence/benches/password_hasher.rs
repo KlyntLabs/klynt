@@ -1,8 +1,9 @@
 //! Benchmarks for password hashing operations.
 //!
-//! These benchmarks measure the synchronous CPU cost of Argon2 hashing and
-//! verification. The numbers justify moving this work off the Tokio async
-//! runtime with `spawn_blocking` so it does not block worker threads.
+//! These benchmarks measure the public async API used by callers, including
+//! the `spawn_blocking` scheduling overhead. The numbers justify moving this
+//! work off the Tokio async runtime so CPU-hard Argon2 operations do not
+//! block worker threads.
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use persistence::password_hasher::Argon2PasswordHasher;

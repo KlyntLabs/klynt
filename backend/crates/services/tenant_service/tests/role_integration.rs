@@ -8,9 +8,9 @@ mod support;
 
 #[tokio::test]
 async fn create_custom_role_exposes_is_custom() {
-    let Some(pool) = support::setup_pool().await else {
-        return;
-    };
+    let pool = support::setup_pool()
+        .await
+        .expect("database pool required for integration test");
 
     let service = support::build_service(pool.clone()).await;
     let owner_id = support::create_test_user(&pool, "owner-role").await;
@@ -62,9 +62,9 @@ async fn create_custom_role_exposes_is_custom() {
 
 #[tokio::test]
 async fn create_custom_role_with_all_permissions_succeeds() {
-    let Some(pool) = support::setup_pool().await else {
-        return;
-    };
+    let pool = support::setup_pool()
+        .await
+        .expect("database pool required for integration test");
 
     let service = support::build_service(pool.clone()).await;
     let owner_id = support::create_test_user(&pool, "owner-role-bulk").await;
