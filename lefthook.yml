@@ -95,6 +95,15 @@ pre-push:
           echo "⏭️  backend-test skipped (no backend changes)"
           exit 0
         fi
+        # Pre-push should not fail just because local dev infrastructure is offline.
+        # If Postgres/Redis are not reachable, skip the backend integration test step
+        # so the rest of the quality gate (format, clippy, audit, machete, frontend) still runs.
+        if ! timeout 1 bash -c 'cat < /dev/null > /dev/tcp/localhost/5432' 2>/dev/null || \
+           ! timeout 1 bash -c 'cat < /dev/null > /dev/tcp/localhost/6379' 2>/dev/null; then
+          echo "⚠️  backend-test skipped: PostgreSQL on localhost:5432 and/or Redis on localhost:6379 are not reachable."
+          echo "    Start local infrastructure (e.g. docker compose -f docker-compose.dev.yml up postgres redis) to run backend tests before pushing."
+          exit 0
+        fi
         cd backend && SQLX_OFFLINE=true DATABASE_URL=${DATABASE_URL:-postgresql://klynt:klynt@localhost:5432/test} REDIS_URL=${REDIS_URL:-redis://localhost:6379/0} cargo llvm-cov nextest --workspace --all-features --no-clean --fail-under-lines 84 -- --include-ignored
     backend-audit:
       glob: "**/*.rs"
