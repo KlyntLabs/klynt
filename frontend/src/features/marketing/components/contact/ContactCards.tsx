@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowRight, Github, Mail, MessageCircle } from "lucide-react";
+import { ArrowRight, GitBranch, Mail, MessageCircle } from "lucide-react";
 import { useMarketingTranslation } from "@/features/marketing/lib/use-marketing-translation";
 
 const staggerContainer = {
@@ -44,7 +44,7 @@ export function ContactCards() {
     },
     {
       key: "github",
-      icon: <Github className="w-5 h-5 text-[#1A1A1A]" />,
+      icon: <GitBranch className="w-5 h-5 text-[#1A1A1A]" />,
       iconBg: "bg-[#1A1A1A]/10",
       href: "https://github.com/Klynt/klynt-edu/issues",
       external: true,
