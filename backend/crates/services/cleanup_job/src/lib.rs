@@ -6,6 +6,7 @@
 
 use chrono::{Duration, Utc};
 use sqlx::PgPool;
+use std::future::Future;
 
 /// Default number of rows to delete per batch.
 ///
@@ -38,23 +39,68 @@ impl CleanupJob {
         let now = Utc::now();
 
         let sessions_deleted = self
-            .delete_in_batches("sessions", "expires_at", now)
+            .purge_batched("sessions", || async {
+                sqlx::query!(
+                    r#"
+                    DELETE FROM sessions
+                    WHERE id IN (
+                        SELECT id FROM sessions
+                        WHERE expires_at < $1
+                        ORDER BY id
+                        LIMIT $2
+                    )
+                    "#,
+                    now,
+                    self.batch_size,
+                )
+                .execute(&self.pool)
+                .await
+                .map(|r| r.rows_affected())
+            })
             .await?;
 
+        let token_cutoff = now - Duration::days(self.token_retention_days);
         let tokens_deleted = self
-            .delete_in_batches(
-                "email_verification_tokens",
-                "expires_at",
-                now - Duration::days(self.token_retention_days),
-            )
+            .purge_batched("email_verification_tokens", || async {
+                sqlx::query!(
+                    r#"
+                    DELETE FROM email_verification_tokens
+                    WHERE id IN (
+                        SELECT id FROM email_verification_tokens
+                        WHERE expires_at < $1
+                        ORDER BY id
+                        LIMIT $2
+                    )
+                    "#,
+                    token_cutoff,
+                    self.batch_size,
+                )
+                .execute(&self.pool)
+                .await
+                .map(|r| r.rows_affected())
+            })
             .await?;
 
+        let audit_cutoff = now - Duration::days(self.audit_retention_days);
         let audit_deleted = self
-            .delete_in_batches(
-                "audit_events",
-                "created_at",
-                now - Duration::days(self.audit_retention_days),
-            )
+            .purge_batched("audit_events", || async {
+                sqlx::query!(
+                    r#"
+                    DELETE FROM audit_events
+                    WHERE id IN (
+                        SELECT id FROM audit_events
+                        WHERE created_at < $1
+                        ORDER BY id
+                        LIMIT $2
+                    )
+                    "#,
+                    audit_cutoff,
+                    self.batch_size,
+                )
+                .execute(&self.pool)
+                .await
+                .map(|r| r.rows_affected())
+            })
             .await?;
 
         tracing::info!(
@@ -67,57 +113,34 @@ impl CleanupJob {
         Ok(())
     }
 
-    /// Delete rows older than `before` from `table` in bounded batches.
-    async fn delete_in_batches(
+    /// Run `run_one_batch` repeatedly until it deletes fewer than `batch_size`
+    /// rows, accumulating the total. Each `run_one_batch` closure owns a static
+    /// SQL literal so every statement is checked by sqlx at compile time.
+    async fn purge_batched<F, Fut>(
         &self,
-        table: &str,
-        column: &str,
-        before: chrono::DateTime<Utc>,
-    ) -> Result<u64, sqlx::Error> {
-        // Validate identifiers to prevent SQL injection. Only known table/column
-        // names used by this cleanup job are allowed.
-        const ALLOWED_TABLES: &[&str] = &["sessions", "email_verification_tokens", "audit_events"];
-        const ALLOWED_COLUMNS: &[&str] = &["expires_at", "created_at"];
-        if !ALLOWED_TABLES.contains(&table) || !ALLOWED_COLUMNS.contains(&column) {
-            return Err(sqlx::Error::Protocol(
-                "invalid table or column name for cleanup".into(),
-            ));
-        }
-
+        table_name: &'static str,
+        mut run_one_batch: F,
+    ) -> Result<u64, sqlx::Error>
+    where
+        F: FnMut() -> Fut,
+        Fut: Future<Output = Result<u64, sqlx::Error>>,
+    {
         let mut total_deleted = 0u64;
         // Cap at 1M rows per table per run to prevent the cleanup job from
         // running indefinitely and monopolizing the database.
         let max_iterations = 1000usize;
 
         for _ in 0..max_iterations {
-            let deleted = sqlx::query(&format!(
-                r#"
-                DELETE FROM {table}
-                WHERE id IN (
-                    SELECT id FROM {table}
-                    WHERE {column} < $1
-                    ORDER BY id
-                    LIMIT $2
-                )
-                "#,
-            ))
-            .bind(before)
-            .bind(self.batch_size)
-            .execute(&self.pool)
-            .await?
-            .rows_affected();
-
+            let deleted = run_one_batch().await?;
             total_deleted += deleted;
-
             if deleted < self.batch_size as u64 {
                 return Ok(total_deleted);
             }
         }
 
         tracing::warn!(
-            table,
-            column,
             total_deleted,
+            table = table_name,
             "cleanup batch deletion reached iteration limit; remaining rows may still exist"
         );
 

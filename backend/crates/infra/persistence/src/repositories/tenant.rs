@@ -94,23 +94,24 @@ impl TenantRepository for PgTenantRepository {
     async fn create(&self, _ctx: &ExecutionContext, tenant: &Tenant) -> DomainResult<Tenant> {
         let mut tx = self.pool.begin().await.map_err(DomainError::internal)?;
 
-        let row: TenantRow = match sqlx::query_as(
+        let row: TenantRow = match sqlx::query_as!(
+            TenantRow,
             r#"
             INSERT INTO tenants (id, slug, name, owner_id, max_members, max_owners, settings, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING id, slug, name, owner_id, max_members, max_owners, settings, status, created_at, updated_at
             "#,
+            tenant.id.inner(),
+            tenant.slug.as_str(),
+            &tenant.name,
+            tenant.owner_id.inner(),
+            tenant.max_members,
+            tenant.max_owners,
+            &tenant.settings,
+            tenant.status.as_str(),
+            tenant.created_at,
+            tenant.updated_at
         )
-        .bind(tenant.id.inner())
-        .bind(tenant.slug.as_str())
-        .bind(&tenant.name)
-        .bind(tenant.owner_id.inner())
-        .bind(tenant.max_members)
-        .bind(tenant.max_owners)
-        .bind(&tenant.settings)
-        .bind(tenant.status.as_str())
-        .bind(tenant.created_at)
-        .bind(tenant.updated_at)
         .fetch_one(&mut *tx)
         .await
         {
@@ -144,16 +145,16 @@ impl TenantRepository for PgTenantRepository {
             }
         };
 
-        if let Err(err) = sqlx::query(
+        if let Err(err) = sqlx::query!(
             r#"
             INSERT INTO user_tenant_memberships (tenant_id, user_id, role, joined_at, tenant_role_id, status)
             VALUES ($1, $2, 'owner', $3, $4, 'active')
             "#,
+            tenant.id.inner(),
+            tenant.owner_id.inner(),
+            tenant.created_at,
+            owner_role_id
         )
-        .bind(tenant.id.inner())
-        .bind(tenant.owner_id.inner())
-        .bind(tenant.created_at)
-        .bind(owner_role_id)
         .execute(&mut *tx)
         .await
         {
@@ -170,14 +171,15 @@ impl TenantRepository for PgTenantRepository {
         _ctx: &ExecutionContext,
         id: TenantId,
     ) -> DomainResult<Option<Tenant>> {
-        let row: Option<TenantRow> = sqlx::query_as(
+        let row: Option<TenantRow> = sqlx::query_as!(
+            TenantRow,
             r#"
             SELECT id, slug, name, owner_id, max_members, max_owners, settings, status, created_at, updated_at
             FROM tenants
             WHERE id = $1
             "#,
+            id.inner()
         )
-        .bind(id.inner())
         .fetch_optional(&self.pool)
         .await
         .map_err(DomainError::internal)?;
@@ -190,14 +192,15 @@ impl TenantRepository for PgTenantRepository {
         _ctx: &ExecutionContext,
         slug: &TenantSlug,
     ) -> DomainResult<Option<Tenant>> {
-        let row: Option<TenantRow> = sqlx::query_as(
+        let row: Option<TenantRow> = sqlx::query_as!(
+            TenantRow,
             r#"
             SELECT id, slug, name, owner_id, max_members, max_owners, settings, status, created_at, updated_at
             FROM tenants
             WHERE slug = $1
             "#,
+            slug.as_str()
         )
-        .bind(slug.as_str())
         .fetch_optional(&self.pool)
         .await
         .map_err(DomainError::internal)?;
@@ -210,7 +213,8 @@ impl TenantRepository for PgTenantRepository {
         _ctx: &ExecutionContext,
         user_id: UserId,
     ) -> DomainResult<Vec<TenantMembershipSummary>> {
-        let rows: Vec<TenantMembershipRow> = sqlx::query_as(
+        let rows: Vec<TenantMembershipRow> = sqlx::query_as!(
+            TenantMembershipRow,
             r#"
             SELECT
                 t.id, t.slug, t.name,
@@ -220,8 +224,8 @@ impl TenantRepository for PgTenantRepository {
             WHERE m.user_id = $1
             ORDER BY t.created_at DESC
             "#,
+            user_id.inner()
         )
-        .bind(user_id.inner())
         .fetch_all(&self.pool)
         .await
         .map_err(DomainError::internal)?;
@@ -233,22 +237,22 @@ impl TenantRepository for PgTenantRepository {
     }
 
     async fn update(&self, _ctx: &ExecutionContext, tenant: &Tenant) -> DomainResult<Tenant> {
-        let result = sqlx::query(
+        let result = sqlx::query!(
             r#"
             UPDATE tenants
             SET slug = $1, name = $2, owner_id = $3, max_members = $4, max_owners = $5, settings = $6, status = $7, updated_at = $8
             WHERE id = $9
             "#,
+            tenant.slug.as_str(),
+            &tenant.name,
+            tenant.owner_id.inner(),
+            tenant.max_members,
+            tenant.max_owners,
+            &tenant.settings,
+            tenant.status.as_str(),
+            tenant.updated_at,
+            tenant.id.inner()
         )
-        .bind(tenant.slug.as_str())
-        .bind(&tenant.name)
-        .bind(tenant.owner_id.inner())
-        .bind(tenant.max_members)
-        .bind(tenant.max_owners)
-        .bind(&tenant.settings)
-        .bind(tenant.status.as_str())
-        .bind(tenant.updated_at)
-        .bind(tenant.id.inner())
         .execute(&self.pool)
         .await
         .map_err(|err| match err {
@@ -273,13 +277,13 @@ impl TenantRepository for PgTenantRepository {
     }
 
     async fn delete(&self, _ctx: &ExecutionContext, id: TenantId) -> DomainResult<()> {
-        let result = sqlx::query(
+        let result = sqlx::query!(
             r#"
             DELETE FROM tenants
             WHERE id = $1
             "#,
+            id.inner()
         )
-        .bind(id.inner())
         .execute(&self.pool)
         .await
         .map_err(DomainError::internal)?;
@@ -296,14 +300,14 @@ impl TenantRepository for PgTenantRepository {
         _ctx: &ExecutionContext,
         user_id: UserId,
     ) -> DomainResult<i64> {
-        let count: i64 = sqlx::query_scalar(
+        let count: i64 = sqlx::query_scalar!(
             r#"
-            SELECT COUNT(*)
+            SELECT COUNT(*) AS "count!"
             FROM tenants
             WHERE owner_id = $1 AND status = 'active'
             "#,
+            user_id.inner()
         )
-        .bind(user_id.inner())
         .fetch_one(&self.pool)
         .await
         .map_err(DomainError::internal)?;
@@ -317,14 +321,14 @@ async fn find_role_id_by_name(
     tenant_id: uuid::Uuid,
     name: &str,
 ) -> DomainResult<uuid::Uuid> {
-    let id: Option<uuid::Uuid> = sqlx::query_scalar(
+    let id: Option<uuid::Uuid> = sqlx::query_scalar!(
         r#"
-        SELECT id FROM tenant_roles
+        SELECT id AS "id!" FROM tenant_roles
         WHERE tenant_id = $1 AND name = $2
         "#,
+        tenant_id,
+        name
     )
-    .bind(tenant_id)
-    .bind(name)
     .fetch_optional(&mut **tx)
     .await
     .map_err(DomainError::internal)?;
@@ -336,7 +340,7 @@ async fn seed_system_roles(
     tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
     tenant_id: uuid::Uuid,
 ) -> DomainResult<()> {
-    sqlx::query(
+    sqlx::query!(
         r#"
         INSERT INTO tenant_roles (tenant_id, name, description, is_system, is_custom)
         VALUES
@@ -346,13 +350,13 @@ async fn seed_system_roles(
             ($1, 'guest', 'Limited read-only access', TRUE, FALSE)
         ON CONFLICT (tenant_id, name) DO NOTHING
         "#,
+        tenant_id
     )
-    .bind(tenant_id)
     .execute(&mut **tx)
     .await
     .map_err(DomainError::internal)?;
 
-    sqlx::query(
+    sqlx::query!(
         r#"
         INSERT INTO role_permissions (role_id, permission_id)
         SELECT r.id, p.id
@@ -367,8 +371,8 @@ async fn seed_system_roles(
           )
         ON CONFLICT (role_id, permission_id) DO NOTHING
         "#,
+        tenant_id
     )
-    .bind(tenant_id)
     .execute(&mut **tx)
     .await
     .map_err(DomainError::internal)?;

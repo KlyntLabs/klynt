@@ -63,7 +63,7 @@ impl TenantInviteRepository for PgTenantInviteRepository {
         _ctx: &ExecutionContext,
         invite: TenantInvite,
     ) -> Result<TenantInvite, RepositoryError> {
-        sqlx::query(
+        sqlx::query!(
             r#"
             INSERT INTO tenant_invites (
                 id, tenant_id, email, tenant_role_id, invited_by,
@@ -71,17 +71,17 @@ impl TenantInviteRepository for PgTenantInviteRepository {
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             "#,
+            invite.id,
+            invite.tenant_id.inner(),
+            invite.email.as_str(),
+            invite.role_id.0,
+            invite.invited_by.inner(),
+            invite.expires_at,
+            invite.accepted_at,
+            &invite.token,
+            invite.created_at,
+            invite.updated_at
         )
-        .bind(invite.id)
-        .bind(invite.tenant_id.inner())
-        .bind(invite.email.as_str())
-        .bind(invite.role_id.0)
-        .bind(invite.invited_by.inner())
-        .bind(invite.expires_at)
-        .bind(invite.accepted_at)
-        .bind(&invite.token)
-        .bind(invite.created_at)
-        .bind(invite.updated_at)
         .execute(&self.pool)
         .await
         .map_err(RepositoryError::from)?;
@@ -96,7 +96,8 @@ impl TenantInviteRepository for PgTenantInviteRepository {
         _ctx: &ExecutionContext,
         token: &str,
     ) -> Result<Option<TenantInvite>, RepositoryError> {
-        let row: Option<InviteRow> = sqlx::query_as(
+        let row = sqlx::query_as!(
+            InviteRow,
             r#"
             SELECT
                 i.id,
@@ -114,8 +115,8 @@ impl TenantInviteRepository for PgTenantInviteRepository {
             JOIN tenant_roles r ON r.id = i.tenant_role_id
             WHERE i.token = $1
             "#,
+            token
         )
-        .bind(token)
         .fetch_optional(&self.pool)
         .await
         .map_err(RepositoryError::from)?;
@@ -128,14 +129,14 @@ impl TenantInviteRepository for PgTenantInviteRepository {
         _ctx: &ExecutionContext,
         invite_id: Uuid,
     ) -> Result<(), RepositoryError> {
-        let result = sqlx::query(
+        let result = sqlx::query!(
             r#"
             UPDATE tenant_invites
             SET accepted_at = NOW()
             WHERE id = $1
             "#,
+            invite_id
         )
-        .bind(invite_id)
         .execute(&self.pool)
         .await
         .map_err(RepositoryError::from)?;

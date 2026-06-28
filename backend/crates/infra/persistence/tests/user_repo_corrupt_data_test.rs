@@ -45,7 +45,7 @@ async fn find_by_id_returns_error_for_invalid_role_in_db() {
     let username = domain::UserId::new().inner().to_string();
     let now = Utc::now();
 
-    sqlx::query(
+    sqlx::query!(
         r#"
         INSERT INTO users (
             id, email, username, name, password_hash,
@@ -55,21 +55,21 @@ async fn find_by_id_returns_error_for_invalid_role_in_db() {
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         "#,
+        user_id.inner(),
+        email.as_str(),
+        &username,
+        "Name",
+        "hash",
+        "pending_verification",
+        None::<DateTime<Utc>>,
+        None::<String>,
+        now,
+        now,
+        now,
+        "1.0",
+        "invalid_role",
+        None::<Uuid>
     )
-    .bind(user_id.inner())
-    .bind(email.as_str())
-    .bind(&username)
-    .bind("Name")
-    .bind("hash")
-    .bind("pending_verification")
-    .bind(None::<DateTime<Utc>>)
-    .bind(None::<String>)
-    .bind(now)
-    .bind(now)
-    .bind(now)
-    .bind("1.0")
-    .bind("invalid_role")
-    .bind(None::<Uuid>)
     .execute(&pool)
     .await
     .unwrap();
@@ -77,8 +77,7 @@ async fn find_by_id_returns_error_for_invalid_role_in_db() {
     let result = repo.find_by_id(&ctx, user_id).await;
     assert!(result.is_err());
 
-    sqlx::query("DELETE FROM users WHERE id = $1")
-        .bind(user_id.inner())
+    sqlx::query!(r#"DELETE FROM users WHERE id = $1"#, user_id.inner())
         .execute(&pool)
         .await
         .ok();
@@ -97,7 +96,7 @@ async fn find_by_id_returns_error_for_invalid_global_role_in_db() {
     let username = domain::UserId::new().inner().to_string();
     let now = Utc::now();
 
-    sqlx::query(
+    sqlx::query!(
         r#"
         INSERT INTO users (
             id, email, username, name, password_hash,
@@ -107,21 +106,21 @@ async fn find_by_id_returns_error_for_invalid_global_role_in_db() {
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         "#,
+        user_id.inner(),
+        email.as_str(),
+        &username,
+        "Name",
+        "hash",
+        "pending_verification",
+        None::<DateTime<Utc>>,
+        Some("invalid_global_role"),
+        now,
+        now,
+        now,
+        "1.0",
+        "student",
+        None::<Uuid>
     )
-    .bind(user_id.inner())
-    .bind(email.as_str())
-    .bind(&username)
-    .bind("Name")
-    .bind("hash")
-    .bind("pending_verification")
-    .bind(None::<DateTime<Utc>>)
-    .bind(Some("invalid_global_role"))
-    .bind(now)
-    .bind(now)
-    .bind(now)
-    .bind("1.0")
-    .bind("student")
-    .bind(None::<Uuid>)
     .execute(&pool)
     .await
     .unwrap();
@@ -129,8 +128,7 @@ async fn find_by_id_returns_error_for_invalid_global_role_in_db() {
     let result = repo.find_by_id(&ctx, user_id).await;
     assert!(result.is_err());
 
-    sqlx::query("DELETE FROM users WHERE id = $1")
-        .bind(user_id.inner())
+    sqlx::query!(r#"DELETE FROM users WHERE id = $1"#, user_id.inner())
         .execute(&pool)
         .await
         .ok();
@@ -151,7 +149,7 @@ async fn find_by_id_returns_error_for_invalid_email_in_db() {
     let username = domain::UserId::new().inner().to_string();
     let now = Utc::now();
 
-    sqlx::query(
+    sqlx::query!(
         r#"
         INSERT INTO users (
             id, email, username, name, password_hash,
@@ -161,21 +159,21 @@ async fn find_by_id_returns_error_for_invalid_email_in_db() {
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         "#,
+        user_id.inner(),
+        &email,
+        &username,
+        "Name",
+        "hash",
+        "pending_verification",
+        None::<DateTime<Utc>>,
+        None::<String>,
+        now,
+        now,
+        now,
+        "1.0",
+        "student",
+        None::<Uuid>
     )
-    .bind(user_id.inner())
-    .bind(&email)
-    .bind(&username)
-    .bind("Name")
-    .bind("hash")
-    .bind("pending_verification")
-    .bind(None::<DateTime<Utc>>)
-    .bind(None::<String>)
-    .bind(now)
-    .bind(now)
-    .bind(now)
-    .bind("1.0")
-    .bind("student")
-    .bind(None::<Uuid>)
     .execute(&pool)
     .await
     .unwrap();
@@ -185,8 +183,7 @@ async fn find_by_id_returns_error_for_invalid_email_in_db() {
 
     // Clean up so this test does not leave corrupt rows behind for concurrent
     // or subsequent test runs.
-    sqlx::query("DELETE FROM users WHERE id = $1")
-        .bind(user_id.inner())
+    sqlx::query!(r#"DELETE FROM users WHERE id = $1"#, user_id.inner())
         .execute(&pool)
         .await
         .ok();

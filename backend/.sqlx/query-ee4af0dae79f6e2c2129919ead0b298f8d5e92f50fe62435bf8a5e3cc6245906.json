@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE sessions\n            SET tenant_memberships = COALESCE(\n                (\n                    SELECT jsonb_agg(\n                        CASE\n                            WHEN (elem->>'tenant_id')::uuid = ($1::jsonb->>'tenant_id')::uuid\n                            THEN $1\n                            ELSE elem\n                        END\n                    )\n                    FROM jsonb_array_elements(tenant_memberships) AS elem\n                ),\n                '[]'::jsonb\n            ) || CASE\n                WHEN EXISTS (\n                    SELECT 1\n                    FROM jsonb_array_elements(tenant_memberships) AS elem\n                    WHERE (elem->>'tenant_id')::uuid = ($1::jsonb->>'tenant_id')::uuid\n                )\n                THEN '[]'::jsonb\n                ELSE $1\n            END\n            WHERE user_id = $2 AND expires_at > NOW()\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Jsonb",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ee4af0dae79f6e2c2129919ead0b298f8d5e92f50fe62435bf8a5e3cc6245906"
+}

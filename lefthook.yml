@@ -14,6 +14,9 @@ pre-commit:
     backend-file-size:
       glob: "backend/crates/**/*.rs"
       run: backend/scripts/check-file-size.sh {staged_files}
+    backend-sqlx-macros:
+      glob: "**/*.rs"
+      run: backend/scripts/check-sqlx-macros.sh {staged_files}
     biome-check:
       glob: "**/*.{js,ts,tsx,json,jsonc,css}"
       run: cd frontend && bunx @biomejs/biome check --error-on-warnings --no-errors-on-unmatched $(for f in {staged_files}; do echo "${f#frontend/}"; done)
@@ -74,7 +77,7 @@ pre-push:
           echo "⏭️  backend-format skipped (no backend changes)"
           exit 0
         fi
-        cd backend && cargo fmt --all -- --check
+        cd backend && SQLX_OFFLINE=true cargo fmt --all -- --check
     backend-clippy:
       glob: "**/*.rs"
       run: |
@@ -83,7 +86,7 @@ pre-push:
           echo "⏭️  backend-clippy skipped (no backend changes)"
           exit 0
         fi
-        cd backend && cargo clippy --all-targets --all-features -- -D warnings
+        cd backend && SQLX_OFFLINE=true cargo clippy --all-targets --all-features -- -D warnings
     backend-test:
       glob: "**/*.rs"
       run: |
@@ -92,7 +95,7 @@ pre-push:
           echo "⏭️  backend-test skipped (no backend changes)"
           exit 0
         fi
-        cd backend && DATABASE_URL=${DATABASE_URL:-postgresql://klynt:klynt@localhost:5432/test} REDIS_URL=${REDIS_URL:-redis://localhost:6379/0} cargo llvm-cov nextest --workspace --all-features --no-clean --fail-under-lines 84 -- --include-ignored
+        cd backend && SQLX_OFFLINE=true DATABASE_URL=${DATABASE_URL:-postgresql://klynt:klynt@localhost:5432/test} REDIS_URL=${REDIS_URL:-redis://localhost:6379/0} cargo llvm-cov nextest --workspace --all-features --no-clean --fail-under-lines 84 -- --include-ignored
     backend-audit:
       glob: "**/*.rs"
       run: |
@@ -105,7 +108,7 @@ pre-push:
           echo "⏭️  cargo-audit not installed; install with 'cargo install cargo-audit --locked' or run 'just setup'"
           exit 0
         fi
-        cd backend && cargo audit
+        cd backend && SQLX_OFFLINE=true cargo audit
     backend-machete:
       glob: "**/*.rs"
       run: |
@@ -118,4 +121,4 @@ pre-push:
           echo "⏭️  cargo-machete not installed; install with 'cargo install cargo-machete --locked' or run 'just setup'"
           exit 0
         fi
-        cd backend && cargo machete
+        cd backend && SQLX_OFFLINE=true cargo machete

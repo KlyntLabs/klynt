@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO permissions (id, name, description, category)\n            VALUES ($1, $2, 'benchmark permission', 'platform')\n            ON CONFLICT (name) DO NOTHING\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Varchar"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "64b65486c7323b00e4db4e9cb6666a34c578b0b4ead846475de09869b1af4813"
+}

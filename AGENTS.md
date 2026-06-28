@@ -80,6 +80,9 @@ Before changing code:
 - Edition 2021.
 - All Clippy warnings are errors (`-D warnings`).
 - `unsafe_code` is forbidden at the workspace level.
+- **SQLx: always use the compile-time-checked macros** (`sqlx::query!`, `query_as!`, `query_scalar!`). Never the runtime `sqlx::query(...)` / `query_as(...)` / `query_scalar(...)` API with `.bind()`. Runtime queries are only checked at runtime; macros type-check every query against the schema at `cargo build`. Enforced by the `backend-sqlx-macros` pre-commit hook and by macro compilation itself.
+- After changing any query string or migration, regenerate the committed offline cache: `just sqlx-prepare`, then commit `backend/.sqlx/`. CI builds with `SQLX_OFFLINE=true` (a query with no cache entry fails the build).
+- A genuine dynamic-SQL exception (e.g. `QueryBuilder`) is rare and must be marked `// allow(non-sqlx-macro)` on the offending line.
 - Source files (`backend/crates/*/src/**/*.rs`) should stay under **400 lines**.
 - Integration test files (`backend/crates/*/tests/**/*.rs`) may go up to **600 lines**.
 - Lefthook enforces this on staged files via `backend/scripts/check-file-size.sh`.
@@ -217,3 +220,17 @@ Before claiming complete:
 - `docs/SECURITY_BASELINE.md` — threat model and gates
 - `docs/VALIDATION_REPORT.md` — what was implemented and validated
 - `docs/adr/` — architecture decision records
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues for this repo (`KlyntLabs/klynt`), via the `gh` CLI. External PRs are not a triage surface. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Five canonical triage roles mapped 1:1 to label strings (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: root `CONTEXT.md` (with `UBIQUITOUS_LANGUAGE.md` as a complementary glossary) and `docs/adr/`. See `docs/agents/domain.md`.

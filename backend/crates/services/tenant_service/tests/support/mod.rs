@@ -189,7 +189,7 @@ pub async fn create_test_user_with_email(pool: &sqlx::PgPool, prefix: &str) -> (
     let email = format!("{}-{}@example.com", prefix, user_id.inner());
     let username = user_id.inner().to_string();
 
-    sqlx::query(
+    sqlx::query!(
         r#"
         INSERT INTO users (
             id, email, username, name, password_hash,
@@ -197,15 +197,15 @@ pub async fn create_test_user_with_email(pool: &sqlx::PgPool, prefix: &str) -> (
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         "#,
+        user_id.inner(),
+        &email,
+        &username,
+        prefix,
+        "hash",
+        "active",
+        Utc::now(),
+        "1.0",
     )
-    .bind(user_id.inner())
-    .bind(&email)
-    .bind(&username)
-    .bind(prefix)
-    .bind("hash")
-    .bind("active")
-    .bind(Utc::now())
-    .bind("1.0")
     .execute(pool)
     .await
     .expect("user should insert");
@@ -215,8 +215,7 @@ pub async fn create_test_user_with_email(pool: &sqlx::PgPool, prefix: &str) -> (
 
 /// Delete a test user by ID.
 pub async fn delete_test_user(pool: &sqlx::PgPool, user_id: UserId) {
-    sqlx::query("DELETE FROM users WHERE id = $1")
-        .bind(user_id.inner())
+    sqlx::query!("DELETE FROM users WHERE id = $1", user_id.inner())
         .execute(pool)
         .await
         .ok();

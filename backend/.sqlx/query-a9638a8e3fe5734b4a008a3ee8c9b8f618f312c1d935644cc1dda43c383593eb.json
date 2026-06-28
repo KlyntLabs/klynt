@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO role_permissions (role_id, permission_id)\n        SELECT r.id, p.id\n        FROM tenant_roles r\n        CROSS JOIN permissions p\n        WHERE r.tenant_id = $1 AND r.is_system = TRUE\n          AND (\n              (r.name = 'owner')\n              OR (r.name = 'admin' AND p.name NOT IN ('tenant.delete'))\n              OR (r.name = 'member' AND p.name IN ('tenant.view', 'content.view', 'content.create', 'content.edit'))\n              OR (r.name = 'guest' AND p.name IN ('tenant.view', 'content.view'))\n          )\n        ON CONFLICT (role_id, permission_id) DO NOTHING\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a9638a8e3fe5734b4a008a3ee8c9b8f618f312c1d935644cc1dda43c383593eb"
+}

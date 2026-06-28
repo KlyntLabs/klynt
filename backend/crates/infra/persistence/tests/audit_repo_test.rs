@@ -42,12 +42,13 @@ async fn audit_event_with_ip_round_trips_through_postgres() {
 
     repo.log(&ctx, event).await.unwrap();
 
-    let stored_ip: String =
-        sqlx::query_scalar("SELECT host(actor_ip_address) FROM audit_events WHERE id = $1")
-            .bind(event_id)
-            .fetch_one(&pool)
-            .await
-            .unwrap();
+    let stored_ip: String = sqlx::query_scalar!(
+        r#"SELECT host(actor_ip_address) AS "host!" FROM audit_events WHERE id = $1"#,
+        event_id
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap();
 
     assert_eq!(stored_ip, "192.168.1.1");
 }
@@ -67,12 +68,13 @@ async fn audit_event_with_ipv6_round_trips_through_postgres() {
 
     repo.log(&ctx, event).await.unwrap();
 
-    let stored_ip: String =
-        sqlx::query_scalar("SELECT host(actor_ip_address) FROM audit_events WHERE id = $1")
-            .bind(event_id)
-            .fetch_one(&pool)
-            .await
-            .unwrap();
+    let stored_ip: String = sqlx::query_scalar!(
+        r#"SELECT host(actor_ip_address) AS "host!" FROM audit_events WHERE id = $1"#,
+        event_id
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap();
 
     assert_eq!(stored_ip, "2001:db8::1");
 }
@@ -91,10 +93,10 @@ async fn audit_event_without_ip_inserts_null_inet() {
 
     repo.log(&ctx, event).await.unwrap();
 
-    let stored_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM audit_events WHERE id = $1 AND actor_ip_address IS NULL",
+    let stored_count: i64 = sqlx::query_scalar!(
+        r#"SELECT COUNT(*) AS "count!" FROM audit_events WHERE id = $1 AND actor_ip_address IS NULL"#,
+        event_id
     )
-    .bind(event_id)
     .fetch_one(&pool)
     .await
     .unwrap();

@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                user_id as \"user_id!\",\n                kind as \"kind!\",\n                pair_id,\n                expires_at as \"expires_at!\",\n                tenant_memberships as \"tenant_memberships: Json<Vec<MembershipSnapshot>>\"\n            FROM sessions\n            WHERE token = $1\n              AND expires_at > NOW()\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id!",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "kind!",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "pair_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "expires_at!",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 4,
+        "name": "tenant_memberships: Json<Vec<MembershipSnapshot>>",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "165f18a561b2da859e7b642a3d536b96f9baa892e6f2fba8cdb6574a4e57413e"
+}

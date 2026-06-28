@@ -33,30 +33,30 @@ async fn setup_fixture() -> BenchFixture {
     let tenant_slug = format!("bench-{bench_suffix}");
     let owner_id = Uuid::new_v4();
 
-    sqlx::query(
+    sqlx::query!(
         r#"
         INSERT INTO users (id, email, username, name, password_hash, status, terms_accepted_at, terms_version)
         VALUES ($1, $2, $3, 'Benchmark Owner', 'not-a-real-hash', 'active', NOW(), '1.0')
         ON CONFLICT (email) DO NOTHING
         "#,
+        owner_id,
+        format!("bench-owner-{tenant_slug}@example.com"),
+        format!("bench-owner-{tenant_slug}"),
     )
-    .bind(owner_id)
-    .bind(format!("bench-owner-{tenant_slug}@example.com"))
-    .bind(format!("bench-owner-{tenant_slug}"))
     .execute(&pool)
     .await
     .unwrap();
 
-    sqlx::query(
+    sqlx::query!(
         r#"
         INSERT INTO tenants (id, name, slug, owner_id)
         VALUES ($1, 'Benchmark Tenant', $2, $3)
         ON CONFLICT (slug) DO NOTHING
         "#,
+        tenant_id.0,
+        &tenant_slug,
+        owner_id,
     )
-    .bind(tenant_id.0)
-    .bind(&tenant_slug)
-    .bind(owner_id)
     .execute(&pool)
     .await
     .unwrap();
@@ -65,15 +65,15 @@ async fn setup_fixture() -> BenchFixture {
     for i in 0..128 {
         let id = PermissionId::from_uuid(Uuid::new_v4());
         let name = format!("bench.permission.{}", i);
-        let result = sqlx::query(
+        let result = sqlx::query!(
             r#"
             INSERT INTO permissions (id, name, description, category)
             VALUES ($1, $2, 'benchmark permission', 'platform')
             ON CONFLICT (name) DO NOTHING
             "#,
+            id.0,
+            &name,
         )
-        .bind(id.0)
-        .bind(&name)
         .execute(&pool)
         .await
         .unwrap();
@@ -98,25 +98,25 @@ async fn setup_fixture() -> BenchFixture {
 }
 
 async fn teardown_fixture(fixture: &BenchFixture) {
-    sqlx::query("DELETE FROM tenant_roles WHERE tenant_id = $1")
-        .bind(fixture.tenant_id.0)
+    sqlx::query!(
+        "DELETE FROM tenant_roles WHERE tenant_id = $1",
+        fixture.tenant_id.0,
+    )
+    .execute(&fixture.pool)
+    .await
+    .unwrap();
+
+    sqlx::query!("DELETE FROM tenants WHERE id = $1", fixture.tenant_id.0,)
         .execute(&fixture.pool)
         .await
         .unwrap();
 
-    sqlx::query("DELETE FROM tenants WHERE id = $1")
-        .bind(fixture.tenant_id.0)
+    sqlx::query!("DELETE FROM users WHERE id = $1", fixture.owner_id,)
         .execute(&fixture.pool)
         .await
         .unwrap();
 
-    sqlx::query("DELETE FROM users WHERE id = $1")
-        .bind(fixture.owner_id)
-        .execute(&fixture.pool)
-        .await
-        .unwrap();
-
-    sqlx::query("DELETE FROM permissions WHERE name LIKE 'bench.permission.%'")
+    sqlx::query!("DELETE FROM permissions WHERE name LIKE 'bench.permission.%'")
         .execute(&fixture.pool)
         .await
         .unwrap();
@@ -179,8 +179,7 @@ fn bench_role_create(c: &mut Criterion) {
                             repo.create_role(&ctx, role).await.unwrap();
                             // Delete the role immediately so the table size
                             // stays stable across iterations.
-                            sqlx::query("DELETE FROM tenant_roles WHERE id = $1")
-                                .bind(role_id)
+                            sqlx::query!("DELETE FROM tenant_roles WHERE id = $1", role_id,)
                                 .execute(&pool)
                                 .await
                                 .unwrap();

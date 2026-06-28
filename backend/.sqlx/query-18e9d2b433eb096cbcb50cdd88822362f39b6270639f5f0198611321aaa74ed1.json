@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM permissions WHERE name LIKE 'bench.permission.%'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "18e9d2b433eb096cbcb50cdd88822362f39b6270639f5f0198611321aaa74ed1"
+}

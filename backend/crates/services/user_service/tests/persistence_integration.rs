@@ -44,7 +44,7 @@ async fn user_repository_round_trips_with_postgres() {
 
     let username = email.split('@').next().unwrap().to_string();
 
-    sqlx::query(
+    sqlx::query!(
         r#"
         INSERT INTO users (
             id, email, username, name, password_hash,
@@ -54,19 +54,19 @@ async fn user_repository_round_trips_with_postgres() {
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         "#,
+        user_id.inner(),
+        &email,
+        &username,
+        "Ada",
+        "hash",
+        "active",
+        Option::<chrono::DateTime<Utc>>::None,
+        Option::<String>::None,
+        Utc::now(),
+        "1.0",
+        "student",
+        Option::<uuid::Uuid>::None,
     )
-    .bind(user_id.inner())
-    .bind(&email)
-    .bind(&username)
-    .bind("Ada")
-    .bind("hash")
-    .bind("active")
-    .bind::<Option<chrono::DateTime<Utc>>>(None)
-    .bind::<Option<String>>(None)
-    .bind(Utc::now())
-    .bind("1.0")
-    .bind("student")
-    .bind::<Option<uuid::Uuid>>(None)
     .execute(&pool)
     .await
     .unwrap();

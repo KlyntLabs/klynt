@@ -25,8 +25,7 @@ async fn setup_pool() -> Option<sqlx::PgPool> {
 
 async fn cleanup_test_data(pool: &sqlx::PgPool, user_ids: &[domain::UserId]) {
     for user_id in user_ids {
-        sqlx::query("DELETE FROM users WHERE id = $1")
-            .bind(user_id.inner())
+        sqlx::query!(r#"DELETE FROM users WHERE id = $1"#, user_id.inner())
             .execute(pool)
             .await
             .ok();

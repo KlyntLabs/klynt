@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE tenants\n            SET slug = $1, name = $2, owner_id = $3, max_members = $4, max_owners = $5, settings = $6, status = $7, updated_at = $8\n            WHERE id = $9\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Varchar",
+        "Uuid",
+        "Int4",
+        "Int4",
+        "Jsonb",
+        "Varchar",
+        "Timestamptz",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3fe6c50427bc6d006f4ab0e572c03eb92a06e4adc9e741c9092fb188adb8d9ce"
+}

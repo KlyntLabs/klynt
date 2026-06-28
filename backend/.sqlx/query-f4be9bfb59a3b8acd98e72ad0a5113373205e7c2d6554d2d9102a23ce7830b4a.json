@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO tenant_roles (tenant_id, name, description, is_system, is_custom)\n        VALUES\n            ($1, 'owner', 'Full control over the tenant', TRUE, FALSE),\n            ($1, 'admin', 'Can manage tenant settings, members, and roles', TRUE, FALSE),\n            ($1, 'member', 'Base tenant access', TRUE, FALSE),\n            ($1, 'guest', 'Limited read-only access', TRUE, FALSE)\n        ON CONFLICT (tenant_id, name) DO NOTHING\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f4be9bfb59a3b8acd98e72ad0a5113373205e7c2d6554d2d9102a23ce7830b4a"
+}

@@ -61,30 +61,31 @@ impl RoleRepository for PgRoleRepository {
         _ctx: &ExecutionContext,
         tenant_id: TenantId,
     ) -> DomainResult<Vec<TenantRoleAggregate>> {
-        let rows: Vec<RoleRow> = sqlx::query_as(
+        let rows: Vec<RoleRow> = sqlx::query_as!(
+            RoleRow,
             r#"
             SELECT
                 r.id,
                 r.tenant_id,
                 r.name,
-                r.description,
+                r.description AS "description!",
                 r.is_custom,
                 r.is_system,
                 r.created_at,
                 r.updated_at,
                 COALESCE(
-                    array_agg(rp.permission_id)
+                    array_agg(rp.permission_id ORDER BY rp.permission_id)
                     FILTER (WHERE rp.permission_id IS NOT NULL),
                     '{}'
-                ) AS permission_ids
+                ) AS "permission_ids!"
             FROM tenant_roles r
             LEFT JOIN role_permissions rp ON rp.role_id = r.id
             WHERE r.tenant_id = $1
             GROUP BY r.id
             ORDER BY r.is_system DESC, r.name
             "#,
+            tenant_id.inner()
         )
-        .bind(tenant_id.inner())
         .fetch_all(&self.pool)
         .await
         .map_err(DomainError::internal)?;
@@ -100,30 +101,31 @@ impl RoleRepository for PgRoleRepository {
         tenant_id: TenantId,
         name: &str,
     ) -> DomainResult<Option<TenantRoleAggregate>> {
-        let row: Option<RoleRow> = sqlx::query_as(
+        let row: Option<RoleRow> = sqlx::query_as!(
+            RoleRow,
             r#"
             SELECT
                 r.id,
                 r.tenant_id,
                 r.name,
-                r.description,
+                r.description AS "description!",
                 r.is_custom,
                 r.is_system,
                 r.created_at,
                 r.updated_at,
                 COALESCE(
-                    array_agg(rp.permission_id)
+                    array_agg(rp.permission_id ORDER BY rp.permission_id)
                     FILTER (WHERE rp.permission_id IS NOT NULL),
                     '{}'
-                ) AS permission_ids
+                ) AS "permission_ids!"
             FROM tenant_roles r
             LEFT JOIN role_permissions rp ON rp.role_id = r.id
             WHERE r.tenant_id = $1 AND r.name = $2
             GROUP BY r.id
             "#,
+            tenant_id.inner(),
+            name
         )
-        .bind(tenant_id.inner())
-        .bind(name)
         .fetch_optional(&self.pool)
         .await
         .map_err(DomainError::internal)?;
@@ -137,30 +139,31 @@ impl RoleRepository for PgRoleRepository {
         tenant_id: TenantId,
         role_id: RoleId,
     ) -> DomainResult<Option<TenantRoleAggregate>> {
-        let row: Option<RoleRow> = sqlx::query_as(
+        let row: Option<RoleRow> = sqlx::query_as!(
+            RoleRow,
             r#"
             SELECT
                 r.id,
                 r.tenant_id,
                 r.name,
-                r.description,
+                r.description AS "description!",
                 r.is_custom,
                 r.is_system,
                 r.created_at,
                 r.updated_at,
                 COALESCE(
-                    array_agg(rp.permission_id)
+                    array_agg(rp.permission_id ORDER BY rp.permission_id)
                     FILTER (WHERE rp.permission_id IS NOT NULL),
                     '{}'
-                ) AS permission_ids
+                ) AS "permission_ids!"
             FROM tenant_roles r
             LEFT JOIN role_permissions rp ON rp.role_id = r.id
             WHERE r.tenant_id = $1 AND r.id = $2
             GROUP BY r.id
             "#,
+            tenant_id.inner(),
+            role_id.0
         )
-        .bind(tenant_id.inner())
-        .bind(role_id.0)
         .fetch_optional(&self.pool)
         .await
         .map_err(DomainError::internal)?;
@@ -175,20 +178,20 @@ impl RoleRepository for PgRoleRepository {
     ) -> DomainResult<()> {
         let mut tx = self.pool.begin().await.map_err(DomainError::internal)?;
 
-        if let Err(err) = sqlx::query(
+        if let Err(err) = sqlx::query!(
             r#"
             INSERT INTO tenant_roles (id, tenant_id, name, description, is_custom, is_system, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             "#,
+            role.id.0,
+            role.tenant_id.inner(),
+            role.name,
+            role.description,
+            role.is_custom,
+            role.is_system,
+            role.created_at,
+            role.updated_at
         )
-        .bind(role.id.0)
-        .bind(role.tenant_id.inner())
-        .bind(&role.name)
-        .bind(&role.description)
-        .bind(role.is_custom)
-        .bind(role.is_system)
-        .bind(role.created_at)
-        .bind(role.updated_at)
         .execute(&mut *tx)
         .await
         {
@@ -213,15 +216,15 @@ impl RoleRepository for PgRoleRepository {
     ) -> DomainResult<()> {
         let mut tx = self.pool.begin().await.map_err(DomainError::internal)?;
 
-        let result = sqlx::query(
+        let result = sqlx::query!(
             r#"
             UPDATE tenant_roles
             SET updated_at = NOW()
             WHERE tenant_id = $1 AND id = $2
             "#,
+            tenant_id.inner(),
+            role_id.0
         )
-        .bind(tenant_id.inner())
-        .bind(role_id.0)
         .execute(&mut *tx)
         .await
         .map_err(DomainError::internal)?;
@@ -231,13 +234,13 @@ impl RoleRepository for PgRoleRepository {
             return Err(DomainError::not_found("role"));
         }
 
-        if let Err(err) = sqlx::query(
+        if let Err(err) = sqlx::query!(
             r#"
             DELETE FROM role_permissions
             WHERE role_id = $1
             "#,
+            role_id.0
         )
-        .bind(role_id.0)
         .execute(&mut *tx)
         .await
         {
@@ -259,14 +262,14 @@ impl RoleRepository for PgRoleRepository {
         tenant_id: TenantId,
         role_id: RoleId,
     ) -> DomainResult<()> {
-        let result = sqlx::query(
+        let result = sqlx::query!(
             r#"
             DELETE FROM tenant_roles
             WHERE tenant_id = $1 AND id = $2 AND is_system = FALSE
             "#,
+            tenant_id.inner(),
+            role_id.0
         )
-        .bind(tenant_id.inner())
-        .bind(role_id.0)
         .execute(&self.pool)
         .await
         .map_err(DomainError::internal)?;
@@ -275,15 +278,15 @@ impl RoleRepository for PgRoleRepository {
             return Ok(());
         }
 
-        let is_system: Option<bool> = sqlx::query_scalar(
+        let is_system: Option<bool> = sqlx::query_scalar!(
             r#"
-            SELECT is_system
+            SELECT is_system AS "is_system!"
             FROM tenant_roles
             WHERE tenant_id = $1 AND id = $2
             "#,
+            tenant_id.inner(),
+            role_id.0
         )
-        .bind(tenant_id.inner())
-        .bind(role_id.0)
         .fetch_optional(&self.pool)
         .await
         .map_err(DomainError::internal)?;
@@ -314,14 +317,14 @@ async fn insert_role_permissions(
     let role_ids: Vec<uuid::Uuid> =
         std::iter::repeat_n(role_id.0, permission_uuids.len()).collect();
 
-    sqlx::query(
+    sqlx::query!(
         r#"
         INSERT INTO role_permissions (role_id, permission_id)
         SELECT * FROM UNNEST($1::uuid[], $2::uuid[])
         "#,
+        role_ids.as_slice(),
+        permission_uuids.as_slice()
     )
-    .bind(role_ids)
-    .bind(permission_uuids)
     .execute(&mut **tx)
     .await
     .map_err(map_role_db_error)?;

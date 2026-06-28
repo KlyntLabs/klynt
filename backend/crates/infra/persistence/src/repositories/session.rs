@@ -31,16 +31,19 @@ impl PgSessionStore {
         _ctx: &ExecutionContext,
         user_id: UserId,
     ) -> Result<Vec<SessionToken>, SessionError> {
-        let rows: Vec<(Uuid,)> =
-            sqlx::query_as("SELECT token FROM sessions WHERE user_id = $1 AND expires_at > NOW()")
-                .bind(user_id.inner())
-                .fetch_all(&self.pool)
-                .await?;
+        let rows = sqlx::query!(
+            r#"
+            SELECT token as "token!"
+            FROM sessions
+            WHERE user_id = $1
+              AND expires_at > NOW()
+            "#,
+            user_id.inner()
+        )
+        .fetch_all(&self.pool)
+        .await?;
 
-        Ok(rows
-            .into_iter()
-            .map(|(token,)| SessionToken(token))
-            .collect())
+        Ok(rows.into_iter().map(|r| SessionToken(r.token)).collect())
     }
 
     /// Resolve the bearer token for an active session owned by `user_id`.
@@ -53,21 +56,21 @@ impl PgSessionStore {
         user_id: UserId,
         session_id: Uuid,
     ) -> Result<SessionToken, SessionError> {
-        let row: Option<(Uuid,)> = sqlx::query_as(
+        let row = sqlx::query!(
             r#"
-            SELECT token
+            SELECT token as "token!"
             FROM sessions
             WHERE id = $1
               AND user_id = $2
               AND expires_at > NOW()
             "#,
+            session_id,
+            user_id.inner()
         )
-        .bind(session_id)
-        .bind(user_id.inner())
         .fetch_optional(&self.pool)
         .await?;
 
-        row.map(|(token,)| SessionToken(token))
+        row.map(|r| SessionToken(r.token))
             .ok_or(SessionError::Forbidden)
     }
 }
@@ -84,17 +87,17 @@ impl SessionStore for PgSessionStore {
     ) -> Result<SessionToken, SessionError> {
         let token = SessionToken::new();
 
-        sqlx::query(
+        sqlx::query!(
             r#"
             INSERT INTO sessions (token, user_id, kind, pair_id, expires_at)
             VALUES ($1, $2, $3, $4, $5)
             "#,
+            token.0,
+            user_id.inner(),
+            kind.as_str(),
+            pair_id,
+            expires_at
         )
-        .bind(token.0)
-        .bind(user_id.0)
-        .bind(kind.as_str())
-        .bind(pair_id)
-        .bind(expires_at)
         .execute(&self.pool)
         .await?;
 
@@ -106,32 +109,31 @@ impl SessionStore for PgSessionStore {
         _ctx: &ExecutionContext,
         token: &SessionToken,
     ) -> Result<Option<Session>, SessionError> {
-        let row: Option<(
-            Uuid,
-            String,
-            Option<Uuid>,
-            DateTime<Utc>,
-            Json<Vec<MembershipSnapshot>>,
-        )> = sqlx::query_as(
+        let row = sqlx::query!(
             r#"
-            SELECT user_id, kind, pair_id, expires_at, tenant_memberships
+            SELECT
+                user_id as "user_id!",
+                kind as "kind!",
+                pair_id,
+                expires_at as "expires_at!",
+                tenant_memberships as "tenant_memberships: Json<Vec<MembershipSnapshot>>"
             FROM sessions
             WHERE token = $1
               AND expires_at > NOW()
             "#,
+            token.0
         )
-        .bind(token.0)
         .fetch_optional(&self.pool)
         .await?;
 
         match row {
-            Some((user_id, kind, pair_id, expires_at, memberships)) => Ok(Some(Session {
-                user_id: UserId(user_id),
-                expires_at,
-                kind: SessionKind::try_from(kind.as_str())
+            Some(r) => Ok(Some(Session {
+                user_id: UserId(r.user_id),
+                expires_at: r.expires_at,
+                kind: SessionKind::try_from(r.kind.as_str())
                     .map_err(|e| SessionError::Internal(format!("invalid session kind: {e}")))?,
-                pair_id,
-                tenant_memberships: memberships.0,
+                pair_id: r.pair_id,
+                tenant_memberships: r.tenant_memberships.0,
             })),
             None => Ok(None),
         }
@@ -142,13 +144,13 @@ impl SessionStore for PgSessionStore {
         _ctx: &ExecutionContext,
         token: &SessionToken,
     ) -> Result<(), SessionError> {
-        sqlx::query(
+        sqlx::query!(
             r#"
             DELETE FROM sessions
             WHERE token = $1
             "#,
+            token.0
         )
-        .bind(token.0)
         .execute(&self.pool)
         .await?;
 
@@ -161,15 +163,15 @@ impl SessionStore for PgSessionStore {
         pair_id: Uuid,
         except_token: &SessionToken,
     ) -> Result<(), SessionError> {
-        sqlx::query(
+        sqlx::query!(
             r#"
             DELETE FROM sessions
             WHERE pair_id = $1
               AND token <> $2
             "#,
+            pair_id,
+            except_token.0
         )
-        .bind(pair_id)
-        .bind(except_token.0)
         .execute(&self.pool)
         .await?;
 
@@ -181,30 +183,33 @@ impl SessionStore for PgSessionStore {
         _ctx: &ExecutionContext,
         user_id: UserId,
     ) -> Result<Vec<SessionSummary>, SessionError> {
-        let rows: Vec<(Uuid, Uuid, String, DateTime<Utc>, DateTime<Utc>)> = sqlx::query_as(
+        let rows = sqlx::query!(
             r#"
-            SELECT id, user_id, kind, created_at, expires_at
+            SELECT
+                id as "id!",
+                user_id as "user_id!",
+                kind as "kind!",
+                created_at as "created_at!",
+                expires_at as "expires_at!"
             FROM sessions
             WHERE user_id = $1
               AND expires_at > NOW()
             ORDER BY created_at DESC
             "#,
+            user_id.inner()
         )
-        .bind(user_id.inner())
         .fetch_all(&self.pool)
         .await?;
 
         Ok(rows
             .into_iter()
-            .map(
-                |(id, user_id, kind, created_at, expires_at)| SessionSummary {
-                    id,
-                    user_id: UserId(user_id),
-                    kind,
-                    created_at,
-                    expires_at,
-                },
-            )
+            .map(|r| SessionSummary {
+                id: r.id,
+                user_id: UserId(r.user_id),
+                kind: r.kind,
+                created_at: r.created_at,
+                expires_at: r.expires_at,
+            })
             .collect())
     }
 
@@ -226,11 +231,13 @@ impl SessionStore for PgSessionStore {
         token: &SessionToken,
         memberships: Vec<MembershipSnapshot>,
     ) -> Result<(), SessionError> {
-        sqlx::query("UPDATE sessions SET tenant_memberships = $1 WHERE token = $2")
-            .bind(Json(memberships))
-            .bind(token.0)
-            .execute(&self.pool)
-            .await?;
+        sqlx::query!(
+            "UPDATE sessions SET tenant_memberships = $1 WHERE token = $2",
+            Json(memberships) as _,
+            token.0
+        )
+        .execute(&self.pool)
+        .await?;
         Ok(())
     }
 
@@ -240,14 +247,14 @@ impl SessionStore for PgSessionStore {
         user_id: UserId,
         membership: MembershipSnapshot,
     ) -> Result<(), SessionError> {
-        sqlx::query(
+        sqlx::query!(
             r#"
             UPDATE sessions
             SET tenant_memberships = COALESCE(
                 (
                     SELECT jsonb_agg(
                         CASE
-                            WHEN (elem->>'tenant_id')::uuid = ($1->>'tenant_id')::uuid
+                            WHEN (elem->>'tenant_id')::uuid = ($1::jsonb->>'tenant_id')::uuid
                             THEN $1
                             ELSE elem
                         END
@@ -259,16 +266,16 @@ impl SessionStore for PgSessionStore {
                 WHEN EXISTS (
                     SELECT 1
                     FROM jsonb_array_elements(tenant_memberships) AS elem
-                    WHERE (elem->>'tenant_id')::uuid = ($1->>'tenant_id')::uuid
+                    WHERE (elem->>'tenant_id')::uuid = ($1::jsonb->>'tenant_id')::uuid
                 )
                 THEN '[]'::jsonb
                 ELSE $1
             END
             WHERE user_id = $2 AND expires_at > NOW()
             "#,
+            Json(membership) as _,
+            user_id.inner()
         )
-        .bind(Json(membership))
-        .bind(user_id.inner())
         .execute(&self.pool)
         .await?;
         Ok(())
@@ -280,7 +287,7 @@ impl SessionStore for PgSessionStore {
         user_id: UserId,
         membership: MembershipSnapshot,
     ) -> Result<(), SessionError> {
-        sqlx::query(
+        sqlx::query!(
             r#"
             UPDATE sessions
             SET tenant_memberships = (
@@ -295,10 +302,10 @@ impl SessionStore for PgSessionStore {
             )
             WHERE user_id = $3 AND expires_at > NOW()
             "#,
+            membership.tenant_id,
+            membership.role.as_str(),
+            user_id.inner()
         )
-        .bind(membership.tenant_id)
-        .bind(membership.role.as_str())
-        .bind(user_id.inner())
         .execute(&self.pool)
         .await?;
         Ok(())
@@ -310,7 +317,7 @@ impl SessionStore for PgSessionStore {
         user_id: UserId,
         tenant_id: domain::TenantId,
     ) -> Result<(), SessionError> {
-        sqlx::query(
+        sqlx::query!(
             r#"
             UPDATE sessions
             SET tenant_memberships = (
@@ -320,9 +327,9 @@ impl SessionStore for PgSessionStore {
             )
             WHERE user_id = $2 AND expires_at > NOW()
             "#,
+            tenant_id.inner(),
+            user_id.inner()
         )
-        .bind(tenant_id.inner())
-        .bind(user_id.inner())
         .execute(&self.pool)
         .await?;
         Ok(())

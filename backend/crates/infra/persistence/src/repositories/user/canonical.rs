@@ -17,18 +17,20 @@ impl UserRepository for PgUserRepository {
         _ctx: &ExecutionContext,
         email: &Email,
     ) -> Result<Option<User>, RepositoryError> {
-        let row: Option<UserRow> = sqlx::query_as(
+        let row: Option<UserRow> = sqlx::query_as!(
+            UserRow,
             r#"
             SELECT
                 id, email, username, name, password_hash,
                 status, email_verified_at, global_role,
                 created_at, updated_at, terms_accepted_at, terms_version,
-                role, institution_id
+                role, institution_id,
+                deleted_at
             FROM users
-            WHERE email = $1
+            WHERE email = $1 AND deleted_at IS NULL
             "#,
+            email.as_str()
         )
-        .bind(email.as_str())
         .fetch_optional(&self.pool)
         .await?;
 
@@ -40,7 +42,8 @@ impl UserRepository for PgUserRepository {
         _ctx: &ExecutionContext,
         id: UserId,
     ) -> Result<Option<User>, RepositoryError> {
-        let row: Option<UserRow> = sqlx::query_as(
+        let row: Option<UserRow> = sqlx::query_as!(
+            UserRow,
             r#"
             SELECT
                 id, email, username, name, password_hash,
@@ -51,8 +54,8 @@ impl UserRepository for PgUserRepository {
             FROM users
             WHERE id = $1
             "#,
+            id.0
         )
-        .bind(id.0)
         .fetch_optional(&self.pool)
         .await?;
 
@@ -89,7 +92,7 @@ impl UserRepository for PgUserRepository {
             deleted_at: None,
         };
 
-        let inserted = sqlx::query_scalar::<_, uuid::Uuid>(
+        let inserted = sqlx::query_scalar!(
             r#"
             INSERT INTO users (
                 id, email, username, name, password_hash,
@@ -99,23 +102,23 @@ impl UserRepository for PgUserRepository {
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
             ON CONFLICT (email) DO NOTHING
-            RETURNING id
+            RETURNING id AS "id!"
             "#,
+            user.id.0,
+            user.email.as_str(),
+            &user.username,
+            user.full_name.as_deref().unwrap_or(""),
+            &user.password_hash,
+            status_to_db(user.status).as_str(),
+            None::<DateTime<Utc>>,
+            None::<String>,
+            user.created_at,
+            user.updated_at,
+            user.terms_accepted_at,
+            &user.terms_version,
+            role_to_db(user.role).as_str(),
+            user.institution_id
         )
-        .bind(user.id.0)
-        .bind(user.email.as_str())
-        .bind(&user.username)
-        .bind(user.full_name.as_deref().unwrap_or(""))
-        .bind(&user.password_hash)
-        .bind(status_to_db(user.status).as_str())
-        .bind(None::<DateTime<Utc>>)
-        .bind(None::<String>)
-        .bind(user.created_at)
-        .bind(user.updated_at)
-        .bind(user.terms_accepted_at)
-        .bind(&user.terms_version)
-        .bind(role_to_db(user.role).as_str())
-        .bind(user.institution_id)
         .fetch_optional(&self.pool)
         .await?;
 
@@ -134,14 +137,14 @@ impl UserRepository for PgUserRepository {
         _ctx: &ExecutionContext,
         user_id: UserId,
     ) -> Result<(), RepositoryError> {
-        let result = sqlx::query(
+        let result = sqlx::query!(
             r#"
             UPDATE users
             SET status = 'active', email_verified_at = NOW()
             WHERE id = $1
             "#,
+            user_id.0
         )
-        .bind(user_id.0)
         .execute(&self.pool)
         .await?;
 
@@ -157,15 +160,15 @@ impl UserRepository for PgUserRepository {
         user_id: UserId,
         password_hash: String,
     ) -> Result<(), RepositoryError> {
-        let result = sqlx::query(
+        let result = sqlx::query!(
             r#"
             UPDATE users
             SET password_hash = $1
             WHERE id = $2
             "#,
+            &password_hash,
+            user_id.0
         )
-        .bind(&password_hash)
-        .bind(user_id.0)
         .execute(&self.pool)
         .await?;
 
@@ -176,7 +179,7 @@ impl UserRepository for PgUserRepository {
     }
 
     async fn update(&self, _ctx: &ExecutionContext, user: User) -> Result<User, RepositoryError> {
-        let result = sqlx::query(
+        let result = sqlx::query!(
             r#"
             UPDATE users
             SET
@@ -193,18 +196,18 @@ impl UserRepository for PgUserRepository {
                 updated_at = NOW()
             WHERE id = $11
             "#,
+            &user.username,
+            user.full_name.as_deref().unwrap_or(""),
+            status_to_db(user.status).as_str(),
+            role_to_db(user.role).as_str(),
+            &user.password_hash,
+            user.global_role.map(|r| r.as_str()),
+            user.email_verified_at,
+            user.institution_id,
+            user.terms_accepted_at,
+            &user.terms_version,
+            user.id.0
         )
-        .bind(&user.username)
-        .bind(user.full_name.as_deref().unwrap_or(""))
-        .bind(status_to_db(user.status).as_str())
-        .bind(role_to_db(user.role).as_str())
-        .bind(&user.password_hash)
-        .bind(user.global_role.map(|r| r.as_str()))
-        .bind(user.email_verified_at)
-        .bind(user.institution_id)
-        .bind(user.terms_accepted_at)
-        .bind(&user.terms_version)
-        .bind(user.id.0)
         .execute(&self.pool)
         .await?;
 
@@ -219,14 +222,14 @@ impl UserRepository for PgUserRepository {
         _ctx: &ExecutionContext,
         user_id: UserId,
     ) -> Result<(), RepositoryError> {
-        let result = sqlx::query(
+        let result = sqlx::query!(
             r#"
             UPDATE users
             SET deleted_at = NOW()
             WHERE id = $1 AND deleted_at IS NULL
             "#,
+            user_id.0
         )
-        .bind(user_id.0)
         .execute(&self.pool)
         .await?;
 
@@ -241,7 +244,8 @@ impl UserRepository for PgUserRepository {
         _ctx: &ExecutionContext,
         pagination: PaginationRequest,
     ) -> Result<(Vec<User>, u64), RepositoryError> {
-        let rows: Vec<UserRow> = sqlx::query_as(
+        let rows: Vec<UserRow> = sqlx::query_as!(
+            UserRow,
             r#"
             SELECT
                 id, email, username, name, password_hash,
@@ -254,18 +258,18 @@ impl UserRepository for PgUserRepository {
             ORDER BY created_at DESC, id DESC
             LIMIT $1 OFFSET $2
             "#,
+            pagination.page_size as i64,
+            pagination.offset() as i64
         )
-        .bind(pagination.page_size as i64)
-        .bind(pagination.offset() as i64)
         .fetch_all(&self.pool)
         .await?;
 
-        let total: i64 = sqlx::query_scalar(
+        let total: i64 = sqlx::query_scalar!(
             r#"
-            SELECT COUNT(*)
+            SELECT COUNT(*) AS "count!"
             FROM users
             WHERE deleted_at IS NULL
-            "#,
+            "#
         )
         .fetch_one(&self.pool)
         .await?;
