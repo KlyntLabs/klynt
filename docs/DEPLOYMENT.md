@@ -150,6 +150,119 @@ VITE_API_BASE_URL=http://<backend-fqdn>/api/v1
 
 Use `coolify app env create <app-uuid> --key <KEY> --value <VALUE>`.
 
+## CI/CD (GitHub Actions)
+
+The repository now uses GitHub Actions for continuous integration and branch-based deployments to Coolify.
+
+### Branch → Environment Mapping
+
+| Branch | Environment | Deploy Trigger |
+|---|---|---|
+| `dev` | dev | Auto on push to `dev` |
+| `staging` | staging | Auto on push to `staging`, requires reviewer approval |
+| `main` | production | Auto on push to `main`, requires reviewer approval |
+
+### Workflows
+
+- `.github/workflows/ci.yml` — lint, typecheck, tests, build, security scans on PRs and pushes.
+- `.github/workflows/deploy-dev.yml` — deploys the `dev` environment.
+- `.github/workflows/deploy-staging.yml` — deploys the `staging` environment.
+- `.github/workflows/deploy-production.yml` — deploys the `production` environment.
+- `.github/workflows/reusable-deploy.yml` — shared deployment logic (env sync, restart, health checks, notifications).
+- `.github/workflows/health-check.yml` — reusable HTTP polling health check.
+- `.github/workflows/rollback.yml` — manual rollback to a previous commit for any environment.
+
+### Required GitHub Setup
+
+#### Environments
+
+Create three GitHub Environments under **Settings → Environments**:
+
+1. **dev**
+   - Deployment branches: `dev`
+   - No required reviewers.
+2. **staging**
+   - Deployment branches: `staging`
+   - Required reviewers: at least 1.
+3. **production**
+   - Deployment branches: `main`
+   - Required reviewers: at least 1 (ideally 2).
+   - Optional: enable a 5-minute wait timer.
+
+#### Repository Secrets (single-instance)
+
+| Secret | Purpose |
+|---|---|
+| `COOLIFY_TOKEN` | Coolify Cloud API token |
+| `COOLIFY_FQDN` | `https://app.coolify.io` |
+| `SLACK_WEBHOOK_URL` | Optional deploy notification webhook |
+
+#### Repository Variables (single-instance)
+
+| Variable | Example |
+|---|---|
+| `COOLIFY_SERVER_UUID` | `toflj7qapme53gw5n67bm6un` |
+| `COOLIFY_GITHUB_APP_UUID` | `p12avcp3j63qm1gdmknsep5w` |
+| `DEV_BACKEND_APP_UUID` | Coolify backend app UUID for dev |
+| `DEV_FRONTEND_APP_UUID` | Coolify frontend app UUID for dev |
+| `DEV_BACKEND_HEALTH_URL` | `http://<dev-backend-fqdn>/health/ready` |
+| `DEV_FRONTEND_URL` | `http://<dev-frontend-fqdn>` |
+| `STAGING_BACKEND_APP_UUID` | ... |
+| `STAGING_FRONTEND_APP_UUID` | ... |
+| `STAGING_BACKEND_HEALTH_URL` | ... |
+| `STAGING_FRONTEND_URL` | ... |
+| `PRODUCTION_BACKEND_APP_UUID` | ... |
+| `PRODUCTION_FRONTEND_APP_UUID` | ... |
+| `PRODUCTION_BACKEND_HEALTH_URL` | ... |
+| `PRODUCTION_FRONTEND_URL` | ... |
+
+App UUIDs can be found with:
+
+```bash
+coolify app list --format json | jq -r '.[] | "\(.name) \(.uuid)"'
+```
+
+#### Environment Secrets (per environment)
+
+Add these under each GitHub Environment:
+
+- `DATABASE_URL`
+- `REDIS_URL`
+- `KLYNT_DATABASE_URL` (alias to `DATABASE_URL`)
+- `KLYNT_REDIS_URL` (alias to `REDIS_URL`)
+- `KLYNT_COOKIE_DOMAIN`
+- `KLYNT_COOKIE_SECURE` (`true` for staging/production)
+- `KLYNT_HSTS_ENABLED` (`true` once TLS is confirmed)
+- `KLYNT_BASE_URL`
+- `KLYNT_API__ALLOWED_ORIGINS`
+- `VITE_API_BASE_URL`
+- `VITE_APP_DOMAIN`
+- `VITE_APP_PROTOCOL`
+
+Environment-scoped secrets take precedence over repository secrets, so the same workflow can reference `${{ secrets.DATABASE_URL }}` and get the correct value for each environment.
+
+### How Deployment Works
+
+1. A push to `dev`, `staging`, or `main` triggers the matching deploy workflow.
+2. The workflow calls `reusable-deploy.yml` with the environment-specific app UUIDs and URLs.
+3. The reusable workflow:
+   - Installs and authenticates the Coolify CLI.
+   - Generates a `.env` file from the environment's secrets and variables.
+   - Syncs the `.env` to the backend and frontend Coolify apps.
+   - Restarts both apps.
+   - Polls `/health/ready` (backend) and HTTP 200 (frontend) until healthy.
+4. If health checks fail, the workflow fails and optionally posts to Slack.
+
+### Rollback
+
+Use **Actions → Rollback Deployment** and select the environment. It redeploys the previous successful commit by default, or a specific SHA if provided.
+
+### Important Rules
+
+- **Do not edit environment variables in the Coolify UI.** Always change them in GitHub Secrets/Variables and redeploy.
+- **Do not store secrets in this repository.** `gitleaks` runs on every PR/push.
+- **Branch protection**: require PR reviews and passing CI before merging to `dev`, `staging`, and `main`.
+
 ## Known Issues
 
 - The current Coolify CLI (v1.6.2) has a UUID-vs-numeric-ID mismatch for some GitHub App endpoints (`repos`, `delete`). Creating apps and listing apps works; the duplicate GitHub App entries can be ignored or removed through the web UI.

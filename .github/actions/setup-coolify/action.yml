@@ -1,0 +1,63 @@
+name: "Setup Coolify CLI"
+description: "Installs the Coolify CLI and authenticates against Coolify Cloud."
+
+inputs:
+  version:
+    description: "Coolify CLI version to install"
+    required: false
+    default: "1.6.2"
+  fqdn:
+    description: "Coolify instance FQDN"
+    required: true
+  token:
+    description: "Coolify API token"
+    required: true
+  context-name:
+    description: "Name for the Coolify CLI context"
+    required: false
+    default: "cloud"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Cache Coolify CLI
+      id: cache-coolify
+      uses: actions/cache@v4
+      with:
+        path: ~/.local/bin/coolify
+        key: coolify-cli-${{ runner.os }}-${{ inputs.version }}
+
+    - name: Install Coolify CLI
+      if: steps.cache-coolify.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        set -euo pipefail
+        mkdir -p "$HOME/.local/bin"
+        curl -fsSL "https://github.com/coollabsio/coolify-cli/releases/download/v${{ inputs.version }}/coolify-cli_${{ inputs.version }}_linux_amd64.tar.gz" -o /tmp/coolify.tar.gz
+        tar -xzf /tmp/coolify.tar.gz -C /tmp
+        mv /tmp/coolify "$HOME/.local/bin/coolify"
+        chmod +x "$HOME/.local/bin/coolify"
+        rm -f /tmp/coolify.tar.gz
+
+    - name: Add Coolify CLI to PATH
+      shell: bash
+      run: echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+    - name: Authenticate Coolify CLI
+      shell: bash
+      run: |
+        set -euo pipefail
+        mkdir -p "$HOME/.config/coolify"
+        cat > "$HOME/.config/coolify/config.json" <<EOF
+        {
+          "instances": [
+            {
+              "default": true,
+              "fqdn": "${{ inputs.fqdn }}",
+              "name": "${{ inputs.context-name }}",
+              "token": "${{ inputs.token }}"
+            }
+          ]
+        }
+        EOF
+        coolify context verify
