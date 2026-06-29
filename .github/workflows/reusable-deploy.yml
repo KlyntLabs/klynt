@@ -62,7 +62,7 @@ jobs:
           fqdn: ${{ vars.COOLIFY_FQDN || 'https://app.coolify.io' }}
           token: ${{ secrets.COOLIFY_TOKEN }}
 
-      - name: Generate and sync backend environment variables
+      - name: Sync backend environment variables
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           REDIS_URL: ${{ secrets.REDIS_URL }}
@@ -93,11 +93,10 @@ jobs:
           SQLX_OFFLINE: "true"
         run: |
           set -euo pipefail
-          chmod +x .github/scripts/generate-env.sh
-          .github/scripts/generate-env.sh backend.env backend
-          coolify app env sync "${{ steps.env_config.outputs.backend_uuid }}" --file backend.env
+          chmod +x .github/scripts/sync-env-vars.sh
+          .github/scripts/sync-env-vars.sh "${{ steps.env_config.outputs.backend_uuid }}" backend
 
-      - name: Generate and sync frontend environment variables
+      - name: Sync frontend environment variables
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
           VITE_APP_NAME: ${{ vars.VITE_APP_NAME || 'Klynt' }}
@@ -105,8 +104,7 @@ jobs:
           VITE_APP_PROTOCOL: ${{ secrets.VITE_APP_PROTOCOL || 'https' }}
         run: |
           set -euo pipefail
-          .github/scripts/generate-env.sh frontend.env frontend
-          coolify app env sync "${{ steps.env_config.outputs.frontend_uuid }}" --file frontend.env
+          .github/scripts/sync-env-vars.sh "${{ steps.env_config.outputs.frontend_uuid }}" frontend
 
       - name: Deploy backend
         run: |
