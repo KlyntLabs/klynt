@@ -30,10 +30,12 @@ runs:
     - name: Install Coolify CLI
       if: steps.cache-coolify.outputs.cache-hit != 'true'
       shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
       run: |
         set -euo pipefail
         mkdir -p "$HOME/.local/bin"
-        curl -fsSL "https://github.com/coollabsio/coolify-cli/releases/download/v${{ inputs.version }}/coolify-cli_${{ inputs.version }}_linux_amd64.tar.gz" -o /tmp/coolify.tar.gz
+        curl -fsSL "https://github.com/coollabsio/coolify-cli/releases/download/v${VERSION}/coolify-cli_${VERSION}_linux_amd64.tar.gz" -o /tmp/coolify.tar.gz
         tar -xzf /tmp/coolify.tar.gz -C /tmp
         mv /tmp/coolify "$HOME/.local/bin/coolify"
         chmod +x "$HOME/.local/bin/coolify"
@@ -45,6 +47,10 @@ runs:
 
     - name: Authenticate Coolify CLI
       shell: bash
+      env:
+        FQDN: ${{ inputs.fqdn }}
+        CONTEXT_NAME: ${{ inputs.context-name }}
+        TOKEN: ${{ inputs.token }}
       run: |
         set -euo pipefail
         mkdir -p "$HOME/.config/coolify"
@@ -53,9 +59,9 @@ runs:
           "instances": [
             {
               "default": true,
-              "fqdn": "${{ inputs.fqdn }}",
-              "name": "${{ inputs.context-name }}",
-              "token": "${{ inputs.token }}"
+              "fqdn": "${FQDN}",
+              "name": "${CONTEXT_NAME}",
+              "token": "${TOKEN}"
             }
           ]
         }

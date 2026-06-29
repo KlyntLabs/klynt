@@ -31,14 +31,21 @@ runs:
   steps:
     - name: Poll endpoint
       shell: bash
+      env:
+        URL: ${{ inputs.url }}
+        EXPECTED_STATUS: ${{ inputs.expected_status }}
+        TIMEOUT_SECONDS: ${{ inputs.timeout_seconds }}
+        INTERVAL_SECONDS: ${{ inputs.interval_seconds }}
+        JSON_PATH: ${{ inputs.expected_json_path }}
+        JSON_VALUE: ${{ inputs.expected_json_value }}
       run: |
         set -euo pipefail
-        url="${{ inputs.url }}"
-        expected="${{ inputs.expected_status }}"
-        timeout="${{ inputs.timeout_seconds }}"
-        interval="${{ inputs.interval_seconds }}"
-        json_path="${{ inputs.expected_json_path }}"
-        json_value="${{ inputs.expected_json_value }}"
+        url="${URL}"
+        expected="${EXPECTED_STATUS}"
+        timeout="${TIMEOUT_SECONDS}"
+        interval="${INTERVAL_SECONDS}"
+        json_path="${JSON_PATH}"
+        json_value="${JSON_VALUE}"
 
         elapsed=0
         while [[ $elapsed -lt $timeout ]]; do
