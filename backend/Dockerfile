@@ -67,14 +67,19 @@ RUN mkdir -p \
 # Build dependencies (this layer is cached unless Cargo manifests change)
 RUN cargo build --release --bin server
 
-# Now copy the real source code, config, and migrations
+# Now copy the real source code, config, migrations, and SQLx offline query cache.
 COPY crates ./crates
 COPY config ./config
 COPY migrations ./migrations
+COPY .sqlx ./.sqlx
 
 # Force Cargo to re-evaluate all local source files (Docker COPY preserves
 # original mtimes, so without this the stub library crates may stay cached).
 RUN find crates -type f -exec touch {} +
+
+# Use the committed SQLx offline cache so compile-time query checks do not
+# require a live database during the Docker build.
+ENV SQLX_OFFLINE=true
 
 # Build the release binary
 RUN cargo build --release --bin server
