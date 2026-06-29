@@ -34,31 +34,46 @@ jobs:
 
       - name: Resolve environment config
         id: env_config
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          DEV_BACKEND_UUID: ${{ vars.DEV_BACKEND_APP_UUID }}
+          DEV_FRONTEND_UUID: ${{ vars.DEV_FRONTEND_APP_UUID }}
+          DEV_BACKEND_HEALTH_URL: ${{ vars.DEV_BACKEND_HEALTH_URL }}
+          DEV_FRONTEND_URL: ${{ vars.DEV_FRONTEND_URL }}
+          STAGING_BACKEND_UUID: ${{ vars.STAGING_BACKEND_APP_UUID }}
+          STAGING_FRONTEND_UUID: ${{ vars.STAGING_FRONTEND_APP_UUID }}
+          STAGING_BACKEND_HEALTH_URL: ${{ vars.STAGING_BACKEND_HEALTH_URL }}
+          STAGING_FRONTEND_URL: ${{ vars.STAGING_FRONTEND_URL }}
+          PRODUCTION_BACKEND_UUID: ${{ vars.PRODUCTION_BACKEND_APP_UUID }}
+          PRODUCTION_FRONTEND_UUID: ${{ vars.PRODUCTION_FRONTEND_APP_UUID }}
+          PRODUCTION_BACKEND_HEALTH_URL: ${{ vars.PRODUCTION_BACKEND_HEALTH_URL }}
+          PRODUCTION_FRONTEND_URL: ${{ vars.PRODUCTION_FRONTEND_URL }}
         run: |
-          case "${{ inputs.environment }}" in
+          set -euo pipefail
+          case "$ENVIRONMENT" in
             dev)
-              backend_health_url="${{ vars.DEV_BACKEND_HEALTH_URL }}"
-              echo "backend_uuid=${{ vars.DEV_BACKEND_APP_UUID }}" >> "$GITHUB_OUTPUT"
-              echo "frontend_uuid=${{ vars.DEV_FRONTEND_APP_UUID }}" >> "$GITHUB_OUTPUT"
+              backend_health_url="$DEV_BACKEND_HEALTH_URL"
+              echo "backend_uuid=$DEV_BACKEND_UUID" >> "$GITHUB_OUTPUT"
+              echo "frontend_uuid=$DEV_FRONTEND_UUID" >> "$GITHUB_OUTPUT"
               echo "backend_health_url=${backend_health_url}" >> "$GITHUB_OUTPUT"
               echo "backend_url=${backend_health_url%/health/ready}" >> "$GITHUB_OUTPUT"
-              echo "frontend_url=${{ vars.DEV_FRONTEND_URL }}" >> "$GITHUB_OUTPUT"
+              echo "frontend_url=$DEV_FRONTEND_URL" >> "$GITHUB_OUTPUT"
               ;;
             staging)
-              backend_health_url="${{ vars.STAGING_BACKEND_HEALTH_URL }}"
-              echo "backend_uuid=${{ vars.STAGING_BACKEND_APP_UUID }}" >> "$GITHUB_OUTPUT"
-              echo "frontend_uuid=${{ vars.STAGING_FRONTEND_APP_UUID }}" >> "$GITHUB_OUTPUT"
+              backend_health_url="$STAGING_BACKEND_HEALTH_URL"
+              echo "backend_uuid=$STAGING_BACKEND_UUID" >> "$GITHUB_OUTPUT"
+              echo "frontend_uuid=$STAGING_FRONTEND_UUID" >> "$GITHUB_OUTPUT"
               echo "backend_health_url=${backend_health_url}" >> "$GITHUB_OUTPUT"
               echo "backend_url=${backend_health_url%/health/ready}" >> "$GITHUB_OUTPUT"
-              echo "frontend_url=${{ vars.STAGING_FRONTEND_URL }}" >> "$GITHUB_OUTPUT"
+              echo "frontend_url=$STAGING_FRONTEND_URL" >> "$GITHUB_OUTPUT"
               ;;
             production)
-              backend_health_url="${{ vars.PRODUCTION_BACKEND_HEALTH_URL }}"
-              echo "backend_uuid=${{ vars.PRODUCTION_BACKEND_APP_UUID }}" >> "$GITHUB_OUTPUT"
-              echo "frontend_uuid=${{ vars.PRODUCTION_FRONTEND_APP_UUID }}" >> "$GITHUB_OUTPUT"
+              backend_health_url="$PRODUCTION_BACKEND_HEALTH_URL"
+              echo "backend_uuid=$PRODUCTION_BACKEND_UUID" >> "$GITHUB_OUTPUT"
+              echo "frontend_uuid=$PRODUCTION_FRONTEND_UUID" >> "$GITHUB_OUTPUT"
               echo "backend_health_url=${backend_health_url}" >> "$GITHUB_OUTPUT"
               echo "backend_url=${backend_health_url%/health/ready}" >> "$GITHUB_OUTPUT"
-              echo "frontend_url=${{ vars.PRODUCTION_FRONTEND_URL }}" >> "$GITHUB_OUTPUT"
+              echo "frontend_url=$PRODUCTION_FRONTEND_URL" >> "$GITHUB_OUTPUT"
               ;;
           esac
 
@@ -97,10 +112,11 @@ jobs:
           KLYNT_SESSION_SYNC_ENABLED: ${{ secrets.KLYNT_SESSION_SYNC_ENABLED || 'true' }}
           RUST_LOG: ${{ secrets.RUST_LOG || 'info' }}
           SQLX_OFFLINE: "true"
+          BACKEND_UUID: ${{ steps.env_config.outputs.backend_uuid }}
         run: |
           set -euo pipefail
           chmod +x .github/scripts/sync-env-vars.sh
-          .github/scripts/sync-env-vars.sh "${{ steps.env_config.outputs.backend_uuid }}" backend
+          .github/scripts/sync-env-vars.sh "$BACKEND_UUID" backend
 
       - name: Sync frontend environment variables
         env:
@@ -108,30 +124,39 @@ jobs:
           VITE_APP_NAME: ${{ vars.VITE_APP_NAME || 'Klynt' }}
           VITE_APP_DOMAIN: ${{ secrets.VITE_APP_DOMAIN }}
           VITE_APP_PROTOCOL: ${{ secrets.VITE_APP_PROTOCOL || 'https' }}
+          FRONTEND_UUID: ${{ steps.env_config.outputs.frontend_uuid }}
         run: |
           set -euo pipefail
-          .github/scripts/sync-env-vars.sh "${{ steps.env_config.outputs.frontend_uuid }}" frontend
+          .github/scripts/sync-env-vars.sh "$FRONTEND_UUID" frontend
 
       - name: Deploy backend
+        env:
+          BACKEND_UUID: ${{ steps.env_config.outputs.backend_uuid }}
         run: |
           set -euo pipefail
-          coolify app restart "${{ steps.env_config.outputs.backend_uuid }}"
+          coolify app restart "$BACKEND_UUID"
 
       - name: Deploy frontend
+        env:
+          FRONTEND_UUID: ${{ steps.env_config.outputs.frontend_uuid }}
         run: |
           set -euo pipefail
-          coolify app restart "${{ steps.env_config.outputs.frontend_uuid }}"
+          coolify app restart "$FRONTEND_UUID"
 
       - name: Wait for backend deployment
+        env:
+          BACKEND_UUID: ${{ steps.env_config.outputs.backend_uuid }}
         run: |
           set -euo pipefail
           chmod +x .github/scripts/wait-for-deployment.sh
-          .github/scripts/wait-for-deployment.sh "${{ steps.env_config.outputs.backend_uuid }}" 900 10
+          .github/scripts/wait-for-deployment.sh "$BACKEND_UUID" 900 10
 
       - name: Wait for frontend deployment
+        env:
+          FRONTEND_UUID: ${{ steps.env_config.outputs.frontend_uuid }}
         run: |
           set -euo pipefail
-          .github/scripts/wait-for-deployment.sh "${{ steps.env_config.outputs.frontend_uuid }}" 900 10
+          .github/scripts/wait-for-deployment.sh "$FRONTEND_UUID" 900 10
 
       - name: Wait for backend health
         uses: ./.github/actions/health-check
@@ -155,10 +180,12 @@ jobs:
         if: ${{ inputs.notify && success() }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          ENVIRONMENT: ${{ inputs.environment }}
+          SHA: ${{ github.sha }}
         run: |
           if [[ -n "${SLACK_WEBHOOK_URL:-}" ]]; then
             curl -s -X POST -H 'Content-type: application/json' \
-              --data "{\"text\":\"✅ Deployed ${{ inputs.environment }} (${{ github.sha }})\"}" \
+              --data "{\"text\":\"✅ Deployed ${ENVIRONMENT} (${SHA})\"}" \
               "$SLACK_WEBHOOK_URL" || true
           fi
 
@@ -166,9 +193,11 @@ jobs:
         if: ${{ inputs.notify && failure() }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          ENVIRONMENT: ${{ inputs.environment }}
+          SHA: ${{ github.sha }}
         run: |
           if [[ -n "${SLACK_WEBHOOK_URL:-}" ]]; then
             curl -s -X POST -H 'Content-type: application/json' \
-              --data "{\"text\":\"❌ Deploy failed for ${{ inputs.environment }} (${{ github.sha }})\"}" \
+              --data "{\"text\":\"❌ Deploy failed for ${ENVIRONMENT} (${SHA})\"}" \
               "$SLACK_WEBHOOK_URL" || true
           fi
