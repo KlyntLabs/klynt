@@ -7,22 +7,6 @@ on:
         description: "GitHub environment name (dev, staging, production)"
         required: true
         type: string
-      backend_app_uuid:
-        description: "Coolify UUID for the backend application"
-        required: true
-        type: string
-      frontend_app_uuid:
-        description: "Coolify UUID for the frontend application"
-        required: true
-        type: string
-      backend_health_url:
-        description: "URL to check backend readiness"
-        required: true
-        type: string
-      frontend_url:
-        description: "URL to check frontend availability"
-        required: true
-        type: string
       checkout_ref:
         description: "Git ref to check out (defaults to the calling workflow ref)"
         required: false
@@ -47,6 +31,30 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.checkout_ref || github.ref }}
+
+      - name: Resolve environment config
+        id: env_config
+        run: |
+          case "${{ inputs.environment }}" in
+            dev)
+              echo "backend_uuid=${{ vars.DEV_BACKEND_APP_UUID }}" >> "$GITHUB_OUTPUT"
+              echo "frontend_uuid=${{ vars.DEV_FRONTEND_APP_UUID }}" >> "$GITHUB_OUTPUT"
+              echo "backend_health_url=${{ vars.DEV_BACKEND_HEALTH_URL }}" >> "$GITHUB_OUTPUT"
+              echo "frontend_url=${{ vars.DEV_FRONTEND_URL }}" >> "$GITHUB_OUTPUT"
+              ;;
+            staging)
+              echo "backend_uuid=${{ vars.STAGING_BACKEND_APP_UUID }}" >> "$GITHUB_OUTPUT"
+              echo "frontend_uuid=${{ vars.STAGING_FRONTEND_APP_UUID }}" >> "$GITHUB_OUTPUT"
+              echo "backend_health_url=${{ vars.STAGING_BACKEND_HEALTH_URL }}" >> "$GITHUB_OUTPUT"
+              echo "frontend_url=${{ vars.STAGING_FRONTEND_URL }}" >> "$GITHUB_OUTPUT"
+              ;;
+            production)
+              echo "backend_uuid=${{ vars.PRODUCTION_BACKEND_APP_UUID }}" >> "$GITHUB_OUTPUT"
+              echo "frontend_uuid=${{ vars.PRODUCTION_FRONTEND_APP_UUID }}" >> "$GITHUB_OUTPUT"
+              echo "backend_health_url=${{ vars.PRODUCTION_BACKEND_HEALTH_URL }}" >> "$GITHUB_OUTPUT"
+              echo "frontend_url=${{ vars.PRODUCTION_FRONTEND_URL }}" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
 
       - name: Setup Coolify CLI
         uses: ./.github/actions/setup-coolify
@@ -87,7 +95,7 @@ jobs:
           set -euo pipefail
           chmod +x .github/scripts/generate-env.sh
           .github/scripts/generate-env.sh backend.env backend
-          coolify app env sync "${{ inputs.backend_app_uuid }}" --file backend.env
+          coolify app env sync "${{ steps.env_config.outputs.backend_uuid }}" --file backend.env
 
       - name: Generate and sync frontend environment variables
         env:
@@ -98,22 +106,22 @@ jobs:
         run: |
           set -euo pipefail
           .github/scripts/generate-env.sh frontend.env frontend
-          coolify app env sync "${{ inputs.frontend_app_uuid }}" --file frontend.env
+          coolify app env sync "${{ steps.env_config.outputs.frontend_uuid }}" --file frontend.env
 
       - name: Deploy backend
         run: |
           set -euo pipefail
-          coolify app restart "${{ inputs.backend_app_uuid }}"
+          coolify app restart "${{ steps.env_config.outputs.backend_uuid }}"
 
       - name: Deploy frontend
         run: |
           set -euo pipefail
-          coolify app restart "${{ inputs.frontend_app_uuid }}"
+          coolify app restart "${{ steps.env_config.outputs.frontend_uuid }}"
 
       - name: Wait for backend health
         uses: ./.github/workflows/health-check.yml
         with:
-          url: ${{ inputs.backend_health_url }}
+          url: ${{ steps.env_config.outputs.backend_health_url }}
           expected_status: 200
           expected_json_path: '.healthy'
           expected_json_value: 'true'
@@ -123,7 +131,7 @@ jobs:
       - name: Wait for frontend availability
         uses: ./.github/workflows/health-check.yml
         with:
-          url: ${{ inputs.frontend_url }}
+          url: ${{ steps.env_config.outputs.frontend_url }}
           expected_status: 200
           timeout_seconds: 180
           interval_seconds: 10

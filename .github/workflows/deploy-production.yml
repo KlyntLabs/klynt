@@ -19,8 +19,4 @@ jobs:
     uses: ./.github/workflows/reusable-deploy.yml
     with:
       environment: production
-      backend_app_uuid: ${{ vars.PRODUCTION_BACKEND_APP_UUID }}
-      frontend_app_uuid: ${{ vars.PRODUCTION_FRONTEND_APP_UUID }}
-      backend_health_url: ${{ vars.PRODUCTION_BACKEND_HEALTH_URL }}
-      frontend_url: ${{ vars.PRODUCTION_FRONTEND_URL }}
     secrets: inherit
