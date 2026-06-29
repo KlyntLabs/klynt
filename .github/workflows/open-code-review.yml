@@ -14,7 +14,9 @@
 # Optional repository secrets:
 #   OCR_LLM_MODEL       Model name (default: gpt-4o).
 #   OCR_USE_ANTHROPIC   Set to "true" when using an Anthropic-compatible endpoint.
-#   OCR_LLM_AUTH_HEADER Auth header: "x-api-key" or "authorization" (default: authorization).
+#
+# OCR is configured via the CLI so the latest config keys are always used.
+# Thinking mode is disabled via llm.extra_body for provider compatibility.
 #
 # Why `pull_request_target` instead of `pull_request`?
 #   The workflow needs LLM secrets to run OCR. `pull_request_target` makes secrets
@@ -62,7 +64,7 @@ jobs:
       - name: Resolve PR context from comment
         if: github.event_name == 'issue_comment'
         id: pr-context
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const { data: pr } = await github.rest.pulls.get({
@@ -107,13 +109,13 @@ jobs:
         run: git fetch origin "pull/$PR_NUMBER/head"
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '22'
+          node-version: '24'
 
       - name: Install OpenCodeReview
         run: |
-          npm install -g @alibaba-group/open-code-review
+          npm install -g @alibaba-group/open-code-review@latest
           ocr version
 
       - name: Verify OCR secrets are configured
@@ -130,17 +132,25 @@ jobs:
           OCR_LLM_URL: ${{ secrets.OCR_LLM_URL }}
           OCR_LLM_TOKEN: ${{ secrets.OCR_LLM_TOKEN }}
 
+      - name: Configure OCR
+        env:
+          OCR_LLM_URL: ${{ secrets.OCR_LLM_URL }}
+          OCR_LLM_TOKEN: ${{ secrets.OCR_LLM_TOKEN }}
+          OCR_LLM_MODEL: ${{ secrets.OCR_LLM_MODEL || 'gpt-4o' }}
+          OCR_USE_ANTHROPIC: ${{ secrets.OCR_USE_ANTHROPIC || 'false' }}
+        run: |
+          ocr config set llm.url "$OCR_LLM_URL"
+          ocr config set llm.auth_token "$OCR_LLM_TOKEN"
+          ocr config set llm.model "$OCR_LLM_MODEL"
+          ocr config set llm.use_anthropic "$OCR_USE_ANTHROPIC"
+          ocr config set llm.extra_body '{"thinking": {"type": "disabled"}}'
+
       - name: Run OpenCodeReview
         id: ocr
         env:
           BASE_REF: ${{ steps.ctx.outputs.base_ref }}
           HEAD_SHA: ${{ steps.ctx.outputs.head_sha }}
           TITLE: ${{ steps.ctx.outputs.title }}
-          OCR_LLM_URL: ${{ secrets.OCR_LLM_URL }}
-          OCR_LLM_TOKEN: ${{ secrets.OCR_LLM_TOKEN }}
-          OCR_LLM_MODEL: ${{ secrets.OCR_LLM_MODEL || 'gpt-4o' }}
-          OCR_USE_ANTHROPIC: ${{ secrets.OCR_USE_ANTHROPIC || 'false' }}
-          OCR_LLM_AUTH_HEADER: ${{ secrets.OCR_LLM_AUTH_HEADER || 'authorization' }}
         run: |
           echo "Reviewing $HEAD_SHA against origin/$BASE_REF"
 
@@ -165,7 +175,7 @@ jobs:
           echo "::endgroup::"
 
       - name: Post review comments to PR
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
