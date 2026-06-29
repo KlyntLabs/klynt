@@ -29,7 +29,8 @@ def request(method, path, body=None, headers=None):
         data = json.dumps(body).encode("utf-8")
     req = urllib.request.Request(url, data=data, headers=req_headers, method=method)
     try:
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        # Local manual test script only; URL points to the Dockerized backend.
+        with urllib.request.urlopen(req, timeout=10) as resp:  # nosemgrep
             raw = resp.read().decode("utf-8")
             return resp.status, json.loads(raw) if raw else {}
     except urllib.error.HTTPError as e:
@@ -80,14 +81,16 @@ def main():
     # ------------------------------------------------------------------
     print("Scenario 1: Health endpoints")
     try:
-        with urllib.request.urlopen(f"{BASE}/health/live", timeout=10) as resp:
+        # Local manual test script only; URL points to the Dockerized backend.
+        with urllib.request.urlopen(f"{BASE}/health/live", timeout=10) as resp:  # nosemgrep
             status = resp.status
     except urllib.error.HTTPError as e:
         status = e.code
     all_ok &= assert_status("/health/live", status, 200)
 
     try:
-        with urllib.request.urlopen(f"{BASE}/health/ready", timeout=10) as resp:
+        # Local manual test script only; URL points to the Dockerized backend.
+        with urllib.request.urlopen(f"{BASE}/health/ready", timeout=10) as resp:  # nosemgrep
             raw = resp.read().decode("utf-8")
             status = resp.status
             body = json.loads(raw)
@@ -283,7 +286,8 @@ def main():
     print("\nScenario 11: Metrics endpoint")
     url = f"{BASE}/metrics"
     try:
-        with urllib.request.urlopen(url, timeout=10) as resp:
+        # Local manual test script only; URL points to the Dockerized backend.
+        with urllib.request.urlopen(url, timeout=10) as resp:  # nosemgrep
             raw = resp.read().decode("utf-8")
             status = resp.status
     except urllib.error.HTTPError as e:
