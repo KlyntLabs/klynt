@@ -118,22 +118,33 @@ jobs:
           set -euo pipefail
           coolify app restart "${{ steps.env_config.outputs.frontend_uuid }}"
 
+      - name: Wait for backend deployment
+        run: |
+          set -euo pipefail
+          chmod +x .github/scripts/wait-for-deployment.sh
+          .github/scripts/wait-for-deployment.sh "${{ steps.env_config.outputs.backend_uuid }}" 900 10
+
+      - name: Wait for frontend deployment
+        run: |
+          set -euo pipefail
+          .github/scripts/wait-for-deployment.sh "${{ steps.env_config.outputs.frontend_uuid }}" 900 10
+
       - name: Wait for backend health
-        uses: ./.github/workflows/health-check.yml
+        uses: ./.github/actions/health-check
         with:
           url: ${{ steps.env_config.outputs.backend_health_url }}
           expected_status: 200
           expected_json_path: '.healthy'
           expected_json_value: 'true'
-          timeout_seconds: 300
+          timeout_seconds: 120
           interval_seconds: 10
 
       - name: Wait for frontend availability
-        uses: ./.github/workflows/health-check.yml
+        uses: ./.github/actions/health-check
         with:
           url: ${{ steps.env_config.outputs.frontend_url }}
           expected_status: 200
-          timeout_seconds: 180
+          timeout_seconds: 120
           interval_seconds: 10
 
       - name: Notify success
