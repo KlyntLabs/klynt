@@ -1,0 +1,151 @@
+name: Reusable Deploy to Coolify
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "GitHub environment name (dev, staging, production)"
+        required: true
+        type: string
+      backend_app_uuid:
+        description: "Coolify UUID for the backend application"
+        required: true
+        type: string
+      frontend_app_uuid:
+        description: "Coolify UUID for the frontend application"
+        required: true
+        type: string
+      backend_health_url:
+        description: "URL to check backend readiness"
+        required: true
+        type: string
+      frontend_url:
+        description: "URL to check frontend availability"
+        required: true
+        type: string
+      checkout_ref:
+        description: "Git ref to check out (defaults to the calling workflow ref)"
+        required: false
+        type: string
+        default: ""
+      notify:
+        description: "Whether to send deployment notifications"
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  deploy:
+    name: Deploy ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    concurrency:
+      group: deploy-${{ inputs.environment }}
+      cancel-in-progress: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.checkout_ref || github.ref }}
+
+      - name: Setup Coolify CLI
+        uses: ./.github/actions/setup-coolify
+        with:
+          fqdn: ${{ vars.COOLIFY_FQDN || 'https://app.coolify.io' }}
+          token: ${{ secrets.COOLIFY_TOKEN }}
+
+      - name: Generate and sync backend environment variables
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          KLYNT_DATABASE_URL: ${{ secrets.KLYNT_DATABASE_URL }}
+          KLYNT_REDIS_URL: ${{ secrets.KLYNT_REDIS_URL }}
+          KLYNT_API__HOST: ${{ vars.KLYNT_API__HOST || '0.0.0.0' }}
+          KLYNT_API__PORT: ${{ vars.KLYNT_API__PORT || '3001' }}
+          KLYNT_API__ALLOWED_ORIGINS: ${{ secrets.KLYNT_API__ALLOWED_ORIGINS }}
+          KLYNT_API__TRUSTED_PROXIES: ${{ secrets.KLYNT_API__TRUSTED_PROXIES || '' }}
+          KLYNT_COOKIE_DOMAIN: ${{ secrets.KLYNT_COOKIE_DOMAIN }}
+          KLYNT_COOKIE_SECURE: ${{ secrets.KLYNT_COOKIE_SECURE }}
+          KLYNT_COOKIE_SAMESITE: ${{ secrets.KLYNT_COOKIE_SAMESITE || 'Lax' }}
+          KLYNT_HSTS_ENABLED: ${{ secrets.KLYNT_HSTS_ENABLED }}
+          KLYNT_CSP_REPORT_ONLY: ${{ secrets.KLYNT_CSP_REPORT_ONLY }}
+          KLYNT_CSP_DIRECTIVE: ${{ secrets.KLYNT_CSP_DIRECTIVE }}
+          KLYNT_BASE_URL: ${{ secrets.KLYNT_BASE_URL }}
+          KLYNT_LOG_BODIES: ${{ secrets.KLYNT_LOG_BODIES || 'false' }}
+          KLYNT_LOG_SUCCESS: ${{ secrets.KLYNT_LOG_SUCCESS || 'false' }}
+          KLYNT_MAX_BODY_SIZE: ${{ secrets.KLYNT_MAX_BODY_SIZE || '10240' }}
+          KLYNT_RATE_LIMITER__ENABLED: ${{ secrets.KLYNT_RATE_LIMITER__ENABLED }}
+          KLYNT_RATE_LIMITER__MAX_REQUESTS: ${{ secrets.KLYNT_RATE_LIMITER__MAX_REQUESTS }}
+          KLYNT_RATE_LIMITER__WINDOW_SECONDS: ${{ secrets.KLYNT_RATE_LIMITER__WINDOW_SECONDS }}
+          KLYNT_SESSION__SESSION_DURATION_SECS: ${{ secrets.KLYNT_SESSION__SESSION_DURATION_SECS }}
+          KLYNT_SESSION__LONG_SESSION_DURATION_SECS: ${{ secrets.KLYNT_SESSION__LONG_SESSION_DURATION_SECS }}
+          KLYNT_SESSION__REFRESH_DURATION_SECS: ${{ secrets.KLYNT_SESSION__REFRESH_DURATION_SECS }}
+          KLYNT_SESSION_SYNC_ENABLED: ${{ secrets.KLYNT_SESSION_SYNC_ENABLED || 'true' }}
+          RUST_LOG: ${{ secrets.RUST_LOG || 'info' }}
+          SQLX_OFFLINE: "true"
+        run: |
+          set -euo pipefail
+          chmod +x .github/scripts/generate-env.sh
+          .github/scripts/generate-env.sh backend.env backend
+          coolify app env sync "${{ inputs.backend_app_uuid }}" --file backend.env
+
+      - name: Generate and sync frontend environment variables
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_APP_NAME: ${{ vars.VITE_APP_NAME || 'Klynt' }}
+          VITE_APP_DOMAIN: ${{ secrets.VITE_APP_DOMAIN }}
+          VITE_APP_PROTOCOL: ${{ secrets.VITE_APP_PROTOCOL || 'https' }}
+        run: |
+          set -euo pipefail
+          .github/scripts/generate-env.sh frontend.env frontend
+          coolify app env sync "${{ inputs.frontend_app_uuid }}" --file frontend.env
+
+      - name: Deploy backend
+        run: |
+          set -euo pipefail
+          coolify app restart "${{ inputs.backend_app_uuid }}"
+
+      - name: Deploy frontend
+        run: |
+          set -euo pipefail
+          coolify app restart "${{ inputs.frontend_app_uuid }}"
+
+      - name: Wait for backend health
+        uses: ./.github/workflows/health-check.yml
+        with:
+          url: ${{ inputs.backend_health_url }}
+          expected_status: 200
+          expected_json_path: '.healthy'
+          expected_json_value: 'true'
+          timeout_seconds: 300
+          interval_seconds: 10
+
+      - name: Wait for frontend availability
+        uses: ./.github/workflows/health-check.yml
+        with:
+          url: ${{ inputs.frontend_url }}
+          expected_status: 200
+          timeout_seconds: 180
+          interval_seconds: 10
+
+      - name: Notify success
+        if: ${{ inputs.notify && success() }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [[ -n "${SLACK_WEBHOOK_URL:-}" ]]; then
+            curl -s -X POST -H 'Content-type: application/json' \
+              --data "{\"text\":\"✅ Deployed ${{ inputs.environment }} (${{ github.sha }})\"}" \
+              "$SLACK_WEBHOOK_URL" || true
+          fi
+
+      - name: Notify failure
+        if: ${{ inputs.notify && failure() }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [[ -n "${SLACK_WEBHOOK_URL:-}" ]]; then
+            curl -s -X POST -H 'Content-type: application/json' \
+              --data "{\"text\":\"❌ Deploy failed for ${{ inputs.environment }} (${{ github.sha }})\"}" \
+              "$SLACK_WEBHOOK_URL" || true
+          fi

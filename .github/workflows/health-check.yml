@@ -1,0 +1,76 @@
+name: Reusable HTTP Health Check
+
+on:
+  workflow_call:
+    inputs:
+      url:
+        description: "URL to poll"
+        required: true
+        type: string
+      expected_status:
+        description: "Expected HTTP status code"
+        required: false
+        type: number
+        default: 200
+      timeout_seconds:
+        description: "Maximum time to wait"
+        required: false
+        type: number
+        default: 300
+      interval_seconds:
+        description: "Seconds between attempts"
+        required: false
+        type: number
+        default: 10
+      expected_json_path:
+        description: "Optional jq path to assert in JSON body (e.g. .healthy)"
+        required: false
+        type: string
+        default: ""
+      expected_json_value:
+        description: "Expected value at expected_json_path"
+        required: false
+        type: string
+        default: ""
+
+jobs:
+  poll:
+    name: Health check ${{ inputs.url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Poll endpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="${{ inputs.url }}"
+          expected="${{ inputs.expected_status }}"
+          timeout="${{ inputs.timeout_seconds }}"
+          interval="${{ inputs.interval_seconds }}"
+          json_path="${{ inputs.expected_json_path }}"
+          json_value="${{ inputs.expected_json_value }}"
+
+          elapsed=0
+          while [[ $elapsed -lt $timeout ]]; do
+            status=$(curl -s -o /tmp/health_response.json -w "%{http_code}" "$url" || echo "000")
+            echo "[$elapsed s] $url -> $status"
+
+            if [[ "$status" == "$expected" ]]; then
+              if [[ -n "$json_path" ]]; then
+                actual=$(jq -r "$json_path" /tmp/health_response.json || echo "__missing__")
+                if [[ "$actual" == "$json_value" ]]; then
+                  echo "Health check passed (json match)"
+                  exit 0
+                fi
+                echo "JSON path mismatch: expected '$json_value', got '$actual'"
+              else
+                echo "Health check passed"
+                exit 0
+              fi
+            fi
+
+            sleep "$interval"
+            elapsed=$((elapsed + interval))
+          done
+
+          echo "Health check timed out after ${timeout}s"
+          exit 1

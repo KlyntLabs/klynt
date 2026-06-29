@@ -3,6 +3,14 @@ name: Deploy Production
 on:
   push:
     branches: [main]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - '.github/workflows/deploy-production.yml'
+      - '.github/workflows/reusable-deploy.yml'
+      - '.github/workflows/health-check.yml'
+      - '.github/actions/setup-coolify/**'
+      - '.github/scripts/generate-env.sh'
   workflow_dispatch:
 
 concurrency:
@@ -12,13 +20,11 @@ concurrency:
 jobs:
   deploy:
     name: Deploy to production
-    runs-on: ubuntu-latest
-    environment: production
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Placeholder deploy
-        run: |
-          echo "Production deployment pipeline not yet implemented."
-          echo "This workflow is triggered automatically on merges to the main branch."
+    uses: ./.github/workflows/reusable-deploy.yml
+    with:
+      environment: production
+      backend_app_uuid: ${{ vars.PRODUCTION_BACKEND_APP_UUID }}
+      frontend_app_uuid: ${{ vars.PRODUCTION_FRONTEND_APP_UUID }}
+      backend_health_url: ${{ vars.PRODUCTION_BACKEND_HEALTH_URL }}
+      frontend_url: ${{ vars.PRODUCTION_FRONTEND_URL }}
+    secrets: inherit
