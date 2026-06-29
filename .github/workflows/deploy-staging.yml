@@ -13,18 +13,10 @@ on:
       - '.github/scripts/generate-env.sh'
   workflow_dispatch:
 
-concurrency:
-  group: deploy-staging
-  cancel-in-progress: true
-
 jobs:
   deploy:
     name: Deploy to staging
     uses: ./.github/workflows/reusable-deploy.yml
     with:
       environment: staging
-      backend_app_uuid: ${{ vars.STAGING_BACKEND_APP_UUID }}
-      frontend_app_uuid: ${{ vars.STAGING_FRONTEND_APP_UUID }}
-      backend_health_url: ${{ vars.STAGING_BACKEND_HEALTH_URL }}
-      frontend_url: ${{ vars.STAGING_FRONTEND_URL }}
     secrets: inherit
