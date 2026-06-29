@@ -13,10 +13,6 @@ on:
       - '.github/scripts/generate-env.sh'
   workflow_dispatch:
 
-concurrency:
-  group: deploy-production
-  cancel-in-progress: false
-
 jobs:
   deploy:
     name: Deploy to production
