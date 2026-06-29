@@ -170,7 +170,7 @@ jobs:
             ghcr.io/gitleaks/gitleaks:v8.30.1 detect --source /repo --verbose
 
       - name: Run Semgrep
-        uses: docker://semgrep/semgrep:v1.168.0
+        uses: docker://semgrep/semgrep:1.168.0
         with:
           args: semgrep --config p/default --error .
 
