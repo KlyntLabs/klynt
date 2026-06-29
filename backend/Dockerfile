@@ -45,11 +45,14 @@ RUN mkdir -p \
     crates/services/cleanup_job/src \
     crates/gateways/src \
     crates/server/src && \
+    mkdir -p crates/infra/persistence/benches && \
     echo 'fn main() {}' > crates/server/src/main.rs && \
     echo '' > crates/base/src/lib.rs && \
     echo '' > crates/shared/domain/src/lib.rs && \
     echo '' > crates/infra/config/src/lib.rs && \
     echo '' > crates/infra/persistence/src/lib.rs && \
+    echo '' > crates/infra/persistence/benches/password_hasher.rs && \
+    echo '' > crates/infra/persistence/benches/role_permissions.rs && \
     echo '' > crates/infra/observability/src/lib.rs && \
     echo '' > crates/services/auth_service/src/lib.rs && \
     echo '' > crates/services/infra_facades/src/lib.rs && \
