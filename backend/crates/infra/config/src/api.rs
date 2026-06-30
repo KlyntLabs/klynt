@@ -1,15 +1,37 @@
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
 
 use super::{ConfigError, Validated};
 
 const MIN_PORT: u16 = 1;
+
+fn deserialize_comma_separated_list<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum Value {
+        List(Vec<String>),
+        Single(String),
+    }
+
+    match Value::deserialize(deserializer)? {
+        Value::List(list) => Ok(list),
+        Value::Single(value) => Ok(value
+            .split(',')
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .map(String::from)
+            .collect()),
+    }
+}
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct ApiConfig {
     pub host: String,
     pub port: u16,
     pub allowed_origins: Vec<String>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_comma_separated_list")]
     pub trusted_proxies: Vec<String>,
 }
 
@@ -142,6 +164,21 @@ mod tests {
             ],
             ..Default::default()
         };
+        assert!(config.validated().is_ok());
+    }
+
+    #[test]
+    fn comma_separated_trusted_proxies_deserialize_to_vec() {
+        let input = r#"{"host":"0.0.0.0","port":3001,"allowed_origins":[],"trusted_proxies":"127.0.0.1,10.0.0.0/8,::1"}"#;
+        let config: ApiConfig = serde_json::from_str(input).unwrap();
+        assert_eq!(
+            config.trusted_proxies,
+            vec![
+                "127.0.0.1".to_string(),
+                "10.0.0.0/8".to_string(),
+                "::1".to_string()
+            ]
+        );
         assert!(config.validated().is_ok());
     }
 
