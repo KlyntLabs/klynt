@@ -24,13 +24,14 @@ permissions:
 jobs:
   rust-audit:
     name: Rust dependency audit
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./backend
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -48,13 +49,14 @@ jobs:
 
   bun-audit:
     name: Bun dependency audit
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./frontend
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2

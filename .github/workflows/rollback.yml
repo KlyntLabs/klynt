@@ -19,12 +19,13 @@ on:
 jobs:
   resolve-target:
     name: Resolve rollback target
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     outputs:
       target_sha: ${{ steps.resolve.outputs.target_sha }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -46,6 +47,7 @@ jobs:
 
   rollback-dev:
     name: Rollback dev
+    timeout-minutes: 30
     needs: resolve-target
     if: ${{ github.event.inputs.environment == 'dev' }}
     uses: ./.github/workflows/reusable-deploy.yml
@@ -56,6 +58,7 @@ jobs:
 
   rollback-staging:
     name: Rollback staging
+    timeout-minutes: 30
     needs: resolve-target
     if: ${{ github.event.inputs.environment == 'staging' }}
     uses: ./.github/workflows/reusable-deploy.yml
@@ -66,6 +69,7 @@ jobs:
 
   rollback-production:
     name: Rollback production
+    timeout-minutes: 30
     needs: resolve-target
     if: ${{ github.event.inputs.environment == 'production' }}
     uses: ./.github/workflows/reusable-deploy.yml
