@@ -21,3 +21,6 @@ ipnet = { workspace = true }
 
 # HTTP types (used for CSP directive validation)
 http = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }
