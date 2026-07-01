@@ -1,22 +1,22 @@
 name: Deploy Staging
 
 on:
-  push:
-    branches: [staging]
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
-      - '.github/workflows/deploy-staging.yml'
-      - '.github/workflows/reusable-deploy.yml'
-      - '.github/workflows/health-check.yml'
-      - '.github/actions/setup-coolify/**'
-      - '.github/scripts/generate-env.sh'
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
   workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
 
 jobs:
   deploy:
     name: Deploy to staging
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'staging') }}
     uses: ./.github/workflows/reusable-deploy.yml
     with:
       environment: staging
-    secrets: inherit
+      checkout_ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || '' }}
+    # Internal same-repo reusable workflow; explicit secret map would be unmaintainable.
+    secrets: inherit # nosemgrep: yaml.github-actions.security.secrets-inherit.secrets-inherit

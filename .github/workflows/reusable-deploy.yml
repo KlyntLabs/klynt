@@ -18,9 +18,14 @@ on:
         type: boolean
         default: true
 
+permissions:
+  contents: read
+  deployments: write
+
 jobs:
   deploy:
     name: Deploy ${{ inputs.environment }}
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     concurrency:
@@ -28,7 +33,7 @@ jobs:
       cancel-in-progress: true
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           ref: ${{ inputs.checkout_ref || github.ref }}
 
@@ -61,6 +66,7 @@ jobs:
               echo "frontend_url=${frontend_url}" >> "$GITHUB_OUTPUT"
               frontend_host="${frontend_url#*://}"
               echo "frontend_wildcard_origin=https://*.${frontend_host}" >> "$GITHUB_OUTPUT"
+              echo "frontend_domain=${frontend_host}" >> "$GITHUB_OUTPUT"
               ;;
             staging)
               backend_health_url="$STAGING_BACKEND_HEALTH_URL"
@@ -72,6 +78,7 @@ jobs:
               echo "frontend_url=${frontend_url}" >> "$GITHUB_OUTPUT"
               frontend_host="${frontend_url#*://}"
               echo "frontend_wildcard_origin=https://*.${frontend_host}" >> "$GITHUB_OUTPUT"
+              echo "frontend_domain=${frontend_host}" >> "$GITHUB_OUTPUT"
               ;;
             production)
               backend_health_url="$PRODUCTION_BACKEND_HEALTH_URL"
@@ -83,6 +90,7 @@ jobs:
               echo "frontend_url=${frontend_url}" >> "$GITHUB_OUTPUT"
               frontend_host="${frontend_url#*://}"
               echo "frontend_wildcard_origin=https://*.${frontend_host}" >> "$GITHUB_OUTPUT"
+              echo "frontend_domain=${frontend_host}" >> "$GITHUB_OUTPUT"
               ;;
           esac
 
@@ -91,6 +99,47 @@ jobs:
         with:
           fqdn: ${{ vars.COOLIFY_FQDN || 'https://app.coolify.io' }}
           token: ${{ secrets.COOLIFY_TOKEN }}
+
+      - name: Create GitHub Deployment
+        id: create_deployment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ENVIRONMENT: ${{ inputs.environment }}
+          REF: ${{ inputs.checkout_ref || github.ref }}
+        run: |
+          set -euo pipefail
+          deployment_id=$(gh api "repos/${{ github.repository }}/deployments" \
+            --method POST \
+            --input - \
+            --jq '.id' <<EOF
+          {
+            "ref": "$REF",
+            "environment": "$ENVIRONMENT",
+            "auto_merge": false,
+            "required_contexts": []
+          }
+          EOF
+          )
+          echo "deployment_id=$deployment_id" >> "$GITHUB_OUTPUT"
+          gh api "repos/${{ github.repository }}/deployments/${deployment_id}/statuses" \
+            --method POST \
+            -f state='pending' \
+            >/dev/null
+
+      - name: Capture previous deployments
+        id: previous_deployments
+        env:
+          BACKEND_UUID: ${{ steps.env_config.outputs.backend_uuid }}
+          FRONTEND_UUID: ${{ steps.env_config.outputs.frontend_uuid }}
+        run: |
+          set -euo pipefail
+          chmod +x .github/scripts/get-current-deployment.sh
+          backend_prev=$(.github/scripts/get-current-deployment.sh "$BACKEND_UUID")
+          frontend_prev=$(.github/scripts/get-current-deployment.sh "$FRONTEND_UUID")
+          echo "backend_deployment=${backend_prev}" >> "$GITHUB_OUTPUT"
+          echo "frontend_deployment=${frontend_prev}" >> "$GITHUB_OUTPUT"
+          echo "Previous backend deployment: ${backend_prev:-<none>}"
+          echo "Previous frontend deployment: ${frontend_prev:-<none>}"
 
       - name: Sync backend environment variables
         env:
@@ -132,7 +181,7 @@ jobs:
         env:
           VITE_API_BASE_URL: ${{ steps.env_config.outputs.backend_url }}/api/v1
           VITE_APP_NAME: ${{ vars.VITE_APP_NAME || 'Klynt' }}
-          VITE_APP_DOMAIN: ${{ secrets.VITE_APP_DOMAIN }}
+          VITE_APP_DOMAIN: ${{ secrets.VITE_APP_DOMAIN || steps.env_config.outputs.frontend_domain }}
           VITE_APP_PROTOCOL: ${{ secrets.VITE_APP_PROTOCOL || 'https' }}
           FRONTEND_UUID: ${{ steps.env_config.outputs.frontend_uuid }}
         run: |
@@ -169,6 +218,7 @@ jobs:
           .github/scripts/wait-for-deployment.sh "$FRONTEND_UUID" 900 10
 
       - name: Wait for backend health
+        id: backend_health
         uses: ./.github/actions/health-check
         with:
           url: ${{ steps.env_config.outputs.backend_health_url }}
@@ -179,12 +229,75 @@ jobs:
           interval_seconds: 10
 
       - name: Wait for frontend availability
+        id: frontend_health
         uses: ./.github/actions/health-check
         with:
           url: ${{ steps.env_config.outputs.frontend_url }}
           expected_status: 200
           timeout_seconds: 120
           interval_seconds: 10
+
+      - name: Rollback to previous deployments
+        id: rollback
+        if: failure() && (steps.backend_health.outcome == 'failure' || steps.frontend_health.outcome == 'failure')
+        env:
+          BACKEND_UUID: ${{ steps.env_config.outputs.backend_uuid }}
+          FRONTEND_UUID: ${{ steps.env_config.outputs.frontend_uuid }}
+          PREV_BACKEND: ${{ steps.previous_deployments.outputs.backend_deployment }}
+          PREV_FRONTEND: ${{ steps.previous_deployments.outputs.frontend_deployment }}
+        run: |
+          set -euo pipefail
+          chmod +x .github/scripts/rollback-to-deployment.sh
+          echo "Rolling back backend to ${PREV_BACKEND}"
+          .github/scripts/rollback-to-deployment.sh "$BACKEND_UUID" "$PREV_BACKEND"
+          echo "Rolling back frontend to ${PREV_FRONTEND}"
+          .github/scripts/rollback-to-deployment.sh "$FRONTEND_UUID" "$PREV_FRONTEND"
+
+      - name: Wait for rollback deployments
+        if: steps.rollback.outcome == 'success'
+        env:
+          BACKEND_UUID: ${{ steps.env_config.outputs.backend_uuid }}
+          FRONTEND_UUID: ${{ steps.env_config.outputs.frontend_uuid }}
+        run: |
+          set -euo pipefail
+          chmod +x .github/scripts/wait-for-deployment.sh
+          .github/scripts/wait-for-deployment.sh "$BACKEND_UUID" 900 10
+          .github/scripts/wait-for-deployment.sh "$FRONTEND_UUID" 900 10
+
+      - name: Verify backend rollback health
+        if: steps.rollback.outcome == 'success'
+        uses: ./.github/actions/health-check
+        with:
+          url: ${{ steps.env_config.outputs.backend_health_url }}
+          expected_status: 200
+          expected_json_path: '.healthy'
+          expected_json_value: 'true'
+          timeout_seconds: 120
+          interval_seconds: 10
+
+      - name: Verify frontend rollback health
+        if: steps.rollback.outcome == 'success'
+        uses: ./.github/actions/health-check
+        with:
+          url: ${{ steps.env_config.outputs.frontend_url }}
+          expected_status: 200
+          timeout_seconds: 120
+          interval_seconds: 10
+
+      - name: Update deployment status to success
+        if: success() && steps.create_deployment.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEPLOYMENT_ID: ${{ steps.create_deployment.outputs.deployment_id }}
+          FRONTEND_URL: ${{ steps.env_config.outputs.frontend_url }}
+        run: |
+          set -euo pipefail
+          gh api "repos/${{ github.repository }}/deployments/${DEPLOYMENT_ID}/statuses" \
+            --method POST \
+            -f state='success' \
+            -f environment_url="$FRONTEND_URL" \
+            -f log_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            >/dev/null
 
       - name: Notify success
         if: ${{ inputs.notify && success() }}
@@ -199,15 +312,36 @@ jobs:
               "$SLACK_WEBHOOK_URL" || true
           fi
 
+      - name: Update deployment status to failure
+        if: failure() && steps.create_deployment.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEPLOYMENT_ID: ${{ steps.create_deployment.outputs.deployment_id }}
+          FRONTEND_URL: ${{ steps.env_config.outputs.frontend_url }}
+        run: |
+          set -euo pipefail
+          gh api "repos/${{ github.repository }}/deployments/${DEPLOYMENT_ID}/statuses" \
+            --method POST \
+            -f state='failure' \
+            -f environment_url="$FRONTEND_URL" \
+            -f log_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            >/dev/null
+
       - name: Notify failure
         if: ${{ inputs.notify && failure() }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           ENVIRONMENT: ${{ inputs.environment }}
           SHA: ${{ github.sha }}
+          ROLLED_BACK: ${{ steps.rollback.outcome == 'success' && 'true' || 'false' }}
         run: |
           if [[ -n "${SLACK_WEBHOOK_URL:-}" ]]; then
+            if [[ "$ROLLED_BACK" == "true" ]]; then
+              message="❌ Deploy failed for ${ENVIRONMENT} (${SHA}) — rolled back to previous deployment"
+            else
+              message="❌ Deploy failed for ${ENVIRONMENT} (${SHA})"
+            fi
             curl -s -X POST -H 'Content-type: application/json' \
-              --data "{\"text\":\"❌ Deploy failed for ${ENVIRONMENT} (${SHA})\"}" \
+              --data "{\"text\":\"${message}\"}" \
               "$SLACK_WEBHOOK_URL" || true
           fi

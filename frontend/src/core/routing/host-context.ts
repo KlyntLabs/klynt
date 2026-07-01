@@ -36,32 +36,47 @@ export function getHostContext(
   const prefix =
     host === base ? "" : host.endsWith(`.${base}`) ? host.slice(0, -(base.length + 1)) : "";
 
-  if (!prefix || prefix === "www") {
-    return { type: "apex" };
+  if (prefix && prefix !== "www") {
+    if (prefix === "login") {
+      return { type: "login" };
+    }
+
+    if (prefix === "admin") {
+      return { type: "admin" };
+    }
+
+    if (prefix.startsWith("u.")) {
+      const username = prefix.slice(2);
+      return username ? { type: "profile", username } : { type: "unknown", subdomain: prefix };
+    }
+
+    if (prefix.includes(".")) {
+      return { type: "unknown", subdomain: prefix };
+    }
+
+    if (RESERVED_SUBDOMAINS.has(prefix)) {
+      return { type: "reserved", subdomain: prefix };
+    }
+
+    return { type: "tenant", slug: prefix };
   }
 
-  if (prefix === "login") {
+  // Fallback for missing or misconfigured base domain: detect reserved
+  // subdomains heuristically so URL builders don't double-prefix them.
+  if (host.startsWith("login.")) {
     return { type: "login" };
   }
 
-  if (prefix === "admin") {
+  if (host.startsWith("admin.")) {
     return { type: "admin" };
   }
 
-  if (prefix.startsWith("u.")) {
-    const username = prefix.slice(2);
-    return username ? { type: "profile", username } : { type: "unknown", subdomain: prefix };
+  const profileMatch = /^u\.([^.]+)\./.exec(host);
+  if (profileMatch) {
+    return { type: "profile", username: profileMatch[1] };
   }
 
-  if (prefix.includes(".")) {
-    return { type: "unknown", subdomain: prefix };
-  }
-
-  if (RESERVED_SUBDOMAINS.has(prefix)) {
-    return { type: "reserved", subdomain: prefix };
-  }
-
-  return { type: "tenant", slug: prefix };
+  return { type: "apex" };
 }
 
 export function isApexHost(hostname?: string): boolean {

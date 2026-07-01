@@ -69,6 +69,22 @@
       "logo": "Klynt",
       "logoAlt": "Klynt logo",
       "getStarted": "Get started – free",
+      "search": "搜索",
+      "notifications": "通知",
+      "profile": "个人资料",
+      "signIn": "登录",
+      "signOut": "退出登录",
+      "settings": "设置",
+      "file": "文件",
+      "edit": "编辑",
+      "view": "查看",
+      "window": "窗口",
+      "help": "帮助",
+      "newWindow": "新建窗口",
+      "closeWindow": "关闭窗口",
+      "showDesktop": "显示桌面",
+      "changeBackground": "更改背景",
+      "adminSettings": "管理员设置",
       "menus": {
         "productOS": {
           "label": "Product OS",
@@ -106,21 +122,7 @@
           "merch": "Merch",
           "trash": "Trash"
         }
-      },
-      "search": "Search",
-      "notifications": "Notifications",
-      "profile": "Profile",
-      "file": "文件",
-      "edit": "编辑",
-      "view": "查看",
-      "window": "窗口",
-      "settings": "设置",
-      "help": "帮助",
-      "newWindow": "新建窗口",
-      "closeWindow": "关闭窗口",
-      "showDesktop": "显示桌面",
-      "changeBackground": "更换背景",
-      "adminSettings": "管理设置"
+      }
     },
     "icons": {
       "switchToWebsite": "Switch to website",
