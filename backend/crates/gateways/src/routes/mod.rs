@@ -1,6 +1,7 @@
 //! HTTP route definitions.
 
 pub mod auth;
+pub mod desktop_apps;
 pub mod health;
 pub mod metrics;
 pub mod openapi;

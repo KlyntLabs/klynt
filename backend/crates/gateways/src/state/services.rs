@@ -25,7 +25,7 @@ use persistence::repositories::cached_session_store::CachedSessionStore;
 use persistence::repositories::session::PgSessionStore;
 use persistence::PasswordHasherAdapter;
 use session_coordinator::{SessionCoordinator, SessionCoordinatorConfig};
-use tenant_service::{TenantDesktopLayoutService, TenantService};
+use tenant_service::{DesktopAppService, TenantDesktopLayoutService, TenantService};
 
 use super::Config;
 
@@ -38,6 +38,8 @@ pub struct Services {
     pub tenant: Arc<TenantService>,
     /// Tenant desktop layout service.
     pub desktop_layout: Arc<TenantDesktopLayoutService>,
+    /// Desktop app service.
+    pub desktop_apps: Arc<DesktopAppService>,
     /// Session service exposed for HTTP authentication middleware.
     pub session: Arc<session_service::SessionService>,
     /// Database pool used by background jobs and direct DB operations.
@@ -138,6 +140,11 @@ impl Services {
             Self::create_tenant_service(persistence_facade.clone(), session_coordinator)?;
         let desktop_layout_service =
             Self::create_desktop_layout_service(persistence_facade.clone());
+        let desktop_apps_service = Arc::new(DesktopAppService::new(
+            persistence_facade.app_repository.clone(),
+            persistence_facade.layout_repository.clone(),
+            persistence_facade.audit_logger.clone(),
+        ));
         let rate_limiter = Self::create_rate_limiter(config).await?;
         let trusted_proxies = Arc::new(
             config::parse_trusted_proxies(&config.trusted_proxies)
@@ -151,6 +158,7 @@ impl Services {
             user: Arc::new(user_service),
             tenant: Arc::new(tenant_service),
             desktop_layout: Arc::new(desktop_layout_service),
+            desktop_apps: desktop_apps_service,
             session: session_service,
             pool,
             rate_limiter,

@@ -14,6 +14,7 @@ use crate::middleware::tenant_context::require_tenant_membership;
 use crate::response::SuccessResponse;
 use crate::state::Services;
 
+use super::desktop_apps;
 use super::roles;
 use super::tenant_desktop_layout;
 
@@ -39,6 +40,8 @@ pub fn routes(services: Services) -> axum::Router<Services> {
             "/{tenant_slug}/desktop-layout",
             tenant_desktop_layout::routes(),
         )
+        // Desktop app routes are tenant-scoped and inherit the membership check above.
+        .nest("/{tenant_slug}", desktop_apps::routes())
         .layer(axum::middleware::from_fn_with_state(
             services,
             require_tenant_membership,

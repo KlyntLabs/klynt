@@ -6,6 +6,7 @@
 use std::sync::Arc;
 
 use base::ports::{Clock, PasswordHashError, PasswordHasher};
+use base::testkit::{FakeAuditLogger, FakeDesktopAppRepository, FakeTenantDesktopLayoutRepository};
 use chrono::{DateTime, Utc};
 use ipnet::IpNet;
 use persistence::ports::RateLimiter;
@@ -81,6 +82,7 @@ pub fn build_test_services_with_fakes() -> (
         user: Arc::new(user_service),
         tenant: Arc::new(tenant::build_test_tenant_service()),
         desktop_layout: build_test_desktop_layout_service(),
+        desktop_apps: build_test_desktop_apps_service(),
         session: session_service.clone(),
         pool: dummy_pool(),
         rate_limiter: Arc::new(NoOpRateLimiter),
@@ -122,6 +124,7 @@ pub fn build_test_services_with_tenant_fakes(
             user_repo.clone(),
         )),
         desktop_layout: build_test_desktop_layout_service(),
+        desktop_apps: build_test_desktop_apps_service(),
         session: session_service.clone(),
         pool: dummy_pool(),
         rate_limiter: Arc::new(NoOpRateLimiter),
@@ -190,6 +193,7 @@ pub fn build_test_services_with_auth_fakes() -> (
         user: Arc::new(user_service),
         tenant: Arc::new(tenant::build_test_tenant_service()),
         desktop_layout: build_test_desktop_layout_service(),
+        desktop_apps: build_test_desktop_apps_service(),
         session: session_service.clone(),
         pool: dummy_pool(),
         rate_limiter: Arc::new(NoOpRateLimiter),
@@ -215,6 +219,20 @@ fn build_test_desktop_layout_service() -> Arc<tenant_service::TenantDesktopLayou
     ) as Arc<dyn base::ports::repository::TenantDesktopLayoutRepository>;
 
     Arc::new(tenant_service::TenantDesktopLayoutService::new(repository))
+}
+
+fn build_test_desktop_apps_service() -> Arc<tenant_service::DesktopAppService> {
+    let app_repository = Arc::new(FakeDesktopAppRepository::default())
+        as Arc<dyn base::ports::repository::DesktopAppRepository>;
+    let layout_repository = Arc::new(FakeTenantDesktopLayoutRepository)
+        as Arc<dyn base::ports::repository::TenantDesktopLayoutRepository>;
+    let audit_logger = Arc::new(FakeAuditLogger) as Arc<dyn base::ports::AuditLogger>;
+
+    Arc::new(tenant_service::DesktopAppService::new(
+        app_repository,
+        layout_repository,
+        audit_logger,
+    ))
 }
 
 /// Default test configuration.
