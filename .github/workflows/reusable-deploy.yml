@@ -66,6 +66,7 @@ jobs:
               echo "frontend_url=${frontend_url}" >> "$GITHUB_OUTPUT"
               frontend_host="${frontend_url#*://}"
               echo "frontend_wildcard_origin=https://*.${frontend_host}" >> "$GITHUB_OUTPUT"
+              echo "frontend_domain=${frontend_host}" >> "$GITHUB_OUTPUT"
               ;;
             staging)
               backend_health_url="$STAGING_BACKEND_HEALTH_URL"
@@ -77,6 +78,7 @@ jobs:
               echo "frontend_url=${frontend_url}" >> "$GITHUB_OUTPUT"
               frontend_host="${frontend_url#*://}"
               echo "frontend_wildcard_origin=https://*.${frontend_host}" >> "$GITHUB_OUTPUT"
+              echo "frontend_domain=${frontend_host}" >> "$GITHUB_OUTPUT"
               ;;
             production)
               backend_health_url="$PRODUCTION_BACKEND_HEALTH_URL"
@@ -88,6 +90,7 @@ jobs:
               echo "frontend_url=${frontend_url}" >> "$GITHUB_OUTPUT"
               frontend_host="${frontend_url#*://}"
               echo "frontend_wildcard_origin=https://*.${frontend_host}" >> "$GITHUB_OUTPUT"
+              echo "frontend_domain=${frontend_host}" >> "$GITHUB_OUTPUT"
               ;;
           esac
 
@@ -173,7 +176,7 @@ jobs:
         env:
           VITE_API_BASE_URL: ${{ steps.env_config.outputs.backend_url }}/api/v1
           VITE_APP_NAME: ${{ vars.VITE_APP_NAME || 'Klynt' }}
-          VITE_APP_DOMAIN: ${{ secrets.VITE_APP_DOMAIN }}
+          VITE_APP_DOMAIN: ${{ secrets.VITE_APP_DOMAIN || steps.env_config.outputs.frontend_domain }}
           VITE_APP_PROTOCOL: ${{ secrets.VITE_APP_PROTOCOL || 'https' }}
           FRONTEND_UUID: ${{ steps.env_config.outputs.frontend_uuid }}
         run: |

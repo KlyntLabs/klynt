@@ -69,6 +69,22 @@
       "logo": "Klynt",
       "logoAlt": "Klynt logo",
       "getStarted": "Get started – free",
+      "search": "Tìm kiếm",
+      "notifications": "Thông báo",
+      "profile": "Hồ sơ",
+      "signIn": "Đăng nhập",
+      "signOut": "Đăng xuất",
+      "settings": "Cài đặt",
+      "file": "Tệp",
+      "edit": "Chỉnh sửa",
+      "view": "Xem",
+      "window": "Cửa sổ",
+      "help": "Trợ giúp",
+      "newWindow": "Cửa sổ mới",
+      "closeWindow": "Đóng cửa sổ",
+      "showDesktop": "Hiển thị màn hình",
+      "changeBackground": "Đổi hình nền",
+      "adminSettings": "Cài đặt quản trị",
       "menus": {
         "productOS": {
           "label": "Product OS",
@@ -106,21 +122,7 @@
           "merch": "Merch",
           "trash": "Trash"
         }
-      },
-      "search": "Search",
-      "notifications": "Notifications",
-      "profile": "Profile",
-      "file": "Tệp",
-      "edit": "Chỉnh sửa",
-      "view": "Xem",
-      "window": "Cửa sổ",
-      "settings": "Cài đặt",
-      "help": "Trợ giúp",
-      "newWindow": "Cửa sổ mới",
-      "closeWindow": "Đóng cửa sổ",
-      "showDesktop": "Hiển thị màn hình",
-      "changeBackground": "Thay đổi hình nền",
-      "adminSettings": "Cài đặt quản trị"
+      }
     },
     "icons": {
       "switchToWebsite": "Switch to website",

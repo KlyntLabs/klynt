@@ -1,59 +1,17 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { GlassPanel } from "@/components/ui/glass-panel";
 import { useWindowManager } from "@/features/desktop/window-manager/window-module";
+import { cn } from "@/lib/utils";
 import type { DesktopAction } from "../apps/types";
 import type { DesktopConfig } from "../factory/types";
 import type { MenubarItem, MenubarSchema } from "../menubar/types";
-
-interface MenuItem {
-  label: string;
-  onClick?: () => void;
-  separator?: boolean;
-}
-
-interface MenuGroup {
-  label: string;
-  items: MenuItem[];
-}
-
-function itemToMenuItem(
-  item: MenubarItem,
-  onAction: (action: DesktopAction) => void
-): MenuItem | null {
-  switch (item.type) {
-    case "action":
-      return { label: item.label, onClick: () => onAction(item.action) };
-    case "separator":
-      return { label: "", separator: true };
-    case "submenu":
-      return {
-        label: item.label,
-        onClick: () => {},
-      };
-    default:
-      return null;
-  }
-}
-
-function useMenuGroups(
-  menubar: MenubarSchema,
-  onAction: (action: DesktopAction) => void
-): MenuGroup[] {
-  return useMemo(() => {
-    return menubar.menus
-      .filter(
-        (menu): menu is { type: "submenu"; label: string; items: MenubarItem[] } =>
-          menu.type === "submenu"
-      )
-      .map((menu) => ({
-        label: menu.label,
-        items: menu.items
-          .map((item) => itemToMenuItem(item, onAction))
-          .filter((item): item is MenuItem => item !== null),
-      }));
-  }, [menubar.menus, onAction]);
-}
+import { BrandLogo } from "./menubar/brand-logo";
+import { MenuDropdown } from "./menubar/menu-dropdown";
+import { useMenuGroups } from "./menubar/menu-helpers";
+import { TrailingActions } from "./menubar/trailing-actions";
+import { UserMenu } from "./menubar/user-menu";
 
 interface MenubarProps {
   config: DesktopConfig;
@@ -94,7 +52,7 @@ export default function Menubar({ config }: MenubarProps) {
 
   const menus = useMenuGroups(config.menubar, handleAction);
 
-  const handleMenuClick = (item: MenuItem) => {
+  const handleMenuClick = (item: { onClick?: () => void }) => {
     setOpenMenu(null);
     item.onClick?.();
   };
@@ -111,39 +69,32 @@ export default function Menubar({ config }: MenubarProps) {
     }
   };
 
+  // Filter out the static "profile" trailing item — UserMenu handles it live
+  const filteredSchema: MenubarSchema = {
+    ...config.menubar,
+    trailing: config.menubar.trailing.filter((item) => {
+      if (item.type !== "action") return true;
+      return item.label !== "desktop.menubar.profile";
+    }),
+  };
+
   return (
-    <div
+    <GlassPanel
       ref={menuRef}
-      className="fixed top-0 left-0 right-0 h-9 z-50 flex items-center px-3 gap-1"
+      variant="topbar"
+      radius="none"
+      className="fixed top-0 left-0 right-0 z-50 flex h-10 items-center gap-1 px-3"
       style={{
-        background: "rgba(232, 228, 220, 0.92)",
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
-        borderBottom: "1px solid rgba(209, 209, 209, 0.6)",
+        WebkitBackdropFilter: "blur(20px) saturate(180%)",
+        backdropFilter: "blur(20px) saturate(180%)",
       }}
     >
       {/* Logo */}
-      <button
-        type="button"
-        onClick={handleLogoClick}
-        className="flex items-center gap-1.5 px-2 py-1 rounded hover:bg-[#D4CFC6] transition-colors"
-      >
-        <svg
-          width="22"
-          height="22"
-          viewBox="0 0 32 32"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-label={t("desktop.menubar.logoAlt")}
-        >
-          <title>{t("desktop.menubar.logoAlt")}</title>
-          <rect width="32" height="32" rx="6" fill="#1A1A2E" />
-          <path d="M8 10h3v8h5v-8h3v12h-3v-4h-5v4H8V10z" fill="#F76E18" />
-          <circle cx="22" cy="12" r="2" fill="#F76E18" />
-        </svg>
-        <span className="text-[13px] font-semibold text-[#1A1A1A]">
-          {config.menubar.brand.label}
-        </span>
+      <button type="button" onClick={handleLogoClick} className="flex shrink-0 items-center">
+        <BrandLogo
+          label={t("desktop.menubar.logo") || config.menubar.brand.label}
+          alt={t("desktop.menubar.logoAlt")}
+        />
       </button>
 
       {/* Menu Items */}
@@ -156,67 +107,33 @@ export default function Menubar({ config }: MenubarProps) {
               onMouseEnter={() => {
                 if (openMenu !== null) setOpenMenu(menu.label);
               }}
-              className={`flex items-center gap-0.5 px-2.5 py-1 rounded text-[13px] font-medium transition-colors ${
+              className={cn(
+                "rounded-md px-2.5 py-1 text-[13px] font-medium transition-colors",
                 openMenu === menu.label
-                  ? "bg-[#2563EB] text-white"
-                  : "text-[#1A1A1A] hover:bg-[#D4CFC6]"
-              }`}
+                  ? "bg-foreground/10 text-foreground"
+                  : "text-foreground/80 hover:bg-foreground/5"
+              )}
             >
               {t(menu.label as never)}
             </button>
 
-            {/* Dropdown */}
-            {openMenu === menu.label && (
-              <div
-                className="absolute top-full left-0 mt-0.5 py-1.5 bg-white rounded-lg shadow-lg border border-[#D1D1D1] min-w-[200px] z-[55]"
-                onMouseLeave={() => setOpenMenu(null)}
-                role="menu"
-              >
-                {menu.items.map((item) => (
-                  <div key={item.label}>
-                    {item.separator && <div className="my-1 border-t border-[#E5E5E5]" />}
-                    <button
-                      type="button"
-                      onClick={() => handleMenuClick(item)}
-                      className="w-full text-left px-3 py-1.5 text-[13px] text-[#1A1A1A] hover:bg-[#F0EDE6] transition-colors"
-                    >
-                      {t(item.label as never)}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+            <MenuDropdown
+              group={menu}
+              isOpen={openMenu === menu.label}
+              onClose={() => setOpenMenu(null)}
+              onItemClick={handleMenuClick}
+            />
           </div>
         ))}
       </div>
 
       <div className="flex-1" />
 
-      {/* Right side actions */}
-      <div className="flex items-center gap-1.5">
-        {config.menubar.trailing.map((item) => {
-          if (item.type !== "action") return null;
-          const Icon = item.icon;
-          const isPrimary = item.variant === "primary";
-          const trailingLabel = t(item.label as never);
-          return (
-            <button
-              key={item.label}
-              type="button"
-              onClick={() => handleTrailingClick(item)}
-              aria-label={trailingLabel}
-              className={
-                isPrimary
-                  ? "h-7 px-3 flex items-center gap-1.5 rounded bg-[#F76E18] hover:bg-[#E56310] text-white text-[12px] font-semibold transition-colors"
-                  : "w-7 h-7 flex items-center justify-center rounded hover:bg-[#D4CFC6] transition-colors"
-              }
-            >
-              {Icon && <Icon className={isPrimary ? "w-3.5 h-3.5" : "w-4 h-4 text-[#1A1A1A]"} />}
-              {isPrimary && trailingLabel}
-            </button>
-          );
-        })}
+      {/* Right side: schema actions + live auth status */}
+      <div className="flex items-center gap-2">
+        <TrailingActions schema={filteredSchema} onAction={handleTrailingClick} />
+        <UserMenu />
       </div>
-    </div>
+    </GlassPanel>
   );
 }
