@@ -292,6 +292,7 @@ pub fn build_test_user_service() -> (UserService, Arc<FakeUserServiceRepository>
         Arc::new(base::testkit::FakePermissionRepository::new()),
         Arc::new(base::testkit::FakeRoleRepository::new()),
         Arc::new(base::testkit::FakeTenantDesktopLayoutRepository),
+        Arc::new(base::testkit::FakeDesktopAppRepository::default()),
         Arc::new(base::testkit::FakeSessionStore::new()),
         Arc::new(base::testkit::FakeTokenStore::new()),
         Arc::new(StubUserAuditLogger),

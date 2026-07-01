@@ -18,7 +18,9 @@ use base::ports::email::EmailError;
 use base::ports::session::{
     Session, SessionError as BaseSessionError, SessionKind, SessionStore, SessionToken,
 };
-use base::testkit::{sample_user, FakeSessionStore, FakeTokenStore, FakeUserRepository};
+use base::testkit::{
+    sample_user, FakeDesktopAppRepository, FakeSessionStore, FakeTokenStore, FakeUserRepository,
+};
 use chrono::{DateTime, Utc};
 use domain::{
     DomainResult, Email, Membership, PermissionId, RoleId, TenantId, TenantMember, User, UserId,
@@ -296,6 +298,7 @@ pub fn build_test_service_with_clock() -> (
         Arc::new(base::testkit::FakePermissionRepository::new()),
         Arc::new(base::testkit::FakeRoleRepository::new()),
         Arc::new(base::testkit::FakeTenantDesktopLayoutRepository),
+        Arc::new(FakeDesktopAppRepository::default()),
         session_store.clone(),
         Arc::new(FakeTokenStore::new()),
         Arc::new(StubAuditLogger),
@@ -345,6 +348,7 @@ pub fn build_test_service_with_session_store(
         Arc::new(base::testkit::FakePermissionRepository::new()),
         Arc::new(base::testkit::FakeRoleRepository::new()),
         Arc::new(base::testkit::FakeTenantDesktopLayoutRepository),
+        Arc::new(FakeDesktopAppRepository::default()),
         session_store.clone(),
         Arc::new(FakeTokenStore::new()),
         Arc::new(StubAuditLogger),

@@ -6,7 +6,7 @@ use auth_service::{AuthConfig, AuthService};
 use base::ports::repository::UserRepository;
 use base::ports::session::SessionStore;
 use base::testkit::{
-    FakePermissionRepository, FakeRoleRepository, FakeSessionStore,
+    FakeDesktopAppRepository, FakePermissionRepository, FakeRoleRepository, FakeSessionStore,
     FakeTenantDesktopLayoutRepository, FakeTenantInviteRepository, FakeTenantRepository,
     FakeTokenStore, FakeUserRepository, TestClock, TestPasswordHasher,
 };
@@ -29,6 +29,7 @@ fn build_facades(
         Arc::new(FakePermissionRepository::new()),
         Arc::new(FakeRoleRepository::new()),
         Arc::new(FakeTenantDesktopLayoutRepository),
+        Arc::new(FakeDesktopAppRepository::default()),
         session_store,
         Arc::new(FakeTokenStore::new()),
         Arc::new(support::StubAuditLogger),

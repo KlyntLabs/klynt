@@ -4,8 +4,8 @@ use std::sync::Arc;
 
 use auth_service::{AuthConfig, AuthService};
 use base::ports::repository::{
-    MembershipRepository, TenantDesktopLayoutRepository, TenantInviteRepository, TenantRepository,
-    UserRepository,
+    DesktopAppRepository, MembershipRepository, TenantDesktopLayoutRepository,
+    TenantInviteRepository, TenantRepository, UserRepository,
 };
 use base::ports::{
     AuditLogger, Clock, EmailSender, PasswordHasher, PermissionRepository, RoleRepository,
@@ -96,6 +96,9 @@ impl Services {
                     pool.clone(),
                 ),
             ) as Arc<dyn TenantDesktopLayoutRepository>,
+            Arc::new(persistence::repositories::desktop_app::PgDesktopAppRepository::new(
+                pool.clone(),
+            )) as Arc<dyn DesktopAppRepository>,
             session_store.clone(),
             Arc::new(persistence::repositories::token::PgTokenStore::new(pool.clone()))
                 as Arc<dyn TokenStore>,

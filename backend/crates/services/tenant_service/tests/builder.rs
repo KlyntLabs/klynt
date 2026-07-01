@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use base::ctx::{ActorType, ExecutionContext, RequestContext};
 use base::testkit::{
-    FakePermissionRepository, FakeRoleRepository, FakeSessionStore,
+    FakeDesktopAppRepository, FakePermissionRepository, FakeRoleRepository, FakeSessionStore,
     FakeTenantDesktopLayoutRepository, FakeTenantInviteRepository, FakeTenantRepository,
     FakeTokenStore, FakeUserRepository,
 };
@@ -31,6 +31,7 @@ async fn builder_with_facades_creates_tenant() {
         Arc::new(FakePermissionRepository::new()),
         Arc::new(FakeRoleRepository::new()),
         Arc::new(FakeTenantDesktopLayoutRepository),
+        Arc::new(FakeDesktopAppRepository::default()),
         session_store.clone(),
         Arc::new(FakeTokenStore::new()),
         Arc::new(base::testkit::FakeAuditLogger),

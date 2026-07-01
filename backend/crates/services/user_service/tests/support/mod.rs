@@ -11,7 +11,9 @@ use async_trait::async_trait;
 
 use base::ctx::ExecutionContext;
 use base::ports::audit::{PasswordChangeSnapshot, ProfileUpdateSnapshot, RoleMetadataSnapshot};
-use base::testkit::{sample_user as base_sample_user, FakeUserRepository};
+use base::testkit::{
+    sample_user as base_sample_user, FakeDesktopAppRepository, FakeUserRepository,
+};
 use domain::{PermissionId, RoleId, TenantId, User, UserId, UserStatus};
 use infra_facades::{InfraFacade, PersistenceFacade};
 use user_service::application::ports::AuditLogger;
@@ -194,6 +196,7 @@ pub fn build_test_service() -> (UserService, Arc<FakeUserRepository>, Arc<TestAu
         Arc::new(base::testkit::FakePermissionRepository::new()),
         Arc::new(base::testkit::FakeRoleRepository::new()),
         Arc::new(base::testkit::FakeTenantDesktopLayoutRepository),
+        Arc::new(FakeDesktopAppRepository::default()),
         Arc::new(base::testkit::FakeSessionStore::new()),
         Arc::new(base::testkit::FakeTokenStore::new()),
         audit.clone(),

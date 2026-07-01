@@ -1,6 +1,7 @@
 //! Persistence facade — groups all repository and store adapters.
 
 use base::ports::permission::{PermissionRepository, RoleRepository};
+use base::ports::repository::DesktopAppRepository;
 use base::ports::repository::*;
 use base::ports::session::SessionStore;
 use base::ports::AuditLogger;
@@ -22,6 +23,7 @@ pub struct PersistenceFacade {
     pub permission_repository: Arc<dyn PermissionRepository>,
     pub role_repository: Arc<dyn RoleRepository>,
     pub layout_repository: Arc<dyn TenantDesktopLayoutRepository>,
+    pub app_repository: Arc<dyn DesktopAppRepository>,
 
     // Stores
     pub session_store: Arc<dyn SessionStore>,
@@ -42,6 +44,7 @@ impl PersistenceFacade {
         permission_repository: Arc<dyn PermissionRepository>,
         role_repository: Arc<dyn RoleRepository>,
         layout_repository: Arc<dyn TenantDesktopLayoutRepository>,
+        app_repository: Arc<dyn DesktopAppRepository>,
         session_store: Arc<dyn SessionStore>,
         token_store: Arc<dyn TokenStore>,
         audit_logger: Arc<dyn AuditLogger>,
@@ -54,6 +57,7 @@ impl PersistenceFacade {
             permission_repository,
             role_repository,
             layout_repository,
+            app_repository,
             session_store,
             token_store,
             audit_logger,
