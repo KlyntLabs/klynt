@@ -92,7 +92,7 @@ mod tests {
     use base::ctx::ExecutionContext;
     use base::ports::repository::TenantDesktopLayoutRepository;
     use domain::{
-        DesktopIcon, DesktopWindow, DomainError, DomainResult, LayoutScope, TenantDesktopLayout,
+        DesktopWindow, DomainError, DomainResult, IconTreeNode, LayoutScope, TenantDesktopLayout,
     };
     use uuid::Uuid;
 
@@ -152,10 +152,11 @@ mod tests {
             user_id,
             version: 1,
             background_preset_id: "default".to_string(),
-            icons: vec![DesktopIcon {
+            icon_tree: vec![IconTreeNode {
                 app_id: "app-1".to_string(),
                 x: 10,
                 y: 20,
+                children: None,
             }],
             windows: vec![DesktopWindow {
                 app_id: "app-1".to_string(),

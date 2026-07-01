@@ -33,7 +33,7 @@ struct LayoutRow {
     user_id: Option<Uuid>,
     version: i32,
     background_preset_id: String,
-    icons: serde_json::Value,
+    icon_tree: serde_json::Value,
     windows: serde_json::Value,
     etag: String,
 }
@@ -41,8 +41,8 @@ struct LayoutRow {
 fn map_layout_row(row: LayoutRow) -> DomainResult<TenantDesktopLayout> {
     let scope = LayoutScope::from_str(&row.scope)
         .map_err(|e| DomainError::internal_msg(format!("invalid layout scope in DB: {e}")))?;
-    let icons = serde_json::from_value(row.icons)
-        .map_err(|e| DomainError::internal_msg(format!("invalid icons JSON in DB: {e}")))?;
+    let icon_tree = serde_json::from_value(row.icon_tree)
+        .map_err(|e| DomainError::internal_msg(format!("invalid icon_tree JSON in DB: {e}")))?;
     let windows = serde_json::from_value(row.windows)
         .map_err(|e| DomainError::internal_msg(format!("invalid windows JSON in DB: {e}")))?;
 
@@ -53,7 +53,7 @@ fn map_layout_row(row: LayoutRow) -> DomainResult<TenantDesktopLayout> {
         user_id: row.user_id,
         version: row.version,
         background_preset_id: row.background_preset_id,
-        icons,
+        icon_tree,
         windows,
         etag: row.etag,
     })
@@ -71,7 +71,7 @@ impl TenantDesktopLayoutRepository for PgTenantDesktopLayoutRepository {
         let row = sqlx::query_as!(
             LayoutRow,
             r#"
-            SELECT id, tenant_id, scope, user_id, version, background_preset_id, icon_tree AS icons, windows, etag
+            SELECT id, tenant_id, scope, user_id, version, background_preset_id, icon_tree, windows, etag
             FROM tenant_desktop_layouts
             WHERE tenant_id = $1 AND scope = $2 AND user_id IS NOT DISTINCT FROM $3
             "#,
@@ -91,8 +91,9 @@ impl TenantDesktopLayoutRepository for PgTenantDesktopLayoutRepository {
         _ctx: &ExecutionContext,
         layout: &TenantDesktopLayout,
     ) -> DomainResult<TenantDesktopLayout> {
-        let icons = serde_json::to_value(&layout.icons)
-            .map_err(|e| DomainError::internal_msg(format!("failed to serialize icons: {e}")))?;
+        let icon_tree = serde_json::to_value(&layout.icon_tree).map_err(|e| {
+            DomainError::internal_msg(format!("failed to serialize icon_tree: {e}"))
+        })?;
         let windows = serde_json::to_value(&layout.windows)
             .map_err(|e| DomainError::internal_msg(format!("failed to serialize windows: {e}")))?;
 
@@ -111,7 +112,7 @@ impl TenantDesktopLayoutRepository for PgTenantDesktopLayoutRepository {
                 windows = EXCLUDED.windows,
                 etag = EXCLUDED.etag,
                 updated_at = NOW()
-            RETURNING id, tenant_id, scope, user_id, version, background_preset_id, icon_tree AS icons, windows, etag
+            RETURNING id, tenant_id, scope, user_id, version, background_preset_id, icon_tree, windows, etag
             "#,
             layout.id,
             layout.tenant_id,
@@ -119,7 +120,7 @@ impl TenantDesktopLayoutRepository for PgTenantDesktopLayoutRepository {
             layout.user_id,
             layout.version,
             &layout.background_preset_id,
-            icons,
+            icon_tree,
             windows,
             &layout.etag
         )

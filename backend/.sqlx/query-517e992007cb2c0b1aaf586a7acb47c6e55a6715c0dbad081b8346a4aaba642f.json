@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT id, tenant_id, scope, user_id, version, background_preset_id, icon_tree AS icons, windows, etag\n            FROM tenant_desktop_layouts\n            WHERE tenant_id = $1 AND scope = $2 AND user_id IS NOT DISTINCT FROM $3\n            ",
+  "query": "\n            INSERT INTO tenant_desktop_layouts (\n                id, tenant_id, scope, user_id, version, background_preset_id, icon_tree, windows, etag, created_at, updated_at\n            )\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())\n            ON CONFLICT (tenant_id, scope, user_id)\n            DO UPDATE SET\n                version = EXCLUDED.version,\n                background_preset_id = EXCLUDED.background_preset_id,\n                icon_tree = EXCLUDED.icon_tree,\n                windows = EXCLUDED.windows,\n                etag = EXCLUDED.etag,\n                updated_at = NOW()\n            RETURNING id, tenant_id, scope, user_id, version, background_preset_id, icon_tree, windows, etag\n            ",
   "describe": {
     "columns": [
       {
@@ -71,7 +71,7 @@
       },
       {
         "ordinal": 6,
-        "name": "icons",
+        "name": "icon_tree",
         "type_info": "Jsonb",
         "origin": {
           "Table": {
@@ -106,8 +106,14 @@
     "parameters": {
       "Left": [
         "Uuid",
+        "Uuid",
         "Text",
-        "Uuid"
+        "Uuid",
+        "Int4",
+        "Text",
+        "Jsonb",
+        "Jsonb",
+        "Text"
       ]
     },
     "nullable": [
@@ -122,5 +128,5 @@
       false
     ]
   },
-  "hash": "8d324dedf30752357e58551129c0e049c158158ee2f97e205c4629b6c0fc2adb"
+  "hash": "517e992007cb2c0b1aaf586a7acb47c6e55a6715c0dbad081b8346a4aaba642f"
 }
