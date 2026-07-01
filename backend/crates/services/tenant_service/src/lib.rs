@@ -14,9 +14,11 @@ pub mod admin;
 pub mod application;
 pub mod builder;
 pub mod config;
+pub mod desktop_apps;
 pub mod desktop_layout;
 pub mod error;
 
+pub use desktop_apps::DesktopAppService;
 pub use desktop_layout::TenantDesktopLayoutService;
 
 use std::sync::Arc;
