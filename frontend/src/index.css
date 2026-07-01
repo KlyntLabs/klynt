@@ -57,6 +57,24 @@
   --shadow-hard-sm: 2px 2px 0 0 #000000;
   --shadow-hard-lg: 6px 6px 0 0 #000000;
 
+  /* ── macOS Tahoe glassmorphism system ─────────────────────────── */
+  /* Brand accent — the Klynt orange used throughout the desktop UI */
+  --color-brand: #f76e18;
+  --color-brand-hover: #e56310;
+  --color-brand-foreground: #ffffff;
+
+  /* Glass surfaces — translucency channels consumed via hsl(var(--token)) */
+  --color-glass: hsl(var(--glass));
+  --color-glass-strong: hsl(var(--glass-strong));
+  --color-glass-border: hsl(var(--glass-border));
+  --color-glass-highlight: hsl(var(--glass-highlight));
+
+  /* Elevation shadows — soft, layered, Apple-style */
+  --shadow-elevation-1: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-elevation-2: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04);
+  --shadow-elevation-3: 0 8px 24px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-elevation-4: 0 16px 48px rgba(0, 0, 0, 0.14), 0 4px 16px rgba(0, 0, 0, 0.08);
+
   /* Animation tokens */
   --animate-fade-in: fade-in 0.2s ease-out;
   --animate-fade-out: fade-out 0.2s ease-in;
@@ -162,6 +180,12 @@
   --sidebar-accent-foreground: 240 5.9% 10%;
   --sidebar-border: 220 13% 91%;
   --sidebar-ring: 217.2 91.2% 59.8%;
+
+  /* macOS Tahoe glass tokens (light) */
+  --glass: 40 12% 90%; /* warm beige translucent base */
+  --glass-strong: 40 12% 88%; /* denser variant for dropdowns */
+  --glass-border: 40 5% 82%; /* soft warm border */
+  --glass-highlight: 0 0% 100%; /* top-edge inner glow */
 }
 
 .dark {
@@ -192,6 +216,12 @@
   --sidebar-accent-foreground: 240 4.8% 95.9%;
   --sidebar-border: 240 3.7% 15.9%;
   --sidebar-ring: 217.2 91.2% 59.8%;
+
+  /* macOS Tahoe glass tokens (dark) */
+  --glass: 240 6% 14%;
+  --glass-strong: 240 6% 18%;
+  --glass-border: 240 4% 28%;
+  --glass-highlight: 240 10% 30%;
 }
 
 @layer base {
@@ -207,6 +237,8 @@
     @apply bg-background text-foreground antialiased;
     font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
     font-display: swap;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     min-width: 320px;
     min-height: 100vh;
   }

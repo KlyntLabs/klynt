@@ -171,9 +171,18 @@ Cargo workspace with dependency direction enforced by the compiler:
 
 ### CI (`ci.yml`)
 
-- Backend: fmt, clippy, tests with coverage, release build
-- Frontend: fmt, lint, typecheck, tests with coverage, production build
-- Security: `gitleaks`, `semgrep` (`p/default`), `trivy` (HIGH/CRITICAL)
+- Backend jobs run in parallel: `backend-fmt`, `backend-clippy`, `backend-test-coverage`, `backend-build-release`.
+- Frontend jobs run in parallel: `frontend-format-lint`, `frontend-typecheck`, `frontend-test-coverage`, `frontend-build`.
+- Coverage reports are uploaded as workflow artifacts.
+- Security: `gitleaks`, `semgrep` (`p/default`), `trivy` (HIGH/CRITICAL).
+- Every job has a `timeout-minutes` limit.
+
+### Deploy
+
+- `deploy-dev.yml`, `deploy-staging.yml`, and `deploy-production.yml` trigger on the successful completion of `ci.yml` via `workflow_run`.
+- The reusable `reusable-deploy.yml` syncs Coolify env vars, restarts the apps, waits for deployment, and health-checks both services.
+- If post-deploy health checks fail, the workflow automatically rolls back to the previous deployment and verifies rollback health.
+- Deployments are recorded with the GitHub Deployments API so environment status is visible in the repo.
 
 ## Security & Compliance
 
@@ -206,7 +215,7 @@ Before claiming complete:
 ## Important Notes for Agents
 
 - Foundation scaffold now uses real Postgres/Redis adapters, bearer-token session auth, and the observability stack described above.
-- Deployment workflows are placeholders.
+- Deployment workflows are live for dev, staging, and production.
 - Prefer adding tools via `Cargo.toml` or `package.json` instead of global installs.
 - When modifying Docker files, validate with `docker compose config` and test `docker compose up --build` when possible.
 - **Frontend coverage gate**: The 92% lines/statements, 87% functions, 73% branches threshold is enforced. New presentational code (UI primitives, marketing pages, desktop chrome) must be covered by unit/integration tests, Storybook story renders, or browser tests so the gate stays green.

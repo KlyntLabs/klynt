@@ -19,7 +19,7 @@ describe("Menubar interactions", () => {
     await user.click(screen.getByRole("button", { name: /^pricing$/i }));
 
     const menu = screen.getByRole("menu");
-    const item = within(menu).getByRole("button", { name: /^pricing$/i });
+    const item = within(menu).getByRole("menuitem", { name: /^pricing$/i });
     expect(item).toBeInTheDocument();
 
     await user.click(item);

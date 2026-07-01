@@ -48,6 +48,7 @@ permissions:
 jobs:
   review:
     name: AI code review
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'pull_request_target' ||
@@ -64,7 +65,7 @@ jobs:
       - name: Resolve PR context from comment
         if: github.event_name == 'issue_comment'
         id: pr-context
-        uses: actions/github-script@v9
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
         with:
           script: |
             const { data: pr } = await github.rest.pulls.get({
@@ -98,7 +99,7 @@ jobs:
           fi
 
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           fetch-depth: 0
           ref: ${{ steps.ctx.outputs.head_sha }}
@@ -109,7 +110,7 @@ jobs:
         run: git fetch origin "pull/$PR_NUMBER/head"
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '24'
 
@@ -175,7 +176,7 @@ jobs:
           echo "::endgroup::"
 
       - name: Post review comments to PR
-        uses: actions/github-script@v9
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
