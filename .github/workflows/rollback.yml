@@ -47,7 +47,6 @@ jobs:
 
   rollback-dev:
     name: Rollback dev
-    timeout-minutes: 30
     needs: resolve-target
     if: ${{ github.event.inputs.environment == 'dev' }}
     uses: ./.github/workflows/reusable-deploy.yml
@@ -59,7 +58,6 @@ jobs:
 
   rollback-staging:
     name: Rollback staging
-    timeout-minutes: 30
     needs: resolve-target
     if: ${{ github.event.inputs.environment == 'staging' }}
     uses: ./.github/workflows/reusable-deploy.yml
@@ -71,7 +69,6 @@ jobs:
 
   rollback-production:
     name: Rollback production
-    timeout-minutes: 30
     needs: resolve-target
     if: ${{ github.event.inputs.environment == 'production' }}
     uses: ./.github/workflows/reusable-deploy.yml
