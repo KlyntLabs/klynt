@@ -12,9 +12,12 @@ use domain::operations::{MembershipOp, TenantOp, UserOp};
 use domain::tenant::{Tenant, TenantId, TenantMembershipSummary, TenantSlug};
 use domain::tenant_desktop_layout::{LayoutScope, TenantDesktopLayout};
 use domain::{
-    DomainResult, Email, PaginationRequest, RoleId, TenantInvite, User, UserId, UserRole,
+    DesktopApp, DomainResult, Email, PaginationRequest, RoleId, TenantInvite, User, UserId,
+    UserRole,
 };
 use uuid::Uuid;
+
+pub use crate::ports::repository_error::RepositoryError;
 
 pub use repository_execute::{MembershipOpResult, TenantOpResult, UserOpResult};
 
@@ -294,52 +297,56 @@ pub trait TenantDesktopLayoutRepository: Send + Sync {
     ) -> DomainResult<TenantDesktopLayout>;
 }
 
-/// Canonical repository error type.
-///
-/// Centralized error type for all repository operations.
-/// Services map this to their domain-specific errors.
-#[derive(Debug, thiserror::Error)]
-pub enum RepositoryError {
-    /// Requested user was not found.
-    #[error("User not found")]
-    NotFound,
+/// Canonical desktop app repository interface.
+#[async_trait]
+pub trait DesktopAppRepository: Send + Sync {
+    /// Create a new app within a transaction that also appends to icon_tree.
+    #[allow(clippy::too_many_arguments)]
+    async fn create_with_position(
+        &self,
+        ctx: &ExecutionContext,
+        app: &DesktopApp,
+        icon_tree_app_id: &str,
+        icon_tree_x: i32,
+        icon_tree_y: i32,
+        icon_tree_parent_id: Option<&str>,
+        scope: LayoutScope,
+    ) -> DomainResult<DesktopApp>;
 
-    /// User already exists with a conflicting identifier.
-    #[error("User already exists ({0})")]
-    Conflict(String),
+    /// Find apps visible to a caller (shared + own).
+    async fn list_visible(
+        &self,
+        ctx: &ExecutionContext,
+        tenant_id: Uuid,
+        caller_id: Uuid,
+    ) -> DomainResult<Vec<DesktopApp>>;
 
-    /// Input validation failed.
-    #[error("Validation error: {0}")]
-    Validation(String),
+    /// Find a single app by id within a tenant. Returns `Ok(None)` when the app
+    /// does not exist. Ownership/visibility checks are enforced by the service layer.
+    async fn find_by_id(
+        &self,
+        ctx: &ExecutionContext,
+        tenant_id: Uuid,
+        app_id: Uuid,
+    ) -> DomainResult<Option<DesktopApp>>;
 
-    /// Underlying database error.
-    #[error("Database error: {0}")]
-    Database(String),
+    /// Update app content/menu_config (with etag check).
+    async fn update(
+        &self,
+        ctx: &ExecutionContext,
+        app: &DesktopApp,
+        expected_etag: &str,
+    ) -> DomainResult<DesktopApp>;
 
-    /// Internal unexpected error.
-    #[error("Internal error: {0}")]
-    Internal(String),
-}
-
-// Convert from sqlx::Error for repository implementations.
-impl From<sqlx::Error> for RepositoryError {
-    fn from(err: sqlx::Error) -> Self {
-        match err {
-            sqlx::Error::RowNotFound => RepositoryError::NotFound,
-            sqlx::Error::Database(db_err) => {
-                if db_err.is_unique_violation() {
-                    RepositoryError::Conflict(db_err.constraint().unwrap_or("unknown").to_string())
-                } else if db_err.is_foreign_key_violation() {
-                    RepositoryError::Validation(
-                        db_err.constraint().unwrap_or("unknown").to_string(),
-                    )
-                } else {
-                    RepositoryError::Database(db_err.to_string())
-                }
-            }
-            _ => RepositoryError::Internal(err.to_string()),
-        }
-    }
+    /// Delete an app. Removing the app from the shared `icon_tree` is the
+    /// responsibility of the caller/service layer; this method only deletes the
+    /// app row.
+    async fn delete(
+        &self,
+        ctx: &ExecutionContext,
+        tenant_id: Uuid,
+        app_id: Uuid,
+    ) -> DomainResult<()>;
 }
 
 #[cfg(test)]

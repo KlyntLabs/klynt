@@ -4,7 +4,10 @@ mod tests {
     use crate::ctx::ExecutionContext;
     use async_trait::async_trait;
     use chrono::Utc;
-    use domain::{Email, PaginationRequest, User, UserId, UserRole, UserStatus};
+    use domain::{
+        AppType, DesktopApp, Email, LayoutScope, PaginationRequest, User, UserId, UserRole,
+        UserStatus,
+    };
     use uuid::Uuid;
 
     #[test]
@@ -275,5 +278,114 @@ mod tests {
             .expect("list");
         assert!(users.is_empty());
         assert_eq!(total, 0);
+    }
+
+    /// A minimal fake implementation for the desktop app repository.
+    struct FakeDesktopAppRepo;
+
+    #[async_trait]
+    impl DesktopAppRepository for FakeDesktopAppRepo {
+        #[allow(clippy::too_many_arguments)]
+        async fn create_with_position(
+            &self,
+            _ctx: &ExecutionContext,
+            app: &DesktopApp,
+            _icon_tree_app_id: &str,
+            _icon_tree_x: i32,
+            _icon_tree_y: i32,
+            _icon_tree_parent_id: Option<&str>,
+            _scope: LayoutScope,
+        ) -> domain::DomainResult<DesktopApp> {
+            Ok(app.clone())
+        }
+
+        async fn list_visible(
+            &self,
+            _ctx: &ExecutionContext,
+            _tenant_id: Uuid,
+            _caller_id: Uuid,
+        ) -> domain::DomainResult<Vec<DesktopApp>> {
+            Ok(vec![])
+        }
+
+        async fn find_by_id(
+            &self,
+            _ctx: &ExecutionContext,
+            _tenant_id: Uuid,
+            _app_id: Uuid,
+        ) -> domain::DomainResult<Option<DesktopApp>> {
+            Ok(None)
+        }
+
+        async fn update(
+            &self,
+            _ctx: &ExecutionContext,
+            app: &DesktopApp,
+            _expected_etag: &str,
+        ) -> domain::DomainResult<DesktopApp> {
+            Ok(app.clone())
+        }
+
+        async fn delete(
+            &self,
+            _ctx: &ExecutionContext,
+            _tenant_id: Uuid,
+            _app_id: Uuid,
+        ) -> domain::DomainResult<()> {
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn test_desktop_app_repository_trait_exists() {
+        // The trait is defined and object-safe: dyn DesktopAppRepository.
+        let _repo: Box<dyn DesktopAppRepository> = Box::new(FakeDesktopAppRepo);
+    }
+
+    #[tokio::test]
+    async fn test_fake_desktop_app_repo_methods_execute() {
+        let ctx = ExecutionContext::new(crate::ctx::RequestContext::new());
+        let repo = FakeDesktopAppRepo;
+        let tenant_id = Uuid::new_v4();
+        let caller_id = Uuid::new_v4();
+        let now = Utc::now();
+
+        let app = DesktopApp {
+            id: Uuid::new_v4(),
+            tenant_id,
+            app_type: AppType::Markdown,
+            title: "Notes".to_string(),
+            content: Default::default(),
+            menu_config: Default::default(),
+            owner_id: Some(Uuid::new_v4()),
+            created_by: Uuid::new_v4(),
+            locked: false,
+            etag: "etag-1".to_string(),
+            created_at: now,
+            updated_at: now,
+        };
+
+        let created = repo
+            .create_with_position(&ctx, &app, "icon-1", 10, 20, None, LayoutScope::Shared)
+            .await
+            .expect("create_with_position");
+        assert_eq!(created.id, app.id);
+
+        let visible = repo
+            .list_visible(&ctx, tenant_id, caller_id)
+            .await
+            .expect("list_visible");
+        assert!(visible.is_empty());
+
+        let found = repo
+            .find_by_id(&ctx, tenant_id, app.id)
+            .await
+            .expect("find_by_id");
+        assert!(found.is_none());
+
+        let updated = repo.update(&ctx, &app, "etag-1").await.expect("update");
+        assert_eq!(updated.id, app.id);
+
+        repo.delete(&ctx, tenant_id, app.id).await.expect("delete");
     }
 }
