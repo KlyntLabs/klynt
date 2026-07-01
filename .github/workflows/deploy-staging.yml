@@ -13,7 +13,7 @@ permissions:
 jobs:
   deploy:
     name: Deploy to staging
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'staging') }}
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.actor.login != 'dependabot[bot]' && github.event.workflow_run.head_branch == 'staging') }}
     uses: ./.github/workflows/reusable-deploy.yml
     with:
       environment: staging
