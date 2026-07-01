@@ -13,7 +13,6 @@ permissions:
 jobs:
   deploy:
     name: Deploy to production
-    timeout-minutes: 30
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
     uses: ./.github/workflows/reusable-deploy.yml
     with:
