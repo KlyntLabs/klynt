@@ -6,22 +6,46 @@
       {
         "ordinal": 0,
         "name": "action",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "audit_events",
+            "name": "action"
+          }
+        }
       },
       {
         "ordinal": 1,
         "name": "resource_type",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "audit_events",
+            "name": "resource_type"
+          }
+        }
       },
       {
         "ordinal": 2,
         "name": "before_data",
-        "type_info": "Jsonb"
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "audit_events",
+            "name": "before_data"
+          }
+        }
       },
       {
         "ordinal": 3,
         "name": "after_data",
-        "type_info": "Jsonb"
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "audit_events",
+            "name": "after_data"
+          }
+        }
       }
     ],
     "parameters": {

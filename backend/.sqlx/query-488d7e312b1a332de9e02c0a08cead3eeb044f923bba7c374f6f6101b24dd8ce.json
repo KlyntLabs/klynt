@@ -6,7 +6,13 @@
       {
         "ordinal": 0,
         "name": "is_system!",
-        "type_info": "Bool"
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "tenant_roles",
+            "name": "is_system"
+          }
+        }
       }
     ],
     "parameters": {
