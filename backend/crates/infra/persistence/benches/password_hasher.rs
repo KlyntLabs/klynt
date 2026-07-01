@@ -5,7 +5,9 @@
 //! work off the Tokio async runtime so CPU-hard Argon2 operations do not
 //! block worker threads.
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use std::hint::black_box;
+
+use criterion::{criterion_group, criterion_main, Criterion};
 use persistence::password_hasher::Argon2PasswordHasher;
 use persistence::ports::PasswordHasher;
 
