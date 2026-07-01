@@ -105,4 +105,37 @@ describe("subdomain-router", () => {
     expect(getHostContext()).toEqual({ type: "reserved", subdomain: "api" });
     expect(buildApexUrl("/dashboard")).toBe("http://lvh.me:5174/dashboard");
   });
+
+  describe("missing VITE_APP_DOMAIN", () => {
+    beforeEach(() => {
+      import.meta.env.VITE_APP_DOMAIN = undefined;
+    });
+
+    it("does not double-prefix login subdomain URL", () => {
+      stubLocation("login.lvh.me:5174");
+      expect(getHostContext()).toEqual({ type: "login" });
+      expect(buildLoginUrl()).toBe("http://login.lvh.me:5174/");
+      expect(buildLoginUrl("http://lvh.me:5174/dashboard")).toBe(
+        "http://login.lvh.me:5174/?from=http%3A%2F%2Flvh.me%3A5174%2Fdashboard"
+      );
+    });
+
+    it("does not double-prefix admin subdomain URL", () => {
+      stubLocation("admin.lvh.me:5174");
+      expect(getHostContext()).toEqual({ type: "admin" });
+      expect(buildAdminUrl()).toBe("http://admin.lvh.me:5174/");
+    });
+
+    it("does not double-prefix profile subdomain URL", () => {
+      stubLocation("u.jayden.lvh.me:5174");
+      expect(getHostContext()).toEqual({ type: "profile", username: "jayden" });
+      expect(buildProfileUrl("jayden")).toBe("http://u.jayden.lvh.me:5174/");
+    });
+
+    it("still builds apex URLs from apex host", () => {
+      stubLocation("lvh.me:5174");
+      expect(getHostContext()).toEqual({ type: "apex" });
+      expect(buildApexUrl("/dashboard")).toBe("http://lvh.me:5174/dashboard");
+    });
+  });
 });
