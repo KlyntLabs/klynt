@@ -82,8 +82,8 @@ pub(super) fn tenant_error_status_code(error: &tenant_service::TenantError) -> S
         }
         TenantError::SessionCoordinator(_) => StatusCode::INTERNAL_SERVER_ERROR,
         TenantError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        TenantError::Domain(DomainError::Validation(_)) => StatusCode::UNPROCESSABLE_ENTITY,
         TenantError::Domain(DomainError::InvalidInput(_))
-        | TenantError::Domain(DomainError::Validation(_))
         | TenantError::Domain(DomainError::InvalidEmail(_))
         | TenantError::Domain(DomainError::InvalidRole(_))
         | TenantError::Domain(DomainError::InvalidToken(_))
