@@ -1,0 +1,169 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO desktop_apps (id, tenant_id, type, title, content, menu_config, owner_id, created_by, locked, etag)\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)\n            RETURNING id, tenant_id, type as \"type!\", title, content, menu_config, owner_id, created_by, locked, etag, created_at, updated_at\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "desktop_apps",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "tenant_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "desktop_apps",
+            "name": "tenant_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "type!",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "desktop_apps",
+            "name": "type"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "title",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "desktop_apps",
+            "name": "title"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "content",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "desktop_apps",
+            "name": "content"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "menu_config",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "desktop_apps",
+            "name": "menu_config"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "owner_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "desktop_apps",
+            "name": "owner_id"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "created_by",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "desktop_apps",
+            "name": "created_by"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "locked",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "desktop_apps",
+            "name": "locked"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "etag",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "desktop_apps",
+            "name": "etag"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "desktop_apps",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "updated_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "desktop_apps",
+            "name": "updated_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text",
+        "Jsonb",
+        "Jsonb",
+        "Uuid",
+        "Uuid",
+        "Bool",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "79f2329969c2925770417d94be8a8c1759428a44eec28eda8b4d4e639203045b"
+}

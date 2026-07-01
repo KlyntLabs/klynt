@@ -5,6 +5,7 @@ pub use observability::audit::types::AuditEventRepository;
 
 pub mod audit_event;
 pub mod cached_session_store;
+pub mod desktop_app;
 pub mod idempotency;
 pub mod membership;
 pub mod permission;
