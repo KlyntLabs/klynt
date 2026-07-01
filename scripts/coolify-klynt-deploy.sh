@@ -18,6 +18,10 @@ GITHUB_APP_UUID="${GITHUB_APP_UUID:-}"
 # Set to a strong random secret. Only used if you recreate the GitHub App.
 WEBHOOK_SECRET="${WEBHOOK_SECRET:-}"
 
+# Apex domain used for the public frontend and cross-subdomain SSO cookies.
+# Local dev uses lvh.me; production uses the real domain (e.g. klynt.dev).
+APEX_DOMAIN="${APEX_DOMAIN:-klynt.dev}"
+
 # -----------------------------------------------------------------------------
 # 2. Optional: create Coolify resources from scratch
 # -----------------------------------------------------------------------------
@@ -228,6 +232,8 @@ set_env_vars() {
     [production]=klynt_production
   )
 
+  local cookie_domain=".${APEX_DOMAIN}"
+
   for env in dev staging production; do
     local backend_uuid frontend_uuid pg_uuid redis_uuid
     backend_uuid="$(app_uuid "klynt-${env}-backend")"
@@ -254,17 +260,36 @@ set_env_vars() {
       fi
     done
 
-    # Frontend env var
-    local backend_fqdn
-    backend_fqdn="$(coolify app get "$backend_uuid" --format json 2>/dev/null | jq -r '.fqdn')"
-    local api_url="${backend_fqdn}/api/v1"
-
-    if ! coolify app env list "$frontend_uuid" --format json 2>/dev/null \
-         | jq -e --arg key "VITE_API_BASE_URL" '.[] | select(.key == $key)' >/dev/null 2>&1; then
-      coolify app env create "$frontend_uuid" --key "VITE_API_BASE_URL" --value "$api_url"
+    # Cross-subdomain SSO cookie domain on the backend.
+    if ! coolify app env list "$backend_uuid" --format json 2>/dev/null \
+         | jq -e --arg key "KLYNT_COOKIE_DOMAIN" '.[] | select(.key == $key)' >/dev/null 2>&1; then
+      coolify app env create "$backend_uuid" --key "KLYNT_COOKIE_DOMAIN" --value "$cookie_domain"
     else
-      echo "    Env var 'VITE_API_BASE_URL' already exists on klynt-${env}-frontend."
+      echo "    Env var 'KLYNT_COOKIE_DOMAIN' already exists on klynt-${env}-backend."
     fi
+
+    # Frontend env vars
+    local backend_fqdn frontend_fqdn
+    backend_fqdn="$(coolify app get "$backend_uuid" --format json 2>/dev/null | jq -r '.fqdn')"
+    frontend_fqdn="$(coolify app get "$frontend_uuid" --format json 2>/dev/null | jq -r '.fqdn')"
+    local api_url="${backend_fqdn}/api/v1"
+    local app_protocol="${frontend_fqdn%%://*}"
+
+    for key in VITE_API_BASE_URL VITE_APP_DOMAIN VITE_APP_PROTOCOL; do
+      local value
+      case "$key" in
+        VITE_API_BASE_URL) value="$api_url" ;;
+        VITE_APP_DOMAIN) value="$APEX_DOMAIN" ;;
+        VITE_APP_PROTOCOL) value="$app_protocol" ;;
+      esac
+
+      if ! coolify app env list "$frontend_uuid" --format json 2>/dev/null \
+           | jq -e --arg key "$key" '.[] | select(.key == $key)' >/dev/null 2>&1; then
+        coolify app env create "$frontend_uuid" --key "$key" --value "$value"
+      else
+        echo "    Env var '$key' already exists on klynt-${env}-frontend."
+      fi
+    done
   done
 }
 
