@@ -70,7 +70,7 @@ sha2 = "0.11"
 base64 = "0.22"
 
 # Validation
-validator = { version = "0.19", features = ["derive"] }
+validator = { version = "0.20", features = ["derive"] }
 
 # Networking
 ipnet = "2"
