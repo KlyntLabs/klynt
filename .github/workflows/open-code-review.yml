@@ -65,7 +65,7 @@ jobs:
       - name: Resolve PR context from comment
         if: github.event_name == 'issue_comment'
         id: pr-context
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
         with:
           script: |
             const { data: pr } = await github.rest.pulls.get({
@@ -176,7 +176,7 @@ jobs:
           echo "::endgroup::"
 
       - name: Post review comments to PR
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
