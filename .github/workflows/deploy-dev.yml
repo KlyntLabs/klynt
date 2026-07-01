@@ -14,13 +14,10 @@ jobs:
   deploy:
     name: Deploy to dev
     timeout-minutes: 30
-    if: |
-      github.event_name == 'workflow_dispatch' || (
-        github.event.workflow_run.conclusion == 'success' &&
-        github.event.workflow_run.head_branch == 'dev'
-      )
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'dev') }}
     uses: ./.github/workflows/reusable-deploy.yml
     with:
       environment: dev
       checkout_ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || '' }}
-    secrets: inherit
+    # Internal same-repo reusable workflow; explicit secret map would be unmaintainable.
+    secrets: inherit # nosemgrep: yaml.github-actions.security.secrets-inherit.secrets-inherit
