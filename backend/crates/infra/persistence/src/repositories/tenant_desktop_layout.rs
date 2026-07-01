@@ -71,7 +71,7 @@ impl TenantDesktopLayoutRepository for PgTenantDesktopLayoutRepository {
         let row = sqlx::query_as!(
             LayoutRow,
             r#"
-            SELECT id, tenant_id, scope, user_id, version, background_preset_id, icons, windows, etag
+            SELECT id, tenant_id, scope, user_id, version, background_preset_id, icon_tree AS icons, windows, etag
             FROM tenant_desktop_layouts
             WHERE tenant_id = $1 AND scope = $2 AND user_id IS NOT DISTINCT FROM $3
             "#,
@@ -100,18 +100,18 @@ impl TenantDesktopLayoutRepository for PgTenantDesktopLayoutRepository {
             LayoutRow,
             r#"
             INSERT INTO tenant_desktop_layouts (
-                id, tenant_id, scope, user_id, version, background_preset_id, icons, windows, etag, created_at, updated_at
+                id, tenant_id, scope, user_id, version, background_preset_id, icon_tree, windows, etag, created_at, updated_at
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
             ON CONFLICT (tenant_id, scope, user_id)
             DO UPDATE SET
                 version = EXCLUDED.version,
                 background_preset_id = EXCLUDED.background_preset_id,
-                icons = EXCLUDED.icons,
+                icon_tree = EXCLUDED.icon_tree,
                 windows = EXCLUDED.windows,
                 etag = EXCLUDED.etag,
                 updated_at = NOW()
-            RETURNING id, tenant_id, scope, user_id, version, background_preset_id, icons, windows, etag
+            RETURNING id, tenant_id, scope, user_id, version, background_preset_id, icon_tree AS icons, windows, etag
             "#,
             layout.id,
             layout.tenant_id,
