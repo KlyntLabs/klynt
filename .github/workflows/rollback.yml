@@ -25,7 +25,7 @@ jobs:
       target_sha: ${{ steps.resolve.outputs.target_sha }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           fetch-depth: 0
 
@@ -54,7 +54,8 @@ jobs:
     with:
       environment: dev
       checkout_ref: ${{ needs.resolve-target.outputs.target_sha }}
-    secrets: inherit
+    # Internal same-repo reusable workflow; explicit secret map would be unmaintainable.
+    secrets: inherit # nosemgrep: yaml.github-actions.security.secrets-inherit.secrets-inherit
 
   rollback-staging:
     name: Rollback staging
@@ -65,7 +66,8 @@ jobs:
     with:
       environment: staging
       checkout_ref: ${{ needs.resolve-target.outputs.target_sha }}
-    secrets: inherit
+    # Internal same-repo reusable workflow; explicit secret map would be unmaintainable.
+    secrets: inherit # nosemgrep: yaml.github-actions.security.secrets-inherit.secrets-inherit
 
   rollback-production:
     name: Rollback production
@@ -76,4 +78,5 @@ jobs:
     with:
       environment: production
       checkout_ref: ${{ needs.resolve-target.outputs.target_sha }}
-    secrets: inherit
+    # Internal same-repo reusable workflow; explicit secret map would be unmaintainable.
+    secrets: inherit # nosemgrep: yaml.github-actions.security.secrets-inherit.secrets-inherit
