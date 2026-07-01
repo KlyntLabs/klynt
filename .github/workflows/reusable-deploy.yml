@@ -110,11 +110,16 @@ jobs:
           set -euo pipefail
           deployment_id=$(gh api "repos/${{ github.repository }}/deployments" \
             --method POST \
-            -f ref="$REF" \
-            -f environment="$ENVIRONMENT" \
-            -F auto_merge=false \
-            -f required_contexts[]= \
-            --jq '.id')
+            --input - \
+            --jq '.id' <<EOF
+          {
+            "ref": "$REF",
+            "environment": "$ENVIRONMENT",
+            "auto_merge": false,
+            "required_contexts": []
+          }
+          EOF
+          )
           echo "deployment_id=$deployment_id" >> "$GITHUB_OUTPUT"
           gh api "repos/${{ github.repository }}/deployments/${deployment_id}/statuses" \
             --method POST \
