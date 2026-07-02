@@ -546,11 +546,14 @@ components:
       type: object
       required:
         - apps
+        - etag
       properties:
         apps:
           type: array
           items:
             $ref: '#/components/schemas/AppSummary'
+        etag:
+          type: string
 
     RateLimitError:
       type: object

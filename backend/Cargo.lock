@@ -2742,6 +2742,7 @@ dependencies = [
  "rand 0.10.1",
  "serde_json",
  "session_coordinator",
+ "sha2 0.11.0",
  "sqlx",
  "thiserror",
  "tokio",

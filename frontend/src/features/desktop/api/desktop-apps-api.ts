@@ -31,6 +31,7 @@ export type UpdateAppPayload = {
 
 export type DesktopBundleResponse = {
   apps: AppSummary[];
+  etag: string;
 };
 
 export const desktopAppsApi = {

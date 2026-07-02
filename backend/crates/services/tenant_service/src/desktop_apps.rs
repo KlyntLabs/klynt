@@ -6,11 +6,21 @@ use base::ctx::ExecutionContext;
 use base::ports::audit::AuditLogger;
 use base::ports::repository::{DesktopAppRepository, TenantDesktopLayoutRepository};
 use domain::{AppType, DesktopApp, DomainError, IconTreeNode, LayoutScope};
+use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
 use crate::error::TenantError;
 
 const MAX_CONTENT_BYTES: usize = 256 * 1024;
+
+/// Bundle of visible desktop apps with a content-derived ETag.
+#[derive(Debug, Clone)]
+pub struct DesktopBundle {
+    /// Visible desktop apps for the caller.
+    pub apps: Vec<DesktopApp>,
+    /// ETag computed from the sorted app ids and their `updated_at` timestamps.
+    pub etag: String,
+}
 
 /// Application service for desktop mini-apps.
 ///
@@ -223,8 +233,19 @@ impl DesktopAppService {
         ctx: &ExecutionContext,
         tenant_id: Uuid,
         caller_id: Uuid,
-    ) -> Result<Vec<DesktopApp>, TenantError> {
-        self.list_apps(ctx, tenant_id, caller_id).await
+    ) -> Result<DesktopBundle, TenantError> {
+        let mut apps = self.list_apps(ctx, tenant_id, caller_id).await?;
+        apps.sort_by_key(|a| a.id);
+
+        let mut hasher = Sha256::new();
+        for app in &apps {
+            hasher.update(app.id.as_bytes());
+            hasher.update(app.updated_at.to_rfc3339().as_bytes());
+        }
+        let hash = hasher.finalize();
+        let etag = hash.iter().map(|b| format!("{:02x}", b)).collect();
+
+        Ok(DesktopBundle { apps, etag })
     }
 
     async fn remove_app_from_layouts(

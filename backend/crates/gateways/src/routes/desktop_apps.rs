@@ -72,14 +72,15 @@ pub(crate) async fn get_desktop_bundle(
     let tenant_id = require_tenant_id(&ctx)?;
     let caller_id = require_actor_id(&auth_ctx)?;
 
-    let apps = services
+    let bundle = services
         .desktop_apps
         .get_desktop_bundle(&ctx, tenant_id, caller_id)
         .await?;
-    let app_summaries: Vec<AppSummary> = apps.into_iter().map(AppSummary::from).collect();
+    let app_summaries: Vec<AppSummary> = bundle.apps.into_iter().map(AppSummary::from).collect();
 
     Ok(Json(SuccessResponse::ok(DesktopBundleResponse {
         apps: app_summaries,
+        etag: bundle.etag,
     })))
 }
 
@@ -223,4 +224,5 @@ impl From<DesktopApp> for AppSummary {
 #[derive(serde::Serialize)]
 pub(crate) struct DesktopBundleResponse {
     pub apps: Vec<AppSummary>,
+    pub etag: String,
 }

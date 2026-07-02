@@ -244,6 +244,7 @@ async fn get_desktop_bundle_returns_summaries_without_content() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let json = body_to_json(response).await;
+    assert!(json["data"]["etag"].is_string());
     let apps = json["data"]["apps"].as_array().unwrap();
     assert_eq!(apps.len(), 1);
     assert!(apps[0]["id"].is_string());

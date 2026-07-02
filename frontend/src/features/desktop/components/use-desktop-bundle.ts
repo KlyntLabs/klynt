@@ -4,6 +4,7 @@ import { desktopAppsApi } from "@/features/desktop/api/desktop-apps-api";
 
 export function useDesktopBundle(slug: string): {
   apps: AppSummary[];
+  etag: string | null;
   isLoading: boolean;
   error: Error | null;
   refetch: () => void;
@@ -24,6 +25,7 @@ export function useDesktopBundle(slug: string): {
 
   return {
     apps: data?.apps ?? [],
+    etag: data?.etag ?? null,
     isLoading,
     error: error ?? null,
     refetch: () => {

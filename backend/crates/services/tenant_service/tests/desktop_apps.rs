@@ -81,7 +81,8 @@ async fn get_desktop_bundle_returns_visible_apps() {
         .get_desktop_bundle(&ctx, tenant_id, caller_id)
         .await
         .unwrap();
-    assert_eq!(bundle.len(), 2);
+    assert_eq!(bundle.apps.len(), 2);
+    assert!(!bundle.etag.is_empty());
 }
 
 #[tokio::test]

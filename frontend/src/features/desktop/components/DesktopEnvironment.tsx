@@ -36,6 +36,7 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
   const tenantSlug = config.context.tenantSlug ?? "";
   const {
     apps,
+    etag,
     isLoading: isBundleLoading,
     error: bundleError,
     refetch,
@@ -115,6 +116,21 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
     if (bundleError) return;
     useIconTreeStore.getState().setTree(configRef.current.id, []);
   }, [isBundleLoading, bundleError]);
+
+  useEffect(() => {
+    if (isBundleLoading) return;
+    if (bundleError) return;
+    if (!etag) return;
+
+    const desktopId = configRef.current.id;
+    const previousEtag = useIconTreeStore.getState().bundleEtags[desktopId];
+    if (previousEtag && previousEtag !== etag) {
+      resetDesktop(desktopId);
+      useIconTreeStore.getState().setTree(desktopId, []);
+      layoutTreeLoadedRef.current = false;
+    }
+    useIconTreeStore.getState().setBundleEtag(desktopId, etag);
+  }, [isBundleLoading, bundleError, etag, resetDesktop]);
 
   useEffect(() => {
     if (isBelowLg && isOsDesktop) return;

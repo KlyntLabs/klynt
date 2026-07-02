@@ -168,12 +168,25 @@ describe("useIconTreeStore", () => {
       result.current.setTree("d1", [n("a1")]);
       result.current.openFolder("d1", "f1");
       result.current.addNode("d2", n("a2"));
+      result.current.setBundleEtag("d1", "etag-1");
     });
 
     act(() => result.current.reset());
 
     expect(result.current.trees).toEqual({});
     expect(result.current.openFolderPaths).toEqual({});
+    expect(result.current.bundleEtags).toEqual({});
+  });
+
+  it("stores bundle ETags per desktop", () => {
+    const { result } = renderHook(() => useIconTreeStore());
+
+    act(() => {
+      result.current.setBundleEtag("d1", "etag-1");
+      result.current.setBundleEtag("d2", "etag-2");
+    });
+
+    expect(result.current.bundleEtags).toEqual({ d1: "etag-1", d2: "etag-2" });
   });
 });
 

@@ -14,6 +14,7 @@ export type IconTreeNode = {
 type IconTreeState = {
   trees: Record<string, IconTreeNode[]>;
   openFolderPaths: Record<string, string[]>;
+  bundleEtags: Record<string, string>;
 
   setTree: (desktopId: string, tree: IconTreeNode[]) => void;
   addNode: (desktopId: string, node: IconTreeNode, parentId?: string | null) => boolean;
@@ -24,6 +25,7 @@ type IconTreeState = {
   closeFolder: (desktopId: string) => void;
   navigateToRoot: (desktopId: string) => void;
   navigateToIndex: (desktopId: string, index: number) => void;
+  setBundleEtag: (desktopId: string, etag: string) => void;
   reset: () => void;
 };
 
@@ -38,10 +40,12 @@ const initialState: Omit<
   | "closeFolder"
   | "navigateToRoot"
   | "navigateToIndex"
+  | "setBundleEtag"
   | "reset"
 > = {
   trees: {},
   openFolderPaths: {},
+  bundleEtags: {},
 };
 
 function findNode(tree: IconTreeNode[], appId: string): IconTreeNode | undefined {
@@ -253,6 +257,11 @@ export const useIconTreeStore = create<IconTreeState>()(
         set((draft) => {
           const path = draft.openFolderPaths[desktopId] ?? [];
           draft.openFolderPaths[desktopId] = index < 0 ? [] : path.slice(0, index + 1);
+        }),
+
+      setBundleEtag: (desktopId, etag) =>
+        set((draft) => {
+          draft.bundleEtags[desktopId] = etag;
         }),
 
       reset: () => set(initialState),

@@ -50,6 +50,7 @@ describe("DesktopEnvironment", () => {
     mockedGetDesktop.mockResolvedValue({
       data: {
         data: {
+          etag: "bundle-etag-1",
           apps: [
             {
               id: "app-1",
