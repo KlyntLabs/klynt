@@ -19,7 +19,7 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: "cd ../backend && cargo run",
+      command: "cd ../backend && cargo run --bin server",
       url: "http://localhost:3001/health/live",
       timeout: 120_000,
       reuseExistingServer: !process.env.CI,
