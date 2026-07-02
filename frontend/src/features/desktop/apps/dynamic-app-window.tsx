@@ -3,6 +3,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Spinner } from "@/components/ui/spinner";
 import { type DesktopApp, desktopAppsApi } from "@/features/desktop/api/desktop-apps-api";
+import { ConflictDialog } from "@/features/desktop/components/ConflictDialog";
+import { useConflictHandler } from "@/features/desktop/components/use-conflict-handler";
 import { buildAppManifest } from "./dynamic-app-manifest";
 import { RendererSwitch } from "./renderers/renderer-switch";
 import { useContentAutosave } from "./use-content-autosave";
@@ -20,6 +22,8 @@ export function DynamicAppWindow({
 }: DynamicAppWindowProps): React.JSX.Element {
   const { t } = useTranslation("errors");
   const queryClient = useQueryClient();
+  const { isOpen, open, close, onReload, onRetry, setReloadCallback, setRetryCallback } =
+    useConflictHandler();
 
   const {
     data: app,
@@ -52,10 +56,10 @@ export function DynamicAppWindow({
   }, [manifest]);
 
   const handleConflict = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: ["desktop-app", tenantSlug, appId] });
-  }, [queryClient, tenantSlug, appId]);
+    open();
+  }, [open]);
 
-  useContentAutosave({
+  const { scheduleSave } = useContentAutosave({
     slug: tenantSlug,
     appId,
     etag,
@@ -63,6 +67,18 @@ export function DynamicAppWindow({
     onConflict: handleConflict,
     onEtagChange: setEtag,
   });
+
+  useEffect(() => {
+    setReloadCallback(() => {
+      void queryClient.invalidateQueries({ queryKey: ["desktop-app", tenantSlug, appId] });
+    });
+  }, [setReloadCallback, queryClient, tenantSlug, appId]);
+
+  useEffect(() => {
+    setRetryCallback(() => {
+      scheduleSave();
+    });
+  }, [setRetryCallback, scheduleSave]);
 
   if (isLoading) {
     return (
@@ -93,6 +109,7 @@ export function DynamicAppWindow({
           onChange={setContent}
         />
       </div>
+      <ConflictDialog open={isOpen} onReload={onReload} onRetry={onRetry} onClose={close} />
     </div>
   );
 }

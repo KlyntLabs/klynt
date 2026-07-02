@@ -161,6 +161,13 @@
       "layoutLoadError": "Không thể tải bố cục máy tính để bàn của bạn.",
       "layoutSaveError": "Không thể lưu bố cục máy tính để bàn của bạn."
     },
+    "conflict": {
+      "title": "Phát hiện xung đột",
+      "message": "Tài nguyên này đã bị thay đổi bởi một phiên khác. Bạn muốn làm gì?",
+      "reload": "Tải lại",
+      "retry": "Thử lại",
+      "cancel": "Hủy"
+    },
     "errorFallback": {
       "title": "Đã xảy ra lỗi",
       "retry": "Thử lại",

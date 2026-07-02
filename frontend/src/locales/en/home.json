@@ -171,6 +171,13 @@
       "layoutLoadError": "Could not load your desktop layout.",
       "layoutSaveError": "Could not save your desktop layout."
     },
+    "conflict": {
+      "title": "Conflict detected",
+      "message": "This resource was changed by another session. What would you like to do?",
+      "reload": "Reload",
+      "retry": "Retry",
+      "cancel": "Cancel"
+    },
     "errorFallback": {
       "title": "Something went wrong",
       "retry": "Try again",

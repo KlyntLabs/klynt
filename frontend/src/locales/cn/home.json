@@ -161,6 +161,13 @@
       "layoutLoadError": "无法加载您的桌面布局。",
       "layoutSaveError": "无法保存您的桌面布局。"
     },
+    "conflict": {
+      "title": "检测到冲突",
+      "message": "此资源已被其他会话更改。您想如何处理？",
+      "reload": "重新加载",
+      "retry": "重试",
+      "cancel": "取消"
+    },
     "errorFallback": {
       "title": "出错了",
       "retry": "重试",

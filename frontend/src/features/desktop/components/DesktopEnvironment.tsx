@@ -23,7 +23,7 @@ interface DesktopEnvironmentProps {
 }
 
 export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
-  const { windows, openApp } = useWindowManager();
+  const { windows, openApp, resetDesktop } = useWindowManager();
   const desktopWindows = windows[config.id] ?? [];
   const [backgroundPresetId, setBackgroundPresetId] = useState(config.background.presetId);
   const [isLoading, setIsLoading] = useState(true);
@@ -64,6 +64,51 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
     handleCreateAppFromDialog,
   } = useDesktopEnvironmentActions(config, apps, refetch, handleChangeBackground);
 
+  const applyLayout = useCallback(
+    (id: string, layout: DesktopLayout | null) => {
+      resetDesktop(id);
+
+      if (layout) {
+        setBackgroundPresetId(layout.backgroundPresetId);
+        useIconTreeStore.getState().setTree(id, layout.iconTree ?? []);
+        layoutTreeLoadedRef.current = true;
+
+        for (const window of layout.windows) {
+          openApp(id, window.appId, {
+            x: window.x,
+            y: window.y,
+            width: window.width,
+            height: window.height,
+            state: window.state,
+          });
+        }
+      }
+    },
+    [openApp, resetDesktop]
+  );
+
+  const handleLoadError = useCallback(() => {
+    addToast({
+      message: t("desktop.toast.layoutLoadError"),
+      type: "error",
+      duration: 5000,
+    });
+    setIsLoading(false);
+  }, [addToast, t]);
+
+  const handleReload = useCallback(async () => {
+    const { persistence, id } = configRef.current;
+    const result = await persistence.load(id);
+
+    if (!result.ok) {
+      handleLoadError();
+      return;
+    }
+
+    useIconTreeStore.getState().setTree(id, []);
+    applyLayout(id, result.layout ?? null);
+  }, [applyLayout, handleLoadError]);
+
   useEffect(() => {
     if (isBundleLoading) return;
     if (layoutTreeLoadedRef.current) return;
@@ -74,37 +119,20 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
   useEffect(() => {
     if (isBelowLg && isOsDesktop) return;
     let cancelled = false;
-    const { persistence, id, defaultApp } = configRef.current;
+    const { id, defaultApp } = configRef.current;
 
     async function load() {
-      const result = await persistence.load(id);
+      const result = await configRef.current.persistence.load(id);
       if (cancelled) return;
 
       if (!result.ok) {
-        addToast({
-          message: t("desktop.toast.layoutLoadError"),
-          type: "error",
-          duration: 5000,
-        });
-        setIsLoading(false);
+        handleLoadError();
         return;
       }
 
-      if (result.layout) {
-        setBackgroundPresetId(result.layout.backgroundPresetId);
-        useIconTreeStore.getState().setTree(id, result.layout.iconTree ?? []);
-        layoutTreeLoadedRef.current = true;
+      applyLayout(id, result.layout ?? null);
 
-        for (const window of result.layout.windows) {
-          openApp(id, window.appId, {
-            x: window.x,
-            y: window.y,
-            width: window.width,
-            height: window.height,
-            state: window.state,
-          });
-        }
-      } else if (defaultApp) {
+      if (!result.layout && defaultApp) {
         openApp(id, defaultApp.id, {
           width: defaultApp.defaultSize.width,
           height: defaultApp.defaultSize.height,
@@ -119,7 +147,7 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
     return () => {
       cancelled = true;
     };
-  }, [isBelowLg, isOsDesktop, openApp, t, addToast]);
+  }, [isBelowLg, isOsDesktop, openApp, applyLayout, handleLoadError]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -142,6 +170,19 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
 
     configRef.current.persistence.save(config.id, layout).then((result) => {
       if (!result.ok) {
+        if (result.error === "conflict") {
+          addToast({
+            message: t("desktop.toast.layoutSaveError"),
+            type: "error",
+            duration: 10000,
+            action: {
+              label: t("desktop.conflict.reload"),
+              onClick: handleReload,
+            },
+          });
+          return;
+        }
+
         addToast({
           message: t("desktop.toast.layoutSaveError"),
           type: "error",
@@ -159,6 +200,7 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
     iconTree,
     t,
     addToast,
+    handleReload,
   ]);
 
   if (isBelowLg && isOsDesktop) {
