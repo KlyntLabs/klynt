@@ -16,6 +16,7 @@ import Menubar from "./Menubar";
 import { MobileFallback } from "./MobileFallback";
 import { useDesktopBundle } from "./use-desktop-bundle";
 import { useDesktopEnvironmentActions } from "./use-desktop-environment-actions";
+import { useDesktopLayoutSave } from "./use-desktop-layout-save";
 import WindowManager from "./WindowManager";
 
 interface DesktopEnvironmentProps {
@@ -41,7 +42,6 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
     error: bundleError,
     refetch,
   } = useDesktopBundle(tenantSlug);
-  const iconTree = useIconTreeStore((s) => s.trees[config.id]);
   const layoutTreeLoadedRef = useRef(false);
 
   const background = getPresetById(backgroundPresetId);
@@ -49,9 +49,7 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
 
   const handleChangeBackground = useCallback(() => {
     const ids = backgroundPresets.map((preset) => preset.id);
-    const currentIndex = ids.indexOf(backgroundPresetId);
-    const nextIndex = (currentIndex + 1) % ids.length;
-    setBackgroundPresetId(ids[nextIndex]);
+    setBackgroundPresetId(ids[(ids.indexOf(backgroundPresetId) + 1) % ids.length]);
   }, [backgroundPresetId]);
 
   const {
@@ -63,6 +61,8 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
     handleOpenContextMenu,
     handleBackgroundContextMenu,
     handleCreateAppFromDialog,
+    selectedAppId,
+    setSelectedAppId,
   } = useDesktopEnvironmentActions(config, apps, refetch, handleChangeBackground);
 
   const applyLayout = useCallback(
@@ -165,59 +165,15 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
     };
   }, [isBelowLg, isOsDesktop, openApp, applyLayout, handleLoadError]);
 
-  useEffect(() => {
-    if (isLoading) return;
-    if (isBelowLg && isOsDesktop) return;
-    if (!configRef.current.persistence.canEdit()) return;
-
-    const layout: DesktopLayout = {
-      version: 1,
-      backgroundPresetId,
-      iconTree: iconTree ?? [],
-      windows: desktopWindows.map((window) => ({
-        appId: window.appId,
-        x: window.x,
-        y: window.y,
-        width: window.width,
-        height: window.height,
-        state: window.state,
-      })),
-    };
-
-    configRef.current.persistence.save(config.id, layout).then((result) => {
-      if (!result.ok) {
-        if (result.error === "conflict") {
-          addToast({
-            message: t("desktop.toast.layoutSaveError"),
-            type: "error",
-            duration: 10000,
-            action: {
-              label: t("desktop.conflict.reload"),
-              onClick: handleReload,
-            },
-          });
-          return;
-        }
-
-        addToast({
-          message: t("desktop.toast.layoutSaveError"),
-          type: "error",
-          duration: 5000,
-        });
-      }
-    });
-  }, [
-    isBelowLg,
-    isOsDesktop,
+  useDesktopLayoutSave(
+    config,
     desktopWindows,
     backgroundPresetId,
-    config.id,
     isLoading,
-    iconTree,
-    t,
-    addToast,
-    handleReload,
-  ]);
+    isBelowLg,
+    isOsDesktop,
+    handleReload
+  );
 
   if (isBelowLg && isOsDesktop) {
     return <MobileFallback />;
@@ -258,7 +214,13 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
       <Menubar config={config} />
 
       {/* Desktop Icons */}
-      <DesktopIcons config={config} apps={apps} onOpenContextMenu={handleOpenContextMenu} />
+      <DesktopIcons
+        config={config}
+        apps={apps}
+        onOpenContextMenu={handleOpenContextMenu}
+        selectedAppId={selectedAppId}
+        onSelectAppId={setSelectedAppId}
+      />
 
       {/* Windows */}
       <WindowManager config={config} />

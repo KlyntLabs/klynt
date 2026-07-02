@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useCallback } from "react";
 import type { AppSummary } from "@/features/desktop/api/desktop-apps-api";
 import { desktopAppsApi } from "@/features/desktop/api/desktop-apps-api";
 
@@ -23,13 +24,15 @@ export function useDesktopBundle(slug: string): {
     enabled: slug.length > 0,
   });
 
+  const refetch = useCallback(() => {
+    void queryRefetch();
+  }, [queryRefetch]);
+
   return {
     apps: data?.apps ?? [],
     etag: data?.etag ?? null,
     isLoading,
     error: error ?? null,
-    refetch: () => {
-      queryRefetch();
-    },
+    refetch,
   };
 }

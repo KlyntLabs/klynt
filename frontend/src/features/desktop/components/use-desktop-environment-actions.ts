@@ -7,9 +7,11 @@ import {
   createDesktopApp,
   deleteDesktopApp,
 } from "@/features/desktop/desktop-manager/desktop-actions";
+import { useIconTreeStore } from "@/features/desktop/desktop-manager/icon-tree-module";
 import { useWindowManager } from "@/features/desktop/window-manager/window-module";
 import type { AppTypeId } from "../apps/app-type-registry";
 import type { DesktopConfig } from "../factory/types";
+import { useDesktopShortcuts } from "./use-desktop-shortcuts";
 
 type NewAppDialogState = {
   open: boolean;
@@ -26,6 +28,8 @@ type UseDesktopEnvironmentActionsResult = {
   handleOpenContextMenu: (event: React.MouseEvent, appId: string, isFolder: boolean) => void;
   handleBackgroundContextMenu: (event: React.MouseEvent) => void;
   handleCreateAppFromDialog: (values: { type: AppTypeId; title: string }) => Promise<void>;
+  selectedAppId: string | null;
+  setSelectedAppId: (appId: string | null) => void;
 };
 
 export function useDesktopEnvironmentActions(
@@ -38,6 +42,7 @@ export function useDesktopEnvironmentActions(
   const tenantSlug = config.context.tenantSlug ?? "";
   const { state: menuState, openMenu, closeMenu } = useDesktopContextMenu();
   const [newAppDialog, setNewAppDialog] = useState<NewAppDialogState>({ open: false });
+  const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
 
   const handleOpenApp = useCallback(
     (appId: string) => {
@@ -98,6 +103,40 @@ export function useDesktopEnvironmentActions(
     [config.id, openMenu]
   );
 
+  const handleOpenSelected = useCallback(() => {
+    if (!selectedAppId) return;
+    const app = apps.find((item) => item.id === selectedAppId);
+    if (app?.type === "folder") {
+      useIconTreeStore.getState().openFolder(config.id, selectedAppId);
+    } else {
+      handleOpenApp(selectedAppId);
+    }
+  }, [selectedAppId, apps, config.id, handleOpenApp]);
+
+  const handleDeleteSelected = useCallback(async () => {
+    if (!selectedAppId) return;
+    await handleDeleteApp(selectedAppId);
+    setSelectedAppId(null);
+  }, [selectedAppId, handleDeleteApp]);
+
+  const handleNewApp = useCallback(() => {
+    setNewAppDialog({ open: true, defaultType: "folder" });
+  }, []);
+
+  const handleCloseOverlay = useCallback(() => {
+    closeMenu();
+    setNewAppDialog({ open: false });
+  }, [closeMenu]);
+
+  useDesktopShortcuts({
+    onNewApp: handleNewApp,
+    onDeleteSelected: handleDeleteSelected,
+    onOpenSelected: handleOpenSelected,
+    onRefresh: refetch,
+    onCloseOverlay: handleCloseOverlay,
+    selectedAppId,
+  });
+
   const actionContext: ActionContext = {
     target: menuState.open ? menuState.target : { kind: "desktop", desktopId: config.id },
     tenantSlug,
@@ -118,5 +157,7 @@ export function useDesktopEnvironmentActions(
     handleOpenContextMenu,
     handleBackgroundContextMenu,
     handleCreateAppFromDialog,
+    selectedAppId,
+    setSelectedAppId,
   };
 }

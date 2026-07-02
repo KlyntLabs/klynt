@@ -66,12 +66,16 @@ interface DesktopIconsProps {
   config: DesktopConfig;
   apps?: AppSummary[];
   onOpenContextMenu?: (event: React.MouseEvent, appId: string, isFolder: boolean) => void;
+  selectedAppId?: string | null;
+  onSelectAppId?: (appId: string | null) => void;
 }
 
 export default function DesktopIcons({
   config,
   apps = [],
   onOpenContextMenu = () => {},
+  selectedAppId,
+  onSelectAppId,
 }: DesktopIconsProps) {
   const { setViewMode } = useWindowManager();
   const { t } = useTranslation("home");
@@ -123,6 +127,8 @@ export default function DesktopIcons({
           tenantSlug={tenantSlug}
           apps={apps}
           onOpenContextMenu={onOpenContextMenu}
+          selectedAppId={selectedAppId}
+          onSelectAppId={onSelectAppId}
         />
       </div>
 
