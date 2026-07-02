@@ -48,6 +48,12 @@
       "home": "Trang chủ",
       "folderFallback": "Thư mục"
     },
+    "empty": {
+      "noIcons": "Không có biểu tượng nào trên màn hình này."
+    },
+    "contextMenu": {
+      "newApp": "Ứng dụng mới"
+    },
     "backgrounds": {
       "fabric": "Vải",
       "graphPaper": "Giấy kẻ ô",

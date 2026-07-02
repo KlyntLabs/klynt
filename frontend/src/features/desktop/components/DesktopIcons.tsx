@@ -1,9 +1,13 @@
 import { ExternalLink, Monitor } from "lucide-react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import type { AppSummary } from "@/features/desktop/api/desktop-apps-api";
+import { FolderBreadcrumb } from "@/features/desktop/desktop-manager/FolderBreadcrumb";
 import { useWindowManager } from "@/features/desktop/window-manager/window-module";
 import type { AppManifest } from "../apps/types";
 import type { DesktopConfig } from "../factory/types";
+import { DesktopIconGrid } from "./DesktopIconGrid";
 
 interface DesktopIconItemProps {
   icon: React.ReactNode;
@@ -60,13 +64,28 @@ function DockIcons({ config, position }: { config: DesktopConfig; position: "lef
 
 interface DesktopIconsProps {
   config: DesktopConfig;
+  apps?: AppSummary[];
+  onOpenContextMenu?: (event: React.MouseEvent, appId: string, isFolder: boolean) => void;
 }
 
-export default function DesktopIcons({ config }: DesktopIconsProps) {
+export default function DesktopIcons({
+  config,
+  apps = [],
+  onOpenContextMenu = () => {},
+}: DesktopIconsProps) {
   const { setViewMode } = useWindowManager();
   const { t } = useTranslation("home");
   const navigate = useNavigate();
   const isMarketing = config.id === "marketing";
+  const tenantSlug = config.context.tenantSlug ?? "";
+
+  const titleMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const app of apps) {
+      map[app.id] = app.title;
+    }
+    return map;
+  }, [apps]);
 
   const handleSignUpClick = () => {
     navigate("/register");
@@ -91,6 +110,20 @@ export default function DesktopIcons({ config }: DesktopIconsProps) {
             />
           </>
         )}
+      </div>
+
+      {/* Center icon grid */}
+      <div
+        className="absolute inset-0 flex flex-col items-center pt-20 px-24"
+        data-testid="desktop-center-grid"
+      >
+        <FolderBreadcrumb desktopId={config.id} titleMap={titleMap} />
+        <DesktopIconGrid
+          desktopId={config.id}
+          tenantSlug={tenantSlug}
+          apps={apps}
+          onOpenContextMenu={onOpenContextMenu}
+        />
       </div>
 
       {/* Right column */}

@@ -58,6 +58,12 @@
       "home": "Home",
       "folderFallback": "Folder"
     },
+    "empty": {
+      "noIcons": "No icons on this desktop."
+    },
+    "contextMenu": {
+      "newApp": "New App"
+    },
     "backgrounds": {
       "fabric": "Fabric",
       "graphPaper": "Graph paper",

@@ -48,6 +48,12 @@
       "home": "首页",
       "folderFallback": "文件夹"
     },
+    "empty": {
+      "noIcons": "此桌面上没有图标。"
+    },
+    "contextMenu": {
+      "newApp": "新建应用"
+    },
     "backgrounds": {
       "fabric": "织物",
       "graphPaper": "方格纸",
