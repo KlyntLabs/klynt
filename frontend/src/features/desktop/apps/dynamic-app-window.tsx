@@ -6,7 +6,7 @@ import { type DesktopApp, desktopAppsApi } from "@/features/desktop/api/desktop-
 import { ConflictDialog } from "@/features/desktop/components/ConflictDialog";
 import { useConflictHandler } from "@/features/desktop/components/use-conflict-handler";
 import { buildAppManifest } from "./dynamic-app-manifest";
-import { RendererSwitch } from "./renderers/renderer-switch";
+import { KNOWN_RENDERER_IDS, RendererSwitch } from "./renderers/renderer-switch";
 import { useContentAutosave } from "./use-content-autosave";
 
 type DynamicAppWindowProps = {
@@ -20,7 +20,7 @@ export function DynamicAppWindow({
   appId,
   tenantSlug,
 }: DynamicAppWindowProps): React.JSX.Element {
-  const { t } = useTranslation("errors");
+  const { t } = useTranslation(["home", "errors"]);
   const queryClient = useQueryClient();
   const { isOpen, open, close, onReload, onRetry, setReloadCallback, setRetryCallback } =
     useConflictHandler();
@@ -91,7 +91,18 @@ export function DynamicAppWindow({
   if (error || !app || !manifest) {
     return (
       <div className="flex h-full items-center justify-center p-4 text-sm text-muted-foreground">
-        {t("generic.message")}
+        {t("errors:generic.message")}
+      </div>
+    );
+  }
+
+  if (!KNOWN_RENDERER_IDS.has(manifest.rendererId)) {
+    return (
+      <div
+        className="flex h-full items-center justify-center p-4 text-sm text-muted-foreground"
+        data-testid="dynamic-app-empty-state"
+      >
+        {t("app.unknownRenderer")}
       </div>
     );
   }

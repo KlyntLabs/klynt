@@ -11,6 +11,8 @@ type RendererSwitchProps = {
   onChange?: (content: Record<string, unknown>) => void;
 };
 
+export const KNOWN_RENDERER_IDS = new Set(["markdown", "notes", "video", "folder"]);
+
 const noop = () => {};
 
 function getFolderChildren(content: Record<string, unknown>): IconTreeNode[] | undefined {

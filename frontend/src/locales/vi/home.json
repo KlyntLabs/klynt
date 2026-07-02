@@ -52,7 +52,11 @@
       "noIcons": "Không có biểu tượng nào trên màn hình này."
     },
     "contextMenu": {
-      "newApp": "Ứng dụng mới"
+      "newApp": "Ứng dụng mới",
+      "empty": "Không có mục menu"
+    },
+    "menuEditor": {
+      "empty": "Không có mục menu nào để chỉnh sửa"
     },
     "backgrounds": {
       "fabric": "Vải",
@@ -248,5 +252,8 @@
       "title": "Khóa học của tôi",
       "description": "Duyệt các khóa học bạn đã đăng ký."
     }
+  },
+  "app": {
+    "unknownRenderer": "Loại ứng dụng không xác định"
   }
 }

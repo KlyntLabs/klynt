@@ -52,7 +52,11 @@
       "noIcons": "此桌面上没有图标。"
     },
     "contextMenu": {
-      "newApp": "新建应用"
+      "newApp": "新建应用",
+      "empty": "没有菜单项"
+    },
+    "menuEditor": {
+      "empty": "没有可编辑的菜单项"
     },
     "backgrounds": {
       "fabric": "织物",
@@ -248,5 +252,8 @@
       "title": "我的课程",
       "description": "浏览您已注册的课程。"
     }
+  },
+  "app": {
+    "unknownRenderer": "未知应用类型"
   }
 }

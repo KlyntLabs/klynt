@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { type ActionContext, executeContextMenuAction } from "./action-registry";
 import {
@@ -121,6 +122,24 @@ export function ContextMenuRenderer({
   actionContext,
   onClose,
 }: ContextMenuRendererProps): React.JSX.Element {
+  const { t } = useTranslation("home");
+
+  if (schema.root.length === 0) {
+    return (
+      <div
+        data-testid="context-menu-empty-state"
+        className={cn(
+          "absolute min-w-[10rem] rounded-lg border border-white/10 bg-black/80 p-3 shadow-xl",
+          "backdrop-blur-sm text-sm text-white/90"
+        )}
+        role="menu"
+        aria-label={schema.id}
+      >
+        {t("desktop.contextMenu.empty")}
+      </div>
+    );
+  }
+
   return (
     <div
       data-testid="context-menu-renderer"

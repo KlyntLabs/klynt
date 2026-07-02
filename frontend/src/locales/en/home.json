@@ -62,7 +62,11 @@
       "noIcons": "No icons on this desktop."
     },
     "contextMenu": {
-      "newApp": "New App"
+      "newApp": "New App",
+      "empty": "No menu items"
+    },
+    "menuEditor": {
+      "empty": "No menu items to edit"
     },
     "backgrounds": {
       "fabric": "Fabric",
@@ -248,5 +252,8 @@
         "titleTooLong": "Title must be 100 characters or less."
       }
     }
+  },
+  "app": {
+    "unknownRenderer": "Unknown app type"
   }
 }
