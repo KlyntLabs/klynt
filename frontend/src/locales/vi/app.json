@@ -2,5 +2,8 @@
   "video": {
     "noUrl": "Không có URL video hợp lệ",
     "httpsOnly": "URL video phải sử dụng HTTPS"
+  },
+  "folder": {
+    "empty": "Thư mục này trống"
   }
 }

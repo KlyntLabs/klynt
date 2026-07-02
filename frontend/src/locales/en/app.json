@@ -2,5 +2,8 @@
   "video": {
     "noUrl": "No valid video URL",
     "httpsOnly": "Video URLs must use HTTPS"
+  },
+  "folder": {
+    "empty": "This folder is empty"
   }
 }
