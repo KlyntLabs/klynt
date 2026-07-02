@@ -44,6 +44,10 @@
   },
   "desktop": {
     "navLabel": "Ứng dụng trên màn hình",
+    "breadcrumb": {
+      "home": "Trang chủ",
+      "folderFallback": "Thư mục"
+    },
     "backgrounds": {
       "fabric": "Vải",
       "graphPaper": "Giấy kẻ ô",

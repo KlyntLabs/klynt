@@ -44,6 +44,10 @@
   },
   "desktop": {
     "navLabel": "桌面应用",
+    "breadcrumb": {
+      "home": "首页",
+      "folderFallback": "文件夹"
+    },
     "backgrounds": {
       "fabric": "织物",
       "graphPaper": "方格纸",

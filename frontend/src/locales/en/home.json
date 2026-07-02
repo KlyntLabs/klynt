@@ -54,6 +54,10 @@
   },
   "desktop": {
     "navLabel": "Desktop apps",
+    "breadcrumb": {
+      "home": "Home",
+      "folderFallback": "Folder"
+    },
     "backgrounds": {
       "fabric": "Fabric",
       "graphPaper": "Graph paper",
