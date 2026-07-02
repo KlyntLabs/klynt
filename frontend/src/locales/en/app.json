@@ -1,0 +1,6 @@
+{
+  "video": {
+    "noUrl": "No valid video URL",
+    "httpsOnly": "Video URLs must use HTTPS"
+  }
+}
