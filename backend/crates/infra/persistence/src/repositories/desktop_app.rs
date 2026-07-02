@@ -180,6 +180,10 @@ async fn upsert_layout_icon_tree(
         return update_layout_icon_tree(conn, layout, new_node, parent_id).await;
     }
 
+    if parent_id.is_some() {
+        return Err(DomainError::not_found("parent folder"));
+    }
+
     let icon_tree_json = serde_json::to_value(vec![new_node.clone()])
         .map_err(|e| DomainError::internal_msg(format!("failed to serialize icon_tree: {e}")))?;
     let windows_json = serde_json::Value::Array(Vec::new());

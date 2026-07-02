@@ -6,6 +6,7 @@ use axum::{
     response::IntoResponse,
     Json,
 };
+use base::ctx::{ExecutionContext, RequestContext};
 use chrono::{DateTime, Utc};
 use domain::UserId;
 
@@ -43,11 +44,16 @@ pub fn routes(services: Services) -> axum::Router<Services> {
         // Desktop app routes are tenant-scoped and inherit the membership check above.
         .nest("/{tenant_slug}", desktop_apps::routes())
         .layer(axum::middleware::from_fn_with_state(
-            services,
+            services.clone(),
             require_tenant_membership,
         ));
 
-    axum::Router::new()
+    let public_routes = axum::Router::new().route(
+        "/{tenant_slug}/public",
+        axum::routing::get(get_tenant_public),
+    );
+
+    let protected_routes = axum::Router::new()
         .route("/", axum::routing::post(create_tenant))
         .route("/", axum::routing::get(list_my_tenants))
         .route(
@@ -55,6 +61,14 @@ pub fn routes(services: Services) -> axum::Router<Services> {
             axum::routing::post(accept_invite),
         )
         .merge(member_required_routes)
+        .layer(axum::middleware::from_fn_with_state(
+            services,
+            crate::middleware::auth::require_auth,
+        ));
+
+    axum::Router::new()
+        .merge(public_routes)
+        .merge(protected_routes)
 }
 
 fn user_id_from_ctx(auth: &AuthContext) -> Result<UserId, crate::GatewayError> {
@@ -99,6 +113,31 @@ async fn get_tenant(
 ) -> Result<impl IntoResponse, crate::GatewayError> {
     let tenant = services.tenant.get_tenant(&ctx, &tenant_slug).await?;
     Ok(Json(SuccessResponse::ok(tenant)))
+}
+
+#[derive(serde::Serialize)]
+struct PublicTenantResponse {
+    slug: String,
+    name: String,
+}
+
+async fn get_tenant_public(
+    State(services): State<Services>,
+    Path(tenant_slug): Path<String>,
+) -> Result<impl IntoResponse, crate::GatewayError> {
+    let ctx = ExecutionContext::new(RequestContext::new());
+    let slug = domain::TenantSlug::parse(&tenant_slug)
+        .map_err(|e| crate::GatewayError::BadRequest(e.to_string()))?;
+    let tenant = services
+        .tenant
+        .get_by_slug(&ctx, &slug)
+        .await?
+        .ok_or_else(|| crate::GatewayError::NotFound(format!("Tenant not found: {slug}")))?;
+
+    Ok(Json(SuccessResponse::ok(PublicTenantResponse {
+        slug: tenant.slug.to_string(),
+        name: tenant.name.to_string(),
+    })))
 }
 
 async fn update_tenant(

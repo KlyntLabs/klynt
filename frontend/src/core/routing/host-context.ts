@@ -14,6 +14,7 @@ const RESERVED_SUBDOMAINS = new Set([
 export type HostContext =
   | { type: "apex" }
   | { type: "login" }
+  | { type: "login_misroute" }
   | { type: "admin" }
   | { type: "tenant"; slug: string }
   | { type: "profile"; username: string }
@@ -51,6 +52,9 @@ export function getHostContext(
     }
 
     if (prefix.includes(".")) {
+      if (prefix.startsWith("login.")) {
+        return { type: "login_misroute" };
+      }
       return { type: "unknown", subdomain: prefix };
     }
 
@@ -89,4 +93,8 @@ export function isTenantHost(hostname?: string): boolean {
 
 export function isProfileHost(hostname?: string): boolean {
   return getHostContext(hostname).type === "profile";
+}
+
+export function isLoginMisrouteHost(hostname?: string): boolean {
+  return getHostContext(hostname).type === "login_misroute";
 }

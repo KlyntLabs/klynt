@@ -69,10 +69,9 @@ fn api_v1_routes(services: Services) -> Router<Services> {
         crate::middleware::auth::require_auth,
     ));
 
-    let tenant_routes = tenants::routes(services.clone()).layer(middleware::from_fn_with_state(
-        services.clone(),
-        crate::middleware::auth::require_auth,
-    ));
+    // Tenant routes manage their own auth: most require an authenticated actor,
+    // but the public lookup endpoint must remain accessible without a session.
+    let tenant_routes = tenants::routes(services.clone());
 
     let permissions_routes = Router::new()
         .route(

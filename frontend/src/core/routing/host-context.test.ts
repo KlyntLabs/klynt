@@ -62,6 +62,12 @@ describe("getHostContext", () => {
     });
   });
 
+  it("returns login_misroute for login.tenant.baseDomain", () => {
+    expect(getHostContext("login.tenant.klynt.dev", baseDomain)).toEqual({
+      type: "login_misroute",
+    });
+  });
+
   it("returns apex for hostname not matching base domain", () => {
     expect(getHostContext("acme.example.com", baseDomain)).toEqual({ type: "apex" });
   });
