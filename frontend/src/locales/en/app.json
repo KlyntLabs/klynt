@@ -1,4 +1,7 @@
 {
+  "app": {
+    "unknownRenderer": "Unknown app type"
+  },
   "video": {
     "noUrl": "No valid video URL",
     "httpsOnly": "Video URLs must use HTTPS"

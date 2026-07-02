@@ -1,4 +1,7 @@
 {
+  "app": {
+    "unknownRenderer": "未知应用类型"
+  },
   "video": {
     "noUrl": "没有有效的视频网址",
     "httpsOnly": "视频网址必须使用 HTTPS"

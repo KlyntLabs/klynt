@@ -1,4 +1,7 @@
 {
+  "app": {
+    "unknownRenderer": "Loại ứng dụng không xác định"
+  },
   "video": {
     "noUrl": "Không có URL video hợp lệ",
     "httpsOnly": "URL video phải sử dụng HTTPS"
