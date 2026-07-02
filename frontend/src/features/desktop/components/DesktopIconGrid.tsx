@@ -55,7 +55,7 @@ function DraggableIcon({
   };
   onOpen: (appId: string, isFolder: boolean) => void;
 }) {
-  const isFolder = app?.type === "folder";
+  const isFolder = app?.type === "folder" || node.children !== undefined;
   const title = node.title ?? app?.title ?? "App";
   const Icon = app?.type ? typeIconMap[app.type] : FileText;
 
@@ -65,6 +65,8 @@ function DraggableIcon({
       type="button"
       onClick={() => {
         onSelect(node.appId);
+      }}
+      onDoubleClick={() => {
         onOpen(node.appId, isFolder);
       }}
       onContextMenu={(event) => onOpenContextMenu(event, node.appId, isFolder)}

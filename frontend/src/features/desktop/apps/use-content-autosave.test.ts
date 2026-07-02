@@ -1,6 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
 import { AxiosError } from "axios";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ApiError } from "@/core/api/api-error";
 import { desktopAppsApi } from "../api/desktop-apps-api";
 import { useContentAutosave } from "./use-content-autosave";
 
@@ -40,6 +41,10 @@ function axiosError(status: number): AxiosError {
     config: {} as never,
   };
   return error;
+}
+
+function apiError(status: number): ApiError {
+  return new ApiError({ message: "API error", status, code: "TEST_ERROR" });
 }
 
 describe("useContentAutosave", () => {
@@ -107,6 +112,28 @@ describe("useContentAutosave", () => {
 
   it("calls onConflict and sets a conflict error on 409 responses", async () => {
     vi.spyOn(desktopAppsApi, "update").mockRejectedValue(axiosError(409));
+    const onConflict = vi.fn();
+
+    const { result } = renderHook(() =>
+      useContentAutosave({
+        slug,
+        appId,
+        etag: initialEtag,
+        content: { text: "hello" },
+        onConflict,
+      })
+    );
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+
+    expect(onConflict).toHaveBeenCalledTimes(1);
+    expect(result.current.error?.message).toBe("The content was modified by another session.");
+  });
+
+  it("calls onConflict for ApiError 409 responses", async () => {
+    vi.spyOn(desktopAppsApi, "update").mockRejectedValue(apiError(409));
     const onConflict = vi.fn();
 
     const { result } = renderHook(() =>

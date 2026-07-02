@@ -1,7 +1,7 @@
 //! Get tenant use case.
 
 use base::ctx::ExecutionContext;
-use domain::Tenant;
+use domain::{TenantMembershipSummary, TenantRole};
 
 use crate::error::TenantError;
 use crate::TenantService;
@@ -14,7 +14,7 @@ pub(crate) async fn execute(
     service: &TenantService,
     ctx: &ExecutionContext,
     slug: &str,
-) -> Result<Tenant, TenantError> {
+) -> Result<TenantMembershipSummary, TenantError> {
     let user_id = require_actor(ctx)?;
     let tenant = fetch_tenant(service, ctx, slug).await?;
 
@@ -24,5 +24,16 @@ pub(crate) async fn execute(
         .await
         .map_err(|e| super::shared::map_permission_error(e, TenantError::NotMember))?;
 
-    Ok(tenant)
+    let membership = service
+        .internal()
+        .persistence_facade
+        .membership_repository
+        .find(ctx, tenant.id, user_id)
+        .await
+        .map_err(TenantError::Domain)?;
+
+    let role = membership.map(|m| m.role).unwrap_or(TenantRole::Member);
+
+    let joined_at = tenant.created_at;
+    Ok(TenantMembershipSummary::new(tenant, role, joined_at))
 }

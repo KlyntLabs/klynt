@@ -6,9 +6,9 @@
 
 ## Summary
 
-The Virtual Desktop end-to-end test plan was executed in four phases. API verification and automated browser smoke tests passed. Full interactive browser testing was deferred because the Kimi WebBridge skill was unavailable in this session and macOS does not resolve wildcard `*.localhost` DNS records, blocking tenant-subdomain manual tests.
+The Virtual Desktop end-to-end test plan was executed in four phases. API verification (Phase B), automated browser smoke tests, and full interactive Playwright browser verification (Phase C) all passed. The suite runs against the actual tenant subdomain `acme-test.lvh.me:5174` with real Postgres/Redis-backed services.
 
-One backend bug was discovered and fixed during API verification, and one frontend test configuration issue was corrected.
+Several backend and frontend bugs were discovered and fixed during verification.
 
 ---
 
@@ -48,20 +48,23 @@ Verified endpoints:
 
 ## Phase C — Browser verification
 
+Run via `bunx playwright test e2e/virtual-desktop-phase-c.spec.ts --workers=1`.
+
+**Result:** 11/11 tests passed.
+
 | Step | Status | Notes |
 |------|--------|-------|
-| Automated Playwright smoke test | ✅ Pass | `frontend/e2e/virtual-desktop-smoke.spec.ts` — tenant path redirect loads without unexpected JS errors |
-| Full context-menu interactions | ⏸️ Deferred | Requires Kimi WebBridge or wildcard localhost DNS |
-| New-folder dialog | ⏸️ Deferred | Requires interactive browser control |
-| Folder navigation / breadcrumbs | ⏸️ Deferred | Requires interactive browser control |
-| App renderers (markdown, notes, video) | ⏸️ Deferred | Requires interactive browser control |
-| Drag-and-drop | ⏸️ Deferred | Requires interactive browser control |
-| Optimistic UI under throttling | ⏸️ Deferred | Requires interactive browser control |
-| ETag conflict dialog | ⏸️ Deferred | Requires two interactive sessions |
-| Keyboard shortcuts | ⏸️ Deferred | Requires interactive browser control |
-| Empty states | ⏸️ Deferred | Requires interactive browser control |
-| i18n switches (vi, cn) | ⏸️ Deferred | Requires interactive browser control |
-| Dock icon regression | ⏸️ Deferred | Requires interactive browser control |
+| Desktop shell / empty grid | ✅ Pass | Wallpaper, menubar, dock icons, empty state render |
+| Context menu | ✅ Pass | New Folder / Markdown / Notes / Video items open the create dialog |
+| New-folder dialog | ✅ Pass | Folder icon appears after submit |
+| Folder navigation / breadcrumbs | ✅ Pass | Double-click opens folder; Home breadcrumb returns to root |
+| App renderers (markdown, notes, video) | ✅ Pass | Content edits persist after reload; valid/invalid video URLs handled |
+| Drag-and-drop | ✅ Pass | App moves into folder and back out |
+| ETag conflict dialog | ✅ Pass | Second tab shows conflict dialog after concurrent edit |
+| Keyboard shortcuts | ✅ Pass | Ctrl+Shift+N, Enter, Delete, Esc work |
+| Empty states | ✅ Pass | Folder, desktop, and video empty states visible |
+| i18n switches (vi, cn) | ✅ Pass | Language changes reflect in UI |
+| Dock icon regression | ✅ Pass | Members dock icon opens its window |
 
 ---
 
@@ -82,7 +85,47 @@ The SQLx offline query cache was regenerated (`backend/.sqlx/`) so CI builds wit
 
 **Status:** Fixed and verified by API checks.
 
-### 2. Playwright backend health URL was incorrect
+### 2. `GET /api/v1/tenants/:slug` did not include caller role
+
+**File:** `backend/crates/services/tenant_service/src/application/use_cases/get_tenant.rs`
+
+**Problem:** `get_tenant` returned the `Tenant` aggregate, which has no `role` field. The tenant desktop page relies on the role to decide whether the shared layout adapter is editable. Without it, owners were treated as members and layout saves were silently skipped, so created icons disappeared after reload.
+
+**Fix:** Changed the use case (and `TenantService::get_tenant`) to return `TenantMembershipSummary`, including the caller's role.
+
+**Status:** Fixed and verified by Phase C reload tests.
+
+### 3. Tenant layout adapter lost etag on re-render
+
+**File:** `frontend/src/features/tenant/pages/tenant-desktop-page.tsx`
+
+**Problem:** `buildTenantDesktop` creates a new `tenant-api-adapter` instance on every render. The adapter stores the layout etag in a closure variable. After a load set the etag, a subsequent re-render replaced the adapter with a fresh instance whose etag was `null`, causing every save to fail with 409.
+
+**Fix:** Memoized the desktop config with `useMemo` so the adapter instance persists across renders.
+
+**Status:** Fixed and verified by Phase C persistence tests.
+
+### 4. Drop events bubbled to parent drop zones
+
+**File:** `frontend/src/features/desktop/desktop-manager/use-icon-drag-drop.ts`
+
+**Problem:** Dropping an icon on a folder button also bubbled to the desktop grid's drop handler, which immediately moved the icon back to the root. The drag appeared to do nothing.
+
+**Fix:** Added `event.stopPropagation()` in the `onDrop` handler.
+
+**Status:** Fixed and verified by Phase C drag-and-drop test.
+
+### 5. Autosave conflict detection used wrong error type
+
+**File:** `frontend/src/features/desktop/apps/use-content-autosave.ts`
+
+**Problem:** The save error handler checked `err instanceof AxiosError`, but the API interceptor wraps Axios errors in a custom `ApiError`. 409 responses therefore never triggered the conflict callback, so the conflict dialog did not open.
+
+**Fix:** Check `err instanceof ApiError && err.status === 409`.
+
+**Status:** Fixed and verified by Phase C ETag conflict test.
+
+### 6. Playwright backend health URL was incorrect
 
 **File:** `frontend/playwright.config.ts`
 

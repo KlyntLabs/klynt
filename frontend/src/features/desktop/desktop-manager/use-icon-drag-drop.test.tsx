@@ -162,6 +162,37 @@ describe("useIconDragDrop", () => {
     expect(result.current.dropTargetId).toBeNull();
   });
 
+  it("clears target state when dropping without an app id", () => {
+    const onMove = vi.fn();
+    const { result } = renderHook(() => useIconDragDrop({ desktopId: "d1", onMove }));
+    const { element: icon } = renderDragSource(result.current, "app-1");
+    const { element: desktopZone } = renderDropZone(result.current, "desktop");
+
+    fireEvent.dragStart(icon, { dataTransfer: createDataTransfer() });
+    fireEvent.dragOver(desktopZone);
+    expect(result.current.dropTargetId).toBe("desktop");
+
+    fireEvent.drop(desktopZone, { dataTransfer: createDataTransfer() });
+
+    expect(onMove).not.toHaveBeenCalled();
+    expect(result.current.dropTargetId).toBeNull();
+  });
+
+  it("clears state when async onMove rejects", async () => {
+    const onMove = vi.fn().mockRejectedValue(new Error("move failed"));
+    const { result } = renderHook(() => useIconDragDrop({ desktopId: "d1", onMove }));
+    const { element: icon } = renderDragSource(result.current, "app-1");
+    const { element: desktopZone } = renderDropZone(result.current, "desktop");
+
+    fireEvent.dragStart(icon, { dataTransfer: createDataTransfer() });
+    fireEvent.drop(desktopZone, { dataTransfer: createDataTransfer("app-1") });
+
+    await vi.waitFor(() => {
+      expect(result.current.draggingId).toBeNull();
+      expect(result.current.dropTargetId).toBeNull();
+    });
+  });
+
   it("falls back to the icon tree store when onMove is omitted", () => {
     act(() => useIconTreeStore.getState().setTree("d1", buildTree()));
 

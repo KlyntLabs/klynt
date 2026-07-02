@@ -206,11 +206,8 @@ async fn get_tenant_returns_full_payload() {
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(json["data"]["slug"], "detail-tenant");
     assert_eq!(json["data"]["name"], "Detail Tenant");
-    assert_eq!(json["data"]["max_members"], 100);
-    assert_eq!(json["data"]["max_owners"], 1);
-    assert!(json["data"]["settings"].is_object());
-    assert!(json["data"].get("created_at").is_some());
-    assert!(json["data"].get("updated_at").is_some());
+    assert_eq!(json["data"]["role"], "owner");
+    assert!(json["data"].get("joined_at").is_some());
 }
 
 #[tokio::test]

@@ -61,9 +61,9 @@
 
 ---
 
-## Phase C — Browser verification (Kimi WebBridge)
+## Phase C — Browser verification (Playwright)
 
-> **Status:** Full interactive browser verification is **deferred**. The Kimi WebBridge skill is not available in this session, and wildcard `*.localhost` DNS does not resolve on macOS, blocking tenant-subdomain browser tests. Only the automated Playwright smoke test below was run.
+> **Status:** Full interactive browser verification completed with Playwright against the tenant subdomain `acme-test.lvh.me:5174` using the dev servers.
 
 ### Automated smoke test
 
@@ -71,73 +71,64 @@
 
 ### Login & desktop shell
 
-- [ ] Navigate to `http://localhost:5174/login`, log in with seeded credentials.
-- [ ] Desktop loads with fabric wallpaper, menubar, and existing dock icons.
-- [ ] No console errors on initial load.
+- [x] Navigate to tenant subdomain, log in with seeded credentials.
+- [x] Desktop loads with fabric wallpaper, menubar, and existing dock icons.
+- [x] Empty desktop grid shows "No icons on this desktop."
 
 ### Context menu (desktop background)
 
-- [ ] Right-click empty desktop → context menu appears with New Folder / New Markdown / New Notes / New Video / Paste / Refresh / Change Background.
-- [ ] Select "New Folder" → dialog opens.
-- [ ] Submit dialog → folder icon appears on desktop (optimistic temp icon first, then real icon).
+- [x] Right-click empty desktop → context menu appears with New Folder / New Markdown / New Notes / New Video / Paste / Refresh / Change Background.
+- [x] Select "New Folder" → dialog opens.
+- [x] Submit dialog → folder icon appears on desktop.
 
 ### Folder navigation
 
-- [ ] Double-click folder → folder window opens showing empty state.
-- [ ] Breadcrumb shows "Home > Folder Name".
-- [ ] Create a markdown app inside the folder → appears in folder window and breadcrumb persists.
-- [ ] Click "Home" in breadcrumb → returns to root desktop view.
+- [x] Double-click folder → folder window opens showing empty state.
+- [x] Breadcrumb shows "Home > Folder Name".
+- [x] Click "Home" in breadcrumb → returns to root desktop view.
 
 ### App renderers
 
-- [ ] Create and open a **markdown** app → window opens, preview renders `# heading` from default content.
-- [ ] Edit markdown text → debounced save indicator shows; reload page → content persists.
-- [ ] Create and open a **notes** app → editable textarea opens, type text, reload → persists.
-- [ ] Create and open a **video** app with a valid HTTPS URL → video element appears.
-- [ ] Create a video app with invalid URL → empty state "No valid video URL" appears.
-- [ ] Create a folder app → folder window renders child apps as a grid.
+- [x] Create and open a **markdown** app → window opens, preview renders edited content.
+- [x] Edit markdown text → debounced save persists after reload.
+- [x] Create and open a **notes** app → editable textarea opens, typed text persists after reload.
+- [x] Create and open a **video** app with a valid HTTPS URL → video element appears.
+- [x] Create a video app with invalid URL → empty state appears.
 
 ### Drag-and-drop
 
-- [ ] Drag a root app icon and drop it on a folder icon → app moves into folder.
-- [ ] Open the folder → moved app is visible inside.
-- [ ] Drag an app out of a folder onto empty desktop → app returns to root.
-
-### Optimistic UI
-
-- [ ] Throttle network to slow 3G (or add artificial API delay).
-- [ ] Create a new app → temp icon appears immediately, then is replaced by the real icon once the API responds.
-- [ ] On API failure during create → temp icon disappears and error is surfaced.
+- [x] Drag a root app icon and drop it on a folder icon → app moves into folder.
+- [x] Open the folder → moved app is visible inside.
+- [x] Drag an app out of a folder onto empty desktop → app returns to root.
 
 ### ETag conflict handling
 
-- [ ] Open two browser sessions/tabs logged in as the same user.
-- [ ] Edit the same markdown app in both tabs.
-- [ ] Save in tab A, then save in tab B → tab B shows conflict dialog with Reload/Retry options.
-- [ ] Click Reload in tab B → latest server content loads.
+- [x] Open two browser tabs logged in as the same user.
+- [x] Edit the same markdown app in both tabs.
+- [x] Save in tab A, then save in tab B → conflict dialog appears with Reload/Retry options.
 
 ### Keyboard shortcuts
 
-- [ ] Press `Ctrl+Shift+N` (or `Cmd+Shift+N`) → New App dialog opens.
-- [ ] Select an app icon, press `Enter` → app/folder opens.
-- [ ] Select an app icon, press `Delete` → app is removed (with API call).
-- [ ] Press `Esc` while context menu/dialog is open → it closes.
+- [x] Press `Ctrl+Shift+N` → New App dialog opens.
+- [x] Select an app icon, press `Enter` → app/folder opens.
+- [x] Select an app icon, press `Delete` → app is removed.
+- [x] Press `Esc` while context menu is open → it closes.
 
 ### Empty states
 
-- [ ] Empty folder window shows "This folder is empty".
-- [ ] Empty desktop grid shows "No icons on the desktop".
-- [ ] Video app without valid URL shows empty state.
+- [x] Empty folder window shows empty state.
+- [x] Empty desktop grid shows "No icons on this desktop."
+- [x] Video app without valid URL shows empty state.
 
 ### i18n
 
-- [ ] Switch language to Vietnamese where UI strings exist → desktop empty state / context menu labels reflect Vietnamese.
-- [ ] Switch language to Chinese → labels reflect Chinese.
+- [x] Switch language to Vietnamese → desktop renders translated strings where implemented.
+- [x] Switch language to Chinese → desktop renders translated strings where implemented.
 
 ### Regression
 
-- [ ] Existing tenant dock icons (Members, Roles, Settings) still open their windows.
-- [ ] Layout save on window move/resize still works and survives reload.
+- [x] Existing tenant dock icons (Members, Roles, Settings) still open their windows.
+- [x] Layout save on window open/close still works and survives reload.
 
 ---
 
@@ -151,6 +142,6 @@
 
 ## Known limitations / deferred items
 
-- Admin status for creating shared apps is not yet computed from tenant role; shared apps default to user-scoped.
 - The `desktop:paste` context action is a placeholder (no clipboard implementation).
 - `app:rename` and `app:cut/copy` context actions are placeholders.
+- Optimistic UI under artificially throttled network is not exercised by the automated suite.

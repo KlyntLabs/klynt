@@ -66,6 +66,7 @@ export function useIconDragDrop(options: {
         },
         onDrop: (event: React.DragEvent<HTMLElement>) => {
           event.preventDefault();
+          event.stopPropagation();
           const appId = event.dataTransfer.getData(DATA_TRANSFER_TYPE);
           if (!appId) {
             setDropTargetId(null);

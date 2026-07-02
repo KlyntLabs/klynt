@@ -1,5 +1,6 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
-import type { AppSummary, AppType } from "@/features/desktop/api/desktop-apps-api";
+import { type AppSummary, AppType, desktopAppsApi } from "@/features/desktop/api/desktop-apps-api";
 import type { ActionContext } from "@/features/desktop/context-menu/action-registry";
 import type { ContextMenuTarget } from "@/features/desktop/context-menu/menu-schema";
 import { useDesktopContextMenu } from "@/features/desktop/context-menu/use-desktop-context-menu";
@@ -38,6 +39,7 @@ export function useDesktopEnvironmentActions(
   refetch: () => void,
   changeBackground: () => void
 ): UseDesktopEnvironmentActionsResult {
+  const queryClient = useQueryClient();
   const { openApp } = useWindowManager();
   const tenantSlug = config.context.tenantSlug ?? "";
   const { state: menuState, openMenu, closeMenu } = useDesktopContextMenu();
@@ -51,6 +53,14 @@ export function useDesktopEnvironmentActions(
     [config.id, openApp]
   );
 
+  const refreshBundleInBackground = useCallback(() => {
+    void desktopAppsApi.getDesktop(tenantSlug).then((response) => {
+      const bundle = response.data.data;
+      useIconTreeStore.getState().setBundleEtag(config.id, bundle.etag);
+      queryClient.setQueryData(["desktop-bundle", tenantSlug], bundle);
+    });
+  }, [tenantSlug, queryClient, config.id]);
+
   const handleDeleteApp = useCallback(
     async (appId: string) => {
       const app = apps.find((item) => item.id === appId);
@@ -60,8 +70,9 @@ export function useDesktopEnvironmentActions(
         appId,
         isLocked: app?.locked,
       });
+      refreshBundleInBackground();
     },
-    [apps, config.id, tenantSlug]
+    [apps, config.id, tenantSlug, refreshBundleInBackground]
   );
 
   const handleCreateAppFromMenu = useCallback(async (type: AppType, parentId?: string | null) => {
@@ -81,9 +92,12 @@ export function useDesktopEnvironmentActions(
         title: values.title,
         parentId: newAppDialog.parentId,
       });
-      handleOpenApp(app.id);
+      if (values.type !== "folder") {
+        handleOpenApp(app.id);
+      }
+      refreshBundleInBackground();
     },
-    [config.id, tenantSlug, newAppDialog.parentId, handleOpenApp]
+    [config.id, tenantSlug, newAppDialog.parentId, handleOpenApp, refreshBundleInBackground]
   );
 
   const handleOpenContextMenu = useCallback(
@@ -106,7 +120,10 @@ export function useDesktopEnvironmentActions(
   const handleOpenSelected = useCallback(() => {
     if (!selectedAppId) return;
     const app = apps.find((item) => item.id === selectedAppId);
-    if (app?.type === "folder") {
+    const tree = useIconTreeStore.getState().trees[config.id] ?? [];
+    const node = tree.find((item) => item.appId === selectedAppId);
+    const isFolder = app?.type === "folder" || node?.children !== undefined;
+    if (isFolder) {
       useIconTreeStore.getState().openFolder(config.id, selectedAppId);
     } else {
       handleOpenApp(selectedAppId);

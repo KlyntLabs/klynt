@@ -8,6 +8,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { type IconTreeNode, useIconTreeStore } from "./icon-tree-module";
 import { useCurrentFolderContents } from "./use-current-folder";
 
 type FolderBreadcrumbProps = {
@@ -27,12 +28,30 @@ export function FolderBreadcrumb({
 }: FolderBreadcrumbProps): React.JSX.Element {
   const { t } = useTranslation("home");
   const { path, navigateToRoot, navigateToIndex } = useCurrentFolderContents(desktopId);
+  const tree = useIconTreeStore((s) => s.trees[desktopId]);
+  const nodes = tree ?? [];
+
+  const nodeTitleMap = React.useMemo(() => {
+    const map: Record<string, string> = {};
+    function walk(items: IconTreeNode[]) {
+      for (const node of items) {
+        if (node.title) {
+          map[node.appId] = node.title;
+        }
+        if (node.children) {
+          walk(node.children);
+        }
+      }
+    }
+    walk(nodes);
+    return map;
+  }, [nodes]);
 
   const crumbs: Crumb[] = [
     { id: "__home__", title: t("desktop.breadcrumb.home"), index: -1 },
     ...path.map((appId, index) => ({
       id: appId,
-      title: titleMap[appId] ?? t("desktop.breadcrumb.folderFallback"),
+      title: titleMap[appId] ?? nodeTitleMap[appId] ?? t("desktop.breadcrumb.folderFallback"),
       index,
     })),
   ];

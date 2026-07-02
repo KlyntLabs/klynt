@@ -123,6 +123,7 @@ export default function WindowComponent({
         height: isMaximized ? "calc(100vh - 36px)" : w.height,
       }}
       className="flex flex-col rounded-lg border border-[#D1D1D1] bg-white shadow-[0_8px_32px_rgba(0,0,0,0.15)] overflow-hidden select-none"
+      data-testid="desktop-window"
     >
       {/* Title Bar */}
       <div

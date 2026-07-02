@@ -1,5 +1,6 @@
-import { AxiosError } from "axios";
+import { isAxiosError } from "axios";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ApiError } from "@/core/api/api-error";
 import { desktopAppsApi } from "../api/desktop-apps-api";
 
 export type UseContentAutosaveOptions = {
@@ -90,7 +91,11 @@ export function useContentAutosave(options: UseContentAutosaveOptions): UseConte
         return;
       }
 
-      if (err instanceof AxiosError && err.response?.status === 409) {
+      const isConflict =
+        (err instanceof ApiError && err.status === 409) ||
+        (isAxiosError(err) && err.response?.status === 409);
+
+      if (isConflict) {
         const conflictError = new Error("The content was modified by another session.");
         setError(conflictError);
         onConflict?.();

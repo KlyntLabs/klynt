@@ -178,7 +178,7 @@ impl TenantService {
         &self,
         ctx: &ExecutionContext,
         slug: &str,
-    ) -> Result<Tenant, TenantError> {
+    ) -> Result<TenantMembershipSummary, TenantError> {
         application::use_cases::get_tenant::execute(self, ctx, slug).await
     }
 

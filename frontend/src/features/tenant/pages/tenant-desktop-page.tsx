@@ -1,5 +1,5 @@
 import { isAxiosError } from "axios";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuthModule } from "@/core/auth/auth-module";
@@ -33,7 +33,10 @@ export default function TenantDesktopPage({ slug: propSlug }: TenantDesktopPageP
   const { data: tenant, isLoading, error } = useTenant(tenantSlug);
   const tenantRole = tenant?.role ?? "member";
 
-  const config = buildTenantDesktop(tenantSlug, tenantRole, user);
+  const config = useMemo(
+    () => buildTenantDesktop(tenantSlug, tenantRole, user),
+    [tenantSlug, tenantRole, user]
+  );
 
   useEffect(() => {
     const appId = deepPath ? DEEP_LINK_APP_MAP[deepPath] : undefined;
