@@ -86,7 +86,7 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
     const layout: DesktopLayout = {
       version: 1,
       backgroundPresetId,
-      icons: [],
+      iconTree: [],
       windows: desktopWindows.map((window) => ({
         appId: window.appId,
         x: window.x,

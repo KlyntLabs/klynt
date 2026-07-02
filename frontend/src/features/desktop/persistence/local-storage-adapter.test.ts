@@ -25,7 +25,7 @@ function createLayout(): DesktopLayout {
   return {
     version: 1,
     backgroundPresetId: "default",
-    icons: [{ appId: "app-1", x: 10, y: 20 }],
+    iconTree: [{ appId: "app-1", x: 10, y: 20 }],
     windows: [
       {
         appId: "app-1",

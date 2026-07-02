@@ -8,7 +8,7 @@ const slug = "acme";
 const layout: DesktopLayout = {
   version: 1,
   backgroundPresetId: "fabric",
-  icons: [],
+  iconTree: [],
   windows: [],
 };
 

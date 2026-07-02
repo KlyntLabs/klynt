@@ -13,7 +13,7 @@ describe("createNoOpAdapter", () => {
     const result = await adapter.save("test", {
       version: 1,
       backgroundPresetId: "default",
-      icons: [],
+      iconTree: [],
       windows: [],
     });
     expect(result).toEqual({ ok: true });

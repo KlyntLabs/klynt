@@ -1,3 +1,5 @@
+import type { IconTreeNode } from "../desktop-manager/icon-tree-module";
+
 export type BackgroundConfig = {
   presetId: string;
 };
@@ -5,7 +7,7 @@ export type BackgroundConfig = {
 export type DesktopLayout = {
   version: number;
   backgroundPresetId: string;
-  icons?: Array<{ appId: string; x: number; y: number }>;
+  iconTree: IconTreeNode[];
   windows: Array<{
     appId: string;
     x: number;
