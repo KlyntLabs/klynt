@@ -97,36 +97,72 @@ impl TenantDesktopLayoutRepository for PgTenantDesktopLayoutRepository {
         let windows = serde_json::to_value(&layout.windows)
             .map_err(|e| DomainError::internal_msg(format!("failed to serialize windows: {e}")))?;
 
-        let row = sqlx::query_as!(
-            LayoutRow,
-            r#"
-            INSERT INTO tenant_desktop_layouts (
-                id, tenant_id, scope, user_id, version, background_preset_id, icon_tree, windows, etag, created_at, updated_at
+        // Shared layouts use a partial unique index on tenant_id, while user
+        // overrides use the table-level unique constraint on
+        // (tenant_id, scope, user_id).
+        let row = if layout.user_id.is_none() {
+            sqlx::query_as!(
+                LayoutRow,
+                r#"
+                INSERT INTO tenant_desktop_layouts (
+                    id, tenant_id, scope, user_id, version, background_preset_id, icon_tree, windows, etag, created_at, updated_at
+                )
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+                ON CONFLICT (tenant_id) WHERE scope = 'shared'
+                DO UPDATE SET
+                    version = EXCLUDED.version,
+                    background_preset_id = EXCLUDED.background_preset_id,
+                    icon_tree = EXCLUDED.icon_tree,
+                    windows = EXCLUDED.windows,
+                    etag = EXCLUDED.etag,
+                    updated_at = NOW()
+                RETURNING id, tenant_id, scope, user_id, version, background_preset_id, icon_tree, windows, etag
+                "#,
+                layout.id,
+                layout.tenant_id,
+                layout.scope.as_str(),
+                layout.user_id,
+                layout.version,
+                &layout.background_preset_id,
+                icon_tree,
+                windows,
+                &layout.etag
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
-            ON CONFLICT (tenant_id, scope, user_id)
-            DO UPDATE SET
-                version = EXCLUDED.version,
-                background_preset_id = EXCLUDED.background_preset_id,
-                icon_tree = EXCLUDED.icon_tree,
-                windows = EXCLUDED.windows,
-                etag = EXCLUDED.etag,
-                updated_at = NOW()
-            RETURNING id, tenant_id, scope, user_id, version, background_preset_id, icon_tree, windows, etag
-            "#,
-            layout.id,
-            layout.tenant_id,
-            layout.scope.as_str(),
-            layout.user_id,
-            layout.version,
-            &layout.background_preset_id,
-            icon_tree,
-            windows,
-            &layout.etag
-        )
-        .fetch_one(&self.pool)
-        .await
-        .map_err(DomainError::internal)?;
+            .fetch_one(&self.pool)
+            .await
+            .map_err(DomainError::internal)?
+        } else {
+            sqlx::query_as!(
+                LayoutRow,
+                r#"
+                INSERT INTO tenant_desktop_layouts (
+                    id, tenant_id, scope, user_id, version, background_preset_id, icon_tree, windows, etag, created_at, updated_at
+                )
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+                ON CONFLICT (tenant_id, scope, user_id) WHERE scope = 'user'
+                DO UPDATE SET
+                    version = EXCLUDED.version,
+                    background_preset_id = EXCLUDED.background_preset_id,
+                    icon_tree = EXCLUDED.icon_tree,
+                    windows = EXCLUDED.windows,
+                    etag = EXCLUDED.etag,
+                    updated_at = NOW()
+                RETURNING id, tenant_id, scope, user_id, version, background_preset_id, icon_tree, windows, etag
+                "#,
+                layout.id,
+                layout.tenant_id,
+                layout.scope.as_str(),
+                layout.user_id,
+                layout.version,
+                &layout.background_preset_id,
+                icon_tree,
+                windows,
+                &layout.etag
+            )
+            .fetch_one(&self.pool)
+            .await
+            .map_err(DomainError::internal)?
+        };
 
         Ok(map_layout_row(row)?)
     }
