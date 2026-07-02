@@ -222,6 +222,18 @@
         "talkToHuman": "Talk to a human",
         "trash": "Trash"
       }
+    },
+    "dialog": {
+      "newApp": {
+        "title": "Create new app",
+        "description": "Choose a type and name for your new app.",
+        "titleLabel": "Title",
+        "typeLabel": "Type",
+        "create": "Create",
+        "cancel": "Cancel",
+        "titleRequired": "Title is required.",
+        "titleTooLong": "Title must be 100 characters or less."
+      }
     }
   }
 }

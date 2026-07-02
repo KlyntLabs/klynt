@@ -212,6 +212,18 @@
         "talkToHuman": "Nói chuyện với người",
         "trash": "Thùng rác"
       }
+    },
+    "dialog": {
+      "newApp": {
+        "title": "Tạo ứng dụng mới",
+        "description": "Chọn loại và tên cho ứng dụng mới của bạn.",
+        "titleLabel": "Tiêu đề",
+        "typeLabel": "Loại",
+        "create": "Tạo",
+        "cancel": "Hủy",
+        "titleRequired": "Tiêu đề là bắt buộc.",
+        "titleTooLong": "Tiêu đề phải có tối đa 100 ký tự."
+      }
     }
   },
   "user": {

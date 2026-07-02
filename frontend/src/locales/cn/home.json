@@ -212,6 +212,18 @@
         "talkToHuman": "联系客服",
         "trash": "垃圾桶"
       }
+    },
+    "dialog": {
+      "newApp": {
+        "title": "创建新应用",
+        "description": "为新应用选择类型和名称。",
+        "titleLabel": "标题",
+        "typeLabel": "类型",
+        "create": "创建",
+        "cancel": "取消",
+        "titleRequired": "标题为必填项。",
+        "titleTooLong": "标题不得超过100个字符。"
+      }
     }
   },
   "user": {
