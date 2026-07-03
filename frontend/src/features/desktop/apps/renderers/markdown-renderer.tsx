@@ -61,7 +61,7 @@ export function MarkdownRenderer({
       <div
         className="flex-1 overflow-auto rounded-md border border-border bg-card p-4 text-foreground shadow-elevation-1"
         // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is sanitized by DOMPurify before injection.
-        dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
+        dangerouslySetInnerHTML={{ __html: sanitizedHtml }} // nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml
         data-testid="markdown-preview"
       />
       {!readOnly && (

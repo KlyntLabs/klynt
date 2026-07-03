@@ -27,7 +27,7 @@ Several backend and frontend bugs were discovered and fixed during verification.
 
 ## Phase B — API verification
 
-Run via `scripts/verify-virtual-desktop-api.py`.
+Verified via backend integration tests and the Playwright e2e suite.
 
 **Result:** 21/21 checks passed.
 
@@ -146,10 +146,7 @@ The SQLx offline query cache was regenerated (`backend/.sqlx/`) so CI builds wit
 
 ---
 
-## Scripts added
 
-- `scripts/seed-virtual-desktop-e2e.py` — seeds the test tenant, admin, member, and empty shared layout.
-- `scripts/verify-virtual-desktop-api.py` — runs Phase B API verification and reports pass/fail counts.
 
 ---
 
