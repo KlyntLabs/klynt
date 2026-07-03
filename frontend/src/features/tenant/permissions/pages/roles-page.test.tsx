@@ -36,4 +36,56 @@ describe("RolesPage", () => {
 
     expect(await screen.findByText("Manager")).toBeInTheDocument();
   });
+
+  it("edits a custom role", async () => {
+    useAuthStore.getState().setActiveTenant({ ...baseTenant, role: "owner" });
+    const user = userEvent.setup();
+
+    render(
+      <Routes>
+        <Route path="/tenants/:slug/roles" element={<RolesPage />} />
+      </Routes>,
+      { initialEntries: ["/tenants/acme/roles"] }
+    );
+
+    expect(await screen.findByText("owner")).toBeInTheDocument();
+
+    // Create a custom role first so it can be edited.
+    await user.click(screen.getByRole("button", { name: /create role/i }));
+    await user.type(screen.getByLabelText(/role name/i), "Editor");
+    await user.click(screen.getByRole("button", { name: /save/i }));
+    expect(await screen.findByText("Editor")).toBeInTheDocument();
+
+    // Edit the custom role.
+    const rows = screen.getAllByRole("row");
+    const editorRow = rows.find((row) => row.textContent?.includes("Editor"));
+    const editButton = editorRow?.querySelector('button[data-variant="outline"]');
+    if (!(editButton instanceof HTMLElement)) {
+      throw new Error("Edit button for Editor role not found");
+    }
+    await user.click(editButton);
+
+    await user.click(screen.getByRole("checkbox", { name: "tenant.manage_members" }));
+    await user.click(screen.getByRole("button", { name: /save/i }));
+
+    expect(await screen.findByText("Editor")).toBeInTheDocument();
+  });
+
+  it("deletes a custom role", async () => {
+    useAuthStore.getState().setActiveTenant({ ...baseTenant, role: "owner" });
+    const user = userEvent.setup();
+
+    render(
+      <Routes>
+        <Route path="/tenants/:slug/roles" element={<RolesPage />} />
+      </Routes>,
+      { initialEntries: ["/tenants/acme/roles"] }
+    );
+
+    expect(await screen.findByText("owner")).toBeInTheDocument();
+
+    await user.click(screen.getAllByRole("button", { name: /delete/i })[0]);
+
+    await screen.findByText("owner");
+  });
 });
