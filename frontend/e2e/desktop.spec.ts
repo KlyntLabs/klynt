@@ -20,7 +20,7 @@ test.describe("desktop OS", () => {
     });
     await loginAndSetCookies(page, user);
 
-    await page.goto("/admin");
+    await page.goto("http://admin.lvh.me:5174/admin");
 
     await page.getByText("User Management").first().click();
     await expect(page.getByText("Admin user management mini-app.")).toBeVisible();

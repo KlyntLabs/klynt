@@ -12,12 +12,16 @@ RUN bun install --frozen-lockfile --ignore-scripts
 # Copy source and build the production bundle
 COPY . .
 
-# Build-time environment variable for the API base URL.
+# Build-time environment variables for the SPA.
 # Override at build time with: --build-arg VITE_API_BASE_URL=https://api.example.com/api/v1
 ARG VITE_API_BASE_URL=/api/v1
 ARG VITE_APP_NAME=Klynt
+ARG VITE_APP_DOMAIN=lvh.me
+ARG VITE_APP_PROTOCOL=http
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 ENV VITE_APP_NAME=${VITE_APP_NAME}
+ENV VITE_APP_DOMAIN=${VITE_APP_DOMAIN}
+ENV VITE_APP_PROTOCOL=${VITE_APP_PROTOCOL}
 
 RUN bun run build
 

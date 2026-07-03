@@ -6,6 +6,7 @@ describe("tenant hooks module exports", () => {
     expect(hooks.useAcceptTenantInvite).toBeDefined();
     expect(hooks.useRemoveTenant).toBeDefined();
     expect(hooks.useTenant).toBeDefined();
+    expect(hooks.useTenantSlug).toBeDefined();
     expect(hooks.useUpdateTenant).toBeDefined();
   });
 });

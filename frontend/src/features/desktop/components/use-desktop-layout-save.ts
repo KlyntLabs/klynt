@@ -1,10 +1,34 @@
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useToastStore } from "@/core/notifications/toast-store";
+import type { IconTreeNode } from "@/features/desktop/desktop-manager/icon-tree-module";
 import { useIconTreeStore } from "@/features/desktop/desktop-manager/icon-tree-module";
 import type { DesktopConfig } from "../factory/types";
 import type { DesktopLayout } from "../persistence/types";
 import type { Window } from "../window-manager/window-module";
+
+function roundIconTree(tree: IconTreeNode[]): IconTreeNode[] {
+  return tree.map((node) => ({
+    ...node,
+    x: Math.round(node.x),
+    y: Math.round(node.y),
+    children: node.children ? roundIconTree(node.children) : undefined,
+  }));
+}
+
+function normalizeLayout(layout: DesktopLayout): DesktopLayout {
+  return {
+    ...layout,
+    iconTree: roundIconTree(layout.iconTree),
+    windows: layout.windows.map((window) => ({
+      ...window,
+      x: Math.round(window.x),
+      y: Math.round(window.y),
+      width: Math.round(window.width),
+      height: Math.round(window.height),
+    })),
+  };
+}
 
 export function useDesktopLayoutSave(
   config: DesktopConfig,
@@ -40,7 +64,7 @@ export function useDesktopLayoutSave(
       })),
     };
 
-    configRef.current.persistence.save(config.id, layout).then((result) => {
+    configRef.current.persistence.save(config.id, normalizeLayout(layout)).then((result) => {
       if (!result.ok) {
         if (result.error === "conflict") {
           addToast({

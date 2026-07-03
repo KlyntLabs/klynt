@@ -210,7 +210,14 @@ test.describe("Phase C — virtual desktop browser verification", () => {
     // Reset layout (icon tree + windows) so each test starts from a clean desktop
     await resetTenantLayout(page.request);
     await openTenantDesktop(page);
-    // Wait for persistence loading overlay to disappear
+    // Ensure tests run with the default English locale regardless of prior localStorage state
+    await page.evaluate(() => window.localStorage.setItem("klynt-language", "en"));
+    await page.reload();
+    // After reload the React app has to remount; wait for the desktop surface before
+    // sending keyboard shortcuts or making assertions.
+    await expect(page.locator('[data-testid="desktop-center-grid"]')).toBeVisible({
+      timeout: 10_000,
+    });
     await expect(page.locator('[role="status"][aria-busy="true"]')).not.toBeVisible({
       timeout: 10_000,
     });

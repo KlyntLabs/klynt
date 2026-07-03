@@ -85,7 +85,7 @@ export async function loginAndSetCookies(page: Page, user: TestUser): Promise<vo
     {
       name: name.trim(),
       value: value.trim(),
-      domain: "localhost",
+      domain: ".lvh.me",
       path: "/",
       httpOnly: true,
       secure: false,

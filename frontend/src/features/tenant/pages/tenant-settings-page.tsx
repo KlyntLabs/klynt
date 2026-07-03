@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { useParams } from "react-router-dom";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -32,13 +31,13 @@ import { navigateExternal } from "@/core/auth/external-redirect";
 import { buildAdminUrl } from "@/core/routing/subdomain-router";
 import { useRemoveTenant } from "../hooks/use-remove-tenant";
 import { useTenant } from "../hooks/use-tenant";
+import { useTenantSlug } from "../hooks/use-tenant-slug";
 import { useUpdateTenant } from "../hooks/use-update-tenant";
 import type { UpdateTenantInput } from "../types";
 
 export default function TenantSettingsPage() {
   const { t } = useTranslation("tenant");
-  const { slug } = useParams<{ slug: string }>();
-  const tenantSlug = slug ?? "";
+  const tenantSlug = useTenantSlug();
 
   const { data: tenant, isLoading, error } = useTenant(tenantSlug);
   const updateMutation = useUpdateTenant(tenantSlug);
