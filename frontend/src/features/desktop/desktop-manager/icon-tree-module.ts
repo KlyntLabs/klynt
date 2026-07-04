@@ -6,6 +6,7 @@ export type IconTreeNode = {
   appId: string;
   x: number;
   y: number;
+  icon?: string;
   children?: IconTreeNode[];
   parentIdSnapshot?: string | null;
   title?: string;
@@ -132,6 +133,8 @@ export const useIconTreeStore = create<IconTreeState>()(
             return;
           }
 
+          // When a parent is requested, the tree must already exist; adding to a
+          // missing tree is treated as a no-op.
           const tree = draft.trees[desktopId];
           if (!tree) {
             return;
@@ -181,13 +184,12 @@ export const useIconTreeStore = create<IconTreeState>()(
             return;
           }
 
-          if (newParentId) {
-            if (isDescendant([node], node.appId, newParentId)) {
-              return;
-            }
-            if (!findNode(tree, newParentId)) {
-              return;
-            }
+          const target = newParentId ? findNode(tree, newParentId) : null;
+          if (newParentId && !target) {
+            return;
+          }
+          if (newParentId && isDescendant([node], node.appId, newParentId)) {
+            return;
           }
 
           const location = findLocation(tree, appId);
@@ -198,12 +200,7 @@ export const useIconTreeStore = create<IconTreeState>()(
           const [movedNode] = location.parent.splice(location.index, 1);
           movedNode.parentIdSnapshot = newParentId ?? null;
 
-          if (newParentId) {
-            const target = findNode(tree, newParentId);
-            if (!target) {
-              location.parent.splice(location.index, 0, movedNode);
-              return;
-            }
+          if (newParentId && target) {
             target.children = target.children ?? [];
             target.children.push(movedNode);
           } else {
@@ -242,9 +239,9 @@ export const useIconTreeStore = create<IconTreeState>()(
 
       closeFolder: (desktopId) =>
         set((draft) => {
-          const path = draft.openFolderPaths[desktopId];
-          if (path && path.length > 0) {
-            path.pop();
+          const path = draft.openFolderPaths[desktopId] ?? [];
+          if (path.length > 0) {
+            draft.openFolderPaths[desktopId] = path.slice(0, -1);
           }
         }),
 
@@ -264,7 +261,7 @@ export const useIconTreeStore = create<IconTreeState>()(
           draft.bundleEtags[desktopId] = etag;
         }),
 
-      reset: () => set(initialState),
+      reset: () => set(() => ({ ...initialState })),
     })),
     { name: "icon-tree" }
   )

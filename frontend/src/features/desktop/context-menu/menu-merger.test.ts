@@ -79,7 +79,7 @@ describe("mergeContextMenu", () => {
   it("returns base unchanged except id when no overrides are provided", () => {
     const merged = mergeContextMenu(baseMenu);
 
-    expect(merged.id).toBe("desktop-background-menu-merged");
+    expect(merged.id).toBe("desktop-background-menu");
     expect(merged.root).toEqual(baseMenu.root);
     expect(merged.root).not.toBe(baseMenu.root);
     expect(merged.root[0]).not.toBe(baseMenu.root[0]);
@@ -194,7 +194,7 @@ describe("mergeContextMenu", () => {
           type: "item",
           id: "duplicate",
           label: "Duplicate",
-          action: "app:duplicate" as const,
+          action: "custom:duplicate" as const,
         },
       ],
     };

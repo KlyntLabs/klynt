@@ -12,8 +12,8 @@ use domain::operations::{MembershipOp, TenantOp, UserOp};
 use domain::tenant::{Tenant, TenantId, TenantMembershipSummary, TenantSlug};
 use domain::tenant_desktop_layout::{LayoutScope, TenantDesktopLayout};
 use domain::{
-    DesktopApp, DomainResult, Email, PaginationRequest, RoleId, TenantInvite, User, UserId,
-    UserRole,
+    DesktopApp, DomainResult, Email, IconTreePosition, PaginationRequest, RoleId, TenantInvite,
+    User, UserId, UserRole,
 };
 use uuid::Uuid;
 
@@ -295,21 +295,24 @@ pub trait TenantDesktopLayoutRepository: Send + Sync {
         ctx: &ExecutionContext,
         layout: &TenantDesktopLayout,
     ) -> DomainResult<TenantDesktopLayout>;
+
+    /// List all user-scoped layouts for a tenant.
+    async fn list_user_layouts(
+        &self,
+        ctx: &ExecutionContext,
+        tenant_id: Uuid,
+    ) -> DomainResult<Vec<TenantDesktopLayout>>;
 }
 
 /// Canonical desktop app repository interface.
 #[async_trait]
 pub trait DesktopAppRepository: Send + Sync {
     /// Create a new app within a transaction that also appends to icon_tree.
-    #[allow(clippy::too_many_arguments)]
     async fn create_with_position(
         &self,
         ctx: &ExecutionContext,
         app: &DesktopApp,
-        icon_tree_app_id: &str,
-        icon_tree_x: i32,
-        icon_tree_y: i32,
-        icon_tree_parent_id: Option<&str>,
+        position: &IconTreePosition,
         scope: LayoutScope,
     ) -> DomainResult<DesktopApp>;
 

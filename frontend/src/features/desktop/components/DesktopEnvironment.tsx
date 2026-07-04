@@ -114,15 +114,15 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
     if (isBundleLoading) return;
     if (layoutTreeLoadedRef.current) return;
     if (bundleError) return;
-    useIconTreeStore.getState().setTree(configRef.current.id, []);
-  }, [isBundleLoading, bundleError]);
+    useIconTreeStore.getState().setTree(config.id, []);
+  }, [isBundleLoading, bundleError, config.id]);
 
   useEffect(() => {
     if (isBundleLoading) return;
     if (bundleError) return;
     if (!etag) return;
 
-    const desktopId = configRef.current.id;
+    const desktopId = config.id;
     const previousEtag = useIconTreeStore.getState().bundleEtags[desktopId];
     if (previousEtag && previousEtag !== etag) {
       resetDesktop(desktopId);
@@ -130,7 +130,7 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
       layoutTreeLoadedRef.current = false;
     }
     useIconTreeStore.getState().setBundleEtag(desktopId, etag);
-  }, [isBundleLoading, bundleError, etag, resetDesktop]);
+  }, [isBundleLoading, bundleError, etag, resetDesktop, config.id]);
 
   useEffect(() => {
     if (isBelowLg && isOsDesktop) return;

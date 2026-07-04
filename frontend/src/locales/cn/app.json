@@ -4,9 +4,27 @@
   },
   "video": {
     "noUrl": "没有有效的视频网址",
-    "httpsOnly": "视频网址必须使用 HTTPS"
+    "httpsOnly": "视频网址必须使用 HTTPS",
+    "urlLabel": "视频网址"
   },
   "folder": {
     "empty": "此文件夹为空"
+  },
+  "menu": {
+    "new": "新建",
+    "rename": "重命名",
+    "duplicate": "复制",
+    "delete": "删除",
+    "open": "打开",
+    "newFolder": "新建文件夹",
+    "newMarkdown": "新建 Markdown",
+    "newNotes": "新建笔记",
+    "newVideo": "新建视频",
+    "paste": "粘贴",
+    "refresh": "刷新",
+    "changeBackground": "更换背景",
+    "newFolderInside": "在内部新建文件夹",
+    "cut": "剪切",
+    "copy": "复制"
   }
 }

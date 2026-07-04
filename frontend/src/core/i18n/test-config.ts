@@ -1,5 +1,6 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
+import cnApp from "@/locales/cn/app.json";
 import cnAuth from "@/locales/cn/auth.json";
 import cnCommon from "@/locales/cn/common.json";
 import cnErrors from "@/locales/cn/errors.json";
@@ -8,6 +9,7 @@ import cnMarketing from "@/locales/cn/marketing.json";
 import cnTenant from "@/locales/cn/tenant.json";
 import cnUi from "@/locales/cn/ui.json";
 import cnValidation from "@/locales/cn/validation.json";
+import enApp from "@/locales/en/app.json";
 import enAuth from "@/locales/en/auth.json";
 import enCommon from "@/locales/en/common.json";
 import enErrors from "@/locales/en/errors.json";
@@ -16,6 +18,7 @@ import enMarketing from "@/locales/en/marketing.json";
 import enTenant from "@/locales/en/tenant.json";
 import enUi from "@/locales/en/ui.json";
 import enValidation from "@/locales/en/validation.json";
+import viApp from "@/locales/vi/app.json";
 import viAuth from "@/locales/vi/auth.json";
 import viCommon from "@/locales/vi/common.json";
 import viErrors from "@/locales/vi/errors.json";
@@ -28,10 +31,11 @@ import viValidation from "@/locales/vi/validation.json";
 i18n.use(initReactI18next).init({
   lng: "en",
   fallbackLng: "en",
-  ns: ["common", "auth", "errors", "ui", "validation", "home", "marketing", "tenant"],
+  ns: ["common", "auth", "errors", "ui", "validation", "home", "marketing", "tenant", "app"],
   defaultNS: "common",
   resources: {
     en: {
+      app: enApp,
       common: enCommon,
       auth: enAuth,
       errors: enErrors,
@@ -42,6 +46,7 @@ i18n.use(initReactI18next).init({
       validation: enValidation,
     },
     vi: {
+      app: viApp,
       common: viCommon,
       auth: viAuth,
       errors: viErrors,
@@ -52,6 +57,7 @@ i18n.use(initReactI18next).init({
       validation: viValidation,
     },
     cn: {
+      app: cnApp,
       common: cnCommon,
       auth: cnAuth,
       errors: cnErrors,

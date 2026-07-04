@@ -18,14 +18,19 @@ function targetFolderId(target: ContextMenuTarget): string | null {
   return target.kind === "folder" ? target.folderId : null;
 }
 
+const createAppHandler =
+  (type: AppType): ActionHandler =>
+  (ctx) =>
+    ctx.createApp?.(type, targetFolderId(ctx.target) ?? null);
+
 const contextMenuActionRegistryImpl: Record<
   Exclude<ContextMenuActionId, `custom:${string}`>,
   ActionHandler
 > = {
-  "desktop:new-folder": (ctx) => ctx.createApp?.("folder", targetFolderId(ctx.target)),
-  "desktop:new-markdown": (ctx) => ctx.createApp?.("markdown", targetFolderId(ctx.target) ?? null),
-  "desktop:new-notes": (ctx) => ctx.createApp?.("notes", targetFolderId(ctx.target) ?? null),
-  "desktop:new-video": (ctx) => ctx.createApp?.("video", targetFolderId(ctx.target) ?? null),
+  "desktop:new-folder": createAppHandler("folder"),
+  "desktop:new-markdown": createAppHandler("markdown"),
+  "desktop:new-notes": createAppHandler("notes"),
+  "desktop:new-video": createAppHandler("video"),
   "desktop:paste": () => {
     // Placeholder: clipboard paste will be wired in Task 5.1.
   },
@@ -56,8 +61,10 @@ const contextMenuActionRegistryImpl: Record<
   },
 };
 
-export const contextMenuActionRegistry: Record<ContextMenuActionId, ActionHandler> =
-  contextMenuActionRegistryImpl as Record<ContextMenuActionId, ActionHandler>;
+export const contextMenuActionRegistry: Record<
+  Exclude<ContextMenuActionId, `custom:${string}`>,
+  ActionHandler
+> = contextMenuActionRegistryImpl;
 
 export async function executeContextMenuAction(
   actionId: ContextMenuActionId,
@@ -73,5 +80,11 @@ export async function executeContextMenuAction(
     throw new Error(`Unknown context menu action: ${actionId}`);
   }
 
-  await handler(ctx);
+  try {
+    await handler(ctx);
+  } catch (error) {
+    // TODO: surface user-friendly error via toast/notification
+    console.error(`Context menu action "${actionId}" failed:`, error);
+    throw error;
+  }
 }

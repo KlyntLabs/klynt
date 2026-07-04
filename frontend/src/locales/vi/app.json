@@ -4,9 +4,27 @@
   },
   "video": {
     "noUrl": "Không có URL video hợp lệ",
-    "httpsOnly": "URL video phải sử dụng HTTPS"
+    "httpsOnly": "URL video phải sử dụng HTTPS",
+    "urlLabel": "URL video"
   },
   "folder": {
     "empty": "Thư mục này trống"
+  },
+  "menu": {
+    "new": "Mới",
+    "rename": "Đổi tên",
+    "duplicate": "Nhân bản",
+    "delete": "Xóa",
+    "open": "Mở",
+    "newFolder": "Thư mục mới",
+    "newMarkdown": "Markdown mới",
+    "newNotes": "Ghi chú mới",
+    "newVideo": "Video mới",
+    "paste": "Dán",
+    "refresh": "Làm mới",
+    "changeBackground": "Thay đổi hình nền",
+    "newFolderInside": "Thư mục mới bên trong",
+    "cut": "Cắt",
+    "copy": "Sao chép"
   }
 }

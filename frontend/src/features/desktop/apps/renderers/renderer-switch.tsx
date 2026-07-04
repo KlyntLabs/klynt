@@ -15,10 +15,19 @@ export const KNOWN_RENDERER_IDS = new Set(["markdown", "notes", "video", "folder
 
 const noop = () => {};
 
+function isIconTreeNode(value: unknown): value is IconTreeNode {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "appId" in value &&
+    typeof (value as Record<string, unknown>).appId === "string"
+  );
+}
+
 function getFolderChildren(content: Record<string, unknown>): IconTreeNode[] | undefined {
   const children = content.children;
-  if (Array.isArray(children)) {
-    return children as IconTreeNode[];
+  if (Array.isArray(children) && children.every(isIconTreeNode)) {
+    return children;
   }
   return undefined;
 }
@@ -37,6 +46,8 @@ export function RendererSwitch({
     case "video":
       return <VideoRenderer content={content} readOnly={readOnly} onChange={onChange} />;
     case "folder":
+      // Folder navigation is intentionally disabled inside the generic renderer;
+      // opening folders is handled by the desktop icon grid outside the window.
       return (
         <FolderRenderer
           content={content}

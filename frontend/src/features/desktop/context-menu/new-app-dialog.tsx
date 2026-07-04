@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { type AppTypeId, listAppTypes } from "../apps/app-type-registry";
+import { type AppTypeId, isAppType, listAppTypes } from "../apps/app-type-registry";
 
 type NewAppDialogProps = {
   open: boolean;
@@ -108,7 +108,14 @@ export function NewAppDialog({
                 {t("desktop.dialog.newApp.typeLabel", "Type")}
               </FieldLabel>
               <FieldContent>
-                <Select value={type} onValueChange={(value) => setType(value as AppTypeId)}>
+                <Select
+                  value={type}
+                  onValueChange={(value) => {
+                    if (isAppType(value)) {
+                      setType(value);
+                    }
+                  }}
+                >
                   <SelectTrigger
                     id="new-app-type"
                     aria-label={t("desktop.dialog.newApp.typeLabel", "Type")}

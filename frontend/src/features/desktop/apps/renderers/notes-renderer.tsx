@@ -1,15 +1,11 @@
 import { NotesEditor } from "./notes-editor";
+import { getText } from "./notes-utils";
 
 type NotesRendererProps = {
   content: Record<string, unknown>;
   readOnly?: boolean;
   onChange?: (content: Record<string, unknown>) => void;
 };
-
-function getText(content: Record<string, unknown>): string {
-  const text = content.text;
-  return typeof text === "string" ? text : "";
-}
 
 export function NotesRenderer({
   content,

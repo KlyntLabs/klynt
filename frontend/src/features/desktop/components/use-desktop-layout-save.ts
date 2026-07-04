@@ -7,6 +7,8 @@ import type { DesktopConfig } from "../factory/types";
 import type { DesktopLayout } from "../persistence/types";
 import type { Window } from "../window-manager/window-module";
 
+const SAVE_DEBOUNCE_MS = 500;
+
 function roundIconTree(tree: IconTreeNode[]): IconTreeNode[] {
   return tree.map((node) => ({
     ...node,
@@ -64,28 +66,38 @@ export function useDesktopLayoutSave(
       })),
     };
 
-    configRef.current.persistence.save(config.id, normalizeLayout(layout)).then((result) => {
-      if (!result.ok) {
-        if (result.error === "conflict") {
+    let cancelled = false;
+    const timeoutId = setTimeout(() => {
+      configRef.current.persistence.save(config.id, normalizeLayout(layout)).then((result) => {
+        if (cancelled) return;
+
+        if (!result.ok) {
+          if (result.error === "conflict") {
+            addToast({
+              message: t("desktop.toast.layoutSaveError"),
+              type: "error",
+              duration: 10000,
+              action: {
+                label: t("desktop.conflict.reload"),
+                onClick: handleReload,
+              },
+            });
+            return;
+          }
+
           addToast({
             message: t("desktop.toast.layoutSaveError"),
             type: "error",
-            duration: 10000,
-            action: {
-              label: t("desktop.conflict.reload"),
-              onClick: handleReload,
-            },
+            duration: 5000,
           });
-          return;
         }
+      });
+    }, SAVE_DEBOUNCE_MS);
 
-        addToast({
-          message: t("desktop.toast.layoutSaveError"),
-          type: "error",
-          duration: 5000,
-        });
-      }
-    });
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
   }, [
     isBelowLg,
     isOsDesktop,

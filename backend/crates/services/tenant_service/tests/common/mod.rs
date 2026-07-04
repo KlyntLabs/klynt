@@ -1,13 +1,14 @@
 //! Shared helpers for [`DesktopAppService`] integration tests.
 
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use base::ctx::ExecutionContext;
 use base::ports::repository::TenantDesktopLayoutRepository;
 use base::testkit::{FakeAuditLogger, FakeDesktopAppRepository};
 use domain::{AppType, DesktopApp, DomainResult, IconTreeNode, LayoutScope, TenantDesktopLayout};
+use tokio::sync::Mutex;
 use uuid::Uuid;
 
 use tenant_service::DesktopAppService;
@@ -31,7 +32,7 @@ impl TenantDesktopLayoutRepository for FakeLayoutRepository {
         Ok(self
             .inner
             .lock()
-            .unwrap()
+            .await
             .get(&(tenant_id, scope, user_id))
             .cloned())
     }
@@ -41,12 +42,27 @@ impl TenantDesktopLayoutRepository for FakeLayoutRepository {
         _ctx: &ExecutionContext,
         layout: &TenantDesktopLayout,
     ) -> DomainResult<TenantDesktopLayout> {
-        let mut inner = self.inner.lock().unwrap();
+        let mut inner = self.inner.lock().await;
         inner.insert(
             (layout.tenant_id, layout.scope, layout.user_id),
             layout.clone(),
         );
         Ok(layout.clone())
+    }
+
+    async fn list_user_layouts(
+        &self,
+        _ctx: &ExecutionContext,
+        tenant_id: Uuid,
+    ) -> DomainResult<Vec<TenantDesktopLayout>> {
+        Ok(self
+            .inner
+            .lock()
+            .await
+            .iter()
+            .filter(|((t, scope, _), _)| *t == tenant_id && *scope == LayoutScope::User)
+            .map(|(_, layout)| layout.clone())
+            .collect())
     }
 }
 

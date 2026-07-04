@@ -3,17 +3,24 @@ import type { IconTreeNode } from "@/features/desktop/desktop-manager/icon-tree-
 
 type FolderRendererProps = {
   content: Record<string, unknown>;
-  children?: IconTreeNode[];
-  items?: IconTreeNode[];
+  items: IconTreeNode[];
   readOnly?: boolean;
   onOpenApp?: (appId: string) => void;
   onOpenFolder?: (appId: string) => void;
 };
 
-function getIcon(content: Record<string, unknown>, hasChildren: boolean): string {
-  const icon = content.icon;
-  if (typeof icon === "string" && icon.length > 0) {
-    return icon;
+function getIcon(
+  node: IconTreeNode,
+  fallbackContent: Record<string, unknown>,
+  hasChildren: boolean
+): string {
+  const nodeIcon = node.icon;
+  if (typeof nodeIcon === "string" && nodeIcon.length > 0) {
+    return nodeIcon;
+  }
+  const fallbackIcon = fallbackContent.icon;
+  if (typeof fallbackIcon === "string" && fallbackIcon.length > 0) {
+    return fallbackIcon;
   }
   return hasChildren ? "📁" : "📄";
 }
@@ -24,14 +31,12 @@ function getLabel(node: IconTreeNode): string {
 
 export function FolderRenderer({
   content,
-  children = [],
   items,
   readOnly = false,
   onOpenApp,
   onOpenFolder,
 }: FolderRendererProps): React.JSX.Element {
   const { t } = useTranslation("app");
-  const childNodes = items ?? children;
 
   const handleChildClick = (node: IconTreeNode) => {
     if (readOnly) {
@@ -46,7 +51,7 @@ export function FolderRenderer({
     }
   };
 
-  if (childNodes.length === 0) {
+  if (items.length === 0) {
     return (
       <div
         className="flex h-full items-center justify-center p-4 text-sm text-muted-foreground"
@@ -59,9 +64,9 @@ export function FolderRenderer({
 
   return (
     <div className="grid grid-cols-[repeat(auto-fill,minmax(5rem,1fr))] gap-4 p-4">
-      {childNodes.map((node) => {
+      {items.map((node) => {
         const hasChildren = (node.children ?? []).length > 0;
-        const icon = getIcon(content, hasChildren);
+        const icon = getIcon(node, content, hasChildren);
         const label = getLabel(node);
 
         return (

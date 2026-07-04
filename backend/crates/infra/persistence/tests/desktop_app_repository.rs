@@ -5,7 +5,9 @@
 
 use base::ctx::{ExecutionContext, RequestContext};
 use base::ports::repository::{DesktopAppRepository, TenantRepository, UserRepository};
-use domain::{AppType, DesktopApp, DomainError, LayoutScope, Tenant, TenantSlug, UserRole};
+use domain::{
+    AppType, DesktopApp, DomainError, IconTreePosition, LayoutScope, Tenant, TenantSlug, UserRole,
+};
 use persistence::repositories::desktop_app::PgDesktopAppRepository;
 use persistence::repositories::tenant::PgTenantRepository;
 use persistence::repositories::user::PgUserRepository;
@@ -16,13 +18,11 @@ fn database_url() -> Option<String> {
 
 async fn setup_pool() -> Option<sqlx::PgPool> {
     let url = database_url()?;
-    let pool = sqlx::PgPool::connect(&url)
-        .await
-        .expect("DATABASE_URL is set but Postgres is unreachable");
+    let pool = sqlx::PgPool::connect(&url).await.ok()?;
     sqlx::migrate!("../../../migrations")
         .run(&pool)
         .await
-        .expect("migrations failed");
+        .ok()?;
     Some(pool)
 }
 
@@ -103,34 +103,39 @@ async fn cleanup_test_data(
         )
         .execute(pool)
         .await
-        .ok();
+        .expect("failed to cleanup tenant_desktop_layouts");
         sqlx::query!(
             r#"DELETE FROM desktop_apps WHERE tenant_id = $1"#,
             tenant_id.inner()
         )
         .execute(pool)
         .await
-        .ok();
+        .expect("failed to cleanup desktop_apps");
         sqlx::query!(
             r#"DELETE FROM user_tenant_memberships WHERE tenant_id = $1"#,
             tenant_id.inner()
         )
         .execute(pool)
         .await
-        .ok();
+        .expect("failed to cleanup user_tenant_memberships");
         sqlx::query!(r#"DELETE FROM tenants WHERE id = $1"#, tenant_id.inner())
             .execute(pool)
             .await
-            .ok();
+            .expect("failed to cleanup tenants");
     }
     for user_id in user_ids {
         sqlx::query!(r#"DELETE FROM users WHERE id = $1"#, user_id.inner())
             .execute(pool)
             .await
-            .ok();
+            .expect("failed to cleanup users");
     }
 }
 
+/// Read the icon tree directly from the persistence layer.
+///
+/// This is intentionally coupled to the internal `tenant_desktop_layouts` schema
+/// so the integration test can verify exactly what the repository wrote to the
+/// database. Production code should use the public layout repository instead.
 async fn fetch_icon_tree(
     pool: &sqlx::PgPool,
     tenant_id: uuid::Uuid,
@@ -149,8 +154,8 @@ async fn fetch_icon_tree(
     )
     .fetch_one(pool)
     .await
-    .unwrap();
-    serde_json::from_value(row.icon_tree).unwrap()
+    .expect("fetch_icon_tree: failed to read layout row");
+    serde_json::from_value(row.icon_tree).expect("fetch_icon_tree: invalid icon_tree JSON in DB")
 }
 
 #[tokio::test]
@@ -163,16 +168,17 @@ async fn create_with_position_appends_to_root_of_shared_layout() {
     let owner_id = create_test_user(&pool, "SharedOwner").await;
     let tenant = create_test_tenant(&pool, owner_id).await;
     let app = new_desktop_app(tenant.id.inner(), None, owner_id.inner());
-    let app_id_str = app.id.to_string();
 
     let created = repo
         .create_with_position(
             &test_ctx(),
             &app,
-            &app_id_str,
-            10,
-            20,
-            None,
+            &IconTreePosition {
+                app_id: app.id,
+                x: 10,
+                y: 20,
+                parent_id: None,
+            },
             LayoutScope::Shared,
         )
         .await
@@ -181,10 +187,10 @@ async fn create_with_position_appends_to_root_of_shared_layout() {
 
     let tree = fetch_icon_tree(&pool, tenant.id.inner(), LayoutScope::Shared, None).await;
     assert_eq!(tree.len(), 1);
-    assert_eq!(tree[0].app_id, app_id_str);
+    assert_eq!(tree[0].app_id, app.id);
     assert_eq!(tree[0].x, 10);
     assert_eq!(tree[0].y, 20);
-    assert!(tree[0].children.is_none());
+    assert!(tree[0].children.is_empty());
 
     cleanup_test_data(&pool, &[owner_id], &[tenant.id]).await;
 }
@@ -199,16 +205,17 @@ async fn create_with_position_creates_user_layout() {
     let owner_id = create_test_user(&pool, "UserOwner").await;
     let tenant = create_test_tenant(&pool, owner_id).await;
     let app = new_desktop_app(tenant.id.inner(), Some(owner_id.inner()), owner_id.inner());
-    let app_id_str = app.id.to_string();
 
     let created = repo
         .create_with_position(
             &test_ctx(),
             &app,
-            &app_id_str,
-            5,
-            15,
-            None,
+            &IconTreePosition {
+                app_id: app.id,
+                x: 5,
+                y: 15,
+                parent_id: None,
+            },
             LayoutScope::User,
         )
         .await
@@ -223,7 +230,7 @@ async fn create_with_position_creates_user_layout() {
     )
     .await;
     assert_eq!(tree.len(), 1);
-    assert_eq!(tree[0].app_id, app_id_str);
+    assert_eq!(tree[0].app_id, app.id);
 
     cleanup_test_data(&pool, &[owner_id], &[tenant.id]).await;
 }
@@ -240,28 +247,32 @@ async fn create_with_position_nests_under_parent_id() {
 
     let mut folder_app = new_desktop_app(tenant.id.inner(), None, owner_id.inner());
     folder_app.app_type = AppType::Folder;
-    let folder_id = folder_app.id.to_string();
+    let folder_id = folder_app.id;
     repo.create_with_position(
         &test_ctx(),
         &folder_app,
-        &folder_id,
-        0,
-        0,
-        None,
+        &IconTreePosition {
+            app_id: folder_id,
+            x: 0,
+            y: 0,
+            parent_id: None,
+        },
         LayoutScope::Shared,
     )
     .await
     .unwrap();
 
     let child_app = new_desktop_app(tenant.id.inner(), None, owner_id.inner());
-    let child_id = child_app.id.to_string();
+    let child_id = child_app.id;
     repo.create_with_position(
         &test_ctx(),
         &child_app,
-        &child_id,
-        1,
-        2,
-        Some(&folder_id),
+        &IconTreePosition {
+            app_id: child_id,
+            x: 1,
+            y: 2,
+            parent_id: Some(folder_id),
+        },
         LayoutScope::Shared,
     )
     .await
@@ -270,7 +281,7 @@ async fn create_with_position_nests_under_parent_id() {
     let tree = fetch_icon_tree(&pool, tenant.id.inner(), LayoutScope::Shared, None).await;
     assert_eq!(tree.len(), 1);
     assert_eq!(tree[0].app_id, folder_id);
-    let children = tree[0].children.as_ref().unwrap();
+    let children = &tree[0].children;
     assert_eq!(children.len(), 1);
     assert_eq!(children[0].app_id, child_id);
     assert_eq!(children[0].x, 1);
@@ -291,7 +302,17 @@ async fn create_with_position_user_scope_without_owner_id_returns_validation_err
     let app = new_desktop_app(tenant.id.inner(), None, owner_id.inner());
 
     let result = repo
-        .create_with_position(&test_ctx(), &app, "app-id", 0, 0, None, LayoutScope::User)
+        .create_with_position(
+            &test_ctx(),
+            &app,
+            &IconTreePosition {
+                app_id: app.id,
+                x: 0,
+                y: 0,
+                parent_id: None,
+            },
+            LayoutScope::User,
+        )
         .await;
 
     assert!(matches!(result, Err(DomainError::Validation(_))));
@@ -314,10 +335,12 @@ async fn create_with_position_missing_parent_id_returns_not_found() {
         .create_with_position(
             &test_ctx(),
             &app,
-            "app-id",
-            0,
-            0,
-            Some("non-existent-folder"),
+            &IconTreePosition {
+                app_id: app.id,
+                x: 0,
+                y: 0,
+                parent_id: Some(uuid::Uuid::new_v4()),
+            },
             LayoutScope::Shared,
         )
         .await;
@@ -345,10 +368,12 @@ async fn list_visible_returns_shared_and_owned_apps() {
     repo.create_with_position(
         &test_ctx(),
         &shared_app,
-        &shared_app.id.to_string(),
-        0,
-        0,
-        None,
+        &IconTreePosition {
+            app_id: shared_app.id,
+            x: 0,
+            y: 0,
+            parent_id: None,
+        },
         LayoutScope::Shared,
     )
     .await
@@ -356,10 +381,12 @@ async fn list_visible_returns_shared_and_owned_apps() {
     repo.create_with_position(
         &test_ctx(),
         &owned_app,
-        &owned_app.id.to_string(),
-        0,
-        0,
-        None,
+        &IconTreePosition {
+            app_id: owned_app.id,
+            x: 0,
+            y: 0,
+            parent_id: None,
+        },
         LayoutScope::User,
     )
     .await
@@ -367,10 +394,12 @@ async fn list_visible_returns_shared_and_owned_apps() {
     repo.create_with_position(
         &test_ctx(),
         &other_app,
-        &other_app.id.to_string(),
-        0,
-        0,
-        None,
+        &IconTreePosition {
+            app_id: other_app.id,
+            x: 0,
+            y: 0,
+            parent_id: None,
+        },
         LayoutScope::User,
     )
     .await
@@ -402,10 +431,12 @@ async fn find_by_id_returns_correct_app() {
     repo.create_with_position(
         &test_ctx(),
         &app,
-        &app.id.to_string(),
-        0,
-        0,
-        None,
+        &IconTreePosition {
+            app_id: app.id,
+            x: 0,
+            y: 0,
+            parent_id: None,
+        },
         LayoutScope::Shared,
     )
     .await
@@ -442,10 +473,12 @@ async fn update_with_matching_etag_succeeds() {
     repo.create_with_position(
         &test_ctx(),
         &app,
-        &app.id.to_string(),
-        0,
-        0,
-        None,
+        &IconTreePosition {
+            app_id: app.id,
+            x: 0,
+            y: 0,
+            parent_id: None,
+        },
         LayoutScope::Shared,
     )
     .await
@@ -473,10 +506,12 @@ async fn update_with_wrong_etag_returns_conflict() {
     repo.create_with_position(
         &test_ctx(),
         &app,
-        &app.id.to_string(),
-        0,
-        0,
-        None,
+        &IconTreePosition {
+            app_id: app.id,
+            x: 0,
+            y: 0,
+            parent_id: None,
+        },
         LayoutScope::Shared,
     )
     .await
@@ -503,10 +538,12 @@ async fn update_with_wrong_tenant_id_returns_conflict() {
     repo.create_with_position(
         &test_ctx(),
         &app,
-        &app.id.to_string(),
-        0,
-        0,
-        None,
+        &IconTreePosition {
+            app_id: app.id,
+            x: 0,
+            y: 0,
+            parent_id: None,
+        },
         LayoutScope::Shared,
     )
     .await
@@ -533,10 +570,12 @@ async fn delete_removes_app() {
     repo.create_with_position(
         &test_ctx(),
         &app,
-        &app.id.to_string(),
-        0,
-        0,
-        None,
+        &IconTreePosition {
+            app_id: app.id,
+            x: 0,
+            y: 0,
+            parent_id: None,
+        },
         LayoutScope::Shared,
     )
     .await

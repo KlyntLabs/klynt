@@ -41,18 +41,11 @@ export function useContentAutosave(options: UseContentAutosaveOptions): UseConte
 
   const etagRef = useRef(etag);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isMountedRef = useRef(true);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     etagRef.current = etag;
   }, [etag]);
-
-  useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
 
   const clearTimer = useCallback(() => {
     if (timerRef.current) {
@@ -66,6 +59,10 @@ export function useContentAutosave(options: UseContentAutosaveOptions): UseConte
       return;
     }
 
+    abortControllerRef.current?.abort();
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
     setIsSaving(true);
     setError(null);
 
@@ -73,13 +70,15 @@ export function useContentAutosave(options: UseContentAutosaveOptions): UseConte
       const payload = {
         etag: etagRef.current,
         content,
-        menu_config: menuConfig,
+        menuConfig,
       };
 
-      const response = await desktopAppsApi.update(slug, appId, payload);
+      const response = await desktopAppsApi.update(slug, appId, payload, {
+        signal: abortController.signal,
+      });
       const newEtag = response.data.data.etag;
 
-      if (!isMountedRef.current) {
+      if (abortController.signal.aborted) {
         return;
       }
 
@@ -87,7 +86,7 @@ export function useContentAutosave(options: UseContentAutosaveOptions): UseConte
       onEtagChange?.(newEtag);
       setError(null);
     } catch (err) {
-      if (!isMountedRef.current) {
+      if (abortController.signal.aborted) {
         return;
       }
 
@@ -106,7 +105,7 @@ export function useContentAutosave(options: UseContentAutosaveOptions): UseConte
       setError(saveError);
       onError?.(saveError);
     } finally {
-      if (isMountedRef.current) {
+      if (!abortController.signal.aborted) {
         setIsSaving(false);
       }
     }
@@ -119,12 +118,12 @@ export function useContentAutosave(options: UseContentAutosaveOptions): UseConte
 
   useEffect(() => {
     scheduleSave();
-    return clearTimer;
-  }, [scheduleSave, clearTimer]);
+  }, [scheduleSave]);
 
   useEffect(() => {
     return () => {
       clearTimer();
+      abortControllerRef.current?.abort();
     };
   }, [clearTimer]);
 

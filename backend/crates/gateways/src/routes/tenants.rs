@@ -48,6 +48,9 @@ pub fn routes(services: Services) -> axum::Router<Services> {
             require_tenant_membership,
         ));
 
+    // Public tenant routes are intentionally unauthenticated and do not perform
+    // membership checks. They are merged before protected routes so that the
+    // `/public` suffix is matched before the tenant membership middleware runs.
     let public_routes = axum::Router::new().route(
         "/{tenant_slug}/public",
         axum::routing::get(get_tenant_public),

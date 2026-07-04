@@ -3,7 +3,7 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
-import { type ChartConfig, useChart } from "./chart";
+import { type ChartConfig, useChart } from "./chart-context";
 
 export type TooltipPayloadItem = {
   type?: string;
@@ -145,7 +145,7 @@ export function ChartTooltipContent({
                           {itemConfig?.label || item.name}
                         </span>
                       </div>
-                      {item.value && (
+                      {item.value != null && (
                         <span className="text-foreground font-mono font-medium tabular-nums">
                           {item.value.toLocaleString()}
                         </span>

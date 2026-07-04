@@ -29,7 +29,6 @@ export function FolderBreadcrumb({
   const { t } = useTranslation("home");
   const { path, navigateToRoot, navigateToIndex } = useCurrentFolderContents(desktopId);
   const tree = useIconTreeStore((s) => s.trees[desktopId]);
-  const nodes = tree ?? [];
 
   const nodeTitleMap = React.useMemo(() => {
     const map: Record<string, string> = {};
@@ -43,9 +42,9 @@ export function FolderBreadcrumb({
         }
       }
     }
-    walk(nodes);
+    walk(tree ?? []);
     return map;
-  }, [nodes]);
+  }, [tree]);
 
   const crumbs: Crumb[] = [
     { id: "__home__", title: t("desktop.breadcrumb.home"), index: -1 },
@@ -70,7 +69,7 @@ export function FolderBreadcrumb({
         {crumbs.map((crumb, i) => {
           const isLast = i === crumbs.length - 1;
           return (
-            <React.Fragment key={crumb.id}>
+            <React.Fragment key={`${crumb.id}-${crumb.index}`}>
               <BreadcrumbItem>
                 {isLast ? (
                   <BreadcrumbPage>{crumb.title}</BreadcrumbPage>

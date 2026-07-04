@@ -258,6 +258,8 @@ export const useWindowManager = create<WindowManagerState>()(
           }
           draft.windows[desktopId] = [];
           draft.activeWindowId[desktopId] = null;
+          // Note: preMaximizeRects for windows already closed via closeWindow are
+          // removed there. This clears rects for any windows removed by reset.
         }),
     })),
     { name: "window-manager" }

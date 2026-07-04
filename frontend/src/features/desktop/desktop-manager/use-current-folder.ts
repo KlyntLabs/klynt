@@ -1,14 +1,5 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { type IconTreeNode, useIconTreeStore } from "./icon-tree-module";
-
-function findNodeInArray(nodes: IconTreeNode[], appId: string): IconTreeNode | undefined {
-  for (const node of nodes) {
-    if (node.appId === appId) {
-      return node;
-    }
-  }
-  return undefined;
-}
 
 function resolveCurrentNodes(tree: IconTreeNode[], path: string[]): IconTreeNode[] {
   if (path.length === 0) {
@@ -17,7 +8,7 @@ function resolveCurrentNodes(tree: IconTreeNode[], path: string[]): IconTreeNode
 
   let current = tree;
   for (const appId of path) {
-    const node = findNodeInArray(current, appId);
+    const node = current.find((item) => item.appId === appId);
     if (!node) {
       return tree;
     }
@@ -42,12 +33,26 @@ export function useCurrentFolderContents(desktopId: string): {
   const path = openFolderPaths[desktopId] ?? [];
   const currentNodes = useMemo(() => resolveCurrentNodes(tree, path), [tree, path]);
 
+  const boundOpenFolder = useCallback(
+    (appId: string) => openFolder(desktopId, appId),
+    [desktopId, openFolder]
+  );
+  const boundCloseFolder = useCallback(() => closeFolder(desktopId), [desktopId, closeFolder]);
+  const boundNavigateToRoot = useCallback(
+    () => navigateToRoot(desktopId),
+    [desktopId, navigateToRoot]
+  );
+  const boundNavigateToIndex = useCallback(
+    (index: number) => navigateToIndex(desktopId, index),
+    [desktopId, navigateToIndex]
+  );
+
   return {
     path,
     currentNodes,
-    openFolder: (appId: string) => openFolder(desktopId, appId),
-    closeFolder: () => closeFolder(desktopId),
-    navigateToRoot: () => navigateToRoot(desktopId),
-    navigateToIndex: (index: number) => navigateToIndex(desktopId, index),
+    openFolder: boundOpenFolder,
+    closeFolder: boundCloseFolder,
+    navigateToRoot: boundNavigateToRoot,
+    navigateToIndex: boundNavigateToIndex,
   };
 }

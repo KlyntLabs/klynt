@@ -87,41 +87,56 @@ describe("createTenantApiAdapter", () => {
   });
 
   it("returns a conflict error on 409 responses", async () => {
+    const getSharedSpy = vi.spyOn(tenantLayoutApi, "getShared").mockResolvedValue({
+      data: { data: { ...layout, etag: "v1" } },
+    } as never);
     const updateSharedSpy = vi
       .spyOn(tenantLayoutApi, "updateShared")
       .mockRejectedValue(axiosError(409));
 
     const adapter = createTenantApiAdapter({ slug, canEditShared: true });
+    await adapter.load("desktop-1");
     const result = await adapter.save("desktop-1", layout);
 
     expect(result).toEqual({ ok: false, error: "conflict", retryable: true });
 
+    getSharedSpy.mockRestore();
     updateSharedSpy.mockRestore();
   });
 
   it("returns a forbidden error on 403 responses", async () => {
+    const getSharedSpy = vi.spyOn(tenantLayoutApi, "getShared").mockResolvedValue({
+      data: { data: { ...layout, etag: "v1" } },
+    } as never);
     const updateSharedSpy = vi
       .spyOn(tenantLayoutApi, "updateShared")
       .mockRejectedValue(axiosError(403));
 
     const adapter = createTenantApiAdapter({ slug, canEditShared: true });
+    await adapter.load("desktop-1");
     const result = await adapter.save("desktop-1", layout);
 
     expect(result).toEqual({ ok: false, error: "forbidden", retryable: false });
 
+    getSharedSpy.mockRestore();
     updateSharedSpy.mockRestore();
   });
 
   it("returns a retryable network error for other save failures", async () => {
+    const getSharedSpy = vi.spyOn(tenantLayoutApi, "getShared").mockResolvedValue({
+      data: { data: { ...layout, etag: "v1" } },
+    } as never);
     const updateSharedSpy = vi
       .spyOn(tenantLayoutApi, "updateShared")
       .mockRejectedValue(new Error("boom"));
 
     const adapter = createTenantApiAdapter({ slug, canEditShared: true });
+    await adapter.load("desktop-1");
     const result = await adapter.save("desktop-1", layout);
 
     expect(result).toEqual({ ok: false, error: "network", retryable: true });
 
+    getSharedSpy.mockRestore();
     updateSharedSpy.mockRestore();
   });
 });

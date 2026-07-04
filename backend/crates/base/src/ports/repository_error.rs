@@ -11,12 +11,12 @@ use thiserror::Error;
 /// Services map this to their domain-specific errors.
 #[derive(Debug, Error)]
 pub enum RepositoryError {
-    /// Requested user was not found.
-    #[error("User not found")]
+    /// Requested entity was not found.
+    #[error("Entity not found")]
     NotFound,
 
-    /// User already exists with a conflicting identifier.
-    #[error("User already exists ({0})")]
+    /// Entity already exists with a conflicting identifier.
+    #[error("Entity already exists")]
     Conflict(String),
 
     /// Input validation failed.
@@ -38,12 +38,8 @@ impl From<sqlx::Error> for RepositoryError {
         match err {
             sqlx::Error::RowNotFound => RepositoryError::NotFound,
             sqlx::Error::Database(db_err) => {
-                if db_err.is_unique_violation() {
+                if db_err.is_unique_violation() || db_err.is_foreign_key_violation() {
                     RepositoryError::Conflict(db_err.constraint().unwrap_or("unknown").to_string())
-                } else if db_err.is_foreign_key_violation() {
-                    RepositoryError::Validation(
-                        db_err.constraint().unwrap_or("unknown").to_string(),
-                    )
                 } else {
                     RepositoryError::Database(db_err.to_string())
                 }

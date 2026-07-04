@@ -8,6 +8,21 @@ import type {
   ContextMenuSchema,
 } from "./menu-schema";
 
+const VALID_CONTEXT_ACTIONS: Set<string> = new Set([
+  "desktop:new-folder",
+  "desktop:new-markdown",
+  "desktop:new-notes",
+  "desktop:new-video",
+  "desktop:paste",
+  "desktop:refresh",
+  "desktop:change-background",
+  "app:open",
+  "app:rename",
+  "app:delete",
+  "app:cut",
+  "app:copy",
+]);
+
 export function findEntryById(
   entries: ContextMenuEntry[],
   id: string
@@ -46,6 +61,11 @@ function convertContentEntry(entry: MenuEntry): ContextMenuEntry {
       children: entry.children.map(convertContentEntry),
     } as ContextMenuGroup;
   }
+
+  if (!VALID_CONTEXT_ACTIONS.has(entry.action) && !entry.action.startsWith("custom:")) {
+    throw new Error(`Invalid context menu action: ${entry.action}`);
+  }
+
   return {
     ...entry,
     action: entry.action as ContextMenuActionId,
@@ -128,9 +148,11 @@ export function mergeContextMenu(
     root = base.root.map(cloneEntry);
   }
 
+  const hasOverrides = Boolean(overrides?.root || appContentMenu);
+
   return {
     ...base,
-    id: `${base.id}-merged`,
+    id: hasOverrides ? `${base.id}-merged` : base.id,
     root,
   };
 }

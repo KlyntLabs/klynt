@@ -86,6 +86,27 @@ impl TenantDesktopLayoutRepository for PgTenantDesktopLayoutRepository {
         Ok(row.map(map_layout_row).transpose()?)
     }
 
+    async fn list_user_layouts(
+        &self,
+        _ctx: &ExecutionContext,
+        tenant_id: Uuid,
+    ) -> DomainResult<Vec<TenantDesktopLayout>> {
+        let rows = sqlx::query_as!(
+            LayoutRow,
+            r#"
+            SELECT id, tenant_id, scope, user_id, version, background_preset_id, icon_tree, windows, etag
+            FROM tenant_desktop_layouts
+            WHERE tenant_id = $1 AND scope = 'user'
+            "#,
+            tenant_id
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(DomainError::internal)?;
+
+        rows.into_iter().map(map_layout_row).collect()
+    }
+
     async fn upsert(
         &self,
         _ctx: &ExecutionContext,

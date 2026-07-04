@@ -333,8 +333,7 @@ async fn delete_app_removes_icon_tree_node() {
     let app = sample_app(tenant_id, Some(owner_id), owner_id);
     app_repo.insert(app.clone());
 
-    let app_id_str = app.id.to_string();
-    let other_app_id = Uuid::new_v4().to_string();
+    let other_app_id = Uuid::new_v4();
 
     let shared_layout = sample_layout(
         tenant_id,
@@ -342,21 +341,21 @@ async fn delete_app_removes_icon_tree_node() {
         None,
         vec![
             IconTreeNode {
-                app_id: app_id_str.clone(),
+                app_id: app.id,
                 x: 0,
                 y: 0,
-                children: None,
+                children: Vec::new(),
             },
             IconTreeNode {
-                app_id: other_app_id.clone(),
+                app_id: other_app_id,
                 x: 1,
                 y: 1,
-                children: Some(vec![IconTreeNode {
-                    app_id: app_id_str.clone(),
+                children: vec![IconTreeNode {
+                    app_id: app.id,
                     x: 2,
                     y: 2,
-                    children: None,
-                }]),
+                    children: Vec::new(),
+                }],
             },
         ],
     );
@@ -367,10 +366,10 @@ async fn delete_app_removes_icon_tree_node() {
         LayoutScope::User,
         Some(owner_id),
         vec![IconTreeNode {
-            app_id: app_id_str.clone(),
+            app_id: app.id,
             x: 3,
             y: 3,
-            children: None,
+            children: Vec::new(),
         }],
     );
     layout_repo.upsert(&ctx, &owner_layout).await.unwrap();
@@ -380,10 +379,10 @@ async fn delete_app_removes_icon_tree_node() {
         LayoutScope::User,
         Some(admin_id),
         vec![IconTreeNode {
-            app_id: app_id_str.clone(),
+            app_id: app.id,
             x: 4,
             y: 4,
-            children: None,
+            children: Vec::new(),
         }],
     );
     layout_repo.upsert(&ctx, &admin_layout).await.unwrap();
@@ -398,12 +397,7 @@ async fn delete_app_removes_icon_tree_node() {
         .await
         .unwrap()
         .unwrap();
-    let shared_ids: Vec<_> = shared_after
-        .icon_tree
-        .iter()
-        .map(|n| n.app_id.clone())
-        .collect();
-    assert!(!shared_ids.contains(&app_id_str));
+    assert!(!shared_after.icon_tree.iter().any(|n| n.app_id == app.id));
     assert!(shared_after
         .icon_tree
         .iter()
@@ -414,19 +408,19 @@ async fn delete_app_removes_icon_tree_node() {
         .find(|n| n.app_id == other_app_id)
         .unwrap()
         .children
-        .is_none());
+        .is_empty());
 
     let owner_after = layout_repo
         .find(&ctx, tenant_id, LayoutScope::User, Some(owner_id))
         .await
         .unwrap()
         .unwrap();
-    assert!(!owner_after.icon_tree.iter().any(|n| n.app_id == app_id_str));
+    assert!(!owner_after.icon_tree.iter().any(|n| n.app_id == app.id));
 
     let admin_after = layout_repo
         .find(&ctx, tenant_id, LayoutScope::User, Some(admin_id))
         .await
         .unwrap()
         .unwrap();
-    assert!(admin_after.icon_tree.iter().any(|n| n.app_id == app_id_str));
+    assert!(!admin_after.icon_tree.iter().any(|n| n.app_id == app.id));
 }

@@ -5,8 +5,8 @@ mod tests {
     use async_trait::async_trait;
     use chrono::Utc;
     use domain::{
-        AppType, DesktopApp, Email, LayoutScope, PaginationRequest, User, UserId, UserRole,
-        UserStatus,
+        AppType, DesktopApp, Email, IconTreePosition, LayoutScope, PaginationRequest, User, UserId,
+        UserRole, UserStatus,
     };
     use uuid::Uuid;
 
@@ -27,8 +27,8 @@ mod tests {
         let database = RepositoryError::Database("connection lost".to_string()).to_string();
         let internal = RepositoryError::Internal("oops".to_string()).to_string();
 
-        assert_eq!(not_found, "User not found");
-        assert_eq!(conflict, "User already exists (users_email_key)");
+        assert_eq!(not_found, "Entity not found");
+        assert_eq!(conflict, "Entity already exists");
         assert_eq!(validation, "Validation error: fk");
         assert_eq!(database, "Database error: connection lost");
         assert_eq!(internal, "Internal error: oops");
@@ -53,7 +53,7 @@ mod tests {
             RepositoryError::Conflict(ref c) if c == "users_email_key"
         ));
 
-        // Foreign-key violation maps to Validation with the constraint name.
+        // Foreign-key violation maps to Conflict with the constraint name.
         let fk_err = sqlx::Error::Database(Box::new(FakeDbError {
             unique: false,
             foreign_key: true,
@@ -63,7 +63,7 @@ mod tests {
         let err: RepositoryError = fk_err.into();
         assert!(matches!(
             err,
-            RepositoryError::Validation(ref c) if c == "users_role_id_fkey"
+            RepositoryError::Conflict(ref c) if c == "users_role_id_fkey"
         ));
 
         // Other database errors fall back to Database.
@@ -285,15 +285,11 @@ mod tests {
 
     #[async_trait]
     impl DesktopAppRepository for FakeDesktopAppRepo {
-        #[allow(clippy::too_many_arguments)]
         async fn create_with_position(
             &self,
             _ctx: &ExecutionContext,
             app: &DesktopApp,
-            _icon_tree_app_id: &str,
-            _icon_tree_x: i32,
-            _icon_tree_y: i32,
-            _icon_tree_parent_id: Option<&str>,
+            _position: &IconTreePosition,
             _scope: LayoutScope,
         ) -> domain::DomainResult<DesktopApp> {
             Ok(app.clone())
@@ -366,7 +362,17 @@ mod tests {
         };
 
         let created = repo
-            .create_with_position(&ctx, &app, "icon-1", 10, 20, None, LayoutScope::Shared)
+            .create_with_position(
+                &ctx,
+                &app,
+                &IconTreePosition {
+                    app_id: app.id,
+                    x: 10,
+                    y: 20,
+                    parent_id: None,
+                },
+                LayoutScope::Shared,
+            )
             .await
             .expect("create_with_position");
         assert_eq!(created.id, app.id);

@@ -26,7 +26,7 @@ export type SaveResult =
   | { ok: true }
   | {
       ok: false;
-      error: "network" | "conflict" | "forbidden" | "validation" | "unknown";
+      error: "network" | "conflict" | "forbidden" | "validation" | "unknown" | "not-loaded";
       retryable: boolean;
     };
 

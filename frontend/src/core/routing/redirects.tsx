@@ -7,7 +7,7 @@ export function RedirectToLogin() {
 }
 
 export function RedirectToCanonicalLogin() {
-  return <ExternalNavigate to={buildLoginUrl()} />;
+  return <RedirectToLogin />;
 }
 
 export function RedirectToAdmin() {

@@ -15,6 +15,7 @@ const renameItem = {
   type: "item" as const,
   id: "rename",
   label: "Rename",
+  labelKey: "app.menu.rename",
   action: "app:rename" as const,
 };
 
@@ -22,6 +23,7 @@ const duplicateItem = {
   type: "item" as const,
   id: "duplicate",
   label: "Duplicate",
+  labelKey: "app.menu.duplicate",
   action: "app:duplicate" as const,
 };
 
@@ -29,6 +31,7 @@ const deleteItem = {
   type: "item" as const,
   id: "delete",
   label: "Delete",
+  labelKey: "app.menu.delete",
   action: "app:delete" as const,
 };
 
@@ -53,6 +56,7 @@ const openItem = {
   type: "item" as const,
   id: "open",
   label: "Open",
+  labelKey: "app.menu.open",
   action: "custom:open" as const,
 };
 

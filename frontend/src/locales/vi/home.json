@@ -51,6 +51,9 @@
     "empty": {
       "noIcons": "Không có biểu tượng nào trên màn hình này."
     },
+    "app": {
+      "defaultTitle": "Ứng dụng"
+    },
     "contextMenu": {
       "newApp": "Ứng dụng mới",
       "empty": "Không có mục menu"

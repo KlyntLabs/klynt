@@ -10,8 +10,8 @@ function makeApp(overrides: Partial<DesktopApp> & Pick<DesktopApp, "type">): Des
     id: "app-1",
     title: "Test App",
     content: {},
-    menu_config: {},
-    owner_id: null,
+    menuConfig: {},
+    ownerId: null,
     locked: false,
     etag: "etag-1",
     ...overrides,
@@ -110,7 +110,7 @@ describe("dynamic-app-manifest", () => {
         id: "summary-1",
         type: "video" as const,
         title: "My Video",
-        owner_id: "owner-1",
+        ownerId: "owner-1",
         locked: true,
         etag: "etag-2",
       };
@@ -132,7 +132,7 @@ describe("dynamic-app-manifest", () => {
         id: "summary-1",
         type: "invalid" as "markdown",
         title: "Bad App",
-        owner_id: null,
+        ownerId: null,
         locked: false,
         etag: "etag-3",
       };

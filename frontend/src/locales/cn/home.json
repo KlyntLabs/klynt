@@ -51,6 +51,9 @@
     "empty": {
       "noIcons": "此桌面上没有图标。"
     },
+    "app": {
+      "defaultTitle": "应用"
+    },
     "contextMenu": {
       "newApp": "新建应用",
       "empty": "没有菜单项"

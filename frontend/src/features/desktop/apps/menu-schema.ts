@@ -16,8 +16,10 @@ export type MenuItem = {
   type: "item";
   id: string;
   label: string;
+  labelKey?: string;
   action: MenuActionId;
   icon?: string;
+  // Consider using a branded type or validation utility for consistent shortcut formatting.
   shortcut?: string;
   disabled?: boolean;
   visible?: MenuCondition;

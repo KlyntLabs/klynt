@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { render } from "@/test/render";
 import * as actionRegistry from "./action-registry";
 import { DesktopContextMenu } from "./DesktopContextMenu";
 import type { ContextMenuState } from "./use-desktop-context-menu";

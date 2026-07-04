@@ -30,7 +30,7 @@ const children: IconTreeNode[] = [appChild, folderChild];
 
 describe("FolderRenderer", () => {
   it("renders labels for each child", () => {
-    render(<FolderRenderer content={{}}>{children}</FolderRenderer>);
+    render(<FolderRenderer content={{}} items={children} />);
 
     expect(screen.getByTestId("folder-item-app-1")).toHaveTextContent("My App");
     expect(screen.getByTestId("folder-item-folder-1")).toHaveTextContent("My Folder");
@@ -43,7 +43,7 @@ describe("FolderRenderer", () => {
       y: 0,
     };
 
-    render(<FolderRenderer content={{}}>{[childWithoutTitle]}</FolderRenderer>);
+    render(<FolderRenderer content={{}} items={[childWithoutTitle]} />);
 
     expect(screen.getByTestId("folder-item-no-title")).toHaveTextContent("no-title");
   });
@@ -54,9 +54,12 @@ describe("FolderRenderer", () => {
     const onOpenFolder = vi.fn();
 
     render(
-      <FolderRenderer content={{}} onOpenApp={onOpenApp} onOpenFolder={onOpenFolder}>
-        {children}
-      </FolderRenderer>
+      <FolderRenderer
+        content={{}}
+        items={children}
+        onOpenApp={onOpenApp}
+        onOpenFolder={onOpenFolder}
+      />
     );
 
     await user.click(screen.getByTestId("folder-item-app-1"));
@@ -71,9 +74,12 @@ describe("FolderRenderer", () => {
     const onOpenFolder = vi.fn();
 
     render(
-      <FolderRenderer content={{}} onOpenApp={onOpenApp} onOpenFolder={onOpenFolder}>
-        {children}
-      </FolderRenderer>
+      <FolderRenderer
+        content={{}}
+        items={children}
+        onOpenApp={onOpenApp}
+        onOpenFolder={onOpenFolder}
+      />
     );
 
     await user.click(screen.getByTestId("folder-item-folder-1"));
@@ -82,8 +88,8 @@ describe("FolderRenderer", () => {
     expect(onOpenApp).not.toHaveBeenCalled();
   });
 
-  it("renders an empty state when children is empty", () => {
-    render(<FolderRenderer content={{}}>{[]}</FolderRenderer>);
+  it("renders an empty state when items is empty", () => {
+    render(<FolderRenderer content={{}} items={[]} />);
 
     expect(screen.getByTestId("folder-empty-state")).toHaveTextContent("This folder is empty");
   });
@@ -94,9 +100,13 @@ describe("FolderRenderer", () => {
     const onOpenFolder = vi.fn();
 
     render(
-      <FolderRenderer content={{}} readOnly onOpenApp={onOpenApp} onOpenFolder={onOpenFolder}>
-        {children}
-      </FolderRenderer>
+      <FolderRenderer
+        content={{}}
+        items={children}
+        readOnly
+        onOpenApp={onOpenApp}
+        onOpenFolder={onOpenFolder}
+      />
     );
 
     await user.click(screen.getByTestId("folder-item-app-1"));
@@ -107,7 +117,7 @@ describe("FolderRenderer", () => {
   });
 
   it("uses content.icon when provided", () => {
-    render(<FolderRenderer content={{ icon: "🚀" }}>{[appChild]}</FolderRenderer>);
+    render(<FolderRenderer content={{ icon: "🚀" }} items={[appChild]} />);
 
     expect(screen.getByTestId("folder-item-app-1")).toHaveTextContent("🚀");
   });

@@ -3,7 +3,9 @@
 use async_trait::async_trait;
 use base::ctx::ExecutionContext;
 use base::ports::repository::DesktopAppRepository;
-use domain::{AppType, DesktopApp, DomainError, DomainResult, IconTreeNode, LayoutScope};
+use domain::{
+    AppType, DesktopApp, DomainError, DomainResult, IconTreeNode, IconTreePosition, LayoutScope,
+};
 use sqlx::{FromRow, PgPool};
 use uuid::Uuid;
 
@@ -73,7 +75,7 @@ fn layout_user_id(scope: LayoutScope, owner_id: Option<Uuid>) -> Option<Uuid> {
 fn append_icon_tree_node(
     tree: &mut Vec<IconTreeNode>,
     node: IconTreeNode,
-    parent_id: Option<&str>,
+    parent_id: Option<&Uuid>,
 ) -> DomainResult<()> {
     match parent_id {
         None => {
@@ -82,7 +84,7 @@ fn append_icon_tree_node(
         }
         Some(parent_id) => {
             if let Some(parent) = find_icon_tree_parent(tree, parent_id, 0)? {
-                parent.children.get_or_insert_with(Vec::new).push(node);
+                parent.children.push(node);
                 Ok(())
             } else {
                 Err(DomainError::not_found("parent folder"))
@@ -93,7 +95,7 @@ fn append_icon_tree_node(
 
 fn find_icon_tree_parent<'a>(
     tree: &'a mut [IconTreeNode],
-    parent_id: &str,
+    parent_id: &Uuid,
     depth: usize,
 ) -> DomainResult<Option<&'a mut IconTreeNode>> {
     if depth > MAX_ICON_TREE_DEPTH {
@@ -102,13 +104,11 @@ fn find_icon_tree_parent<'a>(
         ));
     }
     for node in tree.iter_mut() {
-        if node.app_id == parent_id {
+        if node.app_id == *parent_id {
             return Ok(Some(node));
         }
-        if let Some(children) = node.children.as_mut() {
-            if let Some(found) = find_icon_tree_parent(children, parent_id, depth + 1)? {
-                return Ok(Some(found));
-            }
+        if let Some(found) = find_icon_tree_parent(&mut node.children, parent_id, depth + 1)? {
+            return Ok(Some(found));
         }
     }
     Ok(None)
@@ -141,7 +141,7 @@ async fn update_layout_icon_tree(
     conn: &mut sqlx::PgConnection,
     layout: LayoutRow,
     new_node: IconTreeNode,
-    parent_id: Option<&str>,
+    parent_id: Option<&Uuid>,
 ) -> DomainResult<()> {
     let mut icon_tree: Vec<IconTreeNode> = serde_json::from_value(layout.icon_tree)
         .map_err(|e| DomainError::internal_msg(format!("invalid icon_tree JSON in DB: {e}")))?;
@@ -172,7 +172,7 @@ async fn upsert_layout_icon_tree(
     app: &DesktopApp,
     scope: LayoutScope,
     new_node: IconTreeNode,
-    parent_id: Option<&str>,
+    parent_id: Option<&Uuid>,
 ) -> DomainResult<()> {
     let user_id = layout_user_id(scope, app.owner_id);
 
@@ -228,10 +228,7 @@ impl DesktopAppRepository for PgDesktopAppRepository {
         &self,
         _ctx: &ExecutionContext,
         app: &DesktopApp,
-        icon_tree_app_id: &str,
-        icon_tree_x: i32,
-        icon_tree_y: i32,
-        icon_tree_parent_id: Option<&str>,
+        position: &IconTreePosition,
         scope: LayoutScope,
     ) -> DomainResult<DesktopApp> {
         if scope == LayoutScope::User && app.owner_id.is_none() {
@@ -265,12 +262,12 @@ impl DesktopAppRepository for PgDesktopAppRepository {
         .map_err(DomainError::internal)?;
 
         let new_node = IconTreeNode {
-            app_id: icon_tree_app_id.to_string(),
-            x: icon_tree_x,
-            y: icon_tree_y,
-            children: None,
+            app_id: position.app_id,
+            x: position.x,
+            y: position.y,
+            children: Vec::new(),
         };
-        upsert_layout_icon_tree(&mut tx, app, scope, new_node, icon_tree_parent_id).await?;
+        upsert_layout_icon_tree(&mut tx, app, scope, new_node, position.parent_id.as_ref()).await?;
 
         tx.commit().await.map_err(DomainError::internal)?;
         map_app_row(row)

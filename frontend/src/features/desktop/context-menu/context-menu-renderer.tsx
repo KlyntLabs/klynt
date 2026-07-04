@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -18,6 +20,17 @@ export type ContextMenuRendererProps = {
   onClose: () => void;
 };
 
+function useMenuLabel(
+  entry: { label?: string; labelKey?: string } | undefined
+): string | undefined {
+  const { t } = useTranslation("app");
+  if (!entry) return undefined;
+  if (entry.labelKey) {
+    return t(entry.labelKey as never);
+  }
+  return entry.label;
+}
+
 function MenuItem({
   item,
   actionContext,
@@ -27,17 +40,24 @@ function MenuItem({
   actionContext: ActionContext;
   onClose: () => void;
 }) {
+  const label = useMenuLabel(item);
+
   async function handleClick() {
     if (item.disabled) {
       return;
     }
-    await executeContextMenuAction(item.action, actionContext);
+    try {
+      await executeContextMenuAction(item.action, actionContext);
+    } catch (error) {
+      console.error("Context menu action failed:", error);
+    }
     onClose();
   }
 
   return (
     <button
       type="button"
+      role="menuitem"
       data-testid={`context-menu-item-${item.id}`}
       disabled={item.disabled}
       onClick={handleClick}
@@ -47,7 +67,7 @@ function MenuItem({
         item.disabled && "cursor-not-allowed opacity-50 hover:bg-transparent"
       )}
     >
-      <span>{item.label}</span>
+      <span>{label}</span>
       {item.shortcut ? <span className="ml-4 text-xs text-white/50">{item.shortcut}</span> : null}
     </button>
   );
@@ -66,15 +86,21 @@ function MenuGroup({
   actionContext: ActionContext;
   onClose: () => void;
 }) {
+  const label = useMenuLabel(group);
+
   return (
-    <div data-testid={`context-menu-group-${group.id}`}>
-      {group.label ? (
-        <span className="block px-2 py-1 text-xs font-medium text-white/50">{group.label}</span>
+    <fieldset
+      data-testid={`context-menu-group-${group.id}`}
+      aria-label={label}
+      className="border-0 p-0 m-0"
+    >
+      {label ? (
+        <legend className="block px-2 py-1 text-xs font-medium text-white/50">{label}</legend>
       ) : null}
-      <div className={cn("flex flex-col", group.label ? "pl-2" : "")}>
+      <div className={cn("flex flex-col", label ? "pl-2" : "")}>
         <MenuEntries entries={group.children} actionContext={actionContext} onClose={onClose} />
       </div>
-    </div>
+    </fieldset>
   );
 }
 
@@ -89,7 +115,7 @@ function MenuEntries({
 }) {
   return (
     <>
-      {entries.map((entry) => {
+      {entries.map((entry, index) => {
         if (isContextMenuItem(entry)) {
           return (
             <MenuItem key={entry.id} item={entry} actionContext={actionContext} onClose={onClose} />
@@ -97,7 +123,8 @@ function MenuEntries({
         }
 
         if (isContextMenuSeparator(entry)) {
-          return <MenuSeparator key={`separator-${Math.random()}`} />;
+          // biome-ignore lint/suspicious/noArrayIndexKey: separators are static dividers with no identity
+          return <MenuSeparator key={`separator-${index}`} />;
         }
 
         if (isContextMenuGroup(entry)) {
@@ -122,22 +149,8 @@ export function ContextMenuRenderer({
   actionContext,
   onClose,
 }: ContextMenuRendererProps): React.JSX.Element {
-  const { t } = useTranslation("home");
-
   if (schema.root.length === 0) {
-    return (
-      <div
-        data-testid="context-menu-empty-state"
-        className={cn(
-          "absolute min-w-[10rem] rounded-lg border border-white/10 bg-black/80 p-3 shadow-xl",
-          "backdrop-blur-sm text-sm text-white/90"
-        )}
-        role="menu"
-        aria-label={schema.id}
-      >
-        {t("desktop.contextMenu.empty")}
-      </div>
-    );
+    return <EmptyContextMenu schema={schema} />;
   }
 
   return (
@@ -151,6 +164,23 @@ export function ContextMenuRenderer({
       aria-label={schema.id}
     >
       <MenuEntries entries={schema.root} actionContext={actionContext} onClose={onClose} />
+    </div>
+  );
+}
+
+function EmptyContextMenu({ schema }: { schema: ContextMenuSchema }): React.JSX.Element {
+  const { t } = useTranslation("home");
+  return (
+    <div
+      data-testid="context-menu-empty-state"
+      className={cn(
+        "absolute min-w-[10rem] rounded-lg border border-white/10 bg-black/80 p-3 shadow-xl",
+        "backdrop-blur-sm text-sm text-white/90"
+      )}
+      role="menu"
+      aria-label={schema.id}
+    >
+      {t("desktop.contextMenu.empty")}
     </div>
   );
 }

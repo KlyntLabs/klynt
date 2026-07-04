@@ -36,7 +36,7 @@ describe("Desktop empty states", () => {
   });
 
   it("FolderRenderer renders an empty state when the folder has no children", () => {
-    render(<FolderRenderer content={{}}>{[]}</FolderRenderer>);
+    render(<FolderRenderer content={{}} items={[]} />);
 
     expect(screen.getByTestId("folder-empty-state")).toHaveTextContent("This folder is empty");
   });

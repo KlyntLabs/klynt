@@ -18,8 +18,8 @@ function makeAppResponse(etag: string) {
         type: "notes" as const,
         title: "Test App",
         content: {},
-        menu_config: {},
-        owner_id: null,
+        menuConfig: {},
+        ownerId: null,
         locked: false,
         etag,
       },
@@ -81,11 +81,16 @@ describe("useContentAutosave", () => {
     });
 
     expect(updateSpy).toHaveBeenCalledTimes(1);
-    expect(updateSpy).toHaveBeenCalledWith(slug, appId, {
-      etag: initialEtag,
-      content,
-      menu_config: menuConfig,
-    });
+    expect(updateSpy).toHaveBeenCalledWith(
+      slug,
+      appId,
+      {
+        etag: initialEtag,
+        content,
+        menuConfig,
+      },
+      { signal: expect.any(AbortSignal) }
+    );
   });
 
   it("calls onEtagChange with the new etag and clears error on success", async () => {
@@ -279,10 +284,15 @@ describe("useContentAutosave", () => {
     });
 
     expect(updateSpy).toHaveBeenCalledTimes(2);
-    expect(updateSpy).toHaveBeenLastCalledWith(slug, appId, {
-      etag: newEtag,
-      content: { text: "second" },
-      menu_config: undefined,
-    });
+    expect(updateSpy).toHaveBeenLastCalledWith(
+      slug,
+      appId,
+      {
+        etag: newEtag,
+        content: { text: "second" },
+        menuConfig: undefined,
+      },
+      { signal: expect.any(AbortSignal) }
+    );
   });
 });

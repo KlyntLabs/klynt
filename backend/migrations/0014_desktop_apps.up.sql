@@ -6,7 +6,7 @@ CREATE TABLE desktop_apps (
     content       JSONB NOT NULL DEFAULT '{}',
     menu_config   JSONB NOT NULL DEFAULT '{}',
     owner_id      UUID REFERENCES users(id) ON DELETE CASCADE,
-    created_by    UUID NOT NULL REFERENCES users(id),
+    created_by    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     locked        BOOLEAN NOT NULL DEFAULT FALSE,
     etag          TEXT NOT NULL,
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),

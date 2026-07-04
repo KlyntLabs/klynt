@@ -28,22 +28,24 @@ function createUniqueId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
+const DEFAULT_CUSTOM_ACTION = "custom:new-action" as const;
+
 function createDefaultItem(): ContextMenuItem {
   return {
     type: "item",
     id: createUniqueId(),
     label: "New Item",
-    action: "custom:new-action",
+    action: DEFAULT_CUSTOM_ACTION,
   };
 }
 
 function updateItem(
   entries: ContextMenuEntry[],
-  index: number,
+  id: string,
   patch: Partial<ContextMenuItem>
 ): ContextMenuEntry[] {
-  return entries.map((entry, i) => {
-    if (i === index && isContextMenuItem(entry)) {
+  return entries.map((entry) => {
+    if (isContextMenuItem(entry) && entry.id === id) {
       return { ...entry, ...patch };
     }
     return entry;
@@ -98,7 +100,7 @@ export function MenuEditor({
                         disabled={readOnly}
                         onChange={(event) =>
                           updateRoot((entries) =>
-                            updateItem(entries, index, { label: event.target.value })
+                            updateItem(entries, entry.id, { label: event.target.value })
                           )
                         }
                       />
@@ -116,7 +118,7 @@ export function MenuEditor({
                         disabled={readOnly}
                         onCheckedChange={(checked) =>
                           updateRoot((entries) =>
-                            updateItem(entries, index, { disabled: checked === true })
+                            updateItem(entries, entry.id, { disabled: checked === true })
                           )
                         }
                       />

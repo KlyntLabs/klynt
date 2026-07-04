@@ -68,6 +68,13 @@ export function getHostContext(
   // Fallback for missing or misconfigured base domain: detect reserved
   // subdomains heuristically so URL builders don't double-prefix them.
   if (host.startsWith("login.")) {
+    const rest = host.slice(6);
+    const dotCount = rest.split(".").length - 1;
+    // A host like `login.tenant.lvh.me` has more than one dot after `login.`,
+    // indicating a misrouted nested subdomain. `login.lvh.me` has exactly one.
+    if (dotCount > 1) {
+      return { type: "login_misroute" };
+    }
     return { type: "login" };
   }
 

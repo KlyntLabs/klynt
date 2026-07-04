@@ -23,7 +23,7 @@ export function mergeContent(
   defaults: Record<string, unknown>,
   overrides: Record<string, unknown>
 ): Record<string, unknown> {
-  return { ...defaults, ...overrides };
+  return { ...structuredClone(defaults), ...overrides };
 }
 
 function resolveMenuSchema(
@@ -37,6 +37,7 @@ function resolveMenuSchema(
   const root = overrides.root ?? typeDefault.root;
   const id = overrides.id ?? typeDefault.id;
 
+  // NOTE: This replaces the entire menu schema; it does not deep-merge entries.
   return { id, root };
 }
 

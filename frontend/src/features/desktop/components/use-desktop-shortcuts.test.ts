@@ -8,27 +8,35 @@ function fireKeyDown(eventInit: KeyboardEventInit) {
 }
 
 describe("useDesktopShortcuts", () => {
-  it("calls onNewApp with folder type for Ctrl+Shift+N", () => {
+  it("calls onNewApp with folder type for Ctrl+Shift+D", () => {
     const onNewApp = vi.fn();
     renderHook(() => useDesktopShortcuts({ onNewApp }));
-    fireKeyDown({ key: "N", ctrlKey: true, shiftKey: true });
+    fireKeyDown({ key: "D", ctrlKey: true, shiftKey: true });
     expect(onNewApp).toHaveBeenCalledTimes(1);
     expect(onNewApp).toHaveBeenCalledWith("folder");
   });
 
-  it("calls onNewApp with folder type for Cmd+Shift+N", () => {
+  it("calls onNewApp with folder type for Cmd+Shift+D", () => {
     const onNewApp = vi.fn();
     renderHook(() => useDesktopShortcuts({ onNewApp }));
-    fireKeyDown({ key: "n", metaKey: true, shiftKey: true });
+    fireKeyDown({ key: "d", metaKey: true, shiftKey: true });
     expect(onNewApp).toHaveBeenCalledTimes(1);
     expect(onNewApp).toHaveBeenCalledWith("folder");
   });
 
-  it("does not call onNewApp for Alt+Shift+N", () => {
+  it("does not call onNewApp for Alt+Shift+D", () => {
     const onNewApp = vi.fn();
     renderHook(() => useDesktopShortcuts({ onNewApp }));
-    fireKeyDown({ key: "N", altKey: true, shiftKey: true });
+    fireKeyDown({ key: "D", altKey: true, shiftKey: true });
     expect(onNewApp).not.toHaveBeenCalled();
+  });
+
+  it("uses defaultNewAppType when provided", () => {
+    const onNewApp = vi.fn();
+    renderHook(() => useDesktopShortcuts({ onNewApp, defaultNewAppType: "markdown" }));
+    fireKeyDown({ key: "D", ctrlKey: true, shiftKey: true });
+    expect(onNewApp).toHaveBeenCalledTimes(1);
+    expect(onNewApp).toHaveBeenCalledWith("markdown");
   });
 
   it("calls onDeleteSelected when Delete is pressed with a selection", () => {

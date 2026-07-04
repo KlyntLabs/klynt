@@ -27,13 +27,16 @@ export function VideoRenderer({
   const src = getSrc(content);
   const [draft, setDraft] = useState(src);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
     setDraft(src);
   }, [src]);
 
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
+      isMountedRef.current = false;
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
@@ -49,7 +52,9 @@ export function VideoRenderer({
     }
 
     timeoutRef.current = setTimeout(() => {
-      onChange?.({ src: newValue });
+      if (isMountedRef.current) {
+        onChange?.({ src: newValue });
+      }
     }, DEBOUNCE_MS);
   };
 
@@ -82,7 +87,7 @@ export function VideoRenderer({
             placeholder="https://"
             className="w-full rounded-md border border-border bg-background p-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
             data-testid="video-url-input"
-            aria-label="Video URL"
+            aria-label={t("video.urlLabel")}
           />
           {showHttpsWarning && (
             <span className="text-xs text-destructive" data-testid="video-https-warning">

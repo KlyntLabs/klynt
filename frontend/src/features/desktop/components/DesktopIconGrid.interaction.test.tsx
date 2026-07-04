@@ -14,7 +14,7 @@ function createAppSummary(overrides: Partial<AppSummary> = {}): AppSummary {
     id: "app-1",
     type: "notes",
     title: "Test Note",
-    owner_id: null,
+    ownerId: null,
     locked: false,
     etag: "etag-1",
     ...overrides,

@@ -55,8 +55,9 @@ function DraggableIcon({
   };
   onOpen: (appId: string, isFolder: boolean) => void;
 }) {
+  const { t } = useTranslation("home");
   const isFolder = app?.type === "folder" || node.children !== undefined;
-  const title = node.title ?? app?.title ?? "App";
+  const title = node.title ?? app?.title ?? t("desktop.app.defaultTitle");
   const Icon = app?.type ? typeIconMap[app.type] : FileText;
 
   return (
@@ -115,8 +116,10 @@ export function DesktopIconGrid({
 
   const handleMove = (appId: string, newParentId: string | null) => {
     const app = appMap.get(appId);
-    if (app?.locked) return;
-    void moveDesktopApp({ desktopId, appId, newParentId, isLocked: app?.locked });
+    moveDesktopApp({ desktopId, appId, newParentId, isLocked: app?.locked }).catch((err) => {
+      // TODO: surface error to user via toast/notification
+      console.error("Failed to move app:", err);
+    });
   };
 
   const { bindDrag, bindDrop } = useIconDragDrop({ desktopId, onMove: handleMove });

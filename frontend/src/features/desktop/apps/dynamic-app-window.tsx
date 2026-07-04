@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Spinner } from "@/components/ui/spinner";
 import { type DesktopApp, desktopAppsApi } from "@/features/desktop/api/desktop-apps-api";
@@ -15,12 +15,20 @@ type DynamicAppWindowProps = {
   tenantSlug: string;
 };
 
+function contentsAreEqual(a: Record<string, unknown>, b: Record<string, unknown>): boolean {
+  try {
+    return JSON.stringify(a) === JSON.stringify(b);
+  } catch {
+    return false;
+  }
+}
+
 export function DynamicAppWindow({
-  desktopId: _desktopId,
+  desktopId,
   appId,
   tenantSlug,
 }: DynamicAppWindowProps): React.JSX.Element {
-  const { t } = useTranslation(["home", "errors"]);
+  const { t } = useTranslation(["home", "errors", "app"]);
   const queryClient = useQueryClient();
   const { isOpen, open, close, onReload, onRetry, setReloadCallback, setRetryCallback } =
     useConflictHandler();
@@ -30,7 +38,7 @@ export function DynamicAppWindow({
     isLoading,
     error,
   } = useQuery<DesktopApp, Error>({
-    queryKey: ["desktop-app", tenantSlug, appId],
+    queryKey: ["desktop-app", desktopId, tenantSlug, appId],
     queryFn: async () => {
       const response = await desktopAppsApi.getApp(tenantSlug, appId);
       return response.data.data;
@@ -50,7 +58,7 @@ export function DynamicAppWindow({
     }
 
     setContent((previous) =>
-      JSON.stringify(previous) === JSON.stringify(manifest.content) ? previous : manifest.content
+      contentsAreEqual(previous, manifest.content) ? previous : manifest.content
     );
     setEtag((previous) => (previous === manifest.etag ? previous : manifest.etag));
   }, [manifest]);
@@ -68,17 +76,24 @@ export function DynamicAppWindow({
     onEtagChange: setEtag,
   });
 
+  const scheduleSaveRef = useRef(scheduleSave);
+  useEffect(() => {
+    scheduleSaveRef.current = scheduleSave;
+  }, [scheduleSave]);
+
   useEffect(() => {
     setReloadCallback(() => {
-      void queryClient.invalidateQueries({ queryKey: ["desktop-app", tenantSlug, appId] });
+      void queryClient.invalidateQueries({
+        queryKey: ["desktop-app", desktopId, tenantSlug, appId],
+      });
     });
-  }, [setReloadCallback, queryClient, tenantSlug, appId]);
+  }, [setReloadCallback, queryClient, desktopId, tenantSlug, appId]);
 
   useEffect(() => {
     setRetryCallback(() => {
-      scheduleSave();
+      scheduleSaveRef.current();
     });
-  }, [setRetryCallback, scheduleSave]);
+  }, [setRetryCallback]);
 
   if (isLoading) {
     return (
@@ -116,7 +131,7 @@ export function DynamicAppWindow({
         <RendererSwitch
           rendererId={manifest.rendererId}
           content={content}
-          readOnly={manifest.locked}
+          readOnly={manifest.locked ?? false}
           onChange={setContent}
         />
       </div>

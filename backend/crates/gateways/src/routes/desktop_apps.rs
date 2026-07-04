@@ -7,7 +7,8 @@ use axum::{
     Json,
 };
 use base::ctx::ExecutionContext;
-use domain::{AppType, DesktopApp};
+use domain::{AppType, DesktopApp, TenantId, UserId};
+use tenant_service::admin::is_admin_for_tenant;
 use uuid::Uuid;
 
 use crate::middleware::auth::AuthContext;
@@ -109,6 +110,13 @@ pub(crate) async fn update_app(
 ) -> Result<impl IntoResponse, GatewayError> {
     let tenant_id = require_tenant_id(&ctx)?;
     let caller_id = require_actor_id(&auth_ctx)?;
+    let is_admin = is_admin_for_tenant(
+        &services.tenant,
+        &ctx,
+        TenantId::from_uuid(tenant_id),
+        UserId::from_uuid(caller_id),
+    )
+    .await?;
 
     let app = services
         .desktop_apps
@@ -117,7 +125,7 @@ pub(crate) async fn update_app(
             tenant_id,
             app_id,
             caller_id,
-            false,
+            is_admin,
             payload.etag,
             payload.title,
             payload.content,
@@ -136,10 +144,17 @@ pub(crate) async fn delete_app(
 ) -> Result<impl IntoResponse, GatewayError> {
     let tenant_id = require_tenant_id(&ctx)?;
     let caller_id = require_actor_id(&auth_ctx)?;
+    let is_admin = is_admin_for_tenant(
+        &services.tenant,
+        &ctx,
+        TenantId::from_uuid(tenant_id),
+        UserId::from_uuid(caller_id),
+    )
+    .await?;
 
     services
         .desktop_apps
-        .delete_app(&ctx, tenant_id, app_id, caller_id, false)
+        .delete_app(&ctx, tenant_id, app_id, caller_id, is_admin)
         .await?;
     Ok(StatusCode::NO_CONTENT)
 }

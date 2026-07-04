@@ -20,6 +20,10 @@ function selectBaseSchema(target: ContextMenuTarget) {
       return desktopIconMenu;
     case "folder":
       return desktopFolderMenu;
+    default: {
+      const _exhaustiveCheck: never = target;
+      throw new Error(`Unhandled context menu target: ${_exhaustiveCheck}`);
+    }
   }
 }
 

@@ -26,6 +26,7 @@ export function createTenantApiAdapter(options: TenantApiAdapterOptions): Persis
 
     async save(_desktopId, layout): Promise<SaveResult> {
       if (!options.canEditShared) return { ok: false, error: "forbidden", retryable: false };
+      if (etag === null) return { ok: false, error: "not-loaded", retryable: false };
       try {
         const result = await tenantLayoutApi.updateShared(options.slug, layout, etag ?? "");
         etag = result.data.data.etag;

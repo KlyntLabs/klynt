@@ -5,7 +5,7 @@ use std::sync::Arc;
 use base::ctx::ExecutionContext;
 use base::ports::audit::AuditLogger;
 use base::ports::repository::{DesktopAppRepository, TenantDesktopLayoutRepository};
-use domain::{AppType, DesktopApp, DomainError, IconTreeNode, LayoutScope};
+use domain::{AppType, DesktopApp, DomainError, IconTreeNode, IconTreePosition, LayoutScope};
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
@@ -68,6 +68,7 @@ impl DesktopAppService {
         Self::validate_content(&content)?;
         Self::validate_menu_config(&menu_config)?;
 
+        // TODO(1.9): support shared apps; currently all apps are user-scoped.
         let owner_id = owner_id.or(Some(created_by));
 
         let app = DesktopApp {
@@ -85,17 +86,15 @@ impl DesktopAppService {
             updated_at: chrono::Utc::now(),
         };
 
+        let position = IconTreePosition {
+            app_id: app.id,
+            x: 0,
+            y: 0,
+            parent_id: None,
+        };
         let created = self
             .app_repo
-            .create_with_position(
-                ctx,
-                &app,
-                &app.id.to_string(),
-                0,
-                0,
-                None,
-                LayoutScope::User,
-            )
+            .create_with_position(ctx, &app, &position, LayoutScope::User)
             .await
             .map_err(TenantError::Domain)?;
 
@@ -220,7 +219,7 @@ impl DesktopAppService {
         }
 
         self.app_repo.delete(ctx, tenant_id, app_id).await?;
-        self.remove_app_from_layouts(ctx, tenant_id, existing.owner_id, &app_id.to_string())
+        self.remove_app_from_layouts(ctx, tenant_id, existing.owner_id, app_id)
             .await?;
         Ok(())
     }
@@ -252,47 +251,53 @@ impl DesktopAppService {
         &self,
         ctx: &ExecutionContext,
         tenant_id: Uuid,
-        owner_id: Option<Uuid>,
-        app_id: &str,
+        _owner_id: Option<Uuid>,
+        app_id: Uuid,
     ) -> Result<(), TenantError> {
-        let scopes = [(LayoutScope::Shared, None), (LayoutScope::User, owner_id)];
+        // Always remove from the shared layout.
+        let mut layouts_to_update = Vec::new();
+        if let Some(shared) = self
+            .layout_repo
+            .find(ctx, tenant_id, LayoutScope::Shared, None)
+            .await
+            .map_err(TenantError::Domain)?
+        {
+            layouts_to_update.push(shared);
+        }
 
-        for (scope, user_id) in scopes {
-            if let Some(mut layout) = self
-                .layout_repo
-                .find(ctx, tenant_id, scope, user_id)
-                .await
-                .map_err(TenantError::Domain)?
-            {
-                let mut icon_tree = layout.icon_tree.clone();
-                if Self::remove_icon_tree_node(&mut icon_tree, app_id) {
-                    layout.icon_tree = icon_tree;
-                    layout.etag = Uuid::new_v4().to_string();
-                    self.layout_repo
-                        .upsert(ctx, &layout)
-                        .await
-                        .map_err(TenantError::Domain)?;
-                }
+        // Remove from every user's personal layout so deletions are reflected
+        // for all members (including admins cleaning up another user's app).
+        let user_layouts = self
+            .layout_repo
+            .list_user_layouts(ctx, tenant_id)
+            .await
+            .map_err(TenantError::Domain)?;
+        layouts_to_update.extend(user_layouts);
+
+        for mut layout in layouts_to_update {
+            let mut icon_tree = layout.icon_tree.clone();
+            if Self::remove_icon_tree_node(&mut icon_tree, app_id) {
+                layout.icon_tree = icon_tree;
+                layout.etag = Uuid::new_v4().to_string();
+                self.layout_repo
+                    .upsert(ctx, &layout)
+                    .await
+                    .map_err(TenantError::Domain)?;
             }
         }
 
         Ok(())
     }
 
-    fn remove_icon_tree_node(tree: &mut Vec<IconTreeNode>, app_id: &str) -> bool {
+    fn remove_icon_tree_node(tree: &mut Vec<IconTreeNode>, app_id: Uuid) -> bool {
         let mut removed = false;
         tree.retain_mut(|node| {
             if node.app_id == app_id {
                 removed = true;
                 return false;
             }
-            if let Some(children) = node.children.as_mut() {
-                if Self::remove_icon_tree_node(children, app_id) {
-                    removed = true;
-                }
-                if children.is_empty() {
-                    node.children = None;
-                }
+            if Self::remove_icon_tree_node(&mut node.children, app_id) {
+                removed = true;
             }
             true
         });

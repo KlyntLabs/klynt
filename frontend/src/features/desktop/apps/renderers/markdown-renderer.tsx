@@ -2,6 +2,10 @@ import DOMPurify from "isomorphic-dompurify";
 import { marked } from "marked";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+type MarkdownContent = {
+  text: string;
+};
+
 type MarkdownRendererProps = {
   content: Record<string, unknown>;
   readOnly?: boolean;
@@ -10,9 +14,9 @@ type MarkdownRendererProps = {
 
 const DEBOUNCE_MS = 300;
 
-function getText(content: Record<string, unknown>): string {
+function toMarkdownContent(content: Record<string, unknown>): MarkdownContent {
   const text = content.text;
-  return typeof text === "string" ? text : "";
+  return { text: typeof text === "string" ? text : "" };
 }
 
 function renderMarkdown(text: string): string {
@@ -25,9 +29,10 @@ export function MarkdownRenderer({
   readOnly = false,
   onChange,
 }: MarkdownRendererProps): React.JSX.Element {
-  const text = getText(content);
+  const { text } = useMemo(() => toMarkdownContent(content), [content]);
   const [draft, setDraft] = useState(text);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMountedRef = useRef(true);
 
   const sanitizedHtml = useMemo(() => renderMarkdown(text), [text]);
 
@@ -36,7 +41,9 @@ export function MarkdownRenderer({
   }, [text]);
 
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
+      isMountedRef.current = false;
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
@@ -52,7 +59,9 @@ export function MarkdownRenderer({
     }
 
     timeoutRef.current = setTimeout(() => {
-      onChange?.({ text: newValue });
+      if (isMountedRef.current) {
+        onChange?.({ text: newValue });
+      }
     }, DEBOUNCE_MS);
   };
 

@@ -31,11 +31,7 @@ export type DeleteDesktopAppOptions = {
 };
 
 function generateTempId(): string {
-  try {
-    return `temp-${nanoid()}`;
-  } catch {
-    return `temp-${crypto.randomUUID()}`;
-  }
+  return `temp-${nanoid()}`;
 }
 
 function buildTempNode(options: CreateDesktopAppOptions): IconTreeNode {
@@ -71,7 +67,7 @@ export async function createDesktopApp(options: CreateDesktopAppOptions): Promis
       type: options.type,
       title: options.title,
       content: options.content,
-      menu_config: options.menuConfig,
+      menuConfig: options.menuConfig,
     });
 
     const app = response.data.data;
@@ -106,12 +102,11 @@ export async function deleteDesktopApp(options: DeleteDesktopAppOptions): Promis
   const store = useIconTreeStore.getState();
   store.removeNode(options.desktopId, options.appId);
 
-  try {
-    await desktopAppsApi.delete(options.slug, options.appId);
-  } catch {
-    // The backend is the source of truth; a future load will reconcile any drift.
-  }
+  await desktopAppsApi.delete(options.slug, options.appId);
 }
+
+const LAYOUT_VERSION = 1;
+const DEFAULT_BACKGROUND_PRESET_ID = "fabric";
 
 export function useDebouncedLayoutSave(
   desktopId: string,
@@ -129,8 +124,8 @@ export function useDebouncedLayoutSave(
     timeoutRef.current = setTimeout(async () => {
       const tree = useIconTreeStore.getState().trees[desktopId] ?? [];
       const layout = {
-        version: 1,
-        backgroundPresetId: "fabric",
+        version: LAYOUT_VERSION,
+        backgroundPresetId: DEFAULT_BACKGROUND_PRESET_ID,
         iconTree: tree,
         windows: [],
       };

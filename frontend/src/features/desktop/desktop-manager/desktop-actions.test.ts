@@ -18,8 +18,8 @@ function mockDesktopApp(overrides: Partial<DesktopApp> = {}): DesktopApp {
     type: "markdown",
     title: "My App",
     content: {},
-    menu_config: {},
-    owner_id: null,
+    menuConfig: {},
+    ownerId: null,
     locked: false,
     etag: "v1",
     ...overrides,
@@ -182,21 +182,20 @@ describe("deleteDesktopApp", () => {
     deleteSpy.mockRestore();
   });
 
-  it("continues even if API delete fails", async () => {
+  it("propagates API delete errors to the caller", async () => {
     useIconTreeStore.getState().setTree(desktopId, [{ appId: "app-1", x: 0, y: 0, title: "A" }]);
 
     const deleteSpy = vi.spyOn(desktopAppsApi, "delete").mockRejectedValue(new Error("network"));
 
-    // Should NOT throw — silent catch
     await expect(
       deleteDesktopApp({
         desktopId,
         slug: "acme",
         appId: "app-1",
       })
-    ).resolves.toBeUndefined();
+    ).rejects.toThrow("network");
 
-    // Node should still be removed from the optimistic store
+    // Node is still optimistically removed from the store
     const tree = useIconTreeStore.getState().trees[desktopId] ?? [];
     expect(findInTree(tree, "app-1")).toBe(false);
 

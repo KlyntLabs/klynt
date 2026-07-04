@@ -66,7 +66,6 @@ export function useIconDragDrop(options: {
         },
         onDrop: (event: React.DragEvent<HTMLElement>) => {
           event.preventDefault();
-          event.stopPropagation();
           const appId = event.dataTransfer.getData(DATA_TRANSFER_TYPE);
           if (!appId) {
             setDropTargetId(null);
@@ -79,16 +78,15 @@ export function useIconDragDrop(options: {
             setDropTargetId(null);
           };
 
+          clearState();
+
           if (onMove) {
-            const result = onMove(appId, folderId);
-            if (result instanceof Promise) {
-              result.then(clearState, clearState);
-            } else {
-              clearState();
-            }
+            Promise.resolve(onMove(appId, folderId)).catch(() => {
+              // Error is intentionally swallowed; callers should surface errors
+              // through their own state if needed.
+            });
           } else {
             useIconTreeStore.getState().moveNode(desktopId, appId, folderId);
-            clearState();
           }
         },
       };

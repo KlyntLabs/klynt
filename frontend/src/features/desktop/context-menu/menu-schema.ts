@@ -29,6 +29,7 @@ export type ContextMenuItem = {
   type: "item";
   id: string;
   label: string;
+  labelKey?: string;
   action: ContextMenuActionId;
   icon?: string;
   shortcut?: string;
@@ -45,6 +46,7 @@ export type ContextMenuGroup = {
   type: "group";
   id: string;
   label?: string;
+  labelKey?: string;
   children: ContextMenuEntry[];
 };
 

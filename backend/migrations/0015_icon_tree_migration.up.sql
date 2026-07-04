@@ -1,4 +1,4 @@
-ALTER TABLE tenant_desktop_layouts ADD COLUMN icon_tree JSONB NOT NULL DEFAULT '[]';
+ALTER TABLE tenant_desktop_layouts ADD COLUMN icon_tree JSONB DEFAULT '[]';
 
 UPDATE tenant_desktop_layouts
 SET icon_tree = CASE
@@ -6,5 +6,7 @@ SET icon_tree = CASE
     THEN icons
     ELSE '[]'::jsonb
 END;
+
+ALTER TABLE tenant_desktop_layouts ALTER COLUMN icon_tree SET NOT NULL;
 
 ALTER TABLE tenant_desktop_layouts DROP COLUMN icons;

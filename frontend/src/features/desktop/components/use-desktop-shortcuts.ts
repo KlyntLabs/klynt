@@ -8,6 +8,7 @@ export type DesktopShortcutsOptions = {
   onRefresh?: () => void;
   onCloseOverlay?: () => void;
   selectedAppId?: string | null;
+  defaultNewAppType?: AppTypeId;
 };
 
 function isInputTarget(event: KeyboardEvent): boolean {
@@ -26,8 +27,10 @@ function hasPrimaryModifier(event: KeyboardEvent): boolean {
 }
 
 function isNewAppShortcut(event: KeyboardEvent): boolean {
+  // Ctrl/Cmd+Shift+D is used instead of +N to avoid conflicting with the
+  // browser's native "New Window" / "New Incognito Window" shortcuts.
   return (
-    event.key.toLowerCase() === "n" && event.shiftKey && hasPrimaryModifier(event) && !event.altKey
+    event.key.toLowerCase() === "d" && event.shiftKey && hasPrimaryModifier(event) && !event.altKey
   );
 }
 
@@ -38,8 +41,15 @@ function isRefreshShortcut(event: KeyboardEvent): boolean {
 }
 
 export function useDesktopShortcuts(options: DesktopShortcutsOptions): void {
-  const { onNewApp, onDeleteSelected, onOpenSelected, onRefresh, onCloseOverlay, selectedAppId } =
-    options;
+  const {
+    onNewApp,
+    onDeleteSelected,
+    onOpenSelected,
+    onRefresh,
+    onCloseOverlay,
+    selectedAppId,
+    defaultNewAppType = "folder",
+  } = options;
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -47,7 +57,7 @@ export function useDesktopShortcuts(options: DesktopShortcutsOptions): void {
 
       if (isNewAppShortcut(event)) {
         event.preventDefault();
-        onNewApp?.("folder");
+        onNewApp?.(defaultNewAppType);
         return;
       }
 
@@ -77,5 +87,13 @@ export function useDesktopShortcuts(options: DesktopShortcutsOptions): void {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onNewApp, onDeleteSelected, onOpenSelected, onRefresh, onCloseOverlay, selectedAppId]);
+  }, [
+    onNewApp,
+    onDeleteSelected,
+    onOpenSelected,
+    onRefresh,
+    onCloseOverlay,
+    selectedAppId,
+    defaultNewAppType,
+  ]);
 }

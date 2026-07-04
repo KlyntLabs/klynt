@@ -45,9 +45,24 @@ function resolveTargetParent(
     return null;
   }
   if (folderAppIds && !folderAppIds.has(effectiveParent)) {
+    // Node is not placed inside a folder; promote to root.
     return null;
   }
   return effectiveParent;
+}
+
+function buildParentIndex(
+  entries: Map<string, MergedEntry>,
+  folderAppIds: Set<string> | undefined
+): Map<string | null, string[]> {
+  const index = new Map<string | null, string[]>();
+  for (const [childAppId, childEntry] of entries) {
+    const targetParent = resolveTargetParent(childEntry.effectiveParent, entries, folderAppIds);
+    const siblings = index.get(targetParent) ?? [];
+    siblings.push(childAppId);
+    index.set(targetParent, siblings);
+  }
+  return index;
 }
 
 function buildNode(
@@ -55,7 +70,8 @@ function buildNode(
   entries: Map<string, MergedEntry>,
   folderAppIds: Set<string> | undefined,
   ancestors: Set<string>,
-  built: Set<string>
+  built: Set<string>,
+  parentIndex: Map<string | null, string[]>
 ): MergedNode | null {
   if (ancestors.has(appId)) {
     return null;
@@ -79,13 +95,7 @@ function buildNode(
     baseChildIndex.set(child.appId, index);
   });
 
-  const childIds: string[] = [];
-  for (const [childAppId, childEntry] of entries) {
-    const targetParent = resolveTargetParent(childEntry.effectiveParent, entries, folderAppIds);
-    if (targetParent === appId) {
-      childIds.push(childAppId);
-    }
-  }
+  const childIds = parentIndex.get(appId) ?? [];
 
   childIds.sort((a, b) => {
     const aIndex = baseChildIndex.get(a);
@@ -104,7 +114,7 @@ function buildNode(
 
   const children: MergedNode[] = [];
   for (const childId of childIds) {
-    const child = buildNode(childId, entries, folderAppIds, nextAncestors, built);
+    const child = buildNode(childId, entries, folderAppIds, nextAncestors, built, parentIndex);
     if (child) {
       children.push(child);
     }
@@ -130,20 +140,22 @@ function buildTree(
 ): MergedNode[] {
   const roots: MergedNode[] = [];
   const built = new Set<string>();
+  const parentIndex = buildParentIndex(entries, folderAppIds);
 
   for (const [appId, entry] of entries) {
     const targetParent = resolveTargetParent(entry.effectiveParent, entries, folderAppIds);
     if (targetParent === null) {
-      const node = buildNode(appId, entries, folderAppIds, new Set(), built);
+      const node = buildNode(appId, entries, folderAppIds, new Set(), built, parentIndex);
       if (node) {
         roots.push(node);
       }
     }
   }
 
+  // Recover orphaned nodes (e.g., parent filtered out or cycle broken).
   for (const [appId] of entries) {
     if (!built.has(appId)) {
-      const node = buildNode(appId, entries, folderAppIds, new Set(), built);
+      const node = buildNode(appId, entries, folderAppIds, new Set(), built, parentIndex);
       if (node) {
         roots.push(node);
       }
@@ -200,8 +212,8 @@ export function mergeDesktop(options: {
     let stale: boolean | undefined;
     if (sharedNode && overlayNode) {
       const sharedParentId = sharedNode.parentId;
-      const overlayParentSnapshot = overlayNode.parentIdSnapshot ?? null;
-      if (overlayParentSnapshot !== sharedParentId) {
+      const overlayParentId = overlayNode.parentId;
+      if (overlayParentId !== sharedParentId) {
         stale = true;
       }
     }

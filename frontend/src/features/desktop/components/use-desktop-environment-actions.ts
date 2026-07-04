@@ -54,23 +54,32 @@ export function useDesktopEnvironmentActions(
   );
 
   const refreshBundleInBackground = useCallback(() => {
-    void desktopAppsApi.getDesktop(tenantSlug).then((response) => {
-      const bundle = response.data.data;
-      useIconTreeStore.getState().setBundleEtag(config.id, bundle.etag);
-      queryClient.setQueryData(["desktop-bundle", tenantSlug], bundle);
-    });
+    desktopAppsApi
+      .getDesktop(tenantSlug)
+      .then((response) => {
+        const bundle = response.data.data;
+        useIconTreeStore.getState().setBundleEtag(config.id, bundle.etag);
+        queryClient.setQueryData(["desktop-bundle", tenantSlug], bundle);
+      })
+      .catch((error) => {
+        console.error("Failed to refresh desktop bundle:", error);
+      });
   }, [tenantSlug, queryClient, config.id]);
 
   const handleDeleteApp = useCallback(
     async (appId: string) => {
       const app = apps.find((item) => item.id === appId);
-      await deleteDesktopApp({
-        desktopId: config.id,
-        slug: tenantSlug,
-        appId,
-        isLocked: app?.locked,
-      });
-      refreshBundleInBackground();
+      try {
+        await deleteDesktopApp({
+          desktopId: config.id,
+          slug: tenantSlug,
+          appId,
+          isLocked: app?.locked,
+        });
+        refreshBundleInBackground();
+      } catch (error) {
+        console.error("Failed to delete app:", error);
+      }
     },
     [apps, config.id, tenantSlug, refreshBundleInBackground]
   );

@@ -1,15 +1,11 @@
 import { useEffect, useRef, useState } from "react";
+import { getText } from "./notes-utils";
 
 type NotesEditorProps = {
   content: Record<string, unknown>;
   onChange: (content: Record<string, unknown>) => void;
   debounceMs?: number;
 };
-
-function getText(content: Record<string, unknown>): string {
-  const text = content.text;
-  return typeof text === "string" ? text : "";
-}
 
 export function NotesEditor({
   content,
@@ -19,13 +15,16 @@ export function NotesEditor({
   const text = getText(content);
   const [draft, setDraft] = useState(text);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
     setDraft(text);
   }, [text]);
 
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
+      isMountedRef.current = false;
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
@@ -41,7 +40,9 @@ export function NotesEditor({
     }
 
     timeoutRef.current = setTimeout(() => {
-      onChange({ text: newValue });
+      if (isMountedRef.current) {
+        onChange({ text: newValue });
+      }
     }, debounceMs);
   };
 

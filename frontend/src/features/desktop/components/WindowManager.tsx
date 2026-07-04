@@ -49,6 +49,8 @@ export default function WindowManager({ config }: WindowManagerProps) {
                   desktopId={config.id}
                   window={w}
                   title={w.appId}
+                  errorFallback={config.defaultErrorFallback}
+                  retryLimit={config.defaultRetryLimit}
                   locked={config.locked}
                   singleApp={config.singleApp}
                 >

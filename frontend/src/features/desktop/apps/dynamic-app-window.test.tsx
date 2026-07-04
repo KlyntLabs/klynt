@@ -14,8 +14,8 @@ function makeApp(): DesktopApp {
     type: "notes",
     title: "My Notes",
     content: { text: "Hello" },
-    menu_config: {},
-    owner_id: null,
+    menuConfig: {},
+    ownerId: null,
     locked: false,
     etag: "etag-1",
   };

@@ -12,9 +12,13 @@ use uuid::Uuid;
 
 use crate::ctx::ExecutionContext;
 use crate::ports::repository::DesktopAppRepository;
-use domain::{DesktopApp, DomainError, DomainResult, LayoutScope};
+use domain::{DesktopApp, DomainError, DomainResult, IconTreePosition, LayoutScope};
 
 /// In-memory desktop app repository for tests.
+///
+/// Uses `std::sync::Mutex` because every async method releases the lock before
+/// returning (no `.await` while holding the guard). This keeps the fake free of
+/// a `tokio` dependency in the `base` crate.
 #[derive(Clone, Debug, Default)]
 pub struct FakeDesktopAppRepository {
     inner: Arc<Mutex<Inner>>,
@@ -33,21 +37,18 @@ impl FakeDesktopAppRepository {
 
     /// Insert or overwrite a desktop app.
     pub fn insert(&self, app: DesktopApp) {
-        self.inner.lock().unwrap().apps.insert(app.id, app);
+        let mut inner = self.inner.lock().unwrap();
+        inner.apps.insert(app.id, app);
     }
 }
 
 #[async_trait]
 impl DesktopAppRepository for FakeDesktopAppRepository {
-    #[allow(clippy::too_many_arguments)]
     async fn create_with_position(
         &self,
         _ctx: &ExecutionContext,
         app: &DesktopApp,
-        _icon_tree_app_id: &str,
-        _icon_tree_x: i32,
-        _icon_tree_y: i32,
-        _icon_tree_parent_id: Option<&str>,
+        _position: &IconTreePosition,
         _scope: LayoutScope,
     ) -> DomainResult<DesktopApp> {
         let mut inner = self.inner.lock().unwrap();
@@ -101,6 +102,10 @@ impl DesktopAppRepository for FakeDesktopAppRepository {
             .ok_or_else(|| DomainError::not_found("desktop app"))?
             .clone();
 
+        if existing.tenant_id != app.tenant_id {
+            return Err(DomainError::not_found("desktop app"));
+        }
+
         if existing.etag != expected_etag {
             return Err(DomainError::conflict("app etag mismatch"));
         }
@@ -124,16 +129,14 @@ impl DesktopAppRepository for FakeDesktopAppRepository {
         app_id: Uuid,
     ) -> DomainResult<()> {
         let mut inner = self.inner.lock().unwrap();
-        let existed = inner
+        let app = inner
             .apps
-            .remove(&app_id)
-            .map(|app| app.tenant_id == tenant_id)
-            .unwrap_or(false);
-
-        if existed {
-            Ok(())
-        } else {
-            Err(DomainError::not_found("desktop app"))
+            .get(&app_id)
+            .ok_or_else(|| DomainError::not_found("desktop app"))?;
+        if app.tenant_id != tenant_id {
+            return Err(DomainError::not_found("desktop app"));
         }
+        inner.apps.remove(&app_id);
+        Ok(())
     }
 }
