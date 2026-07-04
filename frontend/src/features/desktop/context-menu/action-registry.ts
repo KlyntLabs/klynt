@@ -84,7 +84,7 @@ export async function executeContextMenuAction(
     await handler(ctx);
   } catch (error) {
     // TODO: surface user-friendly error via toast/notification
-    console.error(`Context menu action "${actionId}" failed:`, error);
+    console.error("Context menu action failed:", { actionId, error });
     throw error;
   }
 }
