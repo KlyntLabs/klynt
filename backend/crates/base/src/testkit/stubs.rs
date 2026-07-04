@@ -164,6 +164,13 @@ impl TenantDesktopLayoutRepository for FakeTenantDesktopLayoutRepository {
 #[derive(Clone, Debug, Default)]
 pub struct FakeAuditLogger;
 
+impl FakeAuditLogger {
+    /// Create a new fake audit logger.
+    pub fn new() -> Self {
+        Self
+    }
+}
+
 #[async_trait]
 impl AuditLogger for FakeAuditLogger {
     async fn log_login_success(&self, _ctx: &ExecutionContext, _user_id: UserId) {}

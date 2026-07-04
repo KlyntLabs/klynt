@@ -78,7 +78,7 @@ pub fn service() -> (
 ) {
     let app_repo = FakeDesktopAppRepository::new();
     let layout_repo = FakeLayoutRepository::default();
-    let audit = FakeAuditLogger;
+    let audit = FakeAuditLogger::new();
     let service = DesktopAppService::new(
         Arc::new(app_repo.clone()),
         Arc::new(layout_repo.clone()),
