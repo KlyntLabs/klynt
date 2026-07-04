@@ -2,6 +2,7 @@ import { screen, waitFor } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
 import { Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { navigateExternal } from "@/core/auth/external-redirect";
 import { buildTenantDesktop } from "@/features/desktop/factory/tenant-desktop";
 import type { DesktopConfig } from "@/features/desktop/factory/types";
 import { resetDesktopStore } from "@/features/desktop/test-helpers";
@@ -16,6 +17,10 @@ vi.mock("@/features/desktop/factory/tenant-desktop", async (importOriginal) => {
     await importOriginal<typeof import("@/features/desktop/factory/tenant-desktop")>();
   return { ...original, buildTenantDesktop: vi.fn(original.buildTenantDesktop) };
 });
+
+vi.mock("@/core/auth/external-redirect", () => ({
+  navigateExternal: vi.fn(),
+}));
 
 function TestRouter() {
   return (
@@ -114,5 +119,19 @@ describe("TenantDesktopPage", () => {
       expect(windows).toHaveLength(1);
       expect(windows?.[0]?.appId).toBe("tenant-settings");
     });
+  });
+
+  it("redirects to apex when the tenant is not found", async () => {
+    server.use(
+      http.get("/api/v1/tenants/:slug", () =>
+        HttpResponse.json({ error: "not found" }, { status: 404 })
+      )
+    );
+
+    render(<TestRouter />, {
+      initialEntries: ["/tenants/missing"],
+    });
+
+    await waitFor(() => expect(navigateExternal).toHaveBeenCalled(), { timeout: 5000 });
   });
 });

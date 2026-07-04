@@ -44,6 +44,23 @@
   },
   "desktop": {
     "navLabel": "Ứng dụng trên màn hình",
+    "breadcrumb": {
+      "home": "Trang chủ",
+      "folderFallback": "Thư mục"
+    },
+    "empty": {
+      "noIcons": "Không có biểu tượng nào trên màn hình này."
+    },
+    "app": {
+      "defaultTitle": "Ứng dụng"
+    },
+    "contextMenu": {
+      "newApp": "Ứng dụng mới",
+      "empty": "Không có mục menu"
+    },
+    "menuEditor": {
+      "empty": "Không có mục menu nào để chỉnh sửa"
+    },
     "backgrounds": {
       "fabric": "Vải",
       "graphPaper": "Giấy kẻ ô",
@@ -151,6 +168,13 @@
       "layoutLoadError": "Không thể tải bố cục máy tính để bàn của bạn.",
       "layoutSaveError": "Không thể lưu bố cục máy tính để bàn của bạn."
     },
+    "conflict": {
+      "title": "Phát hiện xung đột",
+      "message": "Tài nguyên này đã bị thay đổi bởi một phiên khác. Bạn muốn làm gì?",
+      "reload": "Tải lại",
+      "retry": "Thử lại",
+      "cancel": "Hủy"
+    },
     "errorFallback": {
       "title": "Đã xảy ra lỗi",
       "retry": "Thử lại",
@@ -208,6 +232,18 @@
         "talkToHuman": "Nói chuyện với người",
         "trash": "Thùng rác"
       }
+    },
+    "dialog": {
+      "newApp": {
+        "title": "Tạo ứng dụng mới",
+        "description": "Chọn loại và tên cho ứng dụng mới của bạn.",
+        "titleLabel": "Tiêu đề",
+        "typeLabel": "Loại",
+        "create": "Tạo",
+        "cancel": "Hủy",
+        "titleRequired": "Tiêu đề là bắt buộc.",
+        "titleTooLong": "Tiêu đề phải có tối đa 100 ký tự."
+      }
     }
   },
   "user": {
@@ -219,5 +255,8 @@
       "title": "Khóa học của tôi",
       "description": "Duyệt các khóa học bạn đã đăng ký."
     }
+  },
+  "app": {
+    "unknownRenderer": "Loại ứng dụng không xác định"
   }
 }

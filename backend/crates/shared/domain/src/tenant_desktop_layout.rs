@@ -3,13 +3,7 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-/// A single icon on the desktop.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DesktopIcon {
-    pub app_id: String,
-    pub x: i32,
-    pub y: i32,
-}
+pub use crate::desktop_app::IconTreeNode;
 
 /// A window on the desktop.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -67,7 +61,7 @@ pub struct TenantDesktopLayout {
     pub user_id: Option<Uuid>,
     pub version: i32,
     pub background_preset_id: String,
-    pub icons: Vec<DesktopIcon>,
+    pub icon_tree: Vec<IconTreeNode>,
     pub windows: Vec<DesktopWindow>,
     pub etag: String,
 }

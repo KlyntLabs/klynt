@@ -167,6 +167,174 @@ paths:
         '400':
           description: Missing session token
 
+  /tenants/{slug}/desktop/apps:
+    post:
+      summary: Create a desktop app
+      description: |
+        Create a new desktop mini-app in the tenant. The authenticated user
+        becomes the owner.
+      tags:
+        - Desktop
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAppPayload'
+      responses:
+        '201':
+          description: App created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppResponse'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not a tenant member
+
+  /tenants/{slug}/desktop:
+    get:
+      summary: Get the desktop bundle
+      description: |
+        Return the caller's desktop bundle for the tenant, including all
+        visible apps.
+      tags:
+        - Desktop
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Desktop bundle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DesktopBundleResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not a tenant member
+
+  /tenants/{slug}/apps/{appId}:
+    get:
+      summary: Get a desktop app
+      tags:
+        - Desktop
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: appId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: App details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not app owner or tenant member
+        '404':
+          description: App not found
+    patch:
+      summary: Update a desktop app
+      tags:
+        - Desktop
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: appId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAppPayload'
+      responses:
+        '200':
+          description: App updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppResponse'
+        '400':
+          description: Invalid input or etag mismatch
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not app owner or app is locked
+        '404':
+          description: App not found
+    delete:
+      summary: Delete a desktop app
+      tags:
+        - Desktop
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: appId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: App deleted successfully
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not app owner or app is locked
+        '404':
+          description: App not found
+
 components:
   schemas:
     RegisterRequest:
@@ -285,6 +453,110 @@ components:
             Optional session token. If omitted, the `session_token` cookie is
             used instead.
 
+    CreateAppPayload:
+      type: object
+      required:
+        - type
+        - title
+      properties:
+        type:
+          type: string
+          enum: [markdown, notes, video, folder]
+        title:
+          type: string
+          minLength: 1
+        content:
+          type: object
+        menu_config:
+          type: object
+
+    UpdateAppPayload:
+      type: object
+      required:
+        - etag
+      properties:
+        etag:
+          type: string
+        title:
+          type: string
+          minLength: 1
+        content:
+          type: object
+        menu_config:
+          type: object
+
+    AppResponse:
+      type: object
+      required:
+        - id
+        - type
+        - title
+        - content
+        - menu_config
+        - locked
+        - etag
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [markdown, notes, video, folder]
+        title:
+          type: string
+        content:
+          type: object
+        menu_config:
+          type: object
+        owner_id:
+          type: string
+          format: uuid
+          nullable: true
+        locked:
+          type: boolean
+        etag:
+          type: string
+
+    AppSummary:
+      type: object
+      required:
+        - id
+        - type
+        - title
+        - owner_id
+        - locked
+        - etag
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [markdown, notes, video, folder]
+        title:
+          type: string
+        owner_id:
+          type: string
+          format: uuid
+          nullable: true
+        locked:
+          type: boolean
+        etag:
+          type: string
+
+    DesktopBundleResponse:
+      type: object
+      required:
+        - apps
+        - etag
+      properties:
+        apps:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppSummary'
+        etag:
+          type: string
+
     RateLimitError:
       type: object
       required:
@@ -336,3 +608,5 @@ tags:
     description: Operational health checks
   - name: Authentication
     description: User authentication and authorization
+  - name: Desktop
+    description: Tenant desktop mini-apps and layout

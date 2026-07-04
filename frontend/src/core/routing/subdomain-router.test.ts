@@ -75,6 +75,15 @@ describe("subdomain-router", () => {
     expect(buildLoginUrl()).toBe("http://login.lvh.me:5174/");
   });
 
+  it("builds login URL from a tenant host using base domain only", () => {
+    import.meta.env.VITE_APP_DOMAIN = "klynt.dev";
+    stubLocation("acme.klynt.dev:5174");
+    expect(buildLoginUrl()).toBe("http://login.klynt.dev:5174/");
+    expect(buildLoginUrl("http://acme.klynt.dev:5174/dashboard")).toBe(
+      "http://login.klynt.dev:5174/?from=http%3A%2F%2Facme.klynt.dev%3A5174%2Fdashboard"
+    );
+  });
+
   it("builds admin URL", () => {
     expect(buildAdminUrl("/admin")).toBe("http://admin.lvh.me:5174/admin");
   });

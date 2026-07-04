@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -13,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useTenantSlug } from "@/features/tenant/hooks";
 import { createRole, deleteRole, listPermissions, listRoles, updateRole } from "../api";
 import { PermissionGuard } from "../components/PermissionGuard";
 import { RoleFormDialog } from "../components/RoleFormDialog";
@@ -20,9 +20,8 @@ import type { Role } from "../types";
 
 export default function RolesPage() {
   const { t } = useTranslation("ui");
-  const { slug } = useParams<{ slug: string }>();
+  const tenantSlug = useTenantSlug();
   const queryClient = useQueryClient();
-  const tenantSlug = slug ?? "";
 
   const { data: roles, isLoading: isRolesLoading } = useQuery({
     queryKey: ["tenants", tenantSlug, "roles"],

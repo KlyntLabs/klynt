@@ -1,5 +1,5 @@
 import { isAxiosError } from "axios";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuthModule } from "@/core/auth/auth-module";
@@ -9,6 +9,7 @@ import { DesktopEnvironment } from "@/features/desktop/components/DesktopEnviron
 import { buildTenantDesktop } from "@/features/desktop/factory/tenant-desktop";
 import { useWindowManager } from "@/features/desktop/window-manager/window-module";
 import { useTenant } from "../hooks/use-tenant";
+import { useTenantSlug } from "../hooks/use-tenant-slug";
 
 const DEEP_LINK_APP_MAP: Record<string, string> = {
   members: "tenant-members",
@@ -25,15 +26,19 @@ function isTenantNotFound(error: unknown): boolean {
 }
 
 export default function TenantDesktopPage({ slug: propSlug }: TenantDesktopPageProps = {}) {
-  const { slug: paramSlug, "*": deepPath } = useParams<{ slug: string; "*": string }>();
+  const { "*": deepPath } = useParams<{ "*": string }>();
+  const hostSlug = useTenantSlug();
   const { user } = useAuthModule();
   const openApp = useWindowManager((s) => s.openApp);
 
-  const tenantSlug = propSlug ?? paramSlug ?? "";
+  const tenantSlug = propSlug ?? hostSlug;
   const { data: tenant, isLoading, error } = useTenant(tenantSlug);
   const tenantRole = tenant?.role ?? "member";
 
-  const config = buildTenantDesktop(tenantSlug, tenantRole, user);
+  const config = useMemo(
+    () => buildTenantDesktop(tenantSlug, tenantRole, user),
+    [tenantSlug, tenantRole, user]
+  );
 
   useEffect(() => {
     const appId = deepPath ? DEEP_LINK_APP_MAP[deepPath] : undefined;

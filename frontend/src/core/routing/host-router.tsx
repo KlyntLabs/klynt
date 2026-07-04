@@ -1,6 +1,7 @@
 import { useMemo } from "react";
-import { RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { getHostContext } from "./host-context";
+import { RedirectToCanonicalLogin } from "./redirects";
 import { createAdminRouter } from "./routers/admin-router";
 import { createApexRouter } from "./routers/apex-router";
 import { loginRouter } from "./routers/login-router";
@@ -14,6 +15,8 @@ export function HostRouter() {
     switch (ctx.type) {
       case "login":
         return loginRouter;
+      case "login_misroute":
+        return createBrowserRouter([{ path: "*", element: <RedirectToCanonicalLogin /> }]);
       case "admin":
         return createAdminRouter();
       case "tenant":

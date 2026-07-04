@@ -13,6 +13,7 @@ export function buildAuthKioskDesktop(appId: string): DesktopConfig {
     id: `auth:${appId}`,
     title: "Klynt",
     apps: [app],
+    defaultApp: app,
     menubar: authMenubar,
     background: { presetId: "fabric" },
     persistence: createNoOpAdapter(),

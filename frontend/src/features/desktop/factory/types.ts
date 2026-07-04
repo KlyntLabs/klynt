@@ -13,4 +13,6 @@ export type DesktopConfig = {
   context: DesktopContext;
   locked?: boolean;
   singleApp?: boolean;
+  defaultErrorFallback?: React.ComponentType<{ error: Error; retry: () => void }>;
+  defaultRetryLimit?: number;
 };

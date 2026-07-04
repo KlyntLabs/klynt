@@ -14,6 +14,7 @@ const RESERVED_SUBDOMAINS = new Set([
 export type HostContext =
   | { type: "apex" }
   | { type: "login" }
+  | { type: "login_misroute" }
   | { type: "admin" }
   | { type: "tenant"; slug: string }
   | { type: "profile"; username: string }
@@ -51,6 +52,9 @@ export function getHostContext(
     }
 
     if (prefix.includes(".")) {
+      if (prefix.startsWith("login.")) {
+        return { type: "login_misroute" };
+      }
       return { type: "unknown", subdomain: prefix };
     }
 
@@ -64,6 +68,13 @@ export function getHostContext(
   // Fallback for missing or misconfigured base domain: detect reserved
   // subdomains heuristically so URL builders don't double-prefix them.
   if (host.startsWith("login.")) {
+    const rest = host.slice(6);
+    const dotCount = rest.split(".").length - 1;
+    // A host like `login.tenant.lvh.me` has more than one dot after `login.`,
+    // indicating a misrouted nested subdomain. `login.lvh.me` has exactly one.
+    if (dotCount > 1) {
+      return { type: "login_misroute" };
+    }
     return { type: "login" };
   }
 
@@ -89,4 +100,8 @@ export function isTenantHost(hostname?: string): boolean {
 
 export function isProfileHost(hostname?: string): boolean {
   return getHostContext(hostname).type === "profile";
+}
+
+export function isLoginMisrouteHost(hostname?: string): boolean {
+  return getHostContext(hostname).type === "login_misroute";
 }

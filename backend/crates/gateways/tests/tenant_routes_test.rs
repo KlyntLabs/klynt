@@ -206,11 +206,8 @@ async fn get_tenant_returns_full_payload() {
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(json["data"]["slug"], "detail-tenant");
     assert_eq!(json["data"]["name"], "Detail Tenant");
-    assert_eq!(json["data"]["max_members"], 100);
-    assert_eq!(json["data"]["max_owners"], 1);
-    assert!(json["data"]["settings"].is_object());
-    assert!(json["data"].get("created_at").is_some());
-    assert!(json["data"].get("updated_at").is_some());
+    assert_eq!(json["data"]["role"], "owner");
+    assert!(json["data"].get("joined_at").is_some());
 }
 
 #[tokio::test]
@@ -323,4 +320,62 @@ async fn creating_more_than_two_active_tenants_fails() {
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::FORBIDDEN);
+}
+
+#[tokio::test]
+async fn public_tenant_lookup_returns_200_for_existing_tenant() {
+    let tenant_repo = Arc::new(support::StatefulFakeTenantRepository::default());
+    let membership_repo = Arc::new(support::StatefulFakeMembershipRepository::default());
+    let (app, session_service, _invite_repo, user_repo) =
+        app_with_tenant_fakes(tenant_repo.clone(), membership_repo.clone());
+
+    let (owner_id, _owner_token) =
+        create_active_user(&user_repo, &session_service, "owner-public@example.com").await;
+    let tenant = create_owned_tenant(
+        &tenant_repo,
+        &membership_repo,
+        owner_id,
+        "acme-public",
+        "Acme Public",
+    );
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri(format!("/api/v1/tenants/{}/public", tenant.slug.as_str()))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(json["data"]["slug"], "acme-public");
+    assert_eq!(json["data"]["name"], "Acme Public");
+}
+
+#[tokio::test]
+async fn public_tenant_lookup_returns_404_for_missing_tenant() {
+    let tenant_repo = Arc::new(support::StatefulFakeTenantRepository::default());
+    let membership_repo = Arc::new(support::StatefulFakeMembershipRepository::default());
+    let (app, _session_service, _invite_repo, _user_repo) =
+        app_with_tenant_fakes(tenant_repo, membership_repo);
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/api/v1/tenants/no-such-tenant/public")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }

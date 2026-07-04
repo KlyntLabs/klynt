@@ -6,6 +6,10 @@ export function RedirectToLogin() {
   return <ExternalNavigate to={buildLoginUrl()} />;
 }
 
+export function RedirectToCanonicalLogin() {
+  return <RedirectToLogin />;
+}
+
 export function RedirectToAdmin() {
   return <ExternalNavigate to={buildAdminUrl()} />;
 }

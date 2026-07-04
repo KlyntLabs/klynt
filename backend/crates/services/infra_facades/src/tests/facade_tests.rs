@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
 use base::testkit::{
-    FakeAuditLogger, FakeEmailSender, FakeMembershipRepository, FakePermissionRepository,
-    FakeRoleRepository, FakeSessionStore, FakeTenantDesktopLayoutRepository,
-    FakeTenantInviteRepository, FakeTenantRepository, FakeTokenStore, FakeUserRepository,
-    TestClock, TestPasswordHasher,
+    FakeAuditLogger, FakeDesktopAppRepository, FakeEmailSender, FakeMembershipRepository,
+    FakePermissionRepository, FakeRoleRepository, FakeSessionStore,
+    FakeTenantDesktopLayoutRepository, FakeTenantInviteRepository, FakeTenantRepository,
+    FakeTokenStore, FakeUserRepository, TestClock, TestPasswordHasher,
 };
 
 use crate::{InfraFacade, PersistenceFacade};
@@ -24,6 +24,8 @@ fn persistence_facade_stores_adapters() {
         Arc::new(FakeRoleRepository::new());
     let layout_repository: Arc<dyn base::ports::repository::TenantDesktopLayoutRepository> =
         Arc::new(FakeTenantDesktopLayoutRepository);
+    let app_repository: Arc<dyn base::ports::repository::DesktopAppRepository> =
+        Arc::new(FakeDesktopAppRepository::new());
     let session_store: Arc<dyn base::ports::SessionStore> = Arc::new(FakeSessionStore::new());
     let token_store: Arc<dyn base::ports::TokenStore> = Arc::new(FakeTokenStore::new());
     let audit_logger: Arc<dyn base::ports::AuditLogger> = Arc::new(FakeAuditLogger);
@@ -36,6 +38,7 @@ fn persistence_facade_stores_adapters() {
         permission_repository.clone(),
         role_repository.clone(),
         layout_repository.clone(),
+        app_repository.clone(),
         session_store.clone(),
         token_store.clone(),
         audit_logger.clone(),
@@ -54,6 +57,7 @@ fn persistence_facade_stores_adapters() {
     ));
     assert!(Arc::ptr_eq(&facade.role_repository, &role_repository));
     assert!(Arc::ptr_eq(&facade.layout_repository, &layout_repository));
+    assert!(Arc::ptr_eq(&facade.app_repository, &app_repository));
     assert!(Arc::ptr_eq(&facade.session_store, &session_store));
     assert!(Arc::ptr_eq(&facade.token_store, &token_store));
     assert!(Arc::ptr_eq(&facade.audit_logger, &audit_logger));

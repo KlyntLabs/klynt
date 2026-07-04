@@ -1,8 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Spinner } from "@/components/ui/spinner";
 import { useToastStore } from "@/core/notifications/toast-store";
-import { getPresetById } from "@/features/desktop/backgrounds/presets";
+import { backgroundPresets, getPresetById } from "@/features/desktop/backgrounds/presets";
+import { DesktopContextMenu } from "@/features/desktop/context-menu/DesktopContextMenu";
+import { NewAppDialog } from "@/features/desktop/context-menu/new-app-dialog";
+import { useIconTreeStore } from "@/features/desktop/desktop-manager/icon-tree-module";
 import type { DesktopLayout } from "@/features/desktop/persistence/types";
 import { useWindowManager } from "@/features/desktop/window-manager/window-module";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -11,6 +14,9 @@ import CookieBanner from "./CookieBanner";
 import DesktopIcons from "./DesktopIcons";
 import Menubar from "./Menubar";
 import { MobileFallback } from "./MobileFallback";
+import { useDesktopBundle } from "./use-desktop-bundle";
+import { useDesktopEnvironmentActions } from "./use-desktop-environment-actions";
+import { useDesktopLayoutSave } from "./use-desktop-layout-save";
 import WindowManager from "./WindowManager";
 
 interface DesktopEnvironmentProps {
@@ -18,7 +24,7 @@ interface DesktopEnvironmentProps {
 }
 
 export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
-  const { windows, openApp } = useWindowManager();
+  const { windows, openApp, resetDesktop } = useWindowManager();
   const desktopWindows = windows[config.id] ?? [];
   const [backgroundPresetId, setBackgroundPresetId] = useState(config.background.presetId);
   const [isLoading, setIsLoading] = useState(true);
@@ -28,31 +34,47 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
   const configRef = useRef(config);
   configRef.current = config;
 
+  const tenantSlug = config.context.tenantSlug ?? "";
+  const {
+    apps,
+    etag,
+    isLoading: isBundleLoading,
+    error: bundleError,
+    refetch,
+  } = useDesktopBundle(tenantSlug);
+  const layoutTreeLoadedRef = useRef(false);
+
   const background = getPresetById(backgroundPresetId);
   const isOsDesktop = !config.singleApp;
 
-  useEffect(() => {
-    if (isBelowLg && isOsDesktop) return;
-    let cancelled = false;
-    const { persistence, id, defaultApp } = configRef.current;
+  const handleChangeBackground = useCallback(() => {
+    const ids = backgroundPresets.map((preset) => preset.id);
+    setBackgroundPresetId(ids[(ids.indexOf(backgroundPresetId) + 1) % ids.length]);
+  }, [backgroundPresetId]);
 
-    async function load() {
-      const result = await persistence.load(id);
-      if (cancelled) return;
+  const {
+    menuState,
+    closeMenu,
+    newAppDialog,
+    setNewAppDialog,
+    actionContext,
+    handleOpenContextMenu,
+    handleBackgroundContextMenu,
+    handleCreateAppFromDialog,
+    selectedAppId,
+    setSelectedAppId,
+  } = useDesktopEnvironmentActions(config, apps, refetch, handleChangeBackground);
 
-      if (!result.ok) {
-        addToast({
-          message: t("desktop.toast.layoutLoadError"),
-          type: "error",
-          duration: 5000,
-        });
-        setIsLoading(false);
-        return;
-      }
+  const applyLayout = useCallback(
+    (id: string, layout: DesktopLayout | null) => {
+      resetDesktop(id);
 
-      if (result.layout) {
-        setBackgroundPresetId(result.layout.backgroundPresetId);
-        for (const window of result.layout.windows) {
+      if (layout) {
+        setBackgroundPresetId(layout.backgroundPresetId);
+        useIconTreeStore.getState().setTree(id, layout.iconTree ?? []);
+        layoutTreeLoadedRef.current = true;
+
+        for (const window of layout.windows) {
           openApp(id, window.appId, {
             x: window.x,
             y: window.y,
@@ -61,7 +83,72 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
             state: window.state,
           });
         }
-      } else if (defaultApp) {
+      }
+    },
+    [openApp, resetDesktop]
+  );
+
+  const handleLoadError = useCallback(() => {
+    addToast({
+      message: t("desktop.toast.layoutLoadError"),
+      type: "error",
+      duration: 5000,
+    });
+    setIsLoading(false);
+  }, [addToast, t]);
+
+  const handleReload = useCallback(async () => {
+    const { persistence, id } = configRef.current;
+    const result = await persistence.load(id);
+
+    if (!result.ok) {
+      handleLoadError();
+      return;
+    }
+
+    useIconTreeStore.getState().setTree(id, []);
+    applyLayout(id, result.layout ?? null);
+  }, [applyLayout, handleLoadError]);
+
+  useEffect(() => {
+    if (isBundleLoading) return;
+    if (layoutTreeLoadedRef.current) return;
+    if (bundleError) return;
+    useIconTreeStore.getState().setTree(config.id, []);
+  }, [isBundleLoading, bundleError, config.id]);
+
+  useEffect(() => {
+    if (isBundleLoading) return;
+    if (bundleError) return;
+    if (!etag) return;
+
+    const desktopId = config.id;
+    const previousEtag = useIconTreeStore.getState().bundleEtags[desktopId];
+    if (previousEtag && previousEtag !== etag) {
+      resetDesktop(desktopId);
+      useIconTreeStore.getState().setTree(desktopId, []);
+      layoutTreeLoadedRef.current = false;
+    }
+    useIconTreeStore.getState().setBundleEtag(desktopId, etag);
+  }, [isBundleLoading, bundleError, etag, resetDesktop, config.id]);
+
+  useEffect(() => {
+    if (isBelowLg && isOsDesktop) return;
+    let cancelled = false;
+    const { id, defaultApp } = configRef.current;
+
+    async function load() {
+      const result = await configRef.current.persistence.load(id);
+      if (cancelled) return;
+
+      if (!result.ok) {
+        handleLoadError();
+        return;
+      }
+
+      applyLayout(id, result.layout ?? null);
+
+      if (!result.layout && defaultApp) {
         openApp(id, defaultApp.id, {
           width: defaultApp.defaultSize.width,
           height: defaultApp.defaultSize.height,
@@ -76,53 +163,29 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
     return () => {
       cancelled = true;
     };
-  }, [isBelowLg, isOsDesktop, openApp, t, addToast]);
+  }, [isBelowLg, isOsDesktop, openApp, applyLayout, handleLoadError]);
 
-  useEffect(() => {
-    if (isLoading) return;
-    if (isBelowLg && isOsDesktop) return;
-    if (!configRef.current.persistence.canEdit()) return;
-
-    const layout: DesktopLayout = {
-      version: 1,
-      backgroundPresetId,
-      icons: [],
-      windows: desktopWindows.map((window) => ({
-        appId: window.appId,
-        x: window.x,
-        y: window.y,
-        width: window.width,
-        height: window.height,
-        state: window.state,
-      })),
-    };
-
-    configRef.current.persistence.save(config.id, layout).then((result) => {
-      if (!result.ok) {
-        addToast({
-          message: t("desktop.toast.layoutSaveError"),
-          type: "error",
-          duration: 5000,
-        });
-      }
-    });
-  }, [
-    isBelowLg,
-    isOsDesktop,
+  useDesktopLayoutSave(
+    config,
     desktopWindows,
     backgroundPresetId,
-    config.id,
     isLoading,
-    t,
-    addToast,
-  ]);
+    isBelowLg,
+    isOsDesktop,
+    handleReload
+  );
 
   if (isBelowLg && isOsDesktop) {
     return <MobileFallback />;
   }
 
   return (
-    <div className="w-screen h-screen overflow-hidden relative">
+    <div
+      className="w-screen h-screen overflow-hidden relative"
+      onContextMenu={handleBackgroundContextMenu}
+      role="application"
+      aria-label={t("desktop.navLabel")}
+    >
       {/* Wallpaper Background */}
       <div
         className="absolute inset-0"
@@ -151,13 +214,30 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
       <Menubar config={config} />
 
       {/* Desktop Icons */}
-      <DesktopIcons config={config} />
+      <DesktopIcons
+        config={config}
+        apps={apps}
+        onOpenContextMenu={handleOpenContextMenu}
+        selectedAppId={selectedAppId}
+        onSelectAppId={setSelectedAppId}
+      />
 
       {/* Windows */}
       <WindowManager config={config} />
 
       {/* Cookie Banner */}
       <CookieBanner />
+
+      {/* Context Menu */}
+      <DesktopContextMenu state={menuState} actionContext={actionContext} onClose={closeMenu} />
+
+      {/* New App Dialog */}
+      <NewAppDialog
+        open={newAppDialog.open}
+        defaultType={newAppDialog.defaultType}
+        onClose={() => setNewAppDialog({ open: false })}
+        onCreate={handleCreateAppFromDialog}
+      />
 
       {/* Persistence loading overlay */}
       {isLoading && (

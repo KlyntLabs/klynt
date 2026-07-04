@@ -7,7 +7,7 @@ use axum::{
     Json,
 };
 use base::ctx::ExecutionContext;
-use domain::{DesktopIcon, DesktopWindow, LayoutScope, TenantDesktopLayout};
+use domain::{DesktopWindow, IconTreeNode, LayoutScope, TenantDesktopLayout};
 use tenant_service::admin::ensure_admin;
 use uuid::Uuid;
 
@@ -128,7 +128,7 @@ fn build_layout(
             user_id,
             version: payload.version,
             background_preset_id: payload.background_preset_id,
-            icons: payload.icons,
+            icon_tree: payload.icon_tree,
             windows: payload.windows,
             etag: Uuid::new_v4().to_string(),
         },
@@ -140,7 +140,7 @@ fn build_layout(
 pub(crate) struct LayoutPayload {
     version: i32,
     background_preset_id: String,
-    icons: Vec<DesktopIcon>,
+    icon_tree: Vec<IconTreeNode>,
     windows: Vec<DesktopWindow>,
     etag: String,
 }
@@ -153,7 +153,7 @@ struct LayoutResponse {
     user_id: Option<Uuid>,
     version: i32,
     background_preset_id: String,
-    icons: Vec<DesktopIcon>,
+    icon_tree: Vec<IconTreeNode>,
     windows: Vec<DesktopWindow>,
     etag: String,
 }
@@ -167,7 +167,7 @@ impl From<TenantDesktopLayout> for LayoutResponse {
             user_id: layout.user_id,
             version: layout.version,
             background_preset_id: layout.background_preset_id,
-            icons: layout.icons,
+            icon_tree: layout.icon_tree,
             windows: layout.windows,
             etag: layout.etag,
         }

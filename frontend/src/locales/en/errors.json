@@ -11,5 +11,7 @@
   "api": {
     "unauthorized": "Unauthorized API response; clearing session",
     "serverError": "Server error"
-  }
+  },
+  "systemInvalid": "System invalid",
+  "systemInvalidRedirect": "This organization does not exist. Redirecting to the homepage..."
 }

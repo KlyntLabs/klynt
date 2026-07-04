@@ -6,6 +6,11 @@ export interface Tenant {
   joinedAt: string;
 }
 
+export interface PublicTenant {
+  slug: string;
+  name: string;
+}
+
 export interface CreateTenantInput {
   slug: string;
   name: string;

@@ -11,5 +11,7 @@
   "api": {
     "unauthorized": "未授权 API 响应；清除会话",
     "serverError": "服务器错误"
-  }
+  },
+  "systemInvalid": "系统无效",
+  "systemInvalidRedirect": "该组织不存在。正在返回首页..."
 }

@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE tenant_desktop_layouts\n        SET icon_tree = $3, etag = $4, updated_at = NOW()\n        WHERE id = $1 AND tenant_id = $2\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Jsonb",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "42f92ff4806a0244cb1fd0cfccdc004bac1e9faa192ff22c13a4aa8866b21cda"
+}

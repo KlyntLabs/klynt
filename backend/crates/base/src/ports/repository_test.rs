@@ -4,7 +4,10 @@ mod tests {
     use crate::ctx::ExecutionContext;
     use async_trait::async_trait;
     use chrono::Utc;
-    use domain::{Email, PaginationRequest, User, UserId, UserRole, UserStatus};
+    use domain::{
+        AppType, DesktopApp, Email, IconTreePosition, LayoutScope, PaginationRequest, User, UserId,
+        UserRole, UserStatus,
+    };
     use uuid::Uuid;
 
     #[test]
@@ -24,8 +27,8 @@ mod tests {
         let database = RepositoryError::Database("connection lost".to_string()).to_string();
         let internal = RepositoryError::Internal("oops".to_string()).to_string();
 
-        assert_eq!(not_found, "User not found");
-        assert_eq!(conflict, "User already exists (users_email_key)");
+        assert_eq!(not_found, "Entity not found");
+        assert_eq!(conflict, "Entity already exists");
         assert_eq!(validation, "Validation error: fk");
         assert_eq!(database, "Database error: connection lost");
         assert_eq!(internal, "Internal error: oops");
@@ -50,7 +53,7 @@ mod tests {
             RepositoryError::Conflict(ref c) if c == "users_email_key"
         ));
 
-        // Foreign-key violation maps to Validation with the constraint name.
+        // Foreign-key violation maps to Conflict with the constraint name.
         let fk_err = sqlx::Error::Database(Box::new(FakeDbError {
             unique: false,
             foreign_key: true,
@@ -60,7 +63,7 @@ mod tests {
         let err: RepositoryError = fk_err.into();
         assert!(matches!(
             err,
-            RepositoryError::Validation(ref c) if c == "users_role_id_fkey"
+            RepositoryError::Conflict(ref c) if c == "users_role_id_fkey"
         ));
 
         // Other database errors fall back to Database.
@@ -275,5 +278,120 @@ mod tests {
             .expect("list");
         assert!(users.is_empty());
         assert_eq!(total, 0);
+    }
+
+    /// A minimal fake implementation for the desktop app repository.
+    struct FakeDesktopAppRepo;
+
+    #[async_trait]
+    impl DesktopAppRepository for FakeDesktopAppRepo {
+        async fn create_with_position(
+            &self,
+            _ctx: &ExecutionContext,
+            app: &DesktopApp,
+            _position: &IconTreePosition,
+            _scope: LayoutScope,
+        ) -> domain::DomainResult<DesktopApp> {
+            Ok(app.clone())
+        }
+
+        async fn list_visible(
+            &self,
+            _ctx: &ExecutionContext,
+            _tenant_id: Uuid,
+            _caller_id: Uuid,
+        ) -> domain::DomainResult<Vec<DesktopApp>> {
+            Ok(vec![])
+        }
+
+        async fn find_by_id(
+            &self,
+            _ctx: &ExecutionContext,
+            _tenant_id: Uuid,
+            _app_id: Uuid,
+        ) -> domain::DomainResult<Option<DesktopApp>> {
+            Ok(None)
+        }
+
+        async fn update(
+            &self,
+            _ctx: &ExecutionContext,
+            app: &DesktopApp,
+            _expected_etag: &str,
+        ) -> domain::DomainResult<DesktopApp> {
+            Ok(app.clone())
+        }
+
+        async fn delete(
+            &self,
+            _ctx: &ExecutionContext,
+            _tenant_id: Uuid,
+            _app_id: Uuid,
+        ) -> domain::DomainResult<()> {
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn test_desktop_app_repository_trait_exists() {
+        // The trait is defined and object-safe: dyn DesktopAppRepository.
+        let _repo: Box<dyn DesktopAppRepository> = Box::new(FakeDesktopAppRepo);
+    }
+
+    #[tokio::test]
+    async fn test_fake_desktop_app_repo_methods_execute() {
+        let ctx = ExecutionContext::new(crate::ctx::RequestContext::new());
+        let repo = FakeDesktopAppRepo;
+        let tenant_id = Uuid::new_v4();
+        let caller_id = Uuid::new_v4();
+        let now = Utc::now();
+
+        let app = DesktopApp {
+            id: Uuid::new_v4(),
+            tenant_id,
+            app_type: AppType::Markdown,
+            title: "Notes".to_string(),
+            content: Default::default(),
+            menu_config: Default::default(),
+            owner_id: Some(Uuid::new_v4()),
+            created_by: Uuid::new_v4(),
+            locked: false,
+            etag: "etag-1".to_string(),
+            created_at: now,
+            updated_at: now,
+        };
+
+        let created = repo
+            .create_with_position(
+                &ctx,
+                &app,
+                &IconTreePosition {
+                    app_id: app.id,
+                    x: 10,
+                    y: 20,
+                    parent_id: None,
+                },
+                LayoutScope::Shared,
+            )
+            .await
+            .expect("create_with_position");
+        assert_eq!(created.id, app.id);
+
+        let visible = repo
+            .list_visible(&ctx, tenant_id, caller_id)
+            .await
+            .expect("list_visible");
+        assert!(visible.is_empty());
+
+        let found = repo
+            .find_by_id(&ctx, tenant_id, app.id)
+            .await
+            .expect("find_by_id");
+        assert!(found.is_none());
+
+        let updated = repo.update(&ctx, &app, "etag-1").await.expect("update");
+        assert_eq!(updated.id, app.id);
+
+        repo.delete(&ctx, tenant_id, app.id).await.expect("delete");
     }
 }

@@ -243,4 +243,4 @@ Five canonical triage roles mapped 1:1 to label strings (`needs-triage`, `needs-
 
 ### Domain docs
 
-Single-context: root `CONTEXT.md` (with `UBIQUITOUS_LANGUAGE.md` as a complementary glossary) and `docs/adr/`. See `docs/agents/domain.md`.
+Single-context: root `CONTEXT.md` and `docs/adr/`. See `docs/agents/domain.md`.

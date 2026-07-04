@@ -74,6 +74,8 @@ services:
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:3001/api/v1}
         VITE_APP_NAME: ${VITE_APP_NAME:-Klynt}
+        VITE_APP_DOMAIN: ${VITE_APP_DOMAIN:-lvh.me}
+        VITE_APP_PROTOCOL: ${VITE_APP_PROTOCOL:-http}
     container_name: klynt-frontend
     restart: unless-stopped
     ports:

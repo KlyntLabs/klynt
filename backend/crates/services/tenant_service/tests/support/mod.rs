@@ -52,6 +52,9 @@ pub fn build_service_with_session_store_and_config(
         ),
     )
         as Arc<dyn base::ports::repository::TenantDesktopLayoutRepository>;
+    let app_repository =
+        Arc::new(persistence::repositories::desktop_app::PgDesktopAppRepository::new(pool.clone()))
+            as Arc<dyn base::ports::repository::DesktopAppRepository>;
     let token_store = Arc::new(persistence::repositories::token::PgTokenStore::new(
         pool.clone(),
     )) as Arc<dyn base::ports::TokenStore>;
@@ -68,6 +71,7 @@ pub fn build_service_with_session_store_and_config(
         permission_repository,
         role_repository,
         layout_repository,
+        app_repository,
         session_store.clone(),
         token_store,
         audit_logger,

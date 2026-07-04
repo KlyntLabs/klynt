@@ -1,7 +1,7 @@
 //! Tenant administration helpers.
 
 use base::ctx::ExecutionContext;
-use domain::{Tenant, UserId};
+use domain::{Tenant, TenantId, UserId};
 
 use crate::error::TenantError;
 use crate::TenantService;
@@ -29,4 +29,20 @@ pub async fn ensure_admin(
         Some(_) => Err(TenantError::NotAdmin),
         None => Err(TenantError::NotMember),
     }
+}
+
+/// Return whether the user is an owner or admin of the given tenant.
+pub async fn is_admin_for_tenant(
+    service: &TenantService,
+    ctx: &ExecutionContext,
+    tenant_id: TenantId,
+    user_id: UserId,
+) -> Result<bool, TenantError> {
+    let membership = service
+        .internal()
+        .persistence_facade
+        .membership_repository
+        .find(ctx, tenant_id, user_id)
+        .await?;
+    Ok(membership.map(|m| m.role.can_administer()).unwrap_or(false))
 }

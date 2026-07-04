@@ -54,6 +54,23 @@
   },
   "desktop": {
     "navLabel": "Desktop apps",
+    "breadcrumb": {
+      "home": "Home",
+      "folderFallback": "Folder"
+    },
+    "empty": {
+      "noIcons": "No icons on this desktop."
+    },
+    "app": {
+      "defaultTitle": "App"
+    },
+    "contextMenu": {
+      "newApp": "New App",
+      "empty": "No menu items"
+    },
+    "menuEditor": {
+      "empty": "No menu items to edit"
+    },
     "backgrounds": {
       "fabric": "Fabric",
       "graphPaper": "Graph paper",
@@ -161,6 +178,13 @@
       "layoutLoadError": "Could not load your desktop layout.",
       "layoutSaveError": "Could not save your desktop layout."
     },
+    "conflict": {
+      "title": "Conflict detected",
+      "message": "This resource was changed by another session. What would you like to do?",
+      "reload": "Reload",
+      "retry": "Retry",
+      "cancel": "Cancel"
+    },
     "errorFallback": {
       "title": "Something went wrong",
       "retry": "Try again",
@@ -218,6 +242,21 @@
         "talkToHuman": "Talk to a human",
         "trash": "Trash"
       }
+    },
+    "dialog": {
+      "newApp": {
+        "title": "Create new app",
+        "description": "Choose a type and name for your new app.",
+        "titleLabel": "Title",
+        "typeLabel": "Type",
+        "create": "Create",
+        "cancel": "Cancel",
+        "titleRequired": "Title is required.",
+        "titleTooLong": "Title must be 100 characters or less."
+      }
     }
+  },
+  "app": {
+    "unknownRenderer": "Unknown app type"
   }
 }

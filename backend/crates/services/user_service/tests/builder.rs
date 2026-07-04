@@ -3,9 +3,10 @@
 use std::sync::Arc;
 
 use base::testkit::{
-    FakeMembershipRepository, FakePermissionRepository, FakeRoleRepository, FakeSessionStore,
-    FakeTenantDesktopLayoutRepository, FakeTenantInviteRepository, FakeTenantRepository,
-    FakeTokenStore, FakeUserRepository, TestClock, TestPasswordHasher,
+    FakeDesktopAppRepository, FakeMembershipRepository, FakePermissionRepository,
+    FakeRoleRepository, FakeSessionStore, FakeTenantDesktopLayoutRepository,
+    FakeTenantInviteRepository, FakeTenantRepository, FakeTokenStore, FakeUserRepository,
+    TestClock, TestPasswordHasher,
 };
 use domain::UserId;
 use infra_facades::{InfraFacade, PersistenceFacade};
@@ -25,6 +26,7 @@ async fn builder_with_facades_gets_user() {
         Arc::new(FakePermissionRepository::new()),
         Arc::new(FakeRoleRepository::new()),
         Arc::new(FakeTenantDesktopLayoutRepository),
+        Arc::new(FakeDesktopAppRepository::default()),
         Arc::new(FakeSessionStore::new()),
         Arc::new(FakeTokenStore::new()),
         Arc::new(support::TestAuditLogger::new()),

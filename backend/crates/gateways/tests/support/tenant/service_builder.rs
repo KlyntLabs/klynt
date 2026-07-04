@@ -1,6 +1,8 @@
 use std::sync::Arc;
 
-use base::testkit::{FakeSessionStore, FakeTenantDesktopLayoutRepository, FakeTokenStore};
+use base::testkit::{
+    FakeDesktopAppRepository, FakeSessionStore, FakeTenantDesktopLayoutRepository, FakeTokenStore,
+};
 use infra_facades::PersistenceFacade;
 use session_coordinator::{SessionCoordinator, SessionCoordinatorConfig};
 
@@ -30,6 +32,7 @@ fn build_persistence_facade(
         permission_repository,
         role_repository,
         Arc::new(FakeTenantDesktopLayoutRepository),
+        Arc::new(FakeDesktopAppRepository::default()),
         session_store,
         Arc::new(FakeTokenStore::new()),
         audit_logger,

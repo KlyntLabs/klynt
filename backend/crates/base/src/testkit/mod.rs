@@ -12,6 +12,7 @@ pub mod authorization;
 pub mod clock;
 pub mod context;
 pub mod crypto;
+pub mod desktop_app_repository;
 pub mod domain;
 pub mod repository;
 pub mod session;
@@ -22,6 +23,7 @@ pub use authorization::{FakeMembershipRepository, FakePermissionRepository, Fake
 pub use clock::TestClock;
 pub use context::test_ctx;
 pub use crypto::TestPasswordHasher;
+pub use desktop_app_repository::FakeDesktopAppRepository;
 pub use domain::{sample_active_user, sample_user};
 pub use repository::FakeUserRepository;
 pub use session::FakeSessionStore;

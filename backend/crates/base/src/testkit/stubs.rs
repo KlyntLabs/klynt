@@ -150,11 +150,26 @@ impl TenantDesktopLayoutRepository for FakeTenantDesktopLayoutRepository {
     ) -> DomainResult<TenantDesktopLayout> {
         Ok(layout.clone())
     }
+
+    async fn list_user_layouts(
+        &self,
+        _ctx: &ExecutionContext,
+        _tenant_id: uuid::Uuid,
+    ) -> DomainResult<Vec<TenantDesktopLayout>> {
+        Ok(Vec::new())
+    }
 }
 
 /// Stub audit logger that records no events.
 #[derive(Clone, Debug, Default)]
 pub struct FakeAuditLogger;
+
+impl FakeAuditLogger {
+    /// Create a new fake audit logger.
+    pub fn new() -> Self {
+        Self
+    }
+}
 
 #[async_trait]
 impl AuditLogger for FakeAuditLogger {

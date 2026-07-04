@@ -2,8 +2,8 @@ import { HttpResponse, http } from "msw";
 
 const defaultLayout = {
   version: 1,
-  backgroundPresetId: "fabric",
-  icons: [{ appId: "tenant-members", x: 24, y: 120 }],
+  background_preset_id: "fabric",
+  icon_tree: [{ appId: "tenant-members", x: 24, y: 120 }],
   windows: [],
   etag: "v1",
 };

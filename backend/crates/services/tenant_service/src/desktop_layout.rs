@@ -92,7 +92,7 @@ mod tests {
     use base::ctx::ExecutionContext;
     use base::ports::repository::TenantDesktopLayoutRepository;
     use domain::{
-        DesktopIcon, DesktopWindow, DomainError, DomainResult, LayoutScope, TenantDesktopLayout,
+        DesktopWindow, DomainError, DomainResult, IconTreeNode, LayoutScope, TenantDesktopLayout,
     };
     use uuid::Uuid;
 
@@ -134,6 +134,21 @@ mod tests {
             );
             Ok(layout.clone())
         }
+
+        async fn list_user_layouts(
+            &self,
+            _ctx: &ExecutionContext,
+            tenant_id: Uuid,
+        ) -> DomainResult<Vec<TenantDesktopLayout>> {
+            Ok(self
+                .inner
+                .lock()
+                .unwrap()
+                .iter()
+                .filter(|((t, scope, _), _)| *t == tenant_id && *scope == LayoutScope::User)
+                .map(|(_, layout)| layout.clone())
+                .collect())
+        }
     }
 
     fn test_ctx() -> ExecutionContext {
@@ -152,10 +167,11 @@ mod tests {
             user_id,
             version: 1,
             background_preset_id: "default".to_string(),
-            icons: vec![DesktopIcon {
-                app_id: "app-1".to_string(),
+            icon_tree: vec![IconTreeNode {
+                app_id: Uuid::new_v4(),
                 x: 10,
                 y: 20,
+                children: Vec::new(),
             }],
             windows: vec![DesktopWindow {
                 app_id: "app-1".to_string(),

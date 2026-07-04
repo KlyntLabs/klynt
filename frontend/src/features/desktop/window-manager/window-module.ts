@@ -39,6 +39,7 @@ type WindowManagerState = {
   setActiveDesktop: (id: string) => void;
   setViewMode: (mode: ViewMode) => void;
   reset: () => void;
+  resetDesktop: (desktopId: string) => void;
 };
 
 const DEFAULT_WINDOW_WIDTH = 680;
@@ -95,6 +96,7 @@ const initialState: Omit<
   | "setActiveDesktop"
   | "setViewMode"
   | "reset"
+  | "resetDesktop"
 > = {
   windows: {},
   activeWindowId: {},
@@ -247,6 +249,18 @@ export const useWindowManager = create<WindowManagerState>()(
         }),
 
       reset: () => set(initialState),
+
+      resetDesktop: (desktopId) =>
+        set((draft) => {
+          const desktopWindows = draft.windows[desktopId] ?? [];
+          for (const window of desktopWindows) {
+            delete draft.preMaximizeRects[window.id];
+          }
+          draft.windows[desktopId] = [];
+          draft.activeWindowId[desktopId] = null;
+          // Note: preMaximizeRects for windows already closed via closeWindow are
+          // removed there. This clears rects for any windows removed by reset.
+        }),
     })),
     { name: "window-manager" }
   )

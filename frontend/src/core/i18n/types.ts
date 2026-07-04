@@ -1,4 +1,5 @@
 import "i18next";
+import type app from "@/locales/en/app.json";
 import type auth from "@/locales/en/auth.json";
 import type common from "@/locales/en/common.json";
 import type errors from "@/locales/en/errors.json";
@@ -16,6 +17,7 @@ declare module "i18next" {
   interface CustomTypeOptions {
     defaultNS: "common";
     resources: {
+      app: typeof app;
       common: typeof common;
       auth: typeof auth;
       errors: typeof errors;

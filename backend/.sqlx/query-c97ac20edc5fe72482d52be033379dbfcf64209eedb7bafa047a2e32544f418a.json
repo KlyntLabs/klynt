@@ -1,0 +1,132 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO tenant_desktop_layouts (\n                    id, tenant_id, scope, user_id, version, background_preset_id, icon_tree, windows, etag, created_at, updated_at\n                )\n                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())\n                ON CONFLICT (tenant_id, scope, user_id) WHERE scope = 'user'\n                DO UPDATE SET\n                    version = EXCLUDED.version,\n                    background_preset_id = EXCLUDED.background_preset_id,\n                    icon_tree = EXCLUDED.icon_tree,\n                    windows = EXCLUDED.windows,\n                    etag = EXCLUDED.etag,\n                    updated_at = NOW()\n                RETURNING id, tenant_id, scope, user_id, version, background_preset_id, icon_tree, windows, etag\n                ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "tenant_desktop_layouts",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "tenant_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "tenant_desktop_layouts",
+            "name": "tenant_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "scope",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenant_desktop_layouts",
+            "name": "scope"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "user_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "tenant_desktop_layouts",
+            "name": "user_id"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "version",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "tenant_desktop_layouts",
+            "name": "version"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "background_preset_id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenant_desktop_layouts",
+            "name": "background_preset_id"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "icon_tree",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "tenant_desktop_layouts",
+            "name": "icon_tree"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "windows",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "tenant_desktop_layouts",
+            "name": "windows"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "etag",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenant_desktop_layouts",
+            "name": "etag"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Uuid",
+        "Int4",
+        "Text",
+        "Jsonb",
+        "Jsonb",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "c97ac20edc5fe72482d52be033379dbfcf64209eedb7bafa047a2e32544f418a"
+}

@@ -11,5 +11,7 @@
   "api": {
     "unauthorized": "Phản hồi API không được ủy quyền; đang xóa phiên",
     "serverError": "Lỗi máy chủ"
-  }
+  },
+  "systemInvalid": "Hệ thống không hợp lệ",
+  "systemInvalidRedirect": "Tổ chức này không tồn tại. Đang chuyển về trang chủ..."
 }

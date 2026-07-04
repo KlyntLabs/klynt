@@ -3,8 +3,8 @@ use std::sync::Arc;
 use auth_service::{AuthConfig, AuthService, Dependencies as AuthDependencies};
 use base::ports::session::SessionStore;
 use base::testkit::{
-    FakePermissionRepository, FakeRoleRepository, FakeTenantDesktopLayoutRepository,
-    FakeTenantInviteRepository, FakeTenantRepository,
+    FakeDesktopAppRepository, FakePermissionRepository, FakeRoleRepository,
+    FakeTenantDesktopLayoutRepository, FakeTenantInviteRepository, FakeTenantRepository,
 };
 use chrono::Utc;
 use infra_facades::{InfraFacade, PersistenceFacade};
@@ -38,6 +38,7 @@ pub fn build_test_auth_service_with_session_store(
         Arc::new(FakePermissionRepository::new()),
         Arc::new(FakeRoleRepository::new()),
         Arc::new(FakeTenantDesktopLayoutRepository),
+        Arc::new(FakeDesktopAppRepository::default()),
         session_store,
         Arc::new(FakeTokenStore::default()),
         Arc::new(StubAuditLogger),

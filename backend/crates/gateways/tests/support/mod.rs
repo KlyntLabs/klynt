@@ -6,6 +6,7 @@
 use std::sync::Arc;
 
 use base::ports::{Clock, PasswordHashError, PasswordHasher};
+use base::testkit::{FakeAuditLogger, FakeDesktopAppRepository, FakeTenantDesktopLayoutRepository};
 use chrono::{DateTime, Utc};
 use ipnet::IpNet;
 use persistence::ports::RateLimiter;
@@ -81,6 +82,7 @@ pub fn build_test_services_with_fakes() -> (
         user: Arc::new(user_service),
         tenant: Arc::new(tenant::build_test_tenant_service()),
         desktop_layout: build_test_desktop_layout_service(),
+        desktop_apps: build_test_desktop_apps_service(),
         session: session_service.clone(),
         pool: dummy_pool(),
         rate_limiter: Arc::new(NoOpRateLimiter),
@@ -122,6 +124,7 @@ pub fn build_test_services_with_tenant_fakes(
             user_repo.clone(),
         )),
         desktop_layout: build_test_desktop_layout_service(),
+        desktop_apps: build_test_desktop_apps_service(),
         session: session_service.clone(),
         pool: dummy_pool(),
         rate_limiter: Arc::new(NoOpRateLimiter),
@@ -132,6 +135,51 @@ pub fn build_test_services_with_tenant_fakes(
     };
 
     (services, session_service, invite_repo, user_repo)
+}
+
+/// Build test gateway services with stateful tenant fakes and a shared desktop app
+/// fake so tests can seed apps directly.
+pub fn build_test_services_with_tenant_and_desktop_fakes(
+    tenant_repo: Arc<StatefulFakeTenantRepository>,
+    membership_repo: Arc<StatefulFakeMembershipRepository>,
+    app_repo: Arc<FakeDesktopAppRepository>,
+) -> (
+    gateways::state::Services,
+    Arc<session_service::SessionService>,
+    Arc<FakeTenantInviteRepository>,
+    Arc<FakeUserServiceRepository>,
+    Arc<FakeDesktopAppRepository>,
+) {
+    let (auth_service, _, _) = build_test_auth_service();
+    let session_store = Arc::new(FakePersistenceSessionStore::default());
+    let session_service = Arc::new(session_service::SessionService::new(
+        session_service::SessionConfig::default(),
+        session_store,
+    ));
+    let (user_service, user_repo) = build_test_user_service();
+    let invite_repo = Arc::new(FakeTenantInviteRepository::default());
+
+    let services = gateways::state::Services {
+        auth: Arc::new(auth_service),
+        user: Arc::new(user_service),
+        tenant: Arc::new(tenant::build_stateful_test_tenant_service(
+            tenant_repo,
+            membership_repo,
+            invite_repo.clone(),
+            user_repo.clone(),
+        )),
+        desktop_layout: build_test_desktop_layout_service(),
+        desktop_apps: build_test_desktop_apps_service_with_repo(app_repo.clone()),
+        session: session_service.clone(),
+        pool: dummy_pool(),
+        rate_limiter: Arc::new(NoOpRateLimiter),
+        trusted_proxies: Arc::new(Vec::new()),
+        health_reporter: Arc::new(observability::health::AlwaysReadyHealthReporter),
+        metrics_handle: observability::metrics::install_recorder(),
+        config: test_config(),
+    };
+
+    (services, session_service, invite_repo, user_repo, app_repo)
 }
 
 /// Build test gateway services.
@@ -190,6 +238,7 @@ pub fn build_test_services_with_auth_fakes() -> (
         user: Arc::new(user_service),
         tenant: Arc::new(tenant::build_test_tenant_service()),
         desktop_layout: build_test_desktop_layout_service(),
+        desktop_apps: build_test_desktop_apps_service(),
         session: session_service.clone(),
         pool: dummy_pool(),
         rate_limiter: Arc::new(NoOpRateLimiter),
@@ -215,6 +264,25 @@ fn build_test_desktop_layout_service() -> Arc<tenant_service::TenantDesktopLayou
     ) as Arc<dyn base::ports::repository::TenantDesktopLayoutRepository>;
 
     Arc::new(tenant_service::TenantDesktopLayoutService::new(repository))
+}
+
+fn build_test_desktop_apps_service() -> Arc<tenant_service::DesktopAppService> {
+    build_test_desktop_apps_service_with_repo(Arc::new(FakeDesktopAppRepository::default()))
+}
+
+fn build_test_desktop_apps_service_with_repo(
+    app_repo: Arc<FakeDesktopAppRepository>,
+) -> Arc<tenant_service::DesktopAppService> {
+    let app_repository = app_repo as Arc<dyn base::ports::repository::DesktopAppRepository>;
+    let layout_repository = Arc::new(FakeTenantDesktopLayoutRepository)
+        as Arc<dyn base::ports::repository::TenantDesktopLayoutRepository>;
+    let audit_logger = Arc::new(FakeAuditLogger) as Arc<dyn base::ports::AuditLogger>;
+
+    Arc::new(tenant_service::DesktopAppService::new(
+        app_repository,
+        layout_repository,
+        audit_logger,
+    ))
 }
 
 /// Default test configuration.

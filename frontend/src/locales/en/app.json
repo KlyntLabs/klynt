@@ -1,0 +1,30 @@
+{
+  "app": {
+    "unknownRenderer": "Unknown app type"
+  },
+  "video": {
+    "noUrl": "No valid video URL",
+    "httpsOnly": "Video URLs must use HTTPS",
+    "urlLabel": "Video URL"
+  },
+  "folder": {
+    "empty": "This folder is empty"
+  },
+  "menu": {
+    "new": "New",
+    "rename": "Rename",
+    "duplicate": "Duplicate",
+    "delete": "Delete",
+    "open": "Open",
+    "newFolder": "New Folder",
+    "newMarkdown": "New Markdown",
+    "newNotes": "New Notes",
+    "newVideo": "New Video",
+    "paste": "Paste",
+    "refresh": "Refresh",
+    "changeBackground": "Change Background",
+    "newFolderInside": "New Folder inside",
+    "cut": "Cut",
+    "copy": "Copy"
+  }
+}

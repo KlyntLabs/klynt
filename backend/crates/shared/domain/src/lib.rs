@@ -2,6 +2,7 @@
 
 pub mod auth;
 pub mod contracts;
+pub mod desktop_app;
 pub mod error;
 pub mod membership;
 pub mod operations;
@@ -19,6 +20,7 @@ pub use contracts::{
     ErrorResponse, LoginRequest, LoginResponse, ProfileUpdate, RefreshTokenRequest,
     RegistrationRequest, SuccessResponse, UserProfile, UserSessionInfo,
 };
+pub use desktop_app::*;
 pub use error::*;
 pub use membership::*;
 pub use permission::*;

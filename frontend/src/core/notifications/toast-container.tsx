@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import { useToastStore } from "./toast-store";
 
 function ToastItem({
@@ -6,11 +7,16 @@ function ToastItem({
   message,
   type,
   duration,
+  action,
 }: {
   id: string;
   message: string;
   type: string;
   duration: number;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
 }) {
   const removeToast = useToastStore((state) => state.removeToast);
 
@@ -30,9 +36,22 @@ function ToastItem({
     <output
       aria-live="polite"
       aria-atomic="true"
-      className={`rounded-md px-4 py-2 shadow ${color}`}
+      className={`flex items-center gap-3 rounded-md px-4 py-2 shadow ${color}`}
     >
-      {message}
+      <span>{message}</span>
+      {action && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            action.onClick();
+            removeToast(id);
+          }}
+          className="border-current bg-transparent text-current hover:bg-white/20"
+        >
+          {action.label}
+        </Button>
+      )}
     </output>
   );
 }

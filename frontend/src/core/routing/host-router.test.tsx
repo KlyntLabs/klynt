@@ -117,11 +117,18 @@ describe("HostRouter", () => {
     expect(window.location.replace).toHaveBeenCalledWith("http://lvh.me:5174/");
   });
 
-  it("redirects unauthenticated tenant subdomain to login subdomain", () => {
+  it("redirects unauthenticated tenant subdomain to login subdomain", async () => {
     stubLocation("http://acme.lvh.me:5174/members");
+    server.use(
+      http.get("/api/v1/tenants/acme/public", () =>
+        HttpResponse.json({ data: { slug: "acme", name: "Acme" } })
+      )
+    );
     render(<HostRouter />);
-    expect(window.location.replace).toHaveBeenCalledWith(
-      expect.stringContaining("login.lvh.me:5174/?from=")
+    await waitFor(() =>
+      expect(window.location.replace).toHaveBeenCalledWith(
+        expect.stringContaining("login.lvh.me:5174/?from=")
+      )
     );
   });
 
