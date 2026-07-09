@@ -143,7 +143,7 @@ dependencies = [
  "domain",
  "hex",
  "infra_facades",
- "rand 0.10.1",
+ "rand 0.10.2",
  "session_service",
  "sha2 0.11.0",
  "thiserror",
@@ -396,7 +396,7 @@ name = "cleanup_job"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "rand 0.10.1",
+ "rand 0.10.2",
  "sqlx",
  "tokio",
  "tracing",
@@ -1791,7 +1791,7 @@ dependencies = [
  "criterion",
  "domain",
  "observability",
- "rand 0.10.1",
+ "rand 0.10.2",
  "rand_core 0.6.4",
  "redis",
  "serde",
@@ -1995,9 +1995,9 @@ dependencies = [
 
 [[package]]
 name = "rand"
-version = "0.10.1"
+version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d2e8e8bcc7961af1fdac401278c6a831614941f6164ee3bf4ce61b7edb162207"
+checksum = "c7f5fa3a058cd35567ef9bfa5e75732bee0f9e4c55fa90477bef2dfcdbc4be80"
 dependencies = [
  "chacha20",
  "getrandom 0.4.3",
@@ -2632,7 +2632,7 @@ dependencies = [
  "log",
  "md-5",
  "memchr",
- "rand 0.10.1",
+ "rand 0.10.2",
  "serde",
  "serde_json",
  "sha2 0.11.0",
@@ -2739,7 +2739,7 @@ dependencies = [
  "infra_facades",
  "observability",
  "persistence",
- "rand 0.10.1",
+ "rand 0.10.2",
  "serde_json",
  "session_coordinator",
  "sqlx",
