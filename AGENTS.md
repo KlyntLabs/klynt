@@ -110,6 +110,7 @@ Before changing code:
 - **Frozen:** `frontend/src/components/ui/` holds legacy shadcn primitives being replaced by Astryx feature-by-feature. Do not add to it; do not import from it in new code.
 - **Klynt-owned exceptions** (no Astryx equivalent — keep using these): `@/components/glass-panel`, `@/components/scroll-area`, `@/components/form`. Animation uses `framer-motion`.
 - New UI must feel native to Klynt — browser-default styling signals a missing Astryx component or a wrong prop.
+- Astryx's `Theme` provider supplies the app's default text color and body font stack to the whole subtree (via inherited `--color-text-primary` and `--color-font-family-body`), so app-wide default typography/color come from the Astryx theme, not the old Tailwind body defaults.
 
 ### File Size
 
