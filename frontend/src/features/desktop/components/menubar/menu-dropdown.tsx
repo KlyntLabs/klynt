@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import { GlassDivider, GlassPanel } from "@/components/ui/glass-panel";
+import { GlassDivider, GlassPanel } from "@/components/glass-panel";
 import type { MenuGroup, MenuItem } from "./menu-helpers";
 
 export function MenuDropdown({

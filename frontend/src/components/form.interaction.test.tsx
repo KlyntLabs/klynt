@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { FormProvider, useForm } from "react-hook-form";
 import { describe, expect, it } from "vitest";
+import { Input } from "@/components/ui/input";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "./form";
-import { Input } from "./input";
 
 function TestForm({ children }: { children: React.ReactNode }) {
   const form = useForm();
