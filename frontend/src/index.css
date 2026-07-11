@@ -1,4 +1,11 @@
-@import "tailwindcss";
+@layer reset, theme, base, astryx-base, astryx-theme, components, utilities;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "@astryxdesign/core/reset.css";
+@import "@astryxdesign/core/astryx.css";
+@import "@astryxdesign/core/tailwind-theme.css";
+@import "tailwindcss/utilities.css" layer(utilities);
 
 @theme {
   /* v2 design-system colors (HSL variables defined below) */
@@ -58,7 +65,10 @@
   --shadow-hard-lg: 6px 6px 0 0 #000000;
 
   /* ── macOS Tahoe glassmorphism system ─────────────────────────── */
-  /* Brand accent — the Klynt orange used throughout the desktop UI */
+  /* Brand accent — the Klynt orange used throughout the desktop UI.
+     KEPT (not part of the Astryx migration removal) because
+     src/features/desktop/components/menubar/brand-logo.tsx still consumes
+     var(--color-brand) directly; migrate that consumer before deleting. */
   --color-brand: #f76e18;
   --color-brand-hover: #e56310;
   --color-brand-foreground: #ffffff;
@@ -149,7 +159,7 @@
   }
 }
 
-@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 :root {
   --background: 0 0% 100%;
@@ -186,42 +196,6 @@
   --glass-strong: 40 12% 88%; /* denser variant for dropdowns */
   --glass-border: 40 5% 82%; /* soft warm border */
   --glass-highlight: 0 0% 100%; /* top-edge inner glow */
-}
-
-.dark {
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
-  --card: 240 10% 3.9%;
-  --card-foreground: 0 0% 98%;
-  --popover: 240 10% 3.9%;
-  --popover-foreground: 0 0% 98%;
-  --primary: 0 0% 98%;
-  --primary-foreground: 240 5.9% 10%;
-  --secondary: 240 3.7% 15.9%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 64.9%;
-  --accent: 240 3.7% 15.9%;
-  --accent-foreground: 0 0% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 240 3.7% 15.9%;
-  --input: 240 3.7% 15.9%;
-  --ring: 240 4.9% 83.9%;
-  --sidebar-background: 240 5.9% 10%;
-  --sidebar-foreground: 240 4.8% 95.9%;
-  --sidebar-primary: 224.3 76.3% 48%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 240 3.7% 15.9%;
-  --sidebar-accent-foreground: 240 4.8% 95.9%;
-  --sidebar-border: 240 3.7% 15.9%;
-  --sidebar-ring: 217.2 91.2% 59.8%;
-
-  /* macOS Tahoe glass tokens (dark) */
-  --glass: 240 6% 14%;
-  --glass-strong: 240 6% 18%;
-  --glass-border: 240 4% 28%;
-  --glass-highlight: 240 10% 30%;
 }
 
 @layer base {
