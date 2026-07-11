@@ -25,7 +25,7 @@ The backend has real Postgres repositories (users, sessions, tokens, audit), Red
 | Backend language | Rust (stable, see `rust-toolchain.toml`) |
 | Web framework | Axum 0.8, Tokio 1, tower-http |
 | Frontend framework | React 19, Vite 8, TypeScript 6, React Router 7 |
-| Styling | Tailwind CSS 4 |
+| Styling | Astryx design system (`@astryxdesign/core`); Tailwind 4 for layout utilities via the Astryx token bridge |
 | State/forms | TanStack Query 5, React Hook Form 7, Zod 4 |
 | HTTP client | Axios 1 |
 | Lint/format | Biome 1.9, rustfmt, Clippy |
@@ -102,9 +102,14 @@ Before changing code:
 
 ### UI Components
 
-- Reuse `frontend/src/components/ui/` primitives. These are shadcn/ui-style components migrated from `frontend-v2/` and adapted for Tailwind CSS v4.
-- The legacy `frontend/src/core/ui/` NeoBrutalist primitives and `frontend/src/features/home/` OS desktop have been removed; see `docs/adr/0001-frontend-v2-ui-migration.md`.
-- New UI must feel native to Klynt — browser-default styling is a signal that an existing primitive is missing.
+- **Canonical vocabulary:** import UI components from `@astryxdesign/core/<Component>` (e.g. `import { Button } from "@astryxdesign/core/Button"`).
+- **Discovery (do this before building UI):**
+  - Catalog: `node frontend/node_modules/@astryxdesign/core/docs.mjs --list --brief`
+  - Component detail (props, anatomy, Do/Don't): `node frontend/node_modules/@astryxdesign/core/docs.mjs <Component>`
+  - Design guidance: `cd frontend && npx astryx docs <topic>` (`theme`, `color`, `spacing`, `layout`, `principles`, `working-with-ai`)
+- **Frozen:** `frontend/src/components/ui/` holds legacy shadcn primitives being replaced by Astryx feature-by-feature. Do not add to it; do not import from it in new code.
+- **Klynt-owned exceptions** (no Astryx equivalent — keep using these): `@/components/glass-panel`, `@/components/scroll-area`, `@/components/form`. Animation uses `framer-motion`.
+- New UI must feel native to Klynt — browser-default styling signals a missing Astryx component or a wrong prop.
 
 ### File Size
 
@@ -141,7 +146,7 @@ Cargo workspace with dependency direction enforced by the compiler:
 - `routes/` — React Router route tree
 - `app/` — providers, layout, error boundary
 - `features/` — business domains
-- `components/ui/` — design-system primitives
+- `components/` — Klynt-owned UI (glass-panel, scroll-area, form); `components/ui/` — frozen legacy shadcn primitives, being replaced by @astryxdesign/core
 - `lib/` — API client, query client, utilities
 
 ## Testing
