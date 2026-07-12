@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { GlassPanel } from "@/components/ui/glass-panel";
+import { GlassPanel } from "@/components/glass-panel";
 import { useWindowManager } from "@/features/desktop/window-manager/window-module";
 import { cn } from "@/lib/utils";
 import type { DesktopAction } from "../apps/types";

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ScrollArea } from "@/components/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -18,7 +19,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 /* ──────────────────────────── types ──────────────────────────── */
 

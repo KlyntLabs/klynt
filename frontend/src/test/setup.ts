@@ -49,7 +49,7 @@ Object.defineProperty(window, "IntersectionObserver", {
 // Radix Select and other popover libraries call scrollIntoView on active items.
 Element.prototype.scrollIntoView = vi.fn();
 
-// input-otp uses elementFromPoint when focusing slots; jsdom does not implement it.
+// Some libraries (e.g. Radix popovers) call elementFromPoint, which jsdom does not implement; polyfill it to null.
 document.elementFromPoint = () => null;
 
 // Disable framer-motion animations in tests. We map any `motion.<tag>` to the
