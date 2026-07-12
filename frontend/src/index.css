@@ -3,7 +3,14 @@
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/preflight.css" layer(base);
 @import "@astryxdesign/core/reset.css";
-@import "@astryxdesign/core/astryx.css";
+/*
+ * Astryx component styles (astryx.css, ~40 KB gzip precompiled StyleX) are
+ * DEFERRED. No feature code renders an Astryx component yet, so shipping the
+ * whole atomic sheet would blow the 30 KB initial-CSS budget for zero benefit.
+ * The first feature migration (marketing) MUST re-add this import — Astryx
+ * components render UNSTYLED without it — and own the budget bump then:
+ *   @import "@astryxdesign/core/astryx.css";
+ */
 @import "@astryxdesign/core/tailwind-theme.css";
 @import "tailwindcss/utilities.css" layer(utilities);
 
