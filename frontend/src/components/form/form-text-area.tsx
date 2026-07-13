@@ -16,6 +16,9 @@ interface FormTextAreaProps<TValues extends FieldValues, TName extends FieldPath
   rows?: number;
   isRequired?: boolean;
   isDisabled?: boolean;
+  /** Forwarded as data-testid. TypeScript never checks hyphenated JSX attributes, so passing
+   *  `data-testid` directly compiles fine and is then silently dropped — hence an explicit prop. */
+  testId?: string;
   rules?: Omit<RegisterOptions<TValues, TName>, "disabled" | "setValueAs" | "valueAsDate">;
 }
 
@@ -33,6 +36,7 @@ export function FormTextArea<TValues extends FieldValues, TName extends FieldPat
   rows,
   isRequired,
   isDisabled,
+  testId,
   rules,
 }: FormTextAreaProps<TValues, TName>) {
   return (
@@ -48,6 +52,7 @@ export function FormTextArea<TValues extends FieldValues, TName extends FieldPat
           rows={rows}
           isRequired={isRequired}
           isDisabled={isDisabled}
+          data-testid={testId}
           value={field.value ?? ""}
           onChange={(value) => field.onChange(value)}
           onBlur={field.onBlur}

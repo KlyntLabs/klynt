@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -41,7 +41,10 @@ describe("TenantSettingsPage", () => {
     });
 
     const slugInput = await screen.findByTestId("tenant-slug-input");
-    expect(slugInput).toHaveAttribute("readonly");
+    // Disabled is the whole assertion now. The old markup also set `readonly`, but that is
+    // inert on a disabled input — it cannot be edited or submitted either way — and Astryx
+    // models the two as mutually exclusive (isDisabled OR disabledMessage). Nothing
+    // user-visible changed; the redundant attribute simply went away.
     expect(slugInput).toBeDisabled();
   });
 
@@ -73,9 +76,13 @@ describe("TenantSettingsPage", () => {
     await screen.findByDisplayValue("Acme");
 
     await user.click(screen.getByTestId("delete-tenant-button"));
-    expect(await screen.findByTestId("confirm-delete-tenant")).toBeInTheDocument();
 
-    await user.click(screen.getByTestId("confirm-delete-tenant"));
+    // Astryx's AlertDialog owns its own action/cancel buttons and exposes no test ids for
+    // them, so the confirm button is reached through the dialog's role instead. Scoping to
+    // the dialog also matters here: its action label is the same word as the page's trigger
+    // button, so an unscoped query would match both.
+    const dialog = await screen.findByRole("alertdialog");
+    await user.click(within(dialog).getByRole("button", { name: /delete/i }));
 
     await vi.waitFor(() =>
       expect(navigateExternal).toHaveBeenCalledWith(

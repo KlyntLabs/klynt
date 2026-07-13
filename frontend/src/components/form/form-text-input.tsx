@@ -17,6 +17,9 @@ interface FormTextInputProps<TValues extends FieldValues, TName extends FieldPat
   autoComplete?: string;
   isRequired?: boolean;
   isDisabled?: boolean;
+  /** Forwarded as data-testid. TypeScript never checks hyphenated JSX attributes, so passing
+   *  `data-testid` directly compiles fine and is then silently dropped — hence an explicit prop. */
+  testId?: string;
   rules?: Omit<RegisterOptions<TValues, TName>, "disabled" | "setValueAs" | "valueAsDate">;
 }
 
@@ -48,6 +51,7 @@ export function FormTextInput<TValues extends FieldValues, TName extends FieldPa
   autoComplete,
   isRequired,
   isDisabled,
+  testId,
   rules,
 }: FormTextInputProps<TValues, TName>) {
   return (
@@ -69,6 +73,7 @@ export function FormTextInput<TValues extends FieldValues, TName extends FieldPa
           description={description}
           isRequired={isRequired}
           isDisabled={isDisabled}
+          data-testid={testId}
           htmlName={field.name}
           value={field.value ?? ""}
           onChange={(value) => field.onChange(value)}

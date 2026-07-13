@@ -22,7 +22,12 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
-      exclude: ["src/locales/**/*.json"],
+      // src/test/** is test scaffolding — the render helper, msw handlers, and the jsdom
+      // shims — not product code. Counting it distorted the gate in both directions: the msw
+      // handlers inflated the number, while the Popover/dialog shims (whose feature-detect
+      // branches never run under jsdom) deflated it. Neither tells us anything about how well
+      // Klynt's own code is tested.
+      exclude: ["src/locales/**/*.json", "src/test/**"],
       // Re-baselined for the Astryx migration (docs/astryx-migration-plan.md, Phase 1).
       // Deleting 31 dead shadcn primitives removed ~100 near-fully-covered files from the
       // denominator, so the old statements/lines numbers were flattered by presentational

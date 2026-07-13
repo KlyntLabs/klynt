@@ -21,6 +21,9 @@ interface FormSelectorProps<TValues extends FieldValues, TName extends FieldPath
   description?: string;
   isRequired?: boolean;
   isDisabled?: boolean;
+  /** Forwarded as data-testid. TypeScript never checks hyphenated JSX attributes, so passing
+   *  `data-testid` directly compiles fine and is then silently dropped — hence an explicit prop. */
+  testId?: string;
   rules?: Omit<RegisterOptions<TValues, TName>, "disabled" | "setValueAs" | "valueAsDate">;
 }
 
@@ -41,6 +44,7 @@ export function FormSelector<TValues extends FieldValues, TName extends FieldPat
   description,
   isRequired,
   isDisabled,
+  testId,
   rules,
 }: FormSelectorProps<TValues, TName>) {
   return (
@@ -56,6 +60,7 @@ export function FormSelector<TValues extends FieldValues, TName extends FieldPat
           description={description}
           isRequired={isRequired}
           isDisabled={isDisabled}
+          data-testid={testId}
           htmlName={field.name}
           value={field.value ?? ""}
           onChange={(value) => field.onChange(value)}
