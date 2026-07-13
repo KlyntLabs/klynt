@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render } from "@/test/render";
 import { UserMenu } from "./user-menu";
@@ -52,7 +52,10 @@ describe("UserMenu", () => {
 
     render(<UserMenu />);
 
-    expect(screen.getByText("JN")).toBeInTheDocument();
-    expect(screen.getByText("Jayden Nguyen")).toBeInTheDocument();
+    // Scoped to the trigger: Astryx's Popover keeps its content mounted (hidden) rather than
+    // conditionally rendering it, so the avatar and name also exist in the closed menu header.
+    const trigger = within(screen.getByTestId("user-menu-trigger"));
+    expect(trigger.getByText("JN")).toBeInTheDocument();
+    expect(trigger.getByText("Jayden Nguyen")).toBeInTheDocument();
   });
 });

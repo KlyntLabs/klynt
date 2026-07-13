@@ -197,6 +197,7 @@
       "share": "Share",
       "zoom": "100%",
       "toolbar": {
+        "label": "文档工具栏",
         "back": "Back",
         "forward": "Forward",
         "bold": "Bold",

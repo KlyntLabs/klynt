@@ -1,4 +1,5 @@
 import "@testing-library/jest-dom/vitest";
+import "@/test/popover-shim";
 import React from "react";
 import { apiClient } from "@/core/api/api-client";
 import { createAuthInterceptorDeps, registerAuthInterceptor } from "@/core/api/auth-interceptor";

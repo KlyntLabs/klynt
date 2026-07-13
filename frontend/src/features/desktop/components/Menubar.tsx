@@ -1,15 +1,16 @@
-import { useEffect, useRef, useState } from "react";
+import { DropdownMenu } from "@astryxdesign/core/DropdownMenu";
+import { HStack } from "@astryxdesign/core/HStack";
+import { TopNav } from "@astryxdesign/core/TopNav";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { GlassPanel } from "@/components/ui/glass-panel";
 import { useWindowManager } from "@/features/desktop/window-manager/window-module";
-import { cn } from "@/lib/utils";
 import type { DesktopAction } from "../apps/types";
 import type { DesktopConfig } from "../factory/types";
 import type { MenubarItem, MenubarSchema } from "../menubar/types";
 import { BrandLogo } from "./menubar/brand-logo";
-import { MenuDropdown } from "./menubar/menu-dropdown";
 import { useMenuGroups } from "./menubar/menu-helpers";
+import { toDropdownEntries } from "./menubar/menu-items";
 import { TrailingActions } from "./menubar/trailing-actions";
 import { UserMenu } from "./menubar/user-menu";
 
@@ -18,21 +19,13 @@ interface MenubarProps {
 }
 
 export default function Menubar({ config }: MenubarProps) {
+  // Retained only to drive macOS-style hover switching: once one menu is open, hovering a
+  // sibling switches to it. Astryx's DropdownMenu owns open/close and outside-dismissal,
+  // so the old click-outside listener and menu ref are gone.
   const [openMenu, setOpenMenu] = useState<string | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation("home");
   const { openApp } = useWindowManager();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setOpenMenu(null);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const handleAction = (action: DesktopAction) => {
     switch (action.type) {
@@ -51,11 +44,6 @@ export default function Menubar({ config }: MenubarProps) {
   };
 
   const menus = useMenuGroups(config.menubar, handleAction);
-
-  const handleMenuClick = (item: { onClick?: () => void }) => {
-    setOpenMenu(null);
-    item.onClick?.();
-  };
 
   const handleLogoClick = () => {
     if (config.defaultApp) {
@@ -79,61 +67,54 @@ export default function Menubar({ config }: MenubarProps) {
   };
 
   return (
-    <GlassPanel
-      ref={menuRef}
-      variant="topbar"
-      radius="none"
-      className="fixed top-0 left-0 right-0 z-50 flex h-10 items-center gap-1 px-3"
-      style={{
-        WebkitBackdropFilter: "blur(20px) saturate(180%)",
-        backdropFilter: "blur(20px) saturate(180%)",
-      }}
-    >
-      {/* Logo */}
-      <button type="button" onClick={handleLogoClick} className="flex shrink-0 items-center">
-        <BrandLogo
-          label={t("desktop.menubar.logo") || config.menubar.brand.label}
-          alt={t("desktop.menubar.logoAlt")}
-        />
-      </button>
-
-      {/* Menu Items */}
-      <div className="flex items-center gap-0.5">
-        {menus.map((menu) => (
-          <div key={menu.label} className="relative">
-            <button
-              type="button"
-              onClick={() => setOpenMenu(openMenu === menu.label ? null : menu.label)}
-              onMouseEnter={() => {
-                if (openMenu !== null) setOpenMenu(menu.label);
+    <TopNav
+      className="fixed top-0 right-0 left-0 z-50 h-10"
+      heading={
+        <button type="button" onClick={handleLogoClick} className="flex shrink-0 items-center">
+          <BrandLogo
+            label={t("desktop.menubar.logo") || config.menubar.brand.label}
+            alt={t("desktop.menubar.logoAlt")}
+          />
+        </button>
+      }
+      startContent={
+        <HStack gap={1}>
+          {menus.map((menu) => (
+            <DropdownMenu
+              key={menu.label}
+              hasChevron={false}
+              button={{
+                label: t(menu.label as never),
+                variant: "ghost",
+                // The hover handler has to ride on `button`, not on DropdownMenu itself:
+                // DropdownMenu destructures its rest props but never spreads them onto any
+                // element, so an onMouseEnter passed at the top level is silently dropped.
+                onMouseEnter: () => {
+                  if (openMenu !== null) setOpenMenu(menu.label);
+                },
               }}
-              className={cn(
-                "rounded-md px-2.5 py-1 text-[13px] font-medium transition-colors",
-                openMenu === menu.label
-                  ? "bg-foreground/10 text-foreground"
-                  : "text-foreground/80 hover:bg-foreground/5"
-              )}
-            >
-              {t(menu.label as never)}
-            </button>
-
-            <MenuDropdown
-              group={menu}
-              isOpen={openMenu === menu.label}
-              onClose={() => setOpenMenu(null)}
-              onItemClick={handleMenuClick}
+              isMenuOpen={openMenu === menu.label}
+              // Only the menu that is actually open may clear the selection. Native
+              // popover="auto" evicts the previous popover from the top layer when the next
+              // one opens, and that eviction fires onOpenChange(false) on the OLD menu — a
+              // naive `setOpenMenu(null)` there would cancel the menu just opened by hover.
+              onOpenChange={(isOpen) =>
+                setOpenMenu((current) => {
+                  if (isOpen) return menu.label;
+                  return current === menu.label ? null : current;
+                })
+              }
+              items={toDropdownEntries(menu.items, (key) => t(key as never))}
             />
-          </div>
-        ))}
-      </div>
-
-      <div className="flex-1" />
-
-      {/* Right side: schema actions + live auth status */}
-      <div className="flex items-center gap-2">
-        <TrailingActions schema={filteredSchema} onAction={handleTrailingClick} />
-        <UserMenu />
-      </div>
-    </GlassPanel>
+          ))}
+        </HStack>
+      }
+      endContent={
+        <HStack gap={2}>
+          <TrailingActions schema={filteredSchema} onAction={handleTrailingClick} />
+          <UserMenu />
+        </HStack>
+      }
+    />
   );
 }
