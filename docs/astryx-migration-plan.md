@@ -167,7 +167,49 @@ Needing judgement rather than a swap:
 2. **Then decide explicitly.** If most of the chrome needs swizzling, that is opting out of the design system exactly where our UI is most custom — **stop and reopen ADR-015.** This is also the moment to decide whether the residue justifies adopting StyleX.
 3. On proceed: migrate the remaining windows, replace `glass-panel`, move the desktop context menu onto Astryx's `ContextMenu`.
 
-## Phase 5 — Close out
+## Phase 5 — Close out — ⚠️ TAILWIND REMOVAL IS BLOCKED ON A DESIGN DECISION
+
+**Everything else is done.** `components/ui/` is deleted, Radix is at zero, 62 dependencies are down to 27. Tailwind is the only thing left — and it is not a migration task any more, it is a marketing redesign.
+
+### The numbers
+
+| Area | `className` sites | hardcoded hex |
+|---|---|---|
+| `features/marketing` | **748** | **586** |
+| `features/desktop` | 110 | 24 (traffic lights + glass) |
+| everything else | 54 | ~0 |
+
+Tailwind cannot be removed from the build while 748 class sites remain, so partial removal buys nothing. The work is concentrated almost entirely in marketing.
+
+### Why it is a decision, not a task
+
+Marketing carries its own **bespoke palette**, and it is not Astryx's:
+
+| Marketing | Count | Nearest Astryx token | Same? |
+|---|---|---|---|
+| `#1A1A1A` (body text) | 106 | `--color-text-primary` = `#0A1317` | no |
+| `#6B6B6B` (secondary) | 119 | `--color-text-secondary` = `#4E606F` | no |
+| `#9CA3AF` (muted) | 55 | — | — |
+| `#E5E5E5` / `#D1D1D1` (borders) | 76 | `--color-border-emphasized` = `#CCD3DB` | no |
+| `#2563EB` (link blue) | 44 | — (theme accent is Klynt orange) | no |
+| `#F5F3EF` / `#FAFAF8` (surfaces) | 53 | `--color-background-surface` = `#ffffff` | no |
+
+These are close to Astryx's neutrals but **not equal** to them. Mapping 586 hex values onto tokens means accepting a visible shift in the marketing site's colour: warmer greys become cooler, the blue links have no token at all, and the off-white surfaces become white. That is a design call, not a refactor, and it must be made by someone who owns the marketing look.
+
+The layouts are the same story: hero sections, product slides, pricing tables and the docs page are bespoke marketing compositions, not app screens. Astryx's components do not express them; they would move to CSS Modules with `var(--color-*)`, or be redesigned onto Astryx primitives.
+
+### Recommended sequence
+
+1. **Decide the palette.** Either (a) adopt Astryx's neutrals and accept the colour shift, or (b) extend `klynt-theme.ts` with the marketing palette as explicit token overrides via `defineTheme` (the accent already works this way), so the marketing colours become tokens instead of hex.
+2. **Then** convert marketing surface-by-surface, with a **browser pass per page** — this is the one area where a silent visual regression is both likely and invisible to the test suite.
+3. Remove `tailwindcss`, `@tailwindcss/vite`, `tailwind-merge`, `clsx`, the `cn()` helper, the Vite plugin, and the layer block in `index.css`.
+4. Flip `Theme` `mode` from `"light"` to `"system"` and add the theme control.
+5. Regenerate the agent block (it switches to the no-Tailwind variant automatically once Tailwind leaves `package.json`).
+6. Mark ADR-015 **Accepted**.
+
+Option (b) is the cheaper and safer path: it makes the marketing palette theme-driven without changing a single rendered colour, and it removes the hex without a redesign.
+
+## Phase 5 — original close-out checklist
 
 1. Delete `frontend/src/components/ui/`; remove the last `@radix-ui/*`.
 2. **Remove Tailwind**: `tailwindcss`, `@tailwindcss/vite`, `tailwind-merge`, `clsx`, `class-variance-authority`, the `cn()` helper, the Vite plugin, and the layer/bridge block in `index.css`.
