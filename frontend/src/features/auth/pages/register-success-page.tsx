@@ -1,15 +1,9 @@
+import { Center } from "@astryxdesign/core/Center";
+import { EmptyState } from "@astryxdesign/core/EmptyState";
+import { Link } from "@astryxdesign/core/Link";
 import { useTranslation } from "react-i18next";
-import { Link, useLocation } from "react-router-dom";
+import { Link as RouterLink, useLocation } from "react-router-dom";
 import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 const locationStateSchema = z.object({
   email: z.string().optional(),
@@ -21,23 +15,21 @@ export default function RegisterSuccessPage() {
   const state = locationStateSchema.safeParse(location.state).data;
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-6">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>{t("auth:register.success.title")}</CardTitle>
-          <CardDescription>
-            {state?.email
-              ? t("auth:register.success.messageWithEmail", { email: state.email })
-              : t("auth:register.success.message")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent />
-        <CardFooter>
-          <Button asChild className="w-full">
-            <Link to="/login">{t("auth:register.success.goToLogin")}</Link>
-          </Button>
-        </CardFooter>
-      </Card>
-    </div>
+    <Center height="100vh">
+      <EmptyState
+        title={t("auth:register.success.title")}
+        headingLevel={1}
+        description={
+          state?.email
+            ? t("auth:register.success.messageWithEmail", { email: state.email })
+            : t("auth:register.success.message")
+        }
+        actions={
+          <Link as={RouterLink} {...({ to: "/login" } as { to?: string })}>
+            {t("auth:register.success.goToLogin")}
+          </Link>
+        }
+      />
+    </Center>
   );
 }

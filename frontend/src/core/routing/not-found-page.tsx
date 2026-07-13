@@ -1,33 +1,29 @@
+import { Center } from "@astryxdesign/core/Center";
+import { EmptyState } from "@astryxdesign/core/EmptyState";
+import { Link } from "@astryxdesign/core/Link";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Link as RouterLink } from "react-router-dom";
 import { routePaths } from "./route-paths";
 
 export default function NotFoundPage() {
   const { t } = useTranslation("ui");
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-6">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>{t("notFound.title")}</CardTitle>
-          <CardDescription>{t("notFound.message")}</CardDescription>
-        </CardHeader>
-        <CardContent />
-        <CardFooter>
-          <Button asChild className="w-full">
-            <Link to={routePaths.home}>{t("notFound.goHome")}</Link>
-          </Button>
-        </CardFooter>
-      </Card>
-    </div>
+    <Center height="100vh">
+      <EmptyState
+        title={t("notFound.title")}
+        description={t("notFound.message")}
+        headingLevel={1}
+        actions={
+          // `as` lets Astryx's Link render react-router's Link, so this stays a client-side
+          // navigation rather than a full page load. `to` is spread through a cast: Astryx's
+          // LinkProps has no `to` (its BaseProps are HTML-attribute based), but Link does
+          // forward rest props to the `as` component, so it lands on RouterLink at runtime.
+          <Link as={RouterLink} {...({ to: routePaths.home } as { to?: string })}>
+            {t("notFound.goHome")}
+          </Link>
+        }
+      />
+    </Center>
   );
 }

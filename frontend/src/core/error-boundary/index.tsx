@@ -1,6 +1,6 @@
+import { Button } from "@astryxdesign/core/Button";
 import { ErrorBoundary as ReactErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
 import { logger } from "@/core/logger";
 
 interface ErrorBoundaryProps {
@@ -21,9 +21,12 @@ function Fallback({
     <div className="p-6" role="alert">
       <h2 className="text-lg font-semibold">{t("boundary.title")}</h2>
       <pre className="mt-2 text-sm text-destructive">{message}</pre>
-      <Button onClick={resetErrorBoundary} className="mt-4">
-        {t("boundary.tryAgain")}
-      </Button>
+      <Button
+        variant="primary"
+        label={t("boundary.tryAgain")}
+        onClick={resetErrorBoundary}
+        className="mt-4"
+      />
     </div>
   );
 }

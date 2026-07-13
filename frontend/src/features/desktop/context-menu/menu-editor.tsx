@@ -1,11 +1,10 @@
+import { Button } from "@astryxdesign/core/Button";
+import { CheckboxInput } from "@astryxdesign/core/CheckboxInput";
+import { Divider } from "@astryxdesign/core/Divider";
+import { TextInput } from "@astryxdesign/core/TextInput";
 import * as React from "react";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
-
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   type ContextMenuEntry,
   type ContextMenuItem,
@@ -92,47 +91,38 @@ export function MenuEditor({
                   data-testid="menu-item"
                 >
                   <div className="flex-1 space-y-2">
-                    <div>
-                      <Label htmlFor={labelId}>Label</Label>
-                      <Input
-                        id={labelId}
-                        value={entry.label}
-                        disabled={readOnly}
-                        onChange={(event) =>
-                          updateRoot((entries) =>
-                            updateItem(entries, entry.id, { label: event.target.value })
-                          )
-                        }
-                      />
-                    </div>
+                    {/* Astryx's TextInput owns its label, so the separate <Label> is gone. */}
+                    <TextInput
+                      id={labelId}
+                      label="Label"
+                      value={entry.label}
+                      isDisabled={readOnly}
+                      onChange={(value) =>
+                        updateRoot((entries) => updateItem(entries, entry.id, { label: value }))
+                      }
+                    />
                     <p className="text-sm text-muted-foreground">Action: {entry.action}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Label
-                      htmlFor={disabledId}
-                      className="flex items-center gap-2 text-sm font-normal"
-                    >
-                      <Checkbox
-                        id={disabledId}
-                        checked={entry.disabled ?? false}
-                        disabled={readOnly}
-                        onCheckedChange={(checked) =>
-                          updateRoot((entries) =>
-                            updateItem(entries, entry.id, { disabled: checked === true })
-                          )
-                        }
-                      />
-                      Disabled
-                    </Label>
+                    <CheckboxInput
+                      id={disabledId}
+                      label="Disabled"
+                      value={entry.disabled ?? false}
+                      isDisabled={readOnly}
+                      onChange={(checked) =>
+                        updateRoot((entries) =>
+                          updateItem(entries, entry.id, { disabled: checked })
+                        )
+                      }
+                    />
                     {!readOnly && (
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => updateRoot((entries) => removeEntry(entries, index))}
+                        label="Delete"
                         aria-label={`Delete ${entry.label}`}
-                      >
-                        Delete
-                      </Button>
+                        onClick={() => updateRoot((entries) => removeEntry(entries, index))}
+                      />
                     )}
                   </div>
                 </li>
@@ -147,16 +137,15 @@ export function MenuEditor({
                   className="flex items-center justify-between gap-2 rounded-md border p-3"
                   data-testid="menu-separator"
                 >
-                  <div className="h-px flex-1 bg-border" />
+                  <Divider />
                   {!readOnly && (
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => updateRoot((entries) => removeEntry(entries, index))}
+                      label="Delete"
                       aria-label="Delete separator"
-                    >
-                      Delete
-                    </Button>
+                      onClick={() => updateRoot((entries) => removeEntry(entries, index))}
+                    />
                   )}
                 </li>
               );
@@ -181,18 +170,17 @@ export function MenuEditor({
       {!readOnly && (
         <div className="flex gap-2">
           <Button
-            onClick={() => updateRoot((entries) => [...entries, createDefaultItem()])}
+            variant="primary"
+            label="Add Item"
             aria-label="Add item"
-          >
-            Add Item
-          </Button>
+            onClick={() => updateRoot((entries) => [...entries, createDefaultItem()])}
+          />
           <Button
             variant="secondary"
-            onClick={() => updateRoot((entries) => [...entries, { type: "separator" }])}
+            label="Add Separator"
             aria-label="Add separator"
-          >
-            Add Separator
-          </Button>
+            onClick={() => updateRoot((entries) => [...entries, { type: "separator" }])}
+          />
         </div>
       )}
     </div>

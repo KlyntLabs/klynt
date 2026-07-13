@@ -1,7 +1,7 @@
+import { Spinner } from "@astryxdesign/core/Spinner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Spinner } from "@/components/ui/spinner";
 import { type DesktopApp, desktopAppsApi } from "@/features/desktop/api/desktop-apps-api";
 import { ConflictDialog } from "@/features/desktop/components/ConflictDialog";
 import { useConflictHandler } from "@/features/desktop/components/use-conflict-handler";

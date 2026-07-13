@@ -20,17 +20,22 @@ describe("AboutPage interactions", () => {
     const user = userEvent.setup();
     render(<Default />);
 
-    await user.click(screen.getByRole("tab", { name: "Roadmap" }));
+    // Astryx's TabList does NOT implement the ARIA tabs pattern: no role="tab"/"tablist".
+    // It exposes tabs as buttons with aria-current="page" and a roving tabindex — its source
+    // notes the tab roles would trip an axe aria-allowed-attr violation. There is no
+    // alternative component, so query by button. Accessible names carry a duplicated label
+    // (Astryx renders a hidden bold copy to reserve width), hence the regex.
+    await user.click(screen.getByRole("button", { name: /^Roadmap/ }));
     expect(
       screen.getByText("Coming soon — this section is under construction")
     ).toBeInTheDocument();
 
-    await user.click(screen.getByRole("tab", { name: "Careers" }));
+    await user.click(screen.getByRole("button", { name: /^Careers/ }));
     expect(
       screen.getByText("Coming soon — this section is under construction")
     ).toBeInTheDocument();
 
-    await user.click(screen.getByRole("tab", { name: "About" }));
+    await user.click(screen.getByRole("button", { name: /^About/ }));
     await waitFor(() => {
       expect(screen.getByText("James Hawkins")).toBeInTheDocument();
     });

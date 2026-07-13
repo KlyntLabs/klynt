@@ -1,6 +1,6 @@
+import { Button } from "@astryxdesign/core/Button";
 import { Download, Play } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
 import {
   SlideAutocapture,
   SlideCTA,
@@ -85,11 +85,11 @@ export default function ProductAnalyticsPage() {
         {t("productAnalytics.toolbar.present")}
       </button>
       <Button
+        variant="primary"
         size="sm"
-        className="bg-[#F76E18] hover:bg-[#E56310] text-white text-xs rounded-md ml-1"
-      >
-        {t("productAnalytics.toolbar.getStarted")}
-      </Button>
+        label={t("productAnalytics.toolbar.getStarted")}
+        className="ml-1"
+      />
     </>
   );
 

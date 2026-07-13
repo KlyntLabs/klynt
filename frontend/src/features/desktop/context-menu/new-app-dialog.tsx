@@ -1,24 +1,11 @@
+import { Button } from "@astryxdesign/core/Button";
+import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Selector } from "@astryxdesign/core/Selector";
+import { TextInput } from "@astryxdesign/core/TextInput";
+import { VStack } from "@astryxdesign/core/VStack";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Field, FieldContent, FieldError, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { type AppTypeId, isAppType, listAppTypes } from "../apps/app-type-registry";
 
 type NewAppDialogProps = {
@@ -78,72 +65,59 @@ export function NewAppDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t("desktop.dialog.newApp.title", "Create new app")}</DialogTitle>
-          <DialogDescription>
-            {t("desktop.dialog.newApp.description", "Choose a type and name for your new app.")}
-          </DialogDescription>
-        </DialogHeader>
+    // purpose="form": a backdrop click must not silently discard a half-typed app name.
+    <Dialog isOpen={open} onOpenChange={(isOpen) => !isOpen && onClose()} purpose="form">
+      <VStack gap={4}>
+        <DialogHeader
+          title={t("desktop.dialog.newApp.title", "Create new app")}
+          subtitle={t(
+            "desktop.dialog.newApp.description",
+            "Choose a type and name for your new app."
+          )}
+          onOpenChange={(isOpen) => !isOpen && onClose()}
+        />
         <form id="new-app-form" onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <Field>
-              <FieldLabel htmlFor="new-app-title">
-                {t("desktop.dialog.newApp.titleLabel", "Title")}
-              </FieldLabel>
-              <FieldContent>
-                <Input
-                  id="new-app-title"
-                  value={title}
-                  onChange={(event) => setTitle(event.target.value)}
-                  maxLength={MAX_TITLE_LENGTH}
-                  aria-invalid={!!error}
-                  aria-describedby={error ? "new-app-error" : undefined}
-                />
-              </FieldContent>
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="new-app-type">
-                {t("desktop.dialog.newApp.typeLabel", "Type")}
-              </FieldLabel>
-              <FieldContent>
-                <Select
-                  value={type}
-                  onValueChange={(value) => {
-                    if (isAppType(value)) {
-                      setType(value);
-                    }
-                  }}
-                >
-                  <SelectTrigger
-                    id="new-app-type"
-                    aria-label={t("desktop.dialog.newApp.typeLabel", "Type")}
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {appTypes.map((appType) => (
-                      <SelectItem key={appType.id} value={appType.id}>
-                        {appType.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FieldContent>
-            </Field>
-            {error && <FieldError id="new-app-error">{error}</FieldError>}
-          </div>
+          <VStack gap={4}>
+            {/* Astryx's TextInput and Selector own their label, description and validation
+                status, so the Field/FieldLabel/FieldContent/FieldError scaffolding is gone.
+                The error becomes `status`, which is what sets aria-invalid. */}
+            <TextInput
+              label={t("desktop.dialog.newApp.titleLabel", "Title")}
+              value={title}
+              onChange={setTitle}
+              status={error ? { type: "error", message: error } : undefined}
+              {...({ maxLength: MAX_TITLE_LENGTH } as { maxLength?: number })}
+            />
+            <Selector
+              label={t("desktop.dialog.newApp.typeLabel", "Type")}
+              value={type}
+              onChange={(value) => {
+                if (isAppType(value)) {
+                  setType(value);
+                }
+              }}
+              options={appTypes.map((appType) => ({
+                value: appType.id,
+                label: appType.label,
+              }))}
+            />
+          </VStack>
         </form>
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>
-            {t("desktop.dialog.newApp.cancel", "Cancel")}
-          </Button>
-          <Button type="submit" form="new-app-form">
-            {t("desktop.dialog.newApp.create", "Create")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
+        <HStack gap={2} justify="end">
+          <Button
+            type="button"
+            variant="secondary"
+            label={t("desktop.dialog.newApp.cancel", "Cancel")}
+            onClick={onClose}
+          />
+          <Button
+            type="submit"
+            form="new-app-form"
+            variant="primary"
+            label={t("desktop.dialog.newApp.create", "Create")}
+          />
+        </HStack>
+      </VStack>
     </Dialog>
   );
 }

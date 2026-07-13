@@ -1,4 +1,4 @@
-import { Spinner } from "@/components/ui/spinner";
+import { Spinner } from "@astryxdesign/core/Spinner";
 import { useTenantPublic } from "@/features/tenant/hooks/use-tenant";
 import { InvalidTenantPage } from "./invalid-tenant-page";
 

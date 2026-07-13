@@ -1,14 +1,9 @@
+import { Button } from "@astryxdesign/core/Button";
+import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
+import { HStack } from "@astryxdesign/core/HStack";
+import { VStack } from "@astryxdesign/core/VStack";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 type ConflictDialogProps = {
   open: boolean;
@@ -24,22 +19,21 @@ export function ConflictDialog(props: ConflictDialogProps): React.JSX.Element {
   const { t } = useTranslation("home");
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent showCloseButton>
-        <DialogHeader>
-          <DialogTitle>{title ?? t("desktop.conflict.title")}</DialogTitle>
-          <DialogDescription>{message ?? t("desktop.conflict.message")}</DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            {t("desktop.conflict.cancel")}
-          </Button>
-          <Button variant="secondary" onClick={onRetry}>
-            {t("desktop.conflict.retry")}
-          </Button>
-          <Button onClick={onReload}>{t("desktop.conflict.reload")}</Button>
-        </DialogFooter>
-      </DialogContent>
+    // purpose="required": a save conflict must be resolved deliberately, so neither a
+    // backdrop click nor Escape may dismiss it and silently drop the user's edits.
+    <Dialog isOpen={open} onOpenChange={(isOpen) => !isOpen && onClose()} purpose="required">
+      <VStack gap={4}>
+        <DialogHeader
+          title={title ?? t("desktop.conflict.title")}
+          subtitle={message ?? t("desktop.conflict.message")}
+          onOpenChange={(isOpen) => !isOpen && onClose()}
+        />
+        <HStack gap={2} justify="end">
+          <Button variant="secondary" label={t("desktop.conflict.cancel")} onClick={onClose} />
+          <Button variant="secondary" label={t("desktop.conflict.retry")} onClick={onRetry} />
+          <Button variant="primary" label={t("desktop.conflict.reload")} onClick={onReload} />
+        </HStack>
+      </VStack>
     </Dialog>
   );
 }

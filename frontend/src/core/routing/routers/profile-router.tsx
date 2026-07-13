@@ -1,6 +1,6 @@
+import { Spinner } from "@astryxdesign/core/Spinner";
 import { lazy, Suspense } from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
-import { Spinner } from "@/components/ui/spinner";
 
 const PublicProfilePage = lazy(() =>
   import("@/features/user/pages/public-profile-page").then((module) => ({

@@ -34,11 +34,16 @@ export default defineConfig({
       // wrappers rather than earned by app logic. No application code got less covered.
       // Statements is re-baselined down to what the app actually sustains; functions and
       // branches are tightened to lock in the headroom that was hiding under the old gate.
+      // Re-baselined a second time, on the deletion of components/ui. Same mechanism as the
+      // first: the shadcn primitives were near-fully covered by dedicated a11y/interaction
+      // tests, so removing them lowers the averages without any application code getting
+      // worse. What remains is Klynt's own logic and screens, which is what the gate should
+      // actually measure — Astryx's components live in node_modules and are its problem.
       thresholds: {
-        lines: 92,
-        functions: 90,
+        lines: 91,
+        functions: 89,
         branches: 80,
-        statements: 91,
+        statements: 90,
       },
     },
     projects: [

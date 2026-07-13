@@ -59,9 +59,14 @@ describe("TalkToHumanPage interactions", () => {
     render(<Default />);
 
     const trigger = screen.getByRole("button", { name: "How fast do you actually respond?" });
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+
     await user.click(trigger);
+
+    // aria-expanded, not Radix's data-state: Astryx's Collapsible exposes the standard ARIA
+    // attribute rather than a library-specific data attribute.
     await waitFor(() => {
-      expect(trigger).toHaveAttribute("data-state", "open");
+      expect(trigger).toHaveAttribute("aria-expanded", "true");
     });
     expect(screen.getByText(/Email responses are typically within 24 hours/)).toBeInTheDocument();
   });

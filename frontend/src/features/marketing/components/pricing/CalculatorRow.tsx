@@ -1,5 +1,5 @@
+import { Slider } from "@astryxdesign/core/Slider";
 import { useMemo } from "react";
-import { Slider } from "@/components/ui/slider";
 import { calculateCost, formatNumber } from "@/features/marketing/lib/pricing-helpers";
 import type { ProductPricing } from "@/features/marketing/lib/pricing-types";
 
@@ -22,13 +22,16 @@ export function CalculatorRow({ product, value, onChange, tk }: CalculatorRowPro
       </div>
       <div className="flex-1 flex items-center gap-3">
         <Slider
-          value={[value]}
+          label={tk(product.nameKey)}
+          isLabelHidden
+          value={value}
           min={0}
           max={sliderMax}
           step={Math.max(1, Math.floor(sliderMax / 100))}
-          onValueChange={(vals) => onChange(vals[0])}
+          onChange={
+            ((next: number) => onChange(next)) as (value: number | [number, number]) => void
+          }
           className="flex-1"
-          aria-label={tk(product.nameKey)}
         />
         <input
           type="text"

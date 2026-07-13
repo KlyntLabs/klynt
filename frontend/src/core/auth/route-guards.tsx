@@ -1,5 +1,5 @@
+import { Spinner } from "@astryxdesign/core/Spinner";
 import { Navigate } from "react-router-dom";
-import { Spinner } from "@/components/ui/spinner";
 import { buildAdminUrl, buildApexUrl, buildLoginUrl } from "@/core/routing/subdomain-router";
 import { useAuthModule, useAuthRole } from "./auth-module";
 import { ExternalNavigate, isExternalUrl } from "./external-redirect";

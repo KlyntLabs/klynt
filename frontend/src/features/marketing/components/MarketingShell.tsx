@@ -1,5 +1,5 @@
+import { Spinner } from "@astryxdesign/core/Spinner";
 import { lazy, Suspense } from "react";
-import { Spinner } from "@/components/ui/spinner";
 import { marketingRegistry } from "@/features/desktop/apps";
 
 const NotFoundPage = lazy(() => import("@/core/routing/not-found-page"));

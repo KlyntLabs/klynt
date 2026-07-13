@@ -1,8 +1,8 @@
+import { Button } from "@astryxdesign/core/Button";
+import { TextInput } from "@astryxdesign/core/TextInput";
 import { motion } from "framer-motion";
 import { ArrowRight, ExternalLink, MessageCircle, ThumbsUp } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useMarketingTranslation } from "@/features/marketing/lib/use-marketing-translation";
 import type {
   CommunityChangelogItem,
@@ -41,16 +41,15 @@ export function CommunityRightColumn() {
         </p>
         <p className="text-xs text-[#6B6B6B] mt-0.5">{t("community.newsletter.body")}</p>
         <div className="mt-3 space-y-2">
-          <Input
+          <TextInput
+            label={t("community.newsletter.title")}
+            isLabelHidden
             type="email"
             placeholder={t("community.newsletter.placeholder")}
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-white border-[#D1D1D1] rounded px-3 py-2 text-sm h-auto"
+            onChange={setEmail}
           />
-          <Button className="w-full bg-[#1A1A1A] text-white text-sm font-medium rounded px-3 py-2 hover:bg-[#333] h-auto">
-            {t("community.newsletter.cta")}
-          </Button>
+          <Button variant="primary" label={t("community.newsletter.cta")} className="w-full" />
         </div>
       </div>
 

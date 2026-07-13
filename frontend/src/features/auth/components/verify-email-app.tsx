@@ -1,6 +1,6 @@
+import { Spinner } from "@astryxdesign/core/Spinner";
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Spinner } from "@/components/ui/spinner";
 import { useVerifyEmail } from "@/core/auth/hooks/use-verify-email";
 
 export function VerifyEmailApp() {

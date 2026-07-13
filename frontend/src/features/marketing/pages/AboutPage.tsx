@@ -1,3 +1,5 @@
+import { Tab, TabList } from "@astryxdesign/core/TabList";
+import { VStack } from "@astryxdesign/core/VStack";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowRight,
@@ -12,9 +14,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
 
 const COMING_SOON_ICONS: Record<string, React.ReactNode> = {
   roadmap: <Calendar className="w-8 h-8 text-[#9CA3AF]" />,
@@ -64,7 +63,7 @@ function AboutTab() {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
     >
-      <ScrollArea className="h-full">
+      <VStack height="100%" isScrollable className="h-full">
         <div className="p-6 md:p-8">
           {/* Founder header */}
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
@@ -192,7 +191,7 @@ function AboutTab() {
             </motion.div>
           </div>
         </div>
-      </ScrollArea>
+      </VStack>
     </motion.div>
   );
 }
@@ -218,36 +217,21 @@ export default function AboutPage() {
     <div className="flex flex-col h-full bg-white">
       {/* Sub-navigation tabs */}
       <div className="shrink-0 border-b border-[#E5E5E5] bg-[#F5F3EF] overflow-x-auto">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="bg-transparent h-auto p-0 rounded-none w-full flex">
-            {tabs.map((tab) => (
-              <TabsTrigger
-                key={tab.id}
-                value={tab.id}
-                className={cn(
-                  "flex-shrink-0 rounded-none border-t-2 border-transparent px-3 py-2.5 text-xs font-medium transition-colors data-[state=active]:shadow-none",
-                  activeTab === tab.id
-                    ? "bg-white border-t-[#F76E18] text-[#1A1A1A] font-medium"
-                    : "bg-transparent text-[#6B6B6B] hover:text-[#1A1A1A] hover:bg-[#FAFAF8]"
-                )}
-              >
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+        {/* Astryx models tabs as TabList + Tab. There is no TabsContent — the panel is just
+            rendered conditionally, which is what the AnimatePresence swap already did. */}
+        <TabList value={activeTab} onChange={setActiveTab} hasDivider>
+          {tabs.map((tab) => (
+            <Tab key={tab.id} value={tab.id} label={tab.label} />
+          ))}
+        </TabList>
 
-          <AnimatePresence mode="wait">
-            {activeTab === "about" ? (
-              <TabsContent key="about" value="about" className="mt-0 p-0">
-                <AboutTab />
-              </TabsContent>
-            ) : (
-              <TabsContent key={activeTab} value={activeTab} className="mt-0 p-0">
-                <ComingSoonPlaceholder tabId={activeTab} />
-              </TabsContent>
-            )}
-          </AnimatePresence>
-        </Tabs>
+        <AnimatePresence mode="wait">
+          {activeTab === "about" ? (
+            <AboutTab key="about" />
+          ) : (
+            <ComingSoonPlaceholder key={activeTab} tabId={activeTab} />
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

@@ -1,3 +1,6 @@
+import { Badge } from "@astryxdesign/core/Badge";
+import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
+import { VStack } from "@astryxdesign/core/VStack";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
@@ -10,15 +13,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 /* ──────────────────────────── types ──────────────────────────── */
 
@@ -79,11 +73,9 @@ export default function TrashPage() {
         </div>
         <span className="text-xs text-[#6B6B6B]">{t("trash.header.subtitle")}</span>
         <Badge
-          variant="secondary"
-          className="bg-[#E5E5E5] text-[#6B6B6B] text-xs px-2 py-0.5 rounded-full font-normal"
-        >
-          {t("trash.header.itemsCount", { count: trashItems.length })}
-        </Badge>
+          variant="neutral"
+          label={t("trash.header.itemsCount", { count: trashItems.length })}
+        />
       </motion.div>
 
       {/* Subtitle */}
@@ -92,7 +84,7 @@ export default function TrashPage() {
       </div>
 
       {/* Grid */}
-      <ScrollArea className="flex-1">
+      <VStack height="100%" isScrollable className="flex-1">
         <div className="p-6">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {trashItems.map((item, i) => (
@@ -129,26 +121,27 @@ export default function TrashPage() {
             ))}
           </div>
         </div>
-      </ScrollArea>
+      </VStack>
 
       {/* Detail Modal */}
-      <Dialog open={selectedItem !== null} onOpenChange={() => setSelectedItem(null)}>
+      <Dialog isOpen={selectedItem !== null} onOpenChange={() => setSelectedItem(null)} width={448}>
         <AnimatePresence>
           {selectedItem && (
-            <DialogContent className="max-w-md max-h-[80vh] overflow-hidden flex flex-col">
-              <DialogHeader className="shrink-0">
-                <DialogTitle className="flex items-center gap-2 text-base">
-                  {selectedItem.redacted ? (
-                    <Lock className="w-4 h-4 text-[#9CA3AF]" />
+            <>
+              <DialogHeader
+                title={selectedItem.filename}
+                subtitle={
+                  selectedItem.redacted ? selectedItem.redactedReason : selectedItem.description
+                }
+                startContent={
+                  selectedItem.redacted ? (
+                    <Lock className="w-4 h-4" />
                   ) : (
                     getFileIcon(selectedItem.type)
-                  )}
-                  <span className="truncate">{selectedItem.filename}</span>
-                </DialogTitle>
-                <DialogDescription className="text-xs">
-                  {selectedItem.redacted ? selectedItem.redactedReason : selectedItem.description}
-                </DialogDescription>
-              </DialogHeader>
+                  )
+                }
+                onOpenChange={() => setSelectedItem(null)}
+              />
 
               <div className="flex-1 overflow-y-auto my-4">
                 {selectedItem.redacted ? (
@@ -185,7 +178,7 @@ export default function TrashPage() {
                   {t("trash.detail.restore")}
                 </button>
               </div>
-            </DialogContent>
+            </>
           )}
         </AnimatePresence>
       </Dialog>

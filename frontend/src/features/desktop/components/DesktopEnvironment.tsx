@@ -1,6 +1,6 @@
+import { Spinner } from "@astryxdesign/core/Spinner";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Spinner } from "@/components/ui/spinner";
 import { useToastStore } from "@/core/notifications/toast-store";
 import { backgroundPresets, getPresetById } from "@/features/desktop/backgrounds/presets";
 import { DesktopContextMenu } from "@/features/desktop/context-menu/DesktopContextMenu";

@@ -1,6 +1,6 @@
+import { Badge } from "@astryxdesign/core/Badge";
 import { motion } from "framer-motion";
 import { ArrowRight, Calendar } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { useMarketingTranslation } from "@/features/marketing/lib/use-marketing-translation";
 import type { CommunityEvent, CommunitySlackThread, CommunitySpotlight } from "./community-types";
 
@@ -45,12 +45,7 @@ export function CommunityLeftColumn() {
         <div className="space-y-3">
           {slackThreads.map((thread) => (
             <div key={thread.title} className="pb-3 border-b border-[#F0EDE6] last:border-0">
-              <Badge
-                variant="secondary"
-                className="text-[10px] text-[#9CA3AF] bg-[#F5F3EF] px-1 py-0 mb-1 font-normal"
-              >
-                {thread.channel}
-              </Badge>
+              <Badge variant="neutral" label={thread.channel} className="mb-1" />
               <p className="text-sm font-medium text-[#1A1A1A] hover:text-[#2563EB] cursor-pointer leading-snug">
                 {thread.title}
               </p>
@@ -95,9 +90,7 @@ export function CommunityLeftColumn() {
                 <p className="text-sm font-medium text-[#1A1A1A]">{event.title}</p>
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className="text-xs text-[#6B6B6B]">{event.date}</span>
-                  <Badge variant="outline" className="text-[10px] px-1 py-0 h-auto font-normal">
-                    {event.type}
-                  </Badge>
+                  <Badge variant="neutral" label={event.type} />
                 </div>
               </div>
             </div>

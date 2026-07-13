@@ -1,5 +1,5 @@
+import { Button } from "@astryxdesign/core/Button";
 import {
-  ArrowRight,
   BarChart3,
   Check,
   Code2,
@@ -13,7 +13,6 @@ import {
   Users,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
 
 export function SlideTitle() {
   const { t } = useTranslation("marketing");
@@ -197,9 +196,7 @@ export function SlidePricing() {
           {t("productAnalytics.slides.pricing.noHiddenFees")}
         </p>
       </div>
-      <Button className="mt-6 bg-[#F76E18] hover:bg-[#E56310] text-white rounded-lg px-6">
-        {t("productAnalytics.slides.pricing.cta")} <ArrowRight className="w-4 h-4 ml-1" />
-      </Button>
+      <Button variant="primary" label={t("productAnalytics.slides.pricing.cta")} className="mt-6" />
     </div>
   );
 }
@@ -256,12 +253,8 @@ export function SlideCTA() {
       </h2>
       <p className="text-base text-[#6B6B6B] mt-3">{t("productAnalytics.slides.cta.subtitle")}</p>
       <div className="flex gap-3 mt-8">
-        <Button className="bg-[#F76E18] hover:bg-[#E56310] text-white rounded-lg px-5">
-          {t("productAnalytics.slides.cta.primary")}
-        </Button>
-        <Button variant="outline" className="rounded-lg px-5 border-[#D1D1D1]">
-          {t("productAnalytics.slides.cta.secondary")}
-        </Button>
+        <Button variant="primary" label={t("productAnalytics.slides.cta.primary")} />
+        <Button variant="secondary" label={t("productAnalytics.slides.cta.secondary")} />
       </div>
       <div className="mt-6 bg-[#F5F3EF] font-mono text-sm px-4 py-2 rounded-lg flex items-center gap-2">
         <span>{t("productAnalytics.slides.cta.installCommand")}</span>

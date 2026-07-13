@@ -1,5 +1,5 @@
+import { Button } from "@astryxdesign/core/Button";
 import { useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { useToastStore } from "./toast-store";
 
 function ToastItem({
@@ -41,16 +41,15 @@ function ToastItem({
       <span>{message}</span>
       {action && (
         <Button
-          variant="outline"
+          variant="secondary"
           size="sm"
+          label={action.label}
           onClick={() => {
             action.onClick();
             removeToast(id);
           }}
           className="border-current bg-transparent text-current hover:bg-white/20"
-        >
-          {action.label}
-        </Button>
+        />
       )}
     </output>
   );
