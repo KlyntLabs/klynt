@@ -88,12 +88,22 @@ if (typeof HTMLElement.prototype.showPopover !== "function") {
 
   // Light-dismiss: a pointerdown outside an open popover closes it, which is what fires the
   // `toggle` event Astryx's Layer listens for to sync its React state back.
+  //
+  // Only `popover="auto"` light-dismisses. `popover="manual"` never does — and it is not a
+  // rare case here: Astryx's `useLayer` defaults to `lightDismiss: false`, which renders
+  // `popover="manual"`. Tooltip, HoverCard, ContextMenu, ToastViewport and `useKeyboardHint`
+  // all take that path, and `useKeyboardHint` is wired into Toolbar, TabList and
+  // SegmentedControl — every one of which this app renders. Dismissing those on any outside
+  // click would have the shim diverge from the browser on components already in use.
   document.addEventListener(
     "pointerdown",
     (event) => {
       const target = event.target as Element | null;
       for (const el of document.querySelectorAll(`[popover][${OPEN_ATTR}]`)) {
         if (!(el instanceof HTMLElement)) continue;
+        // An empty value is the `auto` default: `<div popover>` === `<div popover="auto">`.
+        const mode = el.getAttribute("popover");
+        if (mode !== "" && mode !== "auto") continue;
         if (target && el.contains(target)) continue;
         hide(el);
       }

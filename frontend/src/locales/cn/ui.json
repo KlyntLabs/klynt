@@ -37,6 +37,7 @@
     "permissionsLabel": "权限",
     "systemBadge": "系统",
     "createButton": "创建角色",
+    "editButton": "编辑",
     "saveButton": "保存",
     "deleteButton": "删除",
     "noRoles": "未找到角色。"

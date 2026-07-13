@@ -37,6 +37,7 @@
     "permissionsLabel": "Quyền hạn",
     "systemBadge": "Hệ thống",
     "createButton": "Tạo vai trò",
+    "editButton": "Chỉnh sửa",
     "saveButton": "Lưu",
     "deleteButton": "Xóa",
     "noRoles": "Không tìm thấy vai trò nào."

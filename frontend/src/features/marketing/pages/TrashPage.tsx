@@ -1,7 +1,7 @@
 import { Badge } from "@astryxdesign/core/Badge";
 import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
 import { VStack } from "@astryxdesign/core/VStack";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   AlertTriangle,
   FileSpreadsheet,
@@ -125,62 +125,58 @@ export default function TrashPage() {
 
       {/* Detail Modal */}
       <Dialog isOpen={selectedItem !== null} onOpenChange={() => setSelectedItem(null)} width={448}>
-        <AnimatePresence>
-          {selectedItem && (
-            <>
-              <DialogHeader
-                title={selectedItem.filename}
-                subtitle={
-                  selectedItem.redacted ? selectedItem.redactedReason : selectedItem.description
-                }
-                startContent={
-                  selectedItem.redacted ? (
-                    <Lock className="w-4 h-4" />
-                  ) : (
-                    getFileIcon(selectedItem.type)
-                  )
-                }
-                onOpenChange={() => setSelectedItem(null)}
-              />
-
-              <div className="flex-1 overflow-y-auto my-4">
-                {selectedItem.redacted ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <AlertTriangle className="w-12 h-12 text-[#F76E18] mb-3" />
-                    <p className="text-sm font-medium text-[#1A1A1A]">
-                      {t("trash.detail.niceTry")}
-                    </p>
-                    <p className="text-xs text-[#6B6B6B] mt-1">{selectedItem.redactedReason}</p>
-                  </div>
+        {selectedItem && (
+          <>
+            <DialogHeader
+              title={selectedItem.filename}
+              subtitle={
+                selectedItem.redacted ? selectedItem.redactedReason : selectedItem.description
+              }
+              startContent={
+                selectedItem.redacted ? (
+                  <Lock className="w-4 h-4" />
                 ) : (
-                  <div className="bg-[#F5F3EF] rounded-md p-4">
-                    <pre className="text-xs text-[#1A1A1A] whitespace-pre-wrap leading-relaxed font-mono">
-                      {Array.isArray(selectedItem.content)
-                        ? selectedItem.content.join("\n")
-                        : selectedItem.content}
-                    </pre>
-                  </div>
-                )}
-              </div>
+                  getFileIcon(selectedItem.type)
+                )
+              }
+              onOpenChange={() => setSelectedItem(null)}
+            />
 
-              <div className="shrink-0 pt-3 border-t border-[#E5E5E5] flex items-center justify-between">
-                <span className="text-[10px] text-[#9CA3AF]">
-                  {selectedItem.type?.toUpperCase() ?? "UNKNOWN"} &bull; {selectedItem.size} &bull;{" "}
-                  {t("trash.detail.deleted")} {selectedItem.dateDeleted}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setSelectedItem(null)}
-                  disabled
-                  className="text-xs text-[#9CA3AF] bg-[#F0EDE6] px-3 py-1.5 rounded cursor-not-allowed opacity-60"
-                  title={t("trash.detail.restoreTooltip")}
-                >
-                  {t("trash.detail.restore")}
-                </button>
-              </div>
-            </>
-          )}
-        </AnimatePresence>
+            <div className="flex-1 overflow-y-auto my-4">
+              {selectedItem.redacted ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <AlertTriangle className="w-12 h-12 text-[#F76E18] mb-3" />
+                  <p className="text-sm font-medium text-[#1A1A1A]">{t("trash.detail.niceTry")}</p>
+                  <p className="text-xs text-[#6B6B6B] mt-1">{selectedItem.redactedReason}</p>
+                </div>
+              ) : (
+                <div className="bg-[#F5F3EF] rounded-md p-4">
+                  <pre className="text-xs text-[#1A1A1A] whitespace-pre-wrap leading-relaxed font-mono">
+                    {Array.isArray(selectedItem.content)
+                      ? selectedItem.content.join("\n")
+                      : selectedItem.content}
+                  </pre>
+                </div>
+              )}
+            </div>
+
+            <div className="shrink-0 pt-3 border-t border-[#E5E5E5] flex items-center justify-between">
+              <span className="text-[10px] text-[#9CA3AF]">
+                {selectedItem.type?.toUpperCase() ?? "UNKNOWN"} &bull; {selectedItem.size} &bull;{" "}
+                {t("trash.detail.deleted")} {selectedItem.dateDeleted}
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedItem(null)}
+                disabled
+                className="text-xs text-[#9CA3AF] bg-[#F0EDE6] px-3 py-1.5 rounded cursor-not-allowed opacity-60"
+                title={t("trash.detail.restoreTooltip")}
+              >
+                {t("trash.detail.restore")}
+              </button>
+            </div>
+          </>
+        )}
       </Dialog>
     </div>
   );

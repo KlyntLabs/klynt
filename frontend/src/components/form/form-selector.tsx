@@ -64,6 +64,9 @@ export function FormSelector<TValues extends FieldValues, TName extends FieldPat
           htmlName={field.name}
           value={field.value ?? ""}
           onChange={(value) => field.onChange(value)}
+          // No `ref` here, unlike the TextInput and TextArea bridges: Astryx's Selector declares
+          // no ref prop, so RHF cannot focus it on a failed submit. Upstream gap, not an omission.
+          onBlur={field.onBlur}
           status={
             fieldState.error ? { type: "error", message: fieldState.error.message } : undefined
           }

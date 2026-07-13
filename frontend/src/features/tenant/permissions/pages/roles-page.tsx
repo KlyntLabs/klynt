@@ -98,7 +98,7 @@ export default function RolesPage() {
           <Button
             variant="secondary"
             size="sm"
-            label={t("roles.saveButton")}
+            label={t("roles.editButton")}
             onClick={() => setEditingRole(role)}
           />
           {!role.isSystem && (

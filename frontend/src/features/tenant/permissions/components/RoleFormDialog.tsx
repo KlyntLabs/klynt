@@ -74,6 +74,15 @@ export function RoleFormDialog({
 
   const isReadOnly = roleData?.isSystem ?? false;
 
+  /**
+   * The role PATCH endpoint accepts only `permission_ids`
+   * (backend/crates/gateways/src/routes/roles.rs:113), so a renamed role or an edited
+   * description is silently dropped on save. Lock both fields while editing rather than
+   * offer a change the API cannot make. Lift this once UpdateRoleRequest carries them.
+   */
+  const isExistingRole = roleData !== null;
+  const isIdentityLocked = isReadOnly || isExistingRole;
+
   return (
     <Dialog isOpen={open} onOpenChange={onOpenChange} purpose="form" width={560}>
       <DialogHeader title={title} onOpenChange={onOpenChange} />
@@ -83,14 +92,14 @@ export function RoleFormDialog({
             label={t("roles.nameLabel")}
             value={name}
             onChange={setName}
-            isDisabled={isReadOnly}
+            isDisabled={isIdentityLocked}
             isRequired
           />
           <TextInput
             label={t("roles.descriptionLabel")}
             value={description}
             onChange={setDescription}
-            isDisabled={isReadOnly}
+            isDisabled={isIdentityLocked}
           />
 
           <VStack gap={3} height={256} isScrollable>

@@ -53,6 +53,7 @@ export function FormTextArea<TValues extends FieldValues, TName extends FieldPat
           isRequired={isRequired}
           isDisabled={isDisabled}
           data-testid={testId}
+          htmlName={field.name}
           value={field.value ?? ""}
           onChange={(value) => field.onChange(value)}
           onBlur={field.onBlur}

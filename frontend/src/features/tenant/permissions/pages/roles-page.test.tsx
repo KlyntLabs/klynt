@@ -63,10 +63,12 @@ describe("RolesPage", () => {
 
     // Edit the custom role. The row's edit button is reached by role rather than by
     // `button[data-variant="outline"]` — that was a shadcn implementation detail.
+    // It is labelled "Edit", not "Save": it opens the dialog, it does not persist anything.
     const rows = screen.getAllByRole("row");
     const editorRow = rows.find((row) => row.textContent?.includes("Editor"));
     if (!editorRow) throw new Error("Editor role row not found");
-    await user.click(within(editorRow).getByRole("button", { name: /save/i }));
+    expect(within(editorRow).queryByRole("button", { name: /^save$/i })).not.toBeInTheDocument();
+    await user.click(within(editorRow).getByRole("button", { name: /edit/i }));
 
     const editDialog = await screen.findByRole("dialog");
     await user.click(within(editDialog).getByRole("checkbox", { name: "tenant.manage_members" }));

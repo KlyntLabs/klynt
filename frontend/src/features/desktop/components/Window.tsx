@@ -127,12 +127,19 @@ export default function WindowComponent({
           />
         )}
 
-        <div className="flex flex-1 cursor-default items-center justify-center gap-1.5">
-          <FileText className="h-3.5 w-3.5" />
+        {/*
+         * min-w-0 is load-bearing. Text's maxLines={1} sets overflow/ellipsis on the Text itself,
+         * but a flex item defaults to min-width:auto, so this wrapper's min-content size still
+         * includes the full nowrap title and it refuses to shrink. Without min-w-0 a long title
+         * (app titles allow up to MAX_TITLE_LENGTH = 100 chars) pushes past the window edge and
+         * knocks the centred title bar out of alignment instead of ellipsising.
+         */}
+        <div className="flex min-w-0 flex-1 cursor-default items-center justify-center gap-1.5">
+          <FileText className="h-3.5 w-3.5 shrink-0" />
           <Text type="label" maxLines={1}>
             {title}
           </Text>
-          <ChevronDown className="h-3 w-3" />
+          <ChevronDown className="h-3 w-3 shrink-0" />
         </div>
 
         {/* Balances the traffic lights so the title stays optically centred */}

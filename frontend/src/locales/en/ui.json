@@ -37,6 +37,7 @@
     "permissionsLabel": "Permissions",
     "systemBadge": "System",
     "createButton": "Create role",
+    "editButton": "Edit",
     "saveButton": "Save",
     "deleteButton": "Delete",
     "noRoles": "No roles found."

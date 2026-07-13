@@ -57,4 +57,21 @@ describe("ConflictDialog", () => {
     await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  /**
+   * The whole point of purpose="required": an unresolved save conflict must not be dismissable
+   * by a stray Escape, or the user's edits vanish. Astryx enforces this by calling
+   * preventDefault() on the native `cancel` event and refusing to close, so a real browser
+   * leaves the dialog open. src/test/dialog-shim.ts has to honour that same contract —
+   * otherwise this passes in a browser and only jsdom disagrees.
+   */
+  it("does not close on Escape, because a save conflict must be resolved deliberately", async () => {
+    const onClose = vi.fn();
+    render(<ConflictDialog open onReload={vi.fn()} onRetry={vi.fn()} onClose={onClose} />);
+
+    await userEvent.keyboard("{Escape}");
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+  });
 });
