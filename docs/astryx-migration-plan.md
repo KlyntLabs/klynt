@@ -148,7 +148,14 @@ Do **not** wrap old shadcn components in Astryx styles. Astryx: *"Replace the pr
 | `tooltip` | `Tooltip` | | `field` | `Field` |
 
 Needing judgement rather than a swap:
-- **`form` (7 consumers)** — React Hook Form + Zod wrapper. Astryx ships `FormLayout`/`Field`/`FieldStatus` but no RHF binding. Write that bridge once, preserving the current API so consumers barely change. It is logic, so it earns real unit tests. Keep validation messages in the `en`/`vi`/`cn` namespaces.
+- **`form` (7 consumers)** — ✅ **BRIDGE DONE.** `src/components/form/` now holds `FormTextInput`, `FormTextArea`, and `FormSelector` (13 tests). Astryx ships no RHF binding, and its docs say `TextInput` must NOT be wrapped in `Field` — it already owns its label, description and status. So the bridge is thin: RHF owns the value, and `fieldState.error` becomes Astryx's `status`, which is what sets `aria-invalid` and renders the message. Six of the seven consumers are migrated (login, register, reset-password, forgot-password, join-tenant, ContactForm). `tenant-settings-page` is deliberately **deferred** — see below.
+
+  Three things this surfaced, which apply to every remaining surface:
+  - **`TextInput` has no `autoComplete`.** Astryx's `BaseProps` extends `React.HTMLAttributes`, not `InputHTMLAttributes`, so input-only attributes (`autoComplete`, `maxLength`, `readOnly`, `pattern`) are absent from the prop types — though rest props DO reach the input, so they work at runtime. Passed through with a narrow cast and pinned by a test. Without it, password managers stop working on the auth forms.
+  - **Astryx `Selector` is a combobox, not a native `<select>`.** `user.selectOptions()` does not work on it; tests must open the combobox and click the option. Its option list also stays mounted when closed, so assert on the *selected value* (scoped to the trigger), never on an option's presence.
+  - **`register-form` has no `autoComplete` at all** — a pre-existing gap, not caused by the migration. Left as-is to keep the diff faithful, but worth fixing: a registration form without `autocomplete="new-password"` won't prompt a password manager to save the credential.
+
+- **`tenant-settings-page` deferred, on purpose.** Its form is only part of the page; the rest is `Card`, `Alert`, and `AlertDialog`. Migrating just the fields would leave Astryx inputs inside shadcn chrome — precisely the mixed screen that ADR-015 and `AGENTS.md` prohibit. It gets migrated whole, with the `tenant` surface.
 - **`scroll-area` (3 marketing pages)** — check whether Astryx `Layout` absorbs it.
 - **`sheet`** — only used inside the dead `sidebar`; should vanish in Phase 1.
 
