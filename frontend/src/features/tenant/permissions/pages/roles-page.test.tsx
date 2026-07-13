@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Route, Routes } from "react-router-dom";
 import { describe, expect, it } from "vitest";
@@ -30,9 +30,13 @@ describe("RolesPage", () => {
 
     await user.click(screen.getByRole("button", { name: /create role/i }));
 
-    await user.type(screen.getByLabelText(/role name/i), "Manager");
-    await user.click(screen.getByRole("checkbox", { name: "tenant.view" }));
-    await user.click(screen.getByRole("button", { name: /save/i }));
+    // Dialog queries must be scoped. Astryx's Dialog keeps its content mounted, and this page
+    // renders two of them (create + edit), so the unscoped /role name/i now matches both
+    // dialogs' labels AND the table's column header.
+    const createDialog = await screen.findByRole("dialog");
+    await user.type(within(createDialog).getByLabelText(/role name/i), "Manager");
+    await user.click(within(createDialog).getByRole("checkbox", { name: "tenant.view" }));
+    await user.click(within(createDialog).getByRole("button", { name: /save/i }));
 
     expect(await screen.findByText("Manager")).toBeInTheDocument();
   });
@@ -52,21 +56,21 @@ describe("RolesPage", () => {
 
     // Create a custom role first so it can be edited.
     await user.click(screen.getByRole("button", { name: /create role/i }));
-    await user.type(screen.getByLabelText(/role name/i), "Editor");
-    await user.click(screen.getByRole("button", { name: /save/i }));
+    const createDialog = await screen.findByRole("dialog");
+    await user.type(within(createDialog).getByLabelText(/role name/i), "Editor");
+    await user.click(within(createDialog).getByRole("button", { name: /save/i }));
     expect(await screen.findByText("Editor")).toBeInTheDocument();
 
-    // Edit the custom role.
+    // Edit the custom role. The row's edit button is reached by role rather than by
+    // `button[data-variant="outline"]` — that was a shadcn implementation detail.
     const rows = screen.getAllByRole("row");
     const editorRow = rows.find((row) => row.textContent?.includes("Editor"));
-    const editButton = editorRow?.querySelector('button[data-variant="outline"]');
-    if (!(editButton instanceof HTMLElement)) {
-      throw new Error("Edit button for Editor role not found");
-    }
-    await user.click(editButton);
+    if (!editorRow) throw new Error("Editor role row not found");
+    await user.click(within(editorRow).getByRole("button", { name: /save/i }));
 
-    await user.click(screen.getByRole("checkbox", { name: "tenant.manage_members" }));
-    await user.click(screen.getByRole("button", { name: /save/i }));
+    const editDialog = await screen.findByRole("dialog");
+    await user.click(within(editDialog).getByRole("checkbox", { name: "tenant.manage_members" }));
+    await user.click(within(editDialog).getByRole("button", { name: /save/i }));
 
     expect(await screen.findByText("Editor")).toBeInTheDocument();
   });

@@ -1,16 +1,11 @@
+import { Button } from "@astryxdesign/core/Button";
+import { CheckboxList, CheckboxListItem } from "@astryxdesign/core/CheckboxList";
+import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
+import { HStack } from "@astryxdesign/core/HStack";
+import { TextInput } from "@astryxdesign/core/TextInput";
+import { VStack } from "@astryxdesign/core/VStack";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import type { Permission, Role } from "../types";
 
 interface RoleFormDialogProps {
@@ -53,14 +48,16 @@ export function RoleFormDialog({
     return groups;
   }, [permissions]);
 
-  function togglePermission(id: string, checked: boolean) {
+  /**
+   * CheckboxList reports the whole selected set for ITS group only, so a category's result
+   * has to be merged back into the global set rather than replacing it — otherwise ticking a
+   * box in one category would silently clear every other category's selections.
+   */
+  function handleCategoryChange(items: Permission[], values: string[]) {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (checked) {
-        next.add(id);
-      } else {
-        next.delete(id);
-      }
+      for (const permission of items) next.delete(permission.id);
+      for (const value of values) next.add(value);
       return next;
     });
   }
@@ -78,74 +75,63 @@ export function RoleFormDialog({
   const isReadOnly = roleData?.isSystem ?? false;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="role-name">{t("roles.nameLabel")}</Label>
-              <Input
-                id="role-name"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                disabled={isReadOnly}
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="role-description">{t("roles.descriptionLabel")}</Label>
-              <Input
-                id="role-description"
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                disabled={isReadOnly}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>{t("roles.permissionsLabel")}</Label>
-              <div className="max-h-64 overflow-y-auto rounded border p-2">
-                {Array.from(groupedPermissions.entries()).map(([category, items]) => (
-                  <div key={category} className="mb-3">
-                    <p className="mb-1 text-sm font-semibold capitalize">{category}</p>
-                    <div className="grid gap-1">
-                      {items.map((permission) => (
-                        <label
-                          key={permission.id}
-                          htmlFor={permission.id}
-                          className="flex items-center gap-2 text-sm"
-                        >
-                          <Checkbox
-                            id={permission.id}
-                            checked={selectedIds.has(permission.id)}
-                            onCheckedChange={(checked) =>
-                              togglePermission(permission.id, checked === true)
-                            }
-                            disabled={isReadOnly}
-                          />
-                          {permission.name}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
+    <Dialog isOpen={open} onOpenChange={onOpenChange} purpose="form" width={560}>
+      <DialogHeader title={title} onOpenChange={onOpenChange} />
+      <form onSubmit={handleSubmit}>
+        <VStack gap={4}>
+          <TextInput
+            label={t("roles.nameLabel")}
+            value={name}
+            onChange={setName}
+            isDisabled={isReadOnly}
+            isRequired
+          />
+          <TextInput
+            label={t("roles.descriptionLabel")}
+            value={description}
+            onChange={setDescription}
+            isDisabled={isReadOnly}
+          />
+
+          <VStack gap={3} height={256} isScrollable>
+            {Array.from(groupedPermissions.entries()).map(([category, items]) => (
+              <CheckboxList
+                key={category}
+                label={category}
+                density="compact"
+                value={items.filter((p) => selectedIds.has(p.id)).map((p) => p.id)}
+                onChange={(values) => handleCategoryChange(items, values)}
+              >
+                {items.map((permission) => (
+                  <CheckboxListItem
+                    key={permission.id}
+                    value={permission.id}
+                    label={permission.name}
+                    isDisabled={isReadOnly}
+                  />
                 ))}
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              {t("close")}
-            </Button>
+              </CheckboxList>
+            ))}
+          </VStack>
+
+          <HStack gap={2} justify="end">
+            <Button
+              type="button"
+              variant="secondary"
+              label={t("close")}
+              onClick={() => onOpenChange(false)}
+            />
             {!isReadOnly && (
-              <Button type="submit" disabled={name.trim().length === 0}>
-                {t("roles.saveButton")}
-              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                label={t("roles.saveButton")}
+                isDisabled={name.trim().length === 0}
+              />
             )}
-          </DialogFooter>
-        </form>
-      </DialogContent>
+          </HStack>
+        </VStack>
+      </form>
     </Dialog>
   );
 }

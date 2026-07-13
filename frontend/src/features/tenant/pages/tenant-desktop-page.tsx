@@ -1,7 +1,7 @@
+import { Spinner } from "@astryxdesign/core/Spinner";
 import { isAxiosError } from "axios";
 import { useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
-import { Spinner } from "@/components/ui/spinner";
 import { useAuthModule } from "@/core/auth/auth-module";
 import { navigateExternal } from "@/core/auth/external-redirect";
 import { buildApexUrl } from "@/core/routing/subdomain-router";

@@ -1,39 +1,27 @@
+import { AlertDialog } from "@astryxdesign/core/AlertDialog";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { EmptyState } from "@astryxdesign/core/EmptyState";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Selector } from "@astryxdesign/core/Selector";
+import { Spinner } from "@astryxdesign/core/Spinner";
+import { pixel, Table, type TableColumn } from "@astryxdesign/core/Table";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Spinner } from "@/components/ui/spinner";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { PermissionGuard } from "@/features/tenant/permissions/components/PermissionGuard";
 import { InviteMemberDialog } from "../components/InviteMemberDialog";
 import { useInviteMember } from "../hooks/use-invite-member";
 import { useMembers } from "../hooks/use-members";
 import { useRemoveMember } from "../hooks/use-remove-member";
 import { useUpdateMemberRole } from "../hooks/use-update-member-role";
-import { ROLE_OPTIONS, type TenantRole } from "../types";
+import { type Member, ROLE_OPTIONS, type TenantRole } from "../types";
+
+/** See roles-page: Astryx's Table constrains its row type to Record<string, unknown>. */
+type MemberRow = Member & Record<string, unknown>;
 
 function formatJoinedDate(value: string, locale: string): string {
   return new Date(value).toLocaleDateString(locale);
@@ -58,90 +46,94 @@ export default function MembersPage() {
 
   if (error) {
     return (
-      <Alert variant="destructive">
-        <AlertTitle>{t("ui:queryError.title")}</AlertTitle>
-        <AlertDescription>{t("ui:queryError.message")}</AlertDescription>
-      </Alert>
+      <Banner
+        status="error"
+        title={t("ui:queryError.title")}
+        description={t("ui:queryError.message")}
+      />
     );
   }
 
+  const columns: TableColumn<MemberRow>[] = [
+    {
+      key: "email",
+      header: t("members.emailLabel"),
+      renderCell: (member: MemberRow) => <Text weight="medium">{member.email}</Text>,
+    },
+    {
+      key: "fullName",
+      header: t("members.nameLabel"),
+      renderCell: (member: MemberRow) => <Text>{member.fullName ?? "—"}</Text>,
+    },
+    {
+      key: "role",
+      header: t("members.roleLabel"),
+      width: pixel(160),
+      renderCell: (member: MemberRow) => (
+        <Selector
+          label={t("members.roleLabel")}
+          isLabelHidden
+          size="sm"
+          value={member.role}
+          isDisabled={updateRoleMutation.isPending}
+          data-testid={`role-select-${member.email}`}
+          onChange={(value) =>
+            updateRoleMutation.mutate({ email: member.email, role: value as TenantRole })
+          }
+          options={ROLE_OPTIONS.map((role) => ({
+            value: role,
+            label: t(`members.roles.${role}`),
+          }))}
+        />
+      ),
+    },
+    {
+      key: "joinedAt",
+      header: t("members.joinedAtLabel"),
+      renderCell: (member: MemberRow) => (
+        <Text>{formatJoinedDate(member.joinedAt, i18n.language)}</Text>
+      ),
+    },
+    {
+      key: "actions",
+      header: "",
+      width: pixel(120),
+      renderCell: (member: MemberRow) => (
+        <Button
+          variant="destructive"
+          size="sm"
+          label={t("members.removeButton")}
+          data-testid={`remove-member-${member.email}`}
+          onClick={() => setRemovingEmail(member.email)}
+          isDisabled={removeMutation.isPending}
+        />
+      ),
+    },
+  ];
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{t("members.title")}</h1>
+    <VStack gap={4}>
+      <HStack justify="between" align="center">
+        <Heading level={1}>{t("members.title")}</Heading>
         <PermissionGuard tenantSlug={tenantSlug} permission="tenant.manage_members">
-          <Button onClick={() => setIsInviteOpen(true)}>{t("members.inviteButton")}</Button>
+          <Button
+            variant="primary"
+            label={t("members.inviteButton")}
+            onClick={() => setIsInviteOpen(true)}
+          />
         </PermissionGuard>
-      </div>
+      </HStack>
 
       <PermissionGuard
         tenantSlug={tenantSlug}
         permission="tenant.manage_members"
-        fallback={<p>{t("members.accessDenied")}</p>}
+        fallback={<Text>{t("members.accessDenied")}</Text>}
       >
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t("members.emailLabel")}</TableHead>
-              <TableHead>{t("members.nameLabel")}</TableHead>
-              <TableHead>{t("members.roleLabel")}</TableHead>
-              <TableHead>{t("members.joinedAtLabel")}</TableHead>
-              <TableHead className="w-24" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {members?.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={5}>{t("members.noMembers")}</TableCell>
-              </TableRow>
-            )}
-            {members?.map((member) => (
-              <TableRow key={member.email} data-testid={`member-row-${member.email}`}>
-                <TableCell className="font-medium">{member.email}</TableCell>
-                <TableCell>{member.fullName ?? "—"}</TableCell>
-                <TableCell>
-                  <Select
-                    value={member.role}
-                    onValueChange={(value) =>
-                      updateRoleMutation.mutate({
-                        email: member.email,
-                        role: value as TenantRole,
-                      })
-                    }
-                    disabled={updateRoleMutation.isPending}
-                  >
-                    <SelectTrigger
-                      className="w-32"
-                      aria-label={t("members.roleLabel")}
-                      data-testid={`role-select-${member.email}`}
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ROLE_OPTIONS.map((role) => (
-                        <SelectItem key={role} value={role}>
-                          {t(`members.roles.${role}`)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell>{formatJoinedDate(member.joinedAt, i18n.language)}</TableCell>
-                <TableCell>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    data-testid={`remove-member-${member.email}`}
-                    onClick={() => setRemovingEmail(member.email)}
-                    disabled={removeMutation.isPending}
-                  >
-                    {t("members.removeButton")}
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        {members?.length === 0 ? (
+          <EmptyState title={t("members.noMembers")} />
+        ) : (
+          <Table data={(members ?? []) as MemberRow[]} columns={columns} idKey="email" hasHover />
+        )}
       </PermissionGuard>
 
       <InviteMemberDialog
@@ -151,38 +143,26 @@ export default function MembersPage() {
         onInvite={async (input) => inviteMutation.mutateAsync(input)}
       />
 
-      <Dialog
-        open={removingEmail !== null}
+      {/* A destructive confirmation, so AlertDialog rather than Dialog: it owns the
+          action/cancel pair and defaults the action to the destructive variant. */}
+      <AlertDialog
+        isOpen={removingEmail !== null}
         onOpenChange={(open) => !open && setRemovingEmail(null)}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t("members.removeConfirmTitle")}</DialogTitle>
-            <DialogDescription>
-              {removingEmail ? t("members.removeConfirmMessage", { email: removingEmail }) : ""}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setRemovingEmail(null)}>
-              {t("members.cancelButton")}
-            </Button>
-            <Button
-              variant="destructive"
-              data-testid="confirm-remove-member"
-              onClick={() => {
-                if (removingEmail) {
-                  removeMutation.mutate(removingEmail, {
-                    onSuccess: () => setRemovingEmail(null),
-                  });
-                }
-              }}
-              disabled={removeMutation.isPending}
-            >
-              {t("members.removeButton")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+        title={t("members.removeConfirmTitle")}
+        description={
+          removingEmail ? t("members.removeConfirmMessage", { email: removingEmail }) : ""
+        }
+        cancelLabel={t("members.cancelButton")}
+        actionLabel={t("members.removeButton")}
+        isActionLoading={removeMutation.isPending}
+        onAction={() => {
+          if (removingEmail) {
+            removeMutation.mutate(removingEmail, {
+              onSuccess: () => setRemovingEmail(null),
+            });
+          }
+        }}
+      />
+    </VStack>
   );
 }

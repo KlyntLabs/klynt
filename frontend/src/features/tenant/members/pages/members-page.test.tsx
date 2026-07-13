@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -32,9 +32,18 @@ describe("MembersPage", () => {
     expect(await screen.findByText("owner@acme.test")).toBeInTheDocument();
     expect(screen.getByText("member@acme.test")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /invite member/i }));
-    await user.type(screen.getByLabelText(/email/i), "new@acme.test");
-    await user.click(screen.getByRole("button", { name: /invite member/i }));
+    // The page's "Invite member" trigger and the dialog's submit button share a label, and
+    // Astryx's Dialog keeps its content mounted, so both are always in the DOM. The trigger
+    // is the one outside the dialog; the submit is scoped to it.
+    const dialogEl = document.querySelector("dialog");
+    const triggers = screen
+      .getAllByRole("button", { name: /invite member/i })
+      .filter((button) => !dialogEl?.contains(button));
+    await user.click(triggers[0]);
+
+    const dialog = await screen.findByRole("dialog");
+    await user.type(within(dialog).getByLabelText(/email/i), "new@acme.test");
+    await user.click(within(dialog).getByRole("button", { name: /invite member/i }));
 
     await waitFor(() => {
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -54,10 +63,11 @@ describe("MembersPage", () => {
 
     expect(await screen.findByText("member@acme.test")).toBeInTheDocument();
 
+    // Astryx's Selector is a combobox: click to open, then pick the option. The old test
+    // focused the Radix trigger and pressed Enter, which no longer applies.
     const roleSelect = screen.getByTestId("role-select-member@acme.test");
-    roleSelect.focus();
-    await user.keyboard("{Enter}");
-    await user.click(screen.getByRole("option", { name: /admin/i }));
+    await user.click(within(roleSelect).getByRole("combobox"));
+    await user.click(await screen.findByRole("option", { name: /admin/i }));
 
     await waitFor(() => {
       expect(screen.getByTestId("role-select-member@acme.test")).toHaveTextContent("Admin");
@@ -79,9 +89,12 @@ describe("MembersPage", () => {
 
     await user.click(screen.getByTestId("remove-member-member@acme.test"));
 
-    expect(await screen.findByText(/are you sure/i)).toBeInTheDocument();
-
-    await user.click(screen.getByTestId("confirm-remove-member"));
+    // Astryx's AlertDialog owns its action/cancel buttons and exposes no test ids, so the
+    // confirm button is reached through the dialog's role. Scoping matters: its action label
+    // is the same word as the per-row remove button.
+    const dialog = await screen.findByRole("alertdialog");
+    expect(within(dialog).getByText(/are you sure/i)).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: /remove/i }));
 
     await waitFor(() => {
       expect(screen.queryByText("member@acme.test")).not.toBeInTheDocument();

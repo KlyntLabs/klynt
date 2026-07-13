@@ -1,16 +1,21 @@
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { VStack } from "@astryxdesign/core/VStack";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FormTextInput } from "@/components/form/form-text-input";
 import { createTenant } from "../api/tenant-api";
 import type { CreateTenantInput } from "../types";
 
 export function CreateTenantForm({ onSuccess }: { onSuccess?: () => void }) {
   const { t } = useTranslation("ui");
   const queryClient = useQueryClient();
-  const { register, handleSubmit, formState } = useForm<CreateTenantInput>();
+  // control, not register: the bridge binds through Controller so Astryx's TextInput owns
+  // its own label and validation status rather than a separate <Label> + <Input> pair.
+  const { control, handleSubmit, formState } = useForm<CreateTenantInput>({
+    defaultValues: { name: "", slug: "" },
+  });
   const mutation = useMutation({
     mutationFn: createTenant,
     onSuccess: () => {
@@ -20,19 +25,28 @@ export function CreateTenantForm({ onSuccess }: { onSuccess?: () => void }) {
   });
 
   return (
-    <form onSubmit={handleSubmit((data) => mutation.mutate(data))} className="space-y-4">
-      <div>
-        <Label htmlFor="tenant-name">{t("tenant.nameLabel")}</Label>
-        <Input id="tenant-name" {...register("name", { required: true })} />
-      </div>
-      <div>
-        <Label htmlFor="tenant-slug">{t("tenant.slugLabel")}</Label>
-        <Input id="tenant-slug" {...register("slug", { required: true })} />
-      </div>
-      {mutation.error && <p className="text-destructive text-sm">{t("tenant.createError")}</p>}
-      <Button type="submit" disabled={formState.isSubmitting || mutation.isPending}>
-        {t("tenant.createButton")}
-      </Button>
+    <form onSubmit={handleSubmit((data) => mutation.mutate(data))}>
+      <VStack gap={4}>
+        <FormTextInput
+          control={control}
+          name="name"
+          label={t("tenant.nameLabel")}
+          rules={{ required: true }}
+        />
+        <FormTextInput
+          control={control}
+          name="slug"
+          label={t("tenant.slugLabel")}
+          rules={{ required: true }}
+        />
+        {mutation.error && <Banner status="error" title={t("tenant.createError")} />}
+        <Button
+          type="submit"
+          variant="primary"
+          label={t("tenant.createButton")}
+          isLoading={formState.isSubmitting || mutation.isPending}
+        />
+      </VStack>
     </form>
   );
 }

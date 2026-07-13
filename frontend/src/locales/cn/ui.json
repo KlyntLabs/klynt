@@ -25,7 +25,8 @@
     "slugLabel": "租户标识",
     "createTitle": "创建租户",
     "createButton": "创建租户",
-    "createError": "创建租户失败，请重试。"
+    "createError": "创建租户失败，请重试。",
+    "switchLabel": "切换工作区"
   },
   "roles": {
     "title": "角色",

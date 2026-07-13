@@ -25,7 +25,8 @@
     "slugLabel": "Mã tổ chức",
     "createTitle": "Tạo tổ chức",
     "createButton": "Tạo tổ chức",
-    "createError": "Không thể tạo tổ chức. Vui lòng thử lại."
+    "createError": "Không thể tạo tổ chức. Vui lòng thử lại.",
+    "switchLabel": "Chuyển không gian làm việc"
   },
   "roles": {
     "title": "Vai trò",

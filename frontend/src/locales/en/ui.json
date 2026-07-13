@@ -25,7 +25,8 @@
     "slugLabel": "Tenant slug",
     "createTitle": "Create tenant",
     "createButton": "Create tenant",
-    "createError": "Failed to create tenant. Please try again."
+    "createError": "Failed to create tenant. Please try again.",
+    "switchLabel": "Switch workspace"
   },
   "roles": {
     "title": "Roles",

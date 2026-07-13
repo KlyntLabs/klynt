@@ -16,12 +16,11 @@ describe("InviteMemberDialog", () => {
 
     await user.type(screen.getByLabelText(/email/i), "ada@example.test");
 
-    const hiddenSelect = document.querySelector(
-      '[data-testid="invite-role-select"] + select'
-    ) as HTMLSelectElement | null;
-    expect(hiddenSelect).not.toBeNull();
-    if (!hiddenSelect) return;
-    await user.selectOptions(hiddenSelect, "admin");
+    // The old test reached into Radix's hidden native <select> sibling — a library
+    // implementation detail. Astryx's Selector is a combobox with a listbox popover and has
+    // no such element, so drive it the way a user does: open it, then pick the option.
+    await user.click(screen.getByRole("combobox", { name: /role/i }));
+    await user.click(await screen.findByRole("option", { name: /admin/i }));
 
     await user.click(screen.getByRole("button", { name: /invite member/i }));
 
