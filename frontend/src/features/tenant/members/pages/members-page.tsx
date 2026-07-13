@@ -11,7 +11,7 @@ import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useParams } from "react-router-dom";
+import { useTenantSlug } from "@/features/tenant/hooks/use-tenant-slug";
 import { PermissionGuard } from "@/features/tenant/permissions/components/PermissionGuard";
 import { InviteMemberDialog } from "../components/InviteMemberDialog";
 import { useInviteMember } from "../hooks/use-invite-member";
@@ -29,8 +29,7 @@ function formatJoinedDate(value: string, locale: string): string {
 
 export default function MembersPage() {
   const { t, i18n } = useTranslation(["tenant", "ui"]);
-  const { slug } = useParams<{ slug: string }>();
-  const tenantSlug = slug ?? "";
+  const tenantSlug = useTenantSlug();
 
   const { data: members, isLoading, error } = useMembers(tenantSlug);
   const inviteMutation = useInviteMember(tenantSlug);

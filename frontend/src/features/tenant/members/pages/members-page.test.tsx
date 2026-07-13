@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Route, Routes } from "react-router-dom";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { useAuthStore } from "@/core/auth/auth-store";
 import { render } from "@/test/render";
 import MembersPage from "./members-page";
@@ -13,9 +13,79 @@ const baseTenant = {
   joinedAt: "2026-06-22T00:00:00Z",
 };
 
+const originalDomain = import.meta.env.VITE_APP_DOMAIN;
+
+/**
+ * Point `window.location` at a tenant subdomain, the way production serves this page.
+ * Mirrors the helper in use-tenant-slug.test.ts.
+ */
+function stubLocation(host: string) {
+  const [hostname, port] = host.split(":");
+  Object.defineProperty(window, "location", {
+    value: { host, hostname, protocol: "http:", port: port || "", href: `http://${host}/` },
+    writable: true,
+    configurable: true,
+  });
+}
+
 describe("MembersPage", () => {
   beforeEach(() => {
     useAuthStore.getState().reset();
+  });
+
+  /**
+   * Production mounts this page from the tenant router, whose only route is `path: "/*"` —
+   * there is no `:slug` param to read. The slug comes from the hostname instead. The rest of
+   * this file mounts a `/tenants/:slug/members` route that exists nowhere in the app, which is
+   * why it kept passing while the real page told every tenant owner they had no permission.
+   */
+  describe("on a tenant subdomain (production routing: no :slug param)", () => {
+    let originalLocation: Location;
+
+    beforeEach(() => {
+      originalLocation = window.location;
+      stubLocation("acme.lvh.me:5174");
+      import.meta.env.VITE_APP_DOMAIN = "lvh.me";
+    });
+
+    afterEach(() => {
+      Object.defineProperty(window, "location", {
+        value: originalLocation,
+        writable: true,
+        configurable: true,
+      });
+      import.meta.env.VITE_APP_DOMAIN = originalDomain;
+    });
+
+    it("resolves the tenant from the hostname and lists its members", async () => {
+      useAuthStore.getState().setActiveTenant({ ...baseTenant, role: "owner" });
+
+      render(
+        <Routes>
+          <Route path="/*" element={<MembersPage />} />
+        </Routes>,
+        { initialEntries: ["/members"] }
+      );
+
+      expect(await screen.findByText("owner@acme.test")).toBeInTheDocument();
+      expect(screen.getByText("member@acme.test")).toBeInTheDocument();
+    });
+
+    it("shows the owner the invite action rather than a permission denial", async () => {
+      useAuthStore.getState().setActiveTenant({ ...baseTenant, role: "owner" });
+
+      render(
+        <Routes>
+          <Route path="/*" element={<MembersPage />} />
+        </Routes>,
+        { initialEntries: ["/members"] }
+      );
+
+      expect(await screen.findByRole("button", { name: /invite member/i })).toBeInTheDocument();
+      expect(
+        screen.queryByText(/don't have permission to manage members/i)
+      ).not.toBeInTheDocument();
+    });
   });
 
   it("lists tenant members and invites a new member", async () => {
