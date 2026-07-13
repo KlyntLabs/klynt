@@ -65,7 +65,7 @@ Before changing code:
 3. Read `docs/ARCHITECTURE.md` for structure.
 4. Read the files you'll modify and their tests.
 5. Find an existing example of the same pattern.
-6. For UI work, reuse `frontend/src/components/ui/` primitives.
+6. For UI work, build with Astryx (see **UI Components** below and the `ASTRYX` block at the end of this file).
 
 ## Code Conventions
 
@@ -102,9 +102,13 @@ Before changing code:
 
 ### UI Components
 
-- Reuse `frontend/src/components/ui/` primitives. These are shadcn/ui-style components migrated from `frontend-v2/` and adapted for Tailwind CSS v4.
-- The legacy `frontend/src/core/ui/` NeoBrutalist primitives and `frontend/src/features/home/` OS desktop have been removed; see `docs/adr/0001-frontend-v2-ui-migration.md`.
-- New UI must feel native to Klynt — browser-default styling is a signal that an existing primitive is missing.
+The component layer is **mid-migration to Astryx**. Both states are live right now — read this before touching any UI. Decision: `docs/adr/015-astryx-component-layer.md`. Phased plan: `docs/astryx-migration-plan.md`.
+
+- **Astryx is the target layer.** All *new* UI is built with Astryx. Its conventions (no `<div>`, `AppShell` for page frames, tokens for every value) are in the `ASTRYX` block at the end of this file. Start with `bunx astryx build "<idea>"` from `frontend/`.
+- **`frontend/src/components/ui/` is LEGACY and FROZEN.** These are the shadcn/ui-style primitives migrated from `frontend-v2/`. Do not add new primitives here and do not build new screens on them. They are removed screen-by-screen as Astryx lands.
+- **Do not mix Astryx and shadcn primitives within a single screen.** A screen is either fully migrated or not migrated. Mixed screens are the one outcome that makes the migration harder to finish.
+- The older `frontend/src/core/ui/` NeoBrutalist primitives and `frontend/src/features/home/` OS desktop were already removed in an earlier migration.
+- New UI must feel native to Klynt — browser-default styling is a signal that a component is missing or that Astryx's CSS is not imported.
 
 ### File Size
 
@@ -244,3 +248,33 @@ Five canonical triage roles mapped 1:1 to label strings (`needs-triage`, `needs-
 ### Domain docs
 
 Single-context: root `CONTEXT.md` and `docs/adr/`. See `docs/agents/domain.md`.
+
+<!-- ASTRYX:START -->
+Astryx v0.1.4 · 149 components
+CLI: run every command as `bunx astryx <cmd>` (shown below as `astryx ...`), from `frontend/`.
+
+SETUP (once, in your app entry e.g. main.tsx) — without these, components render unstyled:
+  import "@astryxdesign/core/reset.css";
+  import "@astryxdesign/core/astryx.css";
+
+WORKFLOW — discover, don't guess. Before writing UI:
+1. `astryx build "<idea>"` — START HERE: returns a kit (closest [page] + [block]s + [component]s). No args = full playbook.
+2. `astryx template <name> [--skeleton]` — scaffold the [page]/[block]s it named, or study their layout. Templates are reference code.
+3. `astryx component <Name>` — props + examples for every component you use.
+
+RULES:
+- No <div> — components do all layout/spacing. Full page → AppShell; sidebar nav → SideNav.
+- Frame first: pick the shell (AppShell / Layout+LayoutPanel) and budget regions in px BEFORE writing content (`astryx docs layout`).
+- Dense data = rows (Table, List/Item) edge-to-edge — never Card-wrapped list items. Card = dashboard widgets, galleries, settings groups only.
+- Status → StatusDot/Token; Badge only for counts and enumerated states, never decoration.
+- Custom styling: component props first; else Tailwind utilities backed by tokens (bg-surface, text-primary, rounded-lg) via tailwind-theme.css. No raw hex/px.
+- Tokens for every value (`astryx docs tokens`). Brand/accent via `astryx theme` — never override --color-* in :root.
+
+MORE CLI:
+  search "<query>"   find any component / hook / doc / template / block
+  component --list   149 components by category
+  template --list    page + block recipes
+  docs <topic>       color, elevation, icons, illustrations, layout, migration, motion, principles, shape, spacing, styling, theme, tokens, typography
+  swizzle <Name>     eject component source for deep customization
+  upgrade --apply    run after any @astryxdesign/core bump
+<!-- ASTRYX:END -->

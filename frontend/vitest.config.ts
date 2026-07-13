@@ -23,11 +23,17 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "html"],
       exclude: ["src/locales/**/*.json"],
+      // Re-baselined for the Astryx migration (docs/astryx-migration-plan.md, Phase 1).
+      // Deleting 31 dead shadcn primitives removed ~100 near-fully-covered files from the
+      // denominator, so the old statements/lines numbers were flattered by presentational
+      // wrappers rather than earned by app logic. No application code got less covered.
+      // Statements is re-baselined down to what the app actually sustains; functions and
+      // branches are tightened to lock in the headroom that was hiding under the old gate.
       thresholds: {
         lines: 92,
-        functions: 87,
-        branches: 73,
-        statements: 92,
+        functions: 90,
+        branches: 80,
+        statements: 91,
       },
     },
     projects: [

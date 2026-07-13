@@ -1,4 +1,16 @@
-@import "tailwindcss";
+/* Astryx + Tailwind coexistence during the migration (see docs/astryx-migration-plan.md).
+   Layer order is load-bearing: Astryx reset/theme must land before Tailwind utilities so
+   migrated components keep Astryx defaults while legacy utility classes still win locally.
+   Tailwind is removed surface-by-surface; this block goes with the last one. */
+@layer reset, theme, base, astryx-base, astryx-theme, components, utilities;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "@astryxdesign/core/reset.css";
+@import "@astryxdesign/core/astryx.css";
+@import "@astryxdesign/theme-neutral/theme.css";
+@import "@astryxdesign/core/tailwind-theme.css";
+@import "tailwindcss/utilities.css" layer(utilities);
 
 @theme {
   /* v2 design-system colors (HSL variables defined below) */
@@ -229,10 +241,6 @@
     @apply border-border;
   }
 
-  html {
-    color-scheme: light dark;
-  }
-
   body {
     @apply bg-background text-foreground antialiased;
     font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -241,5 +249,29 @@
     -moz-osx-font-smoothing: grayscale;
     min-width: 320px;
     min-height: 100vh;
+  }
+}
+
+/* Astryx portal color-mode fix.
+ *
+ * Astryx's reset maps `html[data-theme]` -> `color-scheme` so that portalled content
+ * (Dialog, Popover, Toast, Tooltip, DropdownMenu — all rendered at <body>, outside the
+ * <Theme> wrapper) resolves its light-dark() tokens against the app's mode. But
+ * @astryxdesign/theme-neutral/theme.css re-declares `:root { color-scheme: light dark }`
+ * in the `astryx-theme` layer, which outranks the reset's `:where(html[data-theme])`
+ * rule (higher layer, higher specificity). The reset's portal mapping is therefore dead
+ * under Astryx's own documented layer order, and portals fall back to the OS preference —
+ * rendering dark dialogs inside a light app on a dark-mode machine.
+ *
+ * Re-assert the mapping from a layer above astryx-theme. Re-check on Astryx upgrades;
+ * this should become unnecessary if upstream drops the unconditional :root declaration.
+ */
+@layer components {
+  html[data-theme="light"] {
+    color-scheme: light;
+  }
+
+  html[data-theme="dark"] {
+    color-scheme: dark;
   }
 }
