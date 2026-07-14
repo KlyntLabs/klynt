@@ -116,11 +116,11 @@ shadcn, no `components/ui/`, no `cn()`. Decision: `docs/adr/015-astryx-component
   the pattern and the token map are in `docs/astryx-marketing-conventions.md`.
 - **Do NOT use `xstyle`/StyleX.** Astryx offers it, but there is no StyleX compiler in this
   build — the `xstyle` prop will silently do nothing.
-- **Two deliberate hex exceptions exist, and only two**: the brand accent in
-  `src/app/theme/klynt-theme.ts` (the source of truth that `defineTheme` derives every other
-  token from), and the three macOS traffic lights in `window-controls.module.css` (literal
-  quotations of macOS — theming them would stop them being red/amber/green in dark mode).
-  Anything else with a `#` in it is a bug.
+- **There is no hardcoded colour anywhere, and no exceptions.** The app runs on Astryx's stock
+  `neutralTheme` — no `defineTheme`, no accent, no token overrides, no brand colour. Every
+  colour resolves from a token. **A `#` in a colour position is a bug**, including in the
+  window chrome and including a brand mark: the wordmark is `--color-accent` plated with
+  `--color-on-accent`.
 - **Colour mode is owned by `<Theme mode>`**, driven by `src/core/theme/theme-store.ts` and the
   menubar's `ThemeToggle`. It defaults to `system`. Nothing else may set the mode — Astryx syncs
   `data-theme` onto `<html>` from this prop, and portalled content (dialogs, popovers, toasts)

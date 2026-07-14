@@ -1,11 +1,11 @@
 import "@/core/i18n/config";
 import { Theme } from "@astryxdesign/core/theme";
+import { neutralTheme } from "@astryxdesign/theme-neutral";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useState } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import { I18nextProvider } from "react-i18next";
-import { klyntTheme } from "@/app/theme/klynt-theme";
 import { createQueryClient } from "@/core/api/api-module";
 import { AuthHydrator } from "@/core/auth";
 import { ErrorBoundary } from "@/core/error-boundary";
@@ -42,7 +42,12 @@ export function AppProviders({ children }: AppProvidersProps) {
     // drives it, defaulting to "system", with ThemeToggle as the control. Astryx syncs
     // `data-theme` onto <html> from this prop, which is also what portalled content (dialogs,
     // popovers, toasts) reads to resolve its light-dark() tokens.
-    <Theme theme={klyntTheme} mode={themeMode}>
+    //
+    // The theme is Astryx's STOCK neutralTheme — no defineTheme, no accent, no token overrides.
+    // The app is 100% native to the design system, which means the accent is Astryx's
+    // near-black/near-white (#262626 / #ebebeb), not the Klynt orange. There is deliberately
+    // nowhere left to put a brand colour: reintroducing one means reintroducing defineTheme.
+    <Theme theme={neutralTheme} mode={themeMode}>
       <HelmetProvider>
         <I18nextProvider i18n={i18n}>
           <HtmlLang />

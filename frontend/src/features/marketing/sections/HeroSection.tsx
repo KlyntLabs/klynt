@@ -55,9 +55,9 @@ export function HeroSection({ onOpenApp }: HeroSectionProps) {
                 aria-label={t("home.hero.logoAlt")}
               >
                 <title>{t("home.hero.logoAlt")}</title>
-                <rect width="32" height="32" rx="6" fill="var(--color-background-inverted)" />
-                <path d="M8 10h3v8h5v-8h3v12h-3v-4h-5v4H8V10z" fill="var(--color-accent)" />
-                <circle cx="22" cy="12" r="2" fill="var(--color-accent)" />
+                <rect width="32" height="32" rx="6" fill="var(--color-accent)" />
+                <path d="M8 10h3v8h5v-8h3v12h-3v-4h-5v4H8V10z" fill="var(--color-on-accent)" />
+                <circle cx="22" cy="12" r="2" fill="var(--color-on-accent)" />
               </svg>
               <Text type="large" weight="bold">
                 {t("home.hero.brand")}

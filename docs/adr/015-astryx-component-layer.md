@@ -21,9 +21,12 @@ Three questions this ADR left open were answered by doing the work:
 - **The marketing palette question resolved by adopting Astryx's tokens**, accepting the visual
   shift. The neutrals are warmer than the old bespoke palette, and the link blue is Astryx's.
 
-Two hex values survive, deliberately: the brand accent in `klynt-theme.ts` (which `defineTheme`
-derives every other token from) and the three macOS traffic lights (literal quotations; theming
-them would stop them being red/amber/green in dark mode).
+**No hardcoded colour survives, and there are no exceptions.** The app runs on Astryx's stock
+`neutralTheme`: no `defineTheme`, no accent, no token overrides. That means it has **no brand
+colour** — the accent is Astryx's near-black/near-white, so every CTA is monochrome and the Klynt
+orange is gone from the product. The macOS traffic lights are gone too, replaced by Astryx's
+categorical hues, so the window controls read as red/amber/green but are no longer *the* macOS
+lights. Both were knowing trades for being 100% native to the design system.
 
 Dark mode now works for the first time — `<Theme mode>` defaults to `system` and is driven by a
 real control. It never worked before: nothing ever applied the old `.dark` class.

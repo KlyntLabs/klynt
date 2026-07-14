@@ -1,19 +1,18 @@
 /*
- * macOS-style traffic lights.
+ * Window controls.
  *
- * DELIBERATE ASTRYX EXCEPTION — the three colours below are the only hardcoded hex left in
- * the desktop chrome. They are not brand or semantic values that should follow a theme; they
- * are literal quotations of the macOS window controls, and the whole desktop metaphor depends
- * on the user recognising them. Mapping them onto Astryx's status tokens would make them
- * theme-dependent and, in a dark theme, no longer red/amber/green. Astryx has no
- * window-control component to replace them.
+ * These were literal quotations of the macOS traffic lights (#ff5f57 / #febc2e / #28c840) —
+ * the last hardcoded colours in the app. They now come from Astryx's categorical hue tokens,
+ * so the app is 100% native to the design system with no colour of its own anywhere.
  *
- * See docs/adr/015-astryx-component-layer.md — the desktop chrome is a bounded exception to
- * the "tokens for every value" rule, and this is where it applies.
+ * The trade that buys: the controls are now theme-derived rather than literal. Astryx's red,
+ * yellow and green are not macOS's, and in dark mode they resolve to the dark-mode variants —
+ * so they read as red/amber/green but no longer as *the* macOS lights. That is the intended
+ * consequence of going fully native; the recognisability of the exact macOS hues was the thing
+ * being given up, and it was given up knowingly.
  *
- * Only the three resting colours are literals. The hover shade and the glyph colour are
- * *derived* from them with color-mix, so there is exactly one source of truth per light and
- * no fourth, fifth or sixth hex to keep in sync.
+ * One token per control. Hover and the glyph are derived with color-mix, so there is a single
+ * source of truth per light.
  */
 
 .controls {
@@ -58,15 +57,15 @@
 }
 
 .close {
-  --traffic-light: #ff5f57;
+  --traffic-light: var(--color-icon-red);
 }
 
 .minimize {
-  --traffic-light: #febc2e;
+  --traffic-light: var(--color-icon-yellow);
 }
 
 .maximize {
-  --traffic-light: #28c840;
+  --traffic-light: var(--color-icon-green);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -36,7 +36,7 @@ The contract every migrated file follows. Reference implementation:
 
 ## The token map
 
-Resolved from the live theme (warm neutrals, derived from the Klynt orange accent).
+Resolved from Astryx's stock `neutralTheme`. There is no custom theme and no accent override.
 
 | Old marketing hex | Meaning | Token |
 |---|---|---|
@@ -44,7 +44,7 @@ Resolved from the live theme (warm neutrals, derived from the Klynt orange accen
 | `#6B6B6B` | secondary text | `var(--color-text-secondary)` |
 | `#9CA3AF` | muted / metadata | `var(--color-text-disabled)` |
 | `#2563EB` | link blue | `var(--color-text-blue)` |
-| `#F76E18` | brand orange | `var(--color-accent)` |
+| `#F76E18` | (was brand orange) | `var(--color-accent)` — now Astryx's near-black/near-white. There is no brand colour. |
 | `#E5E5E5` | hairline border | `var(--color-border)` |
 | `#D1D1D1` | stronger border | `var(--color-border-emphasized)` |
 | `#FFFFFF` | card / raised surface | `var(--color-background-surface)` |
@@ -60,10 +60,13 @@ Full lists: `bunx astryx docs tokens`, `… docs color`, `… docs spacing`, `�
 
 ## Expect a visual change
 
-We are adopting Astryx's palette, not preserving the old one. The neutrals are **warm**
-(`--color-text-primary` is `#241914`, not `#1A1A1A`; the body ground is a warm cream, not white)
-and the link blue is Astryx's, not `#2563EB`. That shift is intended and signed off — do not
-reintroduce the old hex to "fix" it.
+We adopted Astryx's palette wholesale — its **stock `neutralTheme`**, with no `defineTheme`, no
+accent and no token overrides. The app is 100% native to the design system and has **no brand
+colour of its own**: the accent is Astryx's near-black (`#262626`) in light and near-white
+(`#ebebeb`) in dark, so every primary button and CTA is monochrome. The Klynt orange is gone.
+
+That shift is intended and signed off. Do not reintroduce a hex to "fix" it — reintroducing a
+brand colour means reintroducing `defineTheme`, which is a decision, not a patch.
 
 ## Non-negotiables
 
