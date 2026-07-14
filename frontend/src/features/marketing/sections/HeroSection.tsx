@@ -1,8 +1,16 @@
+import { Button } from "@astryxdesign/core/Button";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { IconButton } from "@astryxdesign/core/IconButton";
+import { Section } from "@astryxdesign/core/Section";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import { motion } from "framer-motion";
 import { Check, Copy, Link as LinkIcon, Play, User } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TypewriterText } from "@/features/marketing/components/TypewriterText";
+import styles from "./hero-section.module.css";
 
 interface HeroSectionProps {
   onOpenApp: (route: string, title?: string) => void;
@@ -19,9 +27,8 @@ export function HeroSection({ onOpenApp }: HeroSectionProps) {
   }, [t]);
 
   return (
-    <section className="mb-8">
-      <div className="flex flex-col md:flex-row gap-6">
-        {/* Left: Text */}
+    <Section variant="transparent" padding={0}>
+      <div className={styles.columns}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -29,133 +36,131 @@ export function HeroSection({ onOpenApp }: HeroSectionProps) {
             duration: 0.4,
             ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
           }}
-          className="flex-1 min-w-0"
+          className={styles.textColumn}
         >
-          {/* Logo Lockup */}
-          <div className="flex items-center gap-2 mb-5">
-            <svg
-              width="32"
-              height="32"
-              viewBox="0 0 32 32"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-label={t("home.hero.logoAlt")}
-            >
-              <title>{t("home.hero.logoAlt")}</title>
-              <rect width="32" height="32" rx="6" fill="#1A1A2E" />
-              <path d="M8 10h3v8h5v-8h3v12h-3v-4h-5v4H8V10z" fill="#F76E18" />
-              <circle cx="22" cy="12" r="2" fill="#F76E18" />
-            </svg>
-            <span className="text-xl font-bold tracking-tight text-[#1A1A1A]">
-              {t("home.hero.brand")}
-            </span>
-          </div>
-
-          {/* Headline */}
-          <h1 className="text-4xl font-bold text-[#1A1A1A] leading-tight mb-3">
-            {t("home.hero.title")}
-          </h1>
-
-          {/* Subheadline */}
-          <p className="text-base text-[#6B6B6B] leading-relaxed mb-1">
-            {t("home.hero.subtitle1")}
-          </p>
-          <p className="text-base text-[#6B6B6B] leading-relaxed mb-5">
-            {t("home.hero.subtitle2")}
-            <em className="text-[#1A1A1A]">
-              <TypewriterText text={t("home.hero.subtitle2Emphasis")} speed={80} />
-            </em>
-            .
-          </p>
-
-          {/* CTA Row */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.4 }}
-            className="flex flex-wrap gap-3 mb-4"
-          >
-            <button
-              type="button"
-              onClick={() => onOpenApp("/pricing", t("home.hero.ctaPrimary"))}
-              className="px-5 py-2.5 rounded-md bg-[#F76E18] hover:bg-[#E56310] text-white font-semibold transition-colors"
-            >
-              {t("home.hero.ctaPrimary")}
-            </button>
-            <button
-              type="button"
-              className="px-5 py-2.5 rounded-md border border-[#D1D1D1] bg-white text-[#1A1A1A] font-medium hover:bg-[#F5F3EF] transition-colors"
-            >
-              {t("home.hero.ctaSecondary")}
-            </button>
-          </motion.div>
-
-          {/* Install Command */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.4 }}
-            className="mb-4"
-          >
-            <div className="flex items-center gap-2 bg-[#F5F3EF] border border-[#E5E5E5] rounded-md px-4 py-2.5">
-              <code className="text-sm font-mono text-[#1A1A1A] flex-1">
-                {t("home.hero.installCommand")}
-              </code>
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="w-8 h-8 flex items-center justify-center rounded hover:bg-[#E5E5E5] transition-colors"
-                title={t("home.hero.copyTooltip")}
+          <VStack gap={5} align="start">
+            <HStack gap={2} align="center">
+              {/*
+               * The wordmark is a brand asset, not a themed surface: its geometry and the
+               * accent are fixed. The accent is drawn from the theme so it tracks the brand
+               * colour, and the plate uses the inverted background token so the mark stays
+               * legible in both colour modes.
+               */}
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 32 32"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-label={t("home.hero.logoAlt")}
               >
-                {copied ? (
-                  <Check className="w-4 h-4 text-[#22C55E]" />
-                ) : (
-                  <Copy className="w-4 h-4 text-[#6B6B6B]" />
-                )}
-              </button>
-            </div>
-            <p className="text-xs text-[#9CA3AF] mt-1.5">{t("home.hero.installHint")}</p>
-          </motion.div>
+                <title>{t("home.hero.logoAlt")}</title>
+                <rect width="32" height="32" rx="6" fill="var(--color-background-inverted)" />
+                <path d="M8 10h3v8h5v-8h3v12h-3v-4h-5v4H8V10z" fill="var(--color-accent)" />
+                <circle cx="22" cy="12" r="2" fill="var(--color-accent)" />
+              </svg>
+              <Text type="large" weight="bold">
+                {t("home.hero.brand")}
+              </Text>
+            </HStack>
 
-          {/* Link Row */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.4 }}
-            className="flex items-center gap-2 text-sm text-[#6B6B6B]"
-          >
-            <button
-              type="button"
-              onClick={() => onOpenApp("/docs", t("home.hero.links.mcp"))}
-              className="text-[#2563EB] hover:underline flex items-center gap-1"
+            <VStack gap={3} align="start">
+              <Heading level={1} type="display-2" textWrap="balance">
+                {t("home.hero.title")}
+              </Heading>
+
+              <VStack gap={1} align="start">
+                <Text color="secondary" display="block">
+                  {t("home.hero.subtitle1")}
+                </Text>
+                <Text color="secondary" display="block">
+                  {t("home.hero.subtitle2")}
+                  <Text color="primary" as="span">
+                    <em>
+                      <TypewriterText text={t("home.hero.subtitle2Emphasis")} speed={80} />
+                    </em>
+                  </Text>
+                  .
+                </Text>
+              </VStack>
+            </VStack>
+
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1, duration: 0.4 }}
             >
-              <LinkIcon className="w-3.5 h-3.5" /> {t("home.hero.links.mcp")}
-            </button>
-            <span>&bull;</span>
-            <button
-              type="button"
-              onClick={() => onOpenApp("/demo", t("home.hero.links.demo"))}
-              className="text-[#2563EB] hover:underline flex items-center gap-1"
+              <HStack gap={3} wrap="wrap">
+                <Button
+                  variant="primary"
+                  label={t("home.hero.ctaPrimary")}
+                  onClick={() => onOpenApp("/pricing", t("home.hero.ctaPrimary"))}
+                />
+                <Button variant="secondary" label={t("home.hero.ctaSecondary")} />
+              </HStack>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.4 }}
             >
-              <Play className="w-3.5 h-3.5" /> {t("home.hero.links.demo")}
-            </button>
-            <span>&bull;</span>
-            <button
-              type="button"
-              onClick={() => onOpenApp("/talk-to-a-human", t("home.hero.links.talkToHuman"))}
-              className="text-[#2563EB] hover:underline flex items-center gap-1"
+              <VStack gap={1.5} align="start">
+                <div className={styles.commandBar}>
+                  <Text type="code" display="block" className={styles.command}>
+                    {t("home.hero.installCommand")}
+                  </Text>
+                  <IconButton
+                    variant="ghost"
+                    size="sm"
+                    label={t("home.hero.copyTooltip")}
+                    icon={copied ? <Check /> : <Copy />}
+                    onClick={handleCopy}
+                  />
+                </div>
+                <Text type="supporting" size="2xs">
+                  {t("home.hero.installHint")}
+                </Text>
+              </VStack>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.4 }}
             >
-              <User className="w-3.5 h-3.5" /> {t("home.hero.links.talkToHuman")}
-            </button>
-          </motion.div>
+              <HStack gap={1} align="center" wrap="wrap">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={<LinkIcon />}
+                  label={t("home.hero.links.mcp")}
+                  onClick={() => onOpenApp("/docs", t("home.hero.links.mcp"))}
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={<Play />}
+                  label={t("home.hero.links.demo")}
+                  onClick={() => onOpenApp("/demo", t("home.hero.links.demo"))}
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={<User />}
+                  label={t("home.hero.links.talkToHuman")}
+                  onClick={() => onOpenApp("/talk-to-a-human", t("home.hero.links.talkToHuman"))}
+                />
+              </HStack>
+            </motion.div>
+          </VStack>
         </motion.div>
 
-        {/* Right: Hero Illustration */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2, duration: 0.5 }}
-          className="flex items-center justify-center shrink-0"
+          className={styles.mascotColumn}
         >
           <img
             src="/hedgehog-hero.webp"
@@ -163,11 +168,10 @@ export function HeroSection({ onOpenApp }: HeroSectionProps) {
             width={1024}
             height={1024}
             fetchPriority="high"
-            className="w-[260px] h-auto animate-bounce"
-            style={{ animation: "float 3s ease-in-out infinite" }}
+            className={styles.mascot}
           />
         </motion.div>
       </div>
-    </section>
+    </Section>
   );
 }

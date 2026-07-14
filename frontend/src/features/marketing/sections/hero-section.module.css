@@ -1,0 +1,70 @@
+/*
+ * Marketing layout that Astryx's components do not express: a responsive two-column hero,
+ * an inline command bar, and the mascot's float animation.
+ *
+ * Every value is an Astryx token. No hex, no px literals for colour or spacing — those are
+ * what the migration removed. Astryx's guidance for exactly this case: "Most DOM styling
+ * should stay on the CSS-variable path" (bunx astryx docs styling-libraries).
+ */
+
+.columns {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+@media (min-width: 768px) {
+  .columns {
+    flex-direction: row;
+  }
+}
+
+.textColumn {
+  flex: 1;
+  min-width: 0;
+}
+
+.commandBar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  background: var(--color-background-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-element);
+  padding: var(--spacing-2) var(--spacing-4);
+}
+
+.command {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.mascotColumn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mascot {
+  width: 260px;
+  height: auto;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot {
+    animation: none;
+  }
+}
