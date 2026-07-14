@@ -1,3 +1,4 @@
+import { Center } from "@astryxdesign/core/Center";
 import { Text } from "@astryxdesign/core/Text";
 import { TextInput } from "@astryxdesign/core/TextInput";
 import { VStack } from "@astryxdesign/core/VStack";
@@ -64,16 +65,16 @@ export function VideoRenderer({
   const showHttpsWarning = draft.startsWith("http://");
 
   return (
-    <div className={styles.pane}>
+    <VStack height="100%" gap={3} padding={4}>
       {isValidVideoUrl(src) ? (
         // biome-ignore lint/a11y/useMediaCaption: Video source is user-provided and may not have captions available.
         <video controls src={src} className={styles.player} data-testid="video-player" />
       ) : (
-        <div className={styles.emptyState} data-testid="video-empty-state">
+        <Center className={styles.emptyState} data-testid="video-empty-state">
           <Text type="body" color="secondary">
             {t("video.noUrl")}
           </Text>
-        </div>
+        </Center>
       )}
       {!readOnly && (
         <VStack gap={1}>
@@ -102,6 +103,6 @@ export function VideoRenderer({
           )}
         </VStack>
       )}
-    </div>
+    </VStack>
   );
 }

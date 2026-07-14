@@ -1,11 +1,11 @@
+import { LayerProvider } from "@astryxdesign/core/Layer";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook, screen, waitFor } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
 import type { ReactNode } from "react";
 import { I18nextProvider } from "react-i18next";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import i18n from "@/core/i18n/test-config";
-import { useToastStore } from "@/core/notifications/toast-store";
 import { useInviteMember } from "@/features/tenant/members/hooks/use-invite-member";
 import { useRemoveMember } from "@/features/tenant/members/hooks/use-remove-member";
 import { useUpdateMemberRole } from "@/features/tenant/members/hooks/use-update-member-role";
@@ -18,20 +18,21 @@ function createTestSetup() {
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
 
+  // `LayerProvider` mounts Astryx's ToastViewport. Each toast is then asserted where the user
+  // meets it — on screen, with its interpolated message — instead of on a store that no longer
+  // exists. `role="alert"` is the live region Astryx gives an error toast.
   function Wrapper({ children }: { children: ReactNode }) {
     return (
       <I18nextProvider i18n={i18n}>
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        <LayerProvider>
+          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        </LayerProvider>
       </I18nextProvider>
     );
   }
 
   return { queryClient, Wrapper };
 }
-
-beforeEach(() => {
-  useToastStore.getState().reset();
-});
 
 describe("tenant mutation hooks", () => {
   it("shows a toast when removing a tenant fails", async () => {
@@ -41,16 +42,15 @@ describe("tenant mutation hooks", () => {
       )
     );
 
-    const addToastSpy = vi.spyOn(useToastStore.getState(), "addToast");
     const { Wrapper } = createTestSetup();
     const { result } = renderHook(() => useRemoveTenant("acme"), { wrapper: Wrapper });
 
     result.current.mutate();
 
     await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(addToastSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "error", duration: 5000 })
-    );
+
+    const toast = await screen.findByRole("alert");
+    expect(toast).toHaveTextContent(/Failed to delete tenant:/);
   });
 
   it("shows a toast when updating a tenant fails", async () => {
@@ -60,16 +60,15 @@ describe("tenant mutation hooks", () => {
       )
     );
 
-    const addToastSpy = vi.spyOn(useToastStore.getState(), "addToast");
     const { Wrapper } = createTestSetup();
     const { result } = renderHook(() => useUpdateTenant("acme"), { wrapper: Wrapper });
 
     result.current.mutate({ name: "Acme Inc" });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(addToastSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "error", duration: 5000 })
-    );
+
+    const toast = await screen.findByRole("alert");
+    expect(toast).toHaveTextContent(/Failed to update tenant:/);
   });
 
   it("shows a toast when inviting a member fails", async () => {
@@ -79,16 +78,15 @@ describe("tenant mutation hooks", () => {
       )
     );
 
-    const addToastSpy = vi.spyOn(useToastStore.getState(), "addToast");
     const { Wrapper } = createTestSetup();
     const { result } = renderHook(() => useInviteMember("acme"), { wrapper: Wrapper });
 
     result.current.mutate({ email: "new@example.com", role: "member" });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(addToastSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "error", duration: 5000 })
-    );
+
+    const toast = await screen.findByRole("alert");
+    expect(toast).toHaveTextContent(/Failed to invite member:/);
   });
 
   it("shows a toast when removing a member fails", async () => {
@@ -98,16 +96,15 @@ describe("tenant mutation hooks", () => {
       )
     );
 
-    const addToastSpy = vi.spyOn(useToastStore.getState(), "addToast");
     const { Wrapper } = createTestSetup();
     const { result } = renderHook(() => useRemoveMember("acme"), { wrapper: Wrapper });
 
     result.current.mutate("member@example.com");
 
     await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(addToastSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "error", duration: 5000 })
-    );
+
+    const toast = await screen.findByRole("alert");
+    expect(toast).toHaveTextContent(/Failed to remove member:/);
   });
 
   it("shows a toast when updating a member role fails", async () => {
@@ -117,15 +114,14 @@ describe("tenant mutation hooks", () => {
       )
     );
 
-    const addToastSpy = vi.spyOn(useToastStore.getState(), "addToast");
     const { Wrapper } = createTestSetup();
     const { result } = renderHook(() => useUpdateMemberRole("acme"), { wrapper: Wrapper });
 
     result.current.mutate({ email: "member@example.com", role: "admin" });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(addToastSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "error", duration: 5000 })
-    );
+
+    const toast = await screen.findByRole("alert");
+    expect(toast).toHaveTextContent(/Failed to update role:/);
   });
 });

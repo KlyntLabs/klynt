@@ -1,7 +1,9 @@
 "use client";
 
+import { Button } from "@astryxdesign/core/Button";
 import { Divider } from "@astryxdesign/core/Divider";
 import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { type ActionContext, executeContextMenuAction } from "./action-registry";
@@ -56,31 +58,50 @@ function MenuItem({
     onClose();
   }
 
+  /*
+   * A menu row IS an Astryx Button.
+   *
+   * It used to be an `<HStack as="button">` carrying a `{type, disabled}` spread-cast: Astryx's
+   * StackProps extends BaseProps, which is React.HTMLAttributes and therefore has no `type` or
+   * `disabled`, so those button-only attributes were untyped even though rest props do reach the
+   * element. Button declares both properly — `type` defaults to "button" and `isDisabled`
+   * becomes the real `disabled` attribute — so the cast is gone, and with it the native-button
+   * reset and the hand-written :hover / :focus-visible / disabled rules, which are the ghost
+   * variant's job now.
+   *
+   * Astryx's own <Item> looks like the obvious fit and is NOT: passing it a `role` sets its
+   * `hasParentRole` branch, which renders the row as a plain div with no tabIndex. That would
+   * take a keyboard-reachable menu and make it unreachable. Button keeps the real <button>.
+   *
+   * The label/shortcut split rides on `endContent`. Button's content wrapper is `display:
+   * contents`, so the label and the shortcut are direct flex children of the <button> itself —
+   * which is why .item only has to say "fill the row and push them apart", with no values in it.
+   */
   return (
-    <button
-      type="button"
+    <Button
+      variant="ghost"
+      size="sm"
       role="menuitem"
-      data-testid={`context-menu-item-${item.id}`}
-      disabled={item.disabled}
+      label={label ?? ""}
+      endContent={
+        item.shortcut ? (
+          <Text type="supporting" size="sm" color="secondary">
+            {item.shortcut}
+          </Text>
+        ) : undefined
+      }
+      isDisabled={item.disabled}
       onClick={handleClick}
-      className={item.disabled ? `${styles.item} ${styles.itemDisabled}` : styles.item}
-    >
-      <Text type="body">{label}</Text>
-      {item.shortcut ? (
-        <Text type="supporting" size="sm" color="secondary">
-          {item.shortcut}
-        </Text>
-      ) : null}
-    </button>
+      className={styles.item}
+      data-testid={`context-menu-item-${item.id}`}
+    />
   );
 }
 
+/* Astryx's horizontal Divider is width:100% and takes a className, so the wrapper div that used
+   to carry its surrounding rhythm is gone — the margin rides on the Divider itself. */
 function MenuSeparator() {
-  return (
-    <div className={styles.separator}>
-      <Divider />
-    </div>
-  );
+  return <Divider className={styles.separator} />;
 }
 
 function MenuGroup({
@@ -107,9 +128,10 @@ function MenuGroup({
           </Text>
         </legend>
       ) : null}
-      <div className={label ? styles.groupChildrenIndented : styles.groupChildren}>
+      {/* The indent is a padding step, so it is a prop — the two groupChildren classes are gone. */}
+      <VStack paddingInline={label ? 2 : 0}>
         <MenuEntries entries={group.children} actionContext={actionContext} onClose={onClose} />
-      </div>
+      </VStack>
     </fieldset>
   );
 }
@@ -164,27 +186,29 @@ export function ContextMenuRenderer({
   }
 
   return (
-    <div
+    <VStack
       data-testid="context-menu-renderer"
       className={styles.surface}
       role="menu"
       aria-label={schema.id}
+      padding={1}
     >
       <MenuEntries entries={schema.root} actionContext={actionContext} onClose={onClose} />
-    </div>
+    </VStack>
   );
 }
 
 function EmptyContextMenu({ schema }: { schema: ContextMenuSchema }): React.JSX.Element {
   const { t } = useTranslation("home");
   return (
-    <div
+    <VStack
       data-testid="context-menu-empty-state"
       className={styles.emptySurface}
       role="menu"
       aria-label={schema.id}
+      padding={3}
     >
       <Text type="body">{t("desktop.contextMenu.empty")}</Text>
-    </div>
+    </VStack>
   );
 }

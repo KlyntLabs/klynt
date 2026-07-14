@@ -3,8 +3,12 @@
  * primitive for is the tinted icon disc at the top of each card, so that lives here — one class
  * per channel, each drawing its tint and its mark from the matching colour-family tokens.
  *
- * The region padding is the card strip's own (it was `px-8 pb-6` pre-migration and
- * TalkToHumanPage still relies on it).
+ * The region padding stays in CSS for a specific reason: Astryx's Grid exposes no padding prop
+ * at all (only columns/gap/size/alignment), and the strip's block padding is bottom-only, which
+ * even Stack's symmetric `paddingBlock` could not express. Both values are tokens.
+ *
+ * The discs centre their Icon with HStack props; only the tint and the geometry remain below.
+ * No hex, no raw px.
  */
 
 .region {
@@ -13,10 +17,7 @@
 }
 
 .iconDisc {
-  display: flex;
   flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
   width: var(--spacing-10);
   height: var(--spacing-10);
   border-radius: var(--radius-full);

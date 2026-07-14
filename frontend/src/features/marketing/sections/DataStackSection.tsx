@@ -1,10 +1,27 @@
 import { Button } from "@astryxdesign/core/Button";
 import { Heading } from "@astryxdesign/core/Heading";
 import { HStack } from "@astryxdesign/core/HStack";
+import { Icon } from "@astryxdesign/core/Icon";
 import { Section } from "@astryxdesign/core/Section";
 import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
+import type { SVGProps } from "react";
 import { useTranslation } from "react-i18next";
+
+/**
+ * The "included" tick, authored as an `IconType` so Astryx's `Icon` can render it — "Don't render
+ * raw SVG elements; always wrap in Icon" (`bunx astryx component Icon`). Icon owns the geometry
+ * (`size="sm"` is the 16px this mark was hand-sized to); the fills stay Astryx tokens.
+ */
+function IncludedMark({ "aria-label": label, ...props }: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 32 32" fill="none" aria-label={label} {...props}>
+      <title>{label}</title>
+      <rect width="32" height="32" rx="6" fill="var(--color-accent)" />
+      <path d="M8 16l6 6 10-10" stroke="var(--color-on-accent)" strokeWidth="3" fill="none" />
+    </svg>
+  );
+}
 
 export function DataStackSection() {
   const { t } = useTranslation("marketing");
@@ -29,27 +46,12 @@ export function DataStackSection() {
         <VStack as="ul" gap={1.5} align="start">
           {dataStackItems.map((item) => (
             <HStack as="li" key={item} gap={3} align="center">
-              {/*
-               * The "included" tick is a brand mark rather than a themed control: the geometry is
-               * fixed and the plate is the accent. Both fills are drawn from tokens so the mark
-               * tracks the theme in both colour modes.
-               */}
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 32 32"
-                fill="none"
+              <Icon
+                icon={IncludedMark}
+                size="sm"
+                aria-hidden={false}
                 aria-label={t("home.dataStack.includedAlt")}
-              >
-                <title>{t("home.dataStack.includedAlt")}</title>
-                <rect width="32" height="32" rx="6" fill="var(--color-accent)" />
-                <path
-                  d="M8 16l6 6 10-10"
-                  stroke="var(--color-on-accent)"
-                  strokeWidth="3"
-                  fill="none"
-                />
-              </svg>
+              />
               <Text type="label" weight="medium">
                 {item}
               </Text>

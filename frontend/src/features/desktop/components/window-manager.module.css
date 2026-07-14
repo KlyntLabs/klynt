@@ -6,6 +6,6 @@
 .layer {
   position: absolute;
   inset: 0;
-  /* Menubar height. Matches the y-clamp in Window.tsx's drag handler. */
-  top: 36px;
+  /* Menubar height. Matches MENUBAR_OFFSET, the y-clamp in Window.tsx's drag handler. */
+  top: var(--spacing-9);
 }

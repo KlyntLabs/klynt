@@ -12,42 +12,46 @@ export function SlidePricing() {
   const { t } = useTranslation("marketing");
 
   return (
-    <div className={styles.pricingSlide}>
-      <VStack gap={6} align="center">
-        <Heading level={2} justify="center">
-          {t("productAnalytics.slides.pricing.title")}
-        </Heading>
+    <VStack height="100%" paddingInline={8} gap={6} align="center" justify="center">
+      <Heading level={2} justify="center">
+        {t("productAnalytics.slides.pricing.title")}
+      </Heading>
 
-        <Card padding={8} width={320}>
-          <VStack gap={3} align="center">
-            <Text type="large" weight="semibold" display="block" justify="center">
-              {t("productAnalytics.slides.pricing.product")}
+      <Card padding={8} width={320}>
+        <VStack gap={3} align="center">
+          <Text type="large" weight="semibold" display="block" justify="center">
+            {t("productAnalytics.slides.pricing.product")}
+          </Text>
+
+          <VStack gap={1} align="center">
+            {/* Astryx's Text colour union has no "green", so the token sits on the element via a
+                class and Text opts into it with color="inherit". The wrapper <div> is gone. */}
+            <Text
+              type="display-3"
+              color="inherit"
+              weight="bold"
+              display="block"
+              className={styles.priceFigure}
+            >
+              {t("productAnalytics.slides.pricing.freeTier")}
             </Text>
-
-            <VStack gap={1} align="center">
-              <div className={styles.priceFigure}>
-                <Text type="display-3" color="inherit" weight="bold" display="block">
-                  {t("productAnalytics.slides.pricing.freeTier")}
-                </Text>
-              </div>
-              <Badge variant="green" label={t("productAnalytics.slides.pricing.freeLabel")} />
-            </VStack>
-
-            <Divider />
-
-            <VStack gap={1} align="center">
-              <Text color="secondary" display="block" justify="center">
-                {t("productAnalytics.slides.pricing.rate")}
-              </Text>
-              <Text type="supporting" size="xsm" color="disabled" display="block" justify="center">
-                {t("productAnalytics.slides.pricing.noHiddenFees")}
-              </Text>
-            </VStack>
+            <Badge variant="green" label={t("productAnalytics.slides.pricing.freeLabel")} />
           </VStack>
-        </Card>
 
-        <Button variant="primary" label={t("productAnalytics.slides.pricing.cta")} />
-      </VStack>
-    </div>
+          <Divider />
+
+          <VStack gap={1} align="center">
+            <Text color="secondary" display="block" justify="center">
+              {t("productAnalytics.slides.pricing.rate")}
+            </Text>
+            <Text type="supporting" size="xsm" color="disabled" display="block" justify="center">
+              {t("productAnalytics.slides.pricing.noHiddenFees")}
+            </Text>
+          </VStack>
+        </VStack>
+      </Card>
+
+      <Button variant="primary" label={t("productAnalytics.slides.pricing.cta")} />
+    </VStack>
   );
 }

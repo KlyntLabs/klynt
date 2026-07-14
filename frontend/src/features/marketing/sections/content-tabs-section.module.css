@@ -1,26 +1,13 @@
 /*
- * Marketing layout Astryx does not express: the "understand" tab is a copy column beside a
- * product grid that stacks on narrow screens. Grid would force equal tracks, so the split lives
- * here. The uppercase eyebrow is a typographic treatment Text has no prop for; its size, weight
- * and colour still come from the component.
+ * One rule left: the uppercase eyebrow, a typographic treatment Text has no prop for. Its size,
+ * weight and colour still come from the component.
+ *
+ * The 768px breakpoint that used to flip the "understand" tab's stack to a row is gone — the tab
+ * is a `Grid columns={{minWidth, max: 2}}`, which reflows on the container. Equal tracks are a
+ * deliberate change: the copy column and the product grid now share the width evenly.
+ *
+ * No hex, no raw px, no breakpoints.
  */
-
-.columns {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-6);
-}
-
-@media (min-width: 768px) {
-  .columns {
-    flex-direction: row;
-  }
-}
-
-.textColumn {
-  flex: 1;
-  min-width: 0;
-}
 
 .eyebrow {
   text-transform: uppercase;

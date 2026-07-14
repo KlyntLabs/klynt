@@ -11,8 +11,16 @@ import {
   tab4FeatureDev,
   tab4Feedback,
 } from "@/features/marketing/data/products";
-import { staggerContainer, staggerItem } from "./constants";
+import { staggerContainer } from "./constants";
 import { ProductCard } from "./ProductCard";
+
+/*
+ * framer-motion drives the Astryx components themselves — the category *is* the fading VStack and
+ * the grid *is* the stagger container. No wrapper <div> survives. (staggerItem now lives on
+ * ProductCard, which is the stagger item.)
+ */
+const MotionVStack = motion.create(VStack);
+const MotionGrid = motion.create(Grid);
 
 interface ProductCategoryProps {
   title: string;
@@ -22,30 +30,28 @@ interface ProductCategoryProps {
 
 function ProductCategory({ title, products, tk }: ProductCategoryProps) {
   return (
-    <motion.div
+    <MotionVStack
+      gap={4}
+      align="stretch"
       initial={{ opacity: 0, y: 12 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.35 }}
     >
-      <VStack gap={4} align="stretch">
-        <Heading level={3}>{title}</Heading>
-        <motion.div
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-        >
-          <Grid columns={{ minWidth: 260, max: 3 }} gap={1}>
-            {products.map((p) => (
-              <motion.div key={p.id} variants={staggerItem}>
-                <ProductCard product={p} tk={tk} />
-              </motion.div>
-            ))}
-          </Grid>
-        </motion.div>
-      </VStack>
-    </motion.div>
+      <Heading level={3}>{title}</Heading>
+      <MotionGrid
+        columns={{ minWidth: 260, max: 3 }}
+        gap={1}
+        variants={staggerContainer}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true }}
+      >
+        {products.map((p) => (
+          <ProductCard key={p.id} product={p} tk={tk} />
+        ))}
+      </MotionGrid>
+    </MotionVStack>
   );
 }
 

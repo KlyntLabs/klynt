@@ -1,3 +1,4 @@
+import { Button } from "@astryxdesign/core/Button";
 import { DropdownMenu } from "@astryxdesign/core/DropdownMenu";
 import { HStack } from "@astryxdesign/core/HStack";
 import { TopNav } from "@astryxdesign/core/TopNav";
@@ -72,12 +73,28 @@ export default function Menubar({ config }: MenubarProps) {
     <TopNav
       className={styles.topNav}
       heading={
-        <button type="button" onClick={handleLogoClick} className={styles.logoButton}>
+        /*
+         * The logo hit target IS an Astryx Button.
+         *
+         * It used to be an `<HStack as="button">` with a `type="button"` spread-cast and a CSS
+         * module for the native-button reset. Button renders a real `<button type="button">` and
+         * brings the ghost surface, the padding, the hover and the focus ring — so the cast and
+         * the .logoButton reset both go.
+         *
+         * The wordmark plate rides on `children` rather than the `icon` slot: that slot
+         * force-sizes what it wraps, and BrandLogo is a mark *plus* a wordmark, not a glyph.
+         *
+         * `label` is the ALT text, not the wordmark. Button applies `label` as the button's
+         * aria-label, which wins over the name its content would otherwise derive — so passing
+         * the wordmark ("Klynt") here would rename the control from "Klynt logo" to "Klynt".
+         * The visible wordmark still comes from BrandLogo; this is only the accessible name.
+         */
+        <Button variant="ghost" label={t("desktop.menubar.logoAlt")} onClick={handleLogoClick}>
           <BrandLogo
             label={t("desktop.menubar.logo") || config.menubar.brand.label}
             alt={t("desktop.menubar.logoAlt")}
           />
-        </button>
+        </Button>
       }
       startContent={
         <HStack gap={1}>

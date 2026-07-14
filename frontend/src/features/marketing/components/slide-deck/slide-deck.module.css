@@ -1,29 +1,27 @@
 /*
- * The deck chrome: a thumbnail rail, a full-bleed slide stage, a presenter-notes strip and a
- * navigation bar. Astryx has no deck primitive, so the frame lives here — but every control
- * inside it is an Astryx component, and every value below is an Astryx token.
+ * Structural residue for the deck chrome.
+ *
+ * Every band is an Astryx stack now: the rail's 180px width and the notes' 90px height are size
+ * props (Astryx's SizeValue: "numbers are treated as pixels"), and every gap and padding is a
+ * spacing prop. What is left below expresses no design value that Astryx has a prop for — flex
+ * mechanics, overflow, positioning, the button reset — plus token'd surfaces and borders.
+ *
+ * The focus ring is drawn the way Astryx draws its own: `outline-offset: var(--spacing-0-5)` is
+ * lifted straight from the compiled astryx.css, and the ring's width takes the same 2px token
+ * rather than a literal. So there is no raw px in this file at all — no hex either.
  */
 
 .deck {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
   user-select: none;
 }
 
 .topBar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
   flex-shrink: 0;
-  gap: var(--spacing-2);
-  padding: var(--spacing-2) var(--spacing-4);
   border-bottom: var(--border-width) solid var(--color-border);
   background: var(--color-background-surface);
 }
 
 .body {
-  display: flex;
   flex: 1;
   min-height: 0;
 }
@@ -31,17 +29,12 @@
 /* Thumbnail rail */
 .thumbnails {
   flex-shrink: 0;
-  width: 180px;
-  padding: var(--spacing-3);
-  overflow-y: auto;
   background: var(--color-background-muted);
   border-right: var(--border-width) solid var(--color-border);
 }
 
+/* The button reset: none of this is a design value, and Astryx has no prop for any of it. */
 .thumbnail {
-  display: block;
-  width: 100%;
-  margin-bottom: var(--spacing-2);
   padding: 0;
   text-align: start;
   background: none;
@@ -51,15 +44,12 @@
 }
 
 .thumbnail:focus-visible {
-  outline: 2px solid var(--color-border-blue);
-  outline-offset: 2px;
+  outline: var(--spacing-0-5) solid var(--color-border-blue);
+  outline-offset: var(--spacing-0-5);
 }
 
 .thumbnailFrame {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   width: 100%;
   aspect-ratio: 4 / 3;
   overflow: hidden;
@@ -81,15 +71,11 @@
 }
 
 .thumbnailLabel {
-  margin-top: var(--spacing-0-5);
-  padding-inline: var(--spacing-0-5);
   overflow: hidden;
 }
 
 /* Slide stage */
 .stage {
-  display: flex;
-  flex-direction: column;
   flex: 1;
   min-width: 0;
   background: var(--color-background-surface);
@@ -109,9 +95,6 @@
 /* Presenter notes */
 .notes {
   flex-shrink: 0;
-  height: 90px;
-  padding: var(--spacing-2) var(--spacing-4);
-  overflow-y: auto;
   background: var(--color-background-muted);
   border-top: var(--border-width) solid var(--color-border);
 }
@@ -123,17 +106,12 @@
 
 /* Navigation bar */
 .navigation {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
   flex-shrink: 0;
-  gap: var(--spacing-2);
-  padding: var(--spacing-2) var(--spacing-4);
   border-top: var(--border-width) solid var(--color-border);
   background: var(--color-background-surface);
 }
 
+/* A character-relative floor, not a pixel one — it tracks the font, so no token applies. */
 .counter {
   min-width: 3ch;
-  text-align: center;
 }

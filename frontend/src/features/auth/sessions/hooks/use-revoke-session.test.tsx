@@ -1,11 +1,11 @@
+import { LayerProvider } from "@astryxdesign/core/Layer";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook, screen, waitFor } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
 import type { ReactNode } from "react";
 import { I18nextProvider } from "react-i18next";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import i18n from "@/core/i18n/test-config";
-import { useToastStore } from "@/core/notifications/toast-store";
 import { server } from "@/test/msw/server";
 import { useRevokeSession } from "./use-revoke-session";
 
@@ -17,17 +17,15 @@ function createTestSetup() {
   function Wrapper({ children }: { children: ReactNode }) {
     return (
       <I18nextProvider i18n={i18n}>
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        <LayerProvider>
+          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        </LayerProvider>
       </I18nextProvider>
     );
   }
 
   return { queryClient, Wrapper };
 }
-
-beforeEach(() => {
-  useToastStore.getState().reset();
-});
 
 describe("useRevokeSession", () => {
   it("revokes a session", async () => {
@@ -71,19 +69,16 @@ describe("useRevokeSession", () => {
       )
     );
 
-    const addToastSpy = vi.spyOn(useToastStore.getState(), "addToast");
     const { Wrapper } = createTestSetup();
     const { result } = renderHook(() => useRevokeSession(), { wrapper: Wrapper });
 
     result.current.mutate("s-3");
 
     await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(addToastSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: "error",
-        duration: 5000,
-      })
-    );
-    expect(addToastSpy.mock.calls[0][0].message).toMatch(/Failed to revoke session:/);
+
+    // The toast is now read off the screen, not off a store: `role="alert"` is Astryx's live
+    // region for an error toast, and the interpolated i18n message is unchanged.
+    const toast = await screen.findByRole("alert");
+    expect(toast).toHaveTextContent(/Failed to revoke session:/);
   });
 });

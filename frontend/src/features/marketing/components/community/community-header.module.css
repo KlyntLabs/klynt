@@ -1,39 +1,12 @@
 /*
- * The Gazette masthead. Astryx has no "newspaper rule" (a 3px double border) and no
- * responsive row/column switch on HStack, so both live here — on the CSS-variable path
- * Astryx documents for DOM styling it does not express.
+ * The Gazette masthead. Two rules left, both tokens, no raw px and no breakpoints.
  *
- * Every colour and space is an Astryx token. No hex, no Tailwind.
+ * What went:
+ *  - The `3px double` newspaper rule. It is an Astryx `Divider variant="strong"` now — the
+ *    component that draws its own line from the theme's border token.
+ *  - The 768px padding bump and the 640px row switch. Padding is a `padding={6}` prop, and the
+ *    masthead row is a `Grid columns={{minWidth, max: 3}}` that reflows on the container.
  */
-
-.header {
-  padding-inline: var(--spacing-6);
-  padding-block-start: var(--spacing-6);
-  padding-block-end: var(--spacing-4);
-  border-block-end: 3px double var(--color-text-primary);
-}
-
-@media (min-width: 768px) {
-  .header {
-    padding-inline: var(--spacing-8);
-  }
-}
-
-.row {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--spacing-2);
-  margin-block-end: var(--spacing-2);
-}
-
-@media (min-width: 640px) {
-  .row {
-    flex-direction: row;
-    align-items: center;
-  }
-}
 
 /*
  * The masthead keeps its serif — it is the paper's identity, not a theme decision.

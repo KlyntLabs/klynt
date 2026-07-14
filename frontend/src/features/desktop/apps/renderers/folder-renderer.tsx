@@ -1,7 +1,19 @@
+import { Center } from "@astryxdesign/core/Center";
+import { ClickableCard } from "@astryxdesign/core/ClickableCard";
+import { Grid } from "@astryxdesign/core/Grid";
 import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import { useTranslation } from "react-i18next";
 import type { IconTreeNode } from "@/features/desktop/desktop-manager/icon-tree-module";
 import styles from "./folder-renderer.module.css";
+
+/**
+ * The folder field's track width. Astryx's Grid takes `columns={{minWidth, repeat}}` — "minWidth
+ * sets the minimum column width in px, repeat controls track behavior ('fill' preserves empty
+ * tracks for consistent widths)" — which is exactly the repeat(auto-fill, minmax(5rem, 1fr))
+ * this used to hand-roll. 80px == the old 5rem at the default root size.
+ */
+const FOLDER_COLUMN_MIN_WIDTH = 80;
 
 type FolderRendererProps = {
   content: Record<string, unknown>;
@@ -55,41 +67,64 @@ export function FolderRenderer({
 
   if (items.length === 0) {
     return (
-      <div className={styles.emptyState} data-testid="folder-empty-state">
+      <Center className={styles.emptyState} height="100%" data-testid="folder-empty-state">
         <Text type="body" color="secondary">
           {t("folder.empty")}
         </Text>
-      </div>
+      </Center>
     );
   }
 
   return (
-    <div className={styles.grid}>
+    <Grid
+      className={styles.grid}
+      columns={{ minWidth: FOLDER_COLUMN_MIN_WIDTH, repeat: "fill" }}
+      gap={4}
+    >
       {items.map((node) => {
         const hasChildren = (node.children ?? []).length > 0;
         const icon = getIcon(node, content, hasChildren);
         const label = getLabel(node);
 
         return (
-          <button
+          /*
+           * A folder item IS an Astryx ClickableCard.
+           *
+           * It used to be a `<VStack as="button">` carrying a `{type, disabled}` spread-cast —
+           * BaseProps extends HTMLAttributes, not ButtonHTMLAttributes, so button-only
+           * attributes are untyped even though rest props do reach the element. The cast was a
+           * custom pattern papering over "Astryx has no component for this", and that premise
+           * was simply wrong: ClickableCard is a click target that takes arbitrary children,
+           * and it brings a real <button> (hence the role, the accessible name from `label`,
+           * and the focus ring), `isDisabled`, and the hover state — so the cast, the
+           * native-button reset and the hand-written :hover/:focus-visible/:disabled rules all
+           * go at once.
+           */
+          <ClickableCard
             key={node.appId}
-            type="button"
+            label={label}
+            isDisabled={readOnly}
             onClick={() => handleChildClick(node)}
-            disabled={readOnly}
-            className={styles.item}
+            padding={2}
             data-testid={`folder-item-${node.appId}`}
-            aria-label={label}
           >
-            {/* The icon is an emoji glyph, not a lucide icon: it comes from user content. */}
-            <span className={styles.icon} aria-hidden="true">
-              {icon}
-            </span>
-            <Text type="supporting" size="sm" className={styles.label}>
-              {label}
-            </Text>
-          </button>
+            <VStack gap={2} align="center">
+              {/* The glyph is an emoji from user content, not a lucide icon, so Astryx's <Icon>
+                  (which takes an SVG *component*) has nothing to wrap. Text renders the inline
+                  element instead — `as="span"` + `display="inline"` — and its size comes from
+                  the type scale rather than a CSS rule. */}
+              <Text as="span" display="inline" size="2xl" aria-hidden="true">
+                {icon}
+              </Text>
+              {/* maxLines={1} is Text's own ellipsis — the .label class that hand-rolled
+                  overflow/text-overflow/white-space is gone. */}
+              <Text type="supporting" size="sm" maxLines={1}>
+                {label}
+              </Text>
+            </VStack>
+          </ClickableCard>
         );
       })}
-    </div>
+    </Grid>
   );
 }

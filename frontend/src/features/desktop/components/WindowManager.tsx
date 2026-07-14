@@ -1,3 +1,4 @@
+import { VStack } from "@astryxdesign/core/VStack";
 import { AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { DynamicAppWindow } from "@/features/desktop/apps/dynamic-app-window";
@@ -18,7 +19,7 @@ export default function WindowManager({ config }: WindowManagerProps) {
   const windows = desktopWindows ?? EMPTY_WINDOWS;
 
   return (
-    <div className={styles.layer}>
+    <VStack className={styles.layer}>
       <AnimatePresence>
         {windows
           .filter((w) => w.state !== "minimized")
@@ -67,6 +68,6 @@ export default function WindowManager({ config }: WindowManagerProps) {
             return null;
           })}
       </AnimatePresence>
-    </div>
+    </VStack>
   );
 }

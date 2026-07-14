@@ -1,16 +1,16 @@
 /*
  * The tinted icon tile behind each product entry. Astryx has no "icon tile" primitive (Card is
- * for discrete items, Badge for status), so the tile lives on the CSS-variable path — every
- * value is an Astryx token, no hex.
+ * for discrete items, Badge for status), so the tile's *surface* lives on the CSS-variable path.
+ * Its layout does not: the tile is an HStack and centres its mark with props (see ProductIcon).
  *
  * Each hue pairs `--color-background-<hue>` with `--color-text-<hue>`, which is the token family
- * Astryx designs for tinted-surface-plus-legible-foreground. lucide strokes `currentColor`.
+ * Astryx designs for tinted-surface-plus-legible-foreground. Astryx's Icon defaults to
+ * `color="inherit"`, so it inherits the ink below.
+ *
+ * Every value is an Astryx token. No hex, no raw px.
  */
 
 .tile {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   flex-shrink: 0;
   width: var(--spacing-8);
   height: var(--spacing-8);

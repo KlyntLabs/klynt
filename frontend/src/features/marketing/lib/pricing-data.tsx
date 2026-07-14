@@ -10,7 +10,6 @@ import {
   Globe,
   PlayCircle,
 } from "lucide-react";
-import styles from "./pricing-data.module.css";
 import type { ProductPricing } from "./pricing-types";
 
 export const productPricings: ProductPricing[] = [
@@ -72,11 +71,12 @@ export const productPricings: ProductPricing[] = [
   {
     id: "feature-flags",
     nameKey: "marketing:data.products.featureFlags",
-    icon: (
-      <span className={styles.blueIcon}>
-        <Icon icon={Flag} />
-      </span>
-    ),
+    /*
+     * Icon's colour union carries the categorical hues as well as the semantic ones, and
+     * `color="blue"` resolves to the same `--color-icon-blue` token the old wrapper span set
+     * by hand. The span — and its CSS module — are gone; the hue is a prop.
+     */
+    icon: <Icon icon={Flag} color="blue" />,
     freeLimitKey: "marketing:pricing.productPricing.featureFlags.freeLimit",
     unitKey: "marketing:pricing.productPricing.featureFlags.unit",
     freeThreshold: 1_000_000,

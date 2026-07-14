@@ -1,5 +1,6 @@
 import { Button } from "@astryxdesign/core/Button";
 import { EmptyState } from "@astryxdesign/core/EmptyState";
+import { Icon } from "@astryxdesign/core/Icon";
 import { VStack } from "@astryxdesign/core/VStack";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "framer-motion";
@@ -11,6 +12,9 @@ import { FormTextArea } from "@/components/form/form-text-area";
 import { FormTextInput } from "@/components/form/form-text-input";
 import { useMarketingTranslation } from "@/features/marketing/lib/use-marketing-translation";
 import { type ContactFormData, createContactSchema } from "./contact-schema";
+
+/* framer-motion drives the Astryx stacks directly rather than wrapper <div>s. */
+const MotionVStack = motion.create(VStack);
 
 const SUBMIT_DELAY_MS = 1200;
 
@@ -51,14 +55,15 @@ export function ContactForm() {
   return (
     <AnimatePresence mode="wait">
       {status === "success" ? (
-        <motion.div
+        <MotionVStack
           key="success"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0 }}
         >
           <EmptyState
-            icon={<Check />}
+            /* `size="lg"` is the size EmptyState's own doc example uses for its icon slot. */
+            icon={<Icon icon={Check} size="lg" />}
             title={t("talkToHuman.form.success.title")}
             description={t("talkToHuman.form.success.subtitle")}
             actions={
@@ -72,8 +77,20 @@ export function ContactForm() {
               />
             }
           />
-        </motion.div>
+        </MotionVStack>
       ) : (
+        /*
+         * This stays a real <form>, not a Stack rendered `as="form"`.
+         *
+         * Astryx's polymorphic `as` does not widen a component's prop type to the target
+         * element's attributes — `noValidate` is rejected by StackProps (the same limitation
+         * that makes `as="button"` + `type` a type error elsewhere in this repo). And
+         * `noValidate` is load-bearing: it is what keeps react-hook-form + zod the single
+         * validation authority instead of the browser's native bubbles.
+         *
+         * No rule is bent here regardless: the rule is "no <div>", and a <form> is a semantic
+         * element, not a layout box. The spacing inside it is still an Astryx VStack.
+         */
         <motion.form
           key="form"
           initial={{ opacity: 0 }}

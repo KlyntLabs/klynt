@@ -1,5 +1,7 @@
 import { CodeBlock } from "@astryxdesign/core/CodeBlock";
 import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Icon } from "@astryxdesign/core/Icon";
 import { List, ListItem } from "@astryxdesign/core/List";
 import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
@@ -21,29 +23,31 @@ export function SlideAutocapture() {
   ].join("\n");
 
   return (
-    <div className={styles.autocaptureSlide}>
-      <div className={styles.column}>
-        <VStack gap={4} align="start">
-          <Heading level={2}>{t("productAnalytics.slides.autocapture.title")}</Heading>
-          <Text color="secondary" display="block">
-            {t("productAnalytics.slides.autocapture.body")}
-          </Text>
-          <List density="compact">
-            {items.map((item) => (
-              <ListItem
-                key={item}
-                label={item}
-                startContent={<Check className={styles.checkIcon} aria-hidden="true" />}
-              />
-            ))}
-          </List>
-          <Text color="secondary" display="block">
-            {t("productAnalytics.slides.autocapture.footer")}
-          </Text>
-        </VStack>
-      </div>
+    <HStack height="100%" paddingInline={8} gap={8} align="center">
+      <VStack gap={4} align="start" className={styles.column}>
+        <Heading level={2}>{t("productAnalytics.slides.autocapture.title")}</Heading>
+        <Text color="secondary" display="block">
+          {t("productAnalytics.slides.autocapture.body")}
+        </Text>
+        <List density="compact">
+          {items.map((item) => (
+            <ListItem
+              key={item}
+              label={item}
+              startContent={
+                /* `color="green"` resolves to the same --color-icon-green the old CSS rule set,
+                   and `sm` replaces its hand-written 14px. Both are now props. */
+                <Icon icon={Check} size="sm" color="green" className={styles.checkIcon} />
+              }
+            />
+          ))}
+        </List>
+        <Text color="secondary" display="block">
+          {t("productAnalytics.slides.autocapture.footer")}
+        </Text>
+      </VStack>
 
-      <div className={styles.visualColumn}>
+      <HStack align="center" justify="center" className={styles.visualColumn}>
         <CodeBlock
           code={code}
           language="javascript"
@@ -51,7 +55,7 @@ export function SlideAutocapture() {
           hasLanguageLabel={false}
           width="100%"
         />
-      </div>
-    </div>
+      </HStack>
+    </HStack>
   );
 }

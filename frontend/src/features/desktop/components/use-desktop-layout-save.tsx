@@ -1,6 +1,7 @@
+import { Button } from "@astryxdesign/core/Button";
+import { type ToastDismissFn, useToast } from "@astryxdesign/core/Toast";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { useToastStore } from "@/core/notifications/toast-store";
 import type { IconTreeNode } from "@/features/desktop/desktop-manager/icon-tree-module";
 import { useIconTreeStore } from "@/features/desktop/desktop-manager/icon-tree-module";
 import type { DesktopConfig } from "../factory/types";
@@ -44,7 +45,7 @@ export function useDesktopLayoutSave(
   const { t } = useTranslation("home");
   const configRef = useRef(config);
   configRef.current = config;
-  const addToast = useToastStore((state) => state.addToast);
+  const toast = useToast();
   const iconTree = useIconTreeStore((s) => s.trees[config.id]);
 
   useEffect(() => {
@@ -73,22 +74,36 @@ export function useDesktopLayoutSave(
 
         if (!result.ok) {
           if (result.error === "conflict") {
-            addToast({
-              message: t("desktop.toast.layoutSaveError"),
+            // The old store modelled an `action: { label, onClick }` that the container turned
+            // into a button. Astryx has a first-class slot for it — `endContent` — so the
+            // button is passed straight in, and `toast()` hands back the dismiss function that
+            // retires this toast once the user has acted on it.
+            let dismiss: ToastDismissFn | undefined;
+            dismiss = toast({
+              body: t("desktop.toast.layoutSaveError"),
               type: "error",
-              duration: 10000,
-              action: {
-                label: t("desktop.conflict.reload"),
-                onClick: handleReload,
-              },
+              isAutoHide: true,
+              autoHideDuration: 10000,
+              endContent: (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  label={t("desktop.conflict.reload")}
+                  onClick={() => {
+                    handleReload();
+                    dismiss?.();
+                  }}
+                />
+              ),
             });
             return;
           }
 
-          addToast({
-            message: t("desktop.toast.layoutSaveError"),
+          toast({
+            body: t("desktop.toast.layoutSaveError"),
             type: "error",
-            duration: 5000,
+            isAutoHide: true,
+            autoHideDuration: 5000,
           });
         }
       });
@@ -107,7 +122,7 @@ export function useDesktopLayoutSave(
     isLoading,
     iconTree,
     t,
-    addToast,
+    toast,
     handleReload,
   ]);
 }

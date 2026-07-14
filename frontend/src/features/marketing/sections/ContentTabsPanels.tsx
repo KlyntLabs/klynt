@@ -4,6 +4,7 @@ import { ClickableCard } from "@astryxdesign/core/ClickableCard";
 import { Grid } from "@astryxdesign/core/Grid";
 import { Heading } from "@astryxdesign/core/Heading";
 import { HStack } from "@astryxdesign/core/HStack";
+import { Icon } from "@astryxdesign/core/Icon";
 import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
 import { FileText, Flag, Globe, Plug, Users } from "lucide-react";
@@ -23,6 +24,12 @@ interface PanelProps {
   onOpenApp: (route: string, title?: string) => void;
 }
 
+/**
+ * The narrowest the "understand" tab's copy column may get before it and the product grid stack.
+ * Astryx's Grid reflows on the container, which is what let the 768px media query go entirely.
+ */
+const UNDERSTAND_COLUMN_MIN_WIDTH = 280;
+
 /** Panel heading + supporting copy, the shape every tab shares. */
 function PanelIntro({ title, body }: { title: string; body: React.ReactNode }) {
   return (
@@ -38,25 +45,25 @@ export function TabUnderstandPanel({ onOpenApp }: PanelProps) {
   const tk = (key: string) => t(key as never);
 
   return (
-    <div className={styles.columns}>
-      <div className={styles.textColumn}>
-        <VStack gap={3} align="start">
-          <PanelIntro
-            title={t("home.tabUnderstand.title")}
-            body={
-              <Text type="supporting" display="block">
-                {t("home.tabUnderstand.body")}
-              </Text>
-            }
-          />
-          <Button
-            variant="ghost"
-            size="sm"
-            label={t("home.tabUnderstand.link")}
-            onClick={() => onOpenApp("/products", t("home.tabUnderstand.title"))}
-          />
-        </VStack>
-      </div>
+    /* Copy beside the product grid when there is room, stacked when there is not. Grid decides
+       from the container, so this carries no breakpoint. */
+    <Grid columns={{ minWidth: UNDERSTAND_COLUMN_MIN_WIDTH, max: 2 }} gap={6} width="100%">
+      <VStack gap={3} align="start">
+        <PanelIntro
+          title={t("home.tabUnderstand.title")}
+          body={
+            <Text type="supporting" display="block">
+              {t("home.tabUnderstand.body")}
+            </Text>
+          }
+        />
+        <Button
+          variant="ghost"
+          size="sm"
+          label={t("home.tabUnderstand.link")}
+          onClick={() => onOpenApp("/products", t("home.tabUnderstand.title"))}
+        />
+      </VStack>
 
       <Grid columns={3} gap={2}>
         {tab1Products.map((product) => (
@@ -68,7 +75,7 @@ export function TabUnderstandPanel({ onOpenApp }: PanelProps) {
             onClick={() => onOpenApp(product.route, tk(product.labelKey))}
           >
             <VStack gap={1.5} align="center">
-              {getMarketingIcon(product.icon, <Globe size={28} />)}
+              {getMarketingIcon(product.icon, <Icon icon={Globe} size="lg" />)}
               <Text type="supporting" size="xsm" weight="medium" justify="center">
                 {tk(product.labelKey)}
               </Text>
@@ -76,7 +83,7 @@ export function TabUnderstandPanel({ onOpenApp }: PanelProps) {
           </ClickableCard>
         ))}
       </Grid>
-    </div>
+    </Grid>
   );
 }
 
@@ -168,7 +175,7 @@ export function TabDebugPanel({ onOpenApp }: PanelProps) {
             onClick={() => onOpenApp(product.route, tk(product.labelKey))}
           >
             <VStack gap={2} align="start">
-              {getMarketingIcon(product.icon, <FileText size={32} />)}
+              {getMarketingIcon(product.icon, <Icon icon={FileText} size="lg" />)}
               <Text type="label" weight="semibold">
                 {tk(product.labelKey)}
               </Text>
@@ -251,19 +258,19 @@ export function TabShipPanel({ onOpenApp }: PanelProps) {
           title={t("home.tabShip.featureDev")}
           items={tab4FeatureDev}
           onOpenApp={onOpenApp}
-          fallbackIcon={<Flag size={20} />}
+          fallbackIcon={<Icon icon={Flag} size="md" />}
         />
         <TabShipGroup
           title={t("home.tabShip.automation")}
           items={tab4Automation}
           onOpenApp={onOpenApp}
-          fallbackIcon={<Plug size={20} />}
+          fallbackIcon={<Icon icon={Plug} size="md" />}
         />
         <TabShipGroup
           title={t("home.tabShip.feedback")}
           items={tab4Feedback}
           onOpenApp={onOpenApp}
-          fallbackIcon={<Users size={20} />}
+          fallbackIcon={<Icon icon={Users} size="md" />}
         />
       </VStack>
     </VStack>

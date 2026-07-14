@@ -3,6 +3,7 @@ import { Card } from "@astryxdesign/core/Card";
 import { Grid } from "@astryxdesign/core/Grid";
 import { Heading } from "@astryxdesign/core/Heading";
 import { HStack } from "@astryxdesign/core/HStack";
+import { Icon } from "@astryxdesign/core/Icon";
 import { Section } from "@astryxdesign/core/Section";
 import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
@@ -12,6 +13,9 @@ import { useTranslation } from "react-i18next";
 import { pricingCards } from "@/features/marketing/data/homeData";
 import { getMarketingIcon } from "@/features/marketing/lib/icon-map";
 import styles from "./pricing-cards-section.module.css";
+
+/** framer-motion animates the Card itself — no wrapper div. See Window.tsx for the pattern. */
+const MotionCard = motion.create(Card);
 
 interface PricingCardsSectionProps {
   onOpenApp: (route: string, title?: string) => void;
@@ -39,29 +43,29 @@ export function PricingCardsSection({ onOpenApp }: PricingCardsSectionProps) {
 
         <Grid columns={{ minWidth: 160, max: 5 }} gap={3} width="100%">
           {pricingCards.map((card, index) => (
-            <motion.div
+            <MotionCard
               key={card.productKey}
+              padding={4}
+              height="100%"
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.075 }}
             >
-              <Card padding={4} height="100%">
-                <VStack gap={1} align="start">
-                  <HStack gap={2} align="center">
-                    {getMarketingIcon(card.icon, <BarChart3 size={20} />)}
-                    <Text type="label" weight="semibold">
-                      {tk(card.productKey)}
-                    </Text>
-                  </HStack>
-                  <Text type="supporting" size="xsm" display="block" className={styles.freeTier}>
-                    {tk(card.freeTierKey)}
+              <VStack gap={1} align="start">
+                <HStack gap={2} align="center">
+                  {getMarketingIcon(card.icon, <Icon icon={BarChart3} size="md" />)}
+                  <Text type="label" weight="semibold">
+                    {tk(card.productKey)}
                   </Text>
-                  <Text type="label" display="block">
-                    {tk(card.paidRateKey)}
-                  </Text>
-                </VStack>
-              </Card>
-            </motion.div>
+                </HStack>
+                <Text type="supporting" size="xsm" display="block" className={styles.freeTier}>
+                  {tk(card.freeTierKey)}
+                </Text>
+                <Text type="label" display="block">
+                  {tk(card.paidRateKey)}
+                </Text>
+              </VStack>
+            </MotionCard>
           ))}
         </Grid>
 

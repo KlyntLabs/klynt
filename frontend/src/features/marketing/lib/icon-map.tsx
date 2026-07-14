@@ -1,3 +1,4 @@
+import { Icon } from "@astryxdesign/core/Icon";
 import {
   AlertTriangle,
   BarChart3,
@@ -22,51 +23,54 @@ import {
   Webhook,
   Workflow,
 } from "lucide-react";
-import styles from "./icon-map.module.css";
 
-/**
- * Icon geometry, in px, matching Astryx's 4px spacing rhythm (was `w-7 h-7`, `w-8 h-8`,
- * `w-5 h-5`). lucide sizes itself from a numeric prop, so no utility class is needed.
+/*
+ * The marketing icon lookup table.
+ *
+ * Every mark is an Astryx `Icon`. Both the geometry and the hue are Icon props:
+ *
+ * - Size: Icon's scale is xsm(12) / sm(16) / md(20) / lg(24). Its docs are explicit —
+ *   "Don't resize icons with arbitrary pixel values; use the provided size props" — so the
+ *   pre-migration 28px/32px marks snap up to the top of that scale (`lg`), and the 20px marks
+ *   land on `md` exactly. There is no numeric size on Icon by design.
+ *
+ * - Colour: Icon's `IconColor` union carries the full categorical hue set (blue, orange, red,
+ *   green, gray, purple, …) alongside the semantic one, and each hue resolves to the very same
+ *   `--color-icon-<hue>` token the old CSS module set by hand. The hue class file is therefore
+ *   gone: the colour is now a prop, which is the native path.
  */
-const LARGE_ICON_SIZE = 28;
-const XL_ICON_SIZE = 32;
-const SMALL_ICON_SIZE = 20;
 
-/** Categorical hues, mapped onto Astryx's `--color-icon-*` tokens in `icon-map.module.css`. */
-const color = {
-  blue: styles.blue,
-  orange: styles.orange,
-  red: styles.red,
-  green: styles.green,
-  gray: styles.gray,
-  purple: styles.purple,
-};
+/** The display marks (product tiles). `lg` is the largest size Astryx's Icon offers. */
+const DISPLAY = "lg" as const;
+
+/** The inline marks that sit beside a line of text. */
+const INLINE = "md" as const;
 
 export const marketingIconMap: Record<string, React.ReactNode> = {
-  Globe: <Globe size={LARGE_ICON_SIZE} className={color.blue} />,
-  BarChart3: <BarChart3 size={LARGE_ICON_SIZE} className={color.orange} />,
-  PlayCircle: <PlayCircle size={LARGE_ICON_SIZE} className={color.red} />,
-  Filter: <Filter size={LARGE_ICON_SIZE} className={color.green} />,
-  Flame: <Flame size={LARGE_ICON_SIZE} className={color.orange} />,
-  TrendingUp: <TrendingUp size={LARGE_ICON_SIZE} className={color.green} />,
-  RotateCcw: <RotateCcw size={LARGE_ICON_SIZE} className={color.gray} />,
-  GitBranch: <GitBranch size={LARGE_ICON_SIZE} className={color.purple} />,
-  Bot: <Bot size={LARGE_ICON_SIZE} className={color.blue} />,
-  AlertTriangle: <AlertTriangle size={XL_ICON_SIZE} className={color.orange} />,
-  FileText: <FileText size={XL_ICON_SIZE} className={color.gray} />,
-  Clock: <Clock size={XL_ICON_SIZE} className={color.blue} />,
-  Flag: <Flag size={SMALL_ICON_SIZE} className={color.blue} />,
-  Beaker: <Beaker size={SMALL_ICON_SIZE} className={color.purple} />,
-  TestTube: <TestTube size={SMALL_ICON_SIZE} className={color.green} />,
-  Rocket: <Rocket size={SMALL_ICON_SIZE} className={color.orange} />,
-  Plug: <Plug size={SMALL_ICON_SIZE} className={color.gray} />,
-  Webhook: <Webhook size={SMALL_ICON_SIZE} className={color.gray} />,
-  Workflow: <Workflow size={SMALL_ICON_SIZE} className={color.gray} />,
-  ClipboardList: <ClipboardList size={SMALL_ICON_SIZE} className={color.orange} />,
-  LifeBuoy: <LifeBuoy size={SMALL_ICON_SIZE} className={color.blue} />,
-  Users: <Users size={SMALL_ICON_SIZE} className={color.green} />,
-  BarChart3Small: <BarChart3 size={SMALL_ICON_SIZE} className={color.orange} />,
-  PlayCircleSmall: <PlayCircle size={SMALL_ICON_SIZE} className={color.red} />,
+  Globe: <Icon icon={Globe} size={DISPLAY} color="blue" />,
+  BarChart3: <Icon icon={BarChart3} size={DISPLAY} color="orange" />,
+  PlayCircle: <Icon icon={PlayCircle} size={DISPLAY} color="red" />,
+  Filter: <Icon icon={Filter} size={DISPLAY} color="green" />,
+  Flame: <Icon icon={Flame} size={DISPLAY} color="orange" />,
+  TrendingUp: <Icon icon={TrendingUp} size={DISPLAY} color="green" />,
+  RotateCcw: <Icon icon={RotateCcw} size={DISPLAY} color="gray" />,
+  GitBranch: <Icon icon={GitBranch} size={DISPLAY} color="purple" />,
+  Bot: <Icon icon={Bot} size={DISPLAY} color="blue" />,
+  AlertTriangle: <Icon icon={AlertTriangle} size={DISPLAY} color="orange" />,
+  FileText: <Icon icon={FileText} size={DISPLAY} color="gray" />,
+  Clock: <Icon icon={Clock} size={DISPLAY} color="blue" />,
+  Flag: <Icon icon={Flag} size={INLINE} color="blue" />,
+  Beaker: <Icon icon={Beaker} size={INLINE} color="purple" />,
+  TestTube: <Icon icon={TestTube} size={INLINE} color="green" />,
+  Rocket: <Icon icon={Rocket} size={INLINE} color="orange" />,
+  Plug: <Icon icon={Plug} size={INLINE} color="gray" />,
+  Webhook: <Icon icon={Webhook} size={INLINE} color="gray" />,
+  Workflow: <Icon icon={Workflow} size={INLINE} color="gray" />,
+  ClipboardList: <Icon icon={ClipboardList} size={INLINE} color="orange" />,
+  LifeBuoy: <Icon icon={LifeBuoy} size={INLINE} color="blue" />,
+  Users: <Icon icon={Users} size={INLINE} color="green" />,
+  BarChart3Small: <Icon icon={BarChart3} size={INLINE} color="orange" />,
+  PlayCircleSmall: <Icon icon={PlayCircle} size={INLINE} color="red" />,
 };
 
 export function getMarketingIcon(name: string, fallback?: React.ReactNode): React.ReactNode {

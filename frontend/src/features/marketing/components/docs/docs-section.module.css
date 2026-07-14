@@ -1,37 +1,27 @@
 /*
- * Doc-card chrome Astryx does not express: the round icon plate inside each card and the
- * card's minimum height so a grid row stays even. Colours are Astryx CSS variables only.
+ * Structural residue for a docs category.
+ *
+ * The card's 100px floor is now a prop (`minHeight` on its content stack) and its glyph is an
+ * `Icon size="md"`, so `.card`, `.cardBody` and the `.cardIcon svg` sizing rule are all gone.
+ * What is left is the round plate behind the glyph — Astryx has no icon-plate primitive — plus
+ * one overflow clamp. Every value is a token: no hex, no raw px.
  */
 
 .section {
   margin-block-end: var(--spacing-4);
 }
 
+/* framer-motion animates height; the content must be clipped while it does. */
 .collapse {
   overflow: hidden;
 }
 
-.card {
-  min-height: 100px;
-}
-
-.cardBody {
-  height: 100%;
-}
-
+/* The plate is 40px — var(--spacing-10) — and centres its Icon with HStack props, not CSS. */
 .cardIcon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
+  width: var(--spacing-10);
+  height: var(--spacing-10);
   border-radius: var(--radius-full);
   background: var(--color-background-muted);
   color: var(--color-icon-secondary);
-}
-
-.cardIcon svg {
-  width: 20px;
-  height: 20px;
 }

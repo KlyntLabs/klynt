@@ -1,6 +1,7 @@
 import { Button } from "@astryxdesign/core/Button";
 import { Heading } from "@astryxdesign/core/Heading";
 import { HStack } from "@astryxdesign/core/HStack";
+import { Icon } from "@astryxdesign/core/Icon";
 import { IconButton } from "@astryxdesign/core/IconButton";
 import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
@@ -18,35 +19,38 @@ export function SlideCTA() {
   }, [installCommand]);
 
   return (
-    <div className={styles.ctaSlide}>
-      <VStack gap={8} align="center">
-        <VStack gap={3} align="center">
-          <Heading level={2} type="display-3" justify="center" textWrap="balance">
-            {t("productAnalytics.slides.cta.title")}
-          </Heading>
-          <Text color="secondary" display="block" justify="center">
-            {t("productAnalytics.slides.cta.subtitle")}
-          </Text>
-        </VStack>
-
-        <VStack gap={6} align="center">
-          <HStack gap={3} justify="center">
-            <Button variant="primary" label={t("productAnalytics.slides.cta.primary")} />
-            <Button variant="secondary" label={t("productAnalytics.slides.cta.secondary")} />
-          </HStack>
-
-          <div className={styles.commandBar}>
-            <Text type="code">{installCommand}</Text>
-            <IconButton
-              variant="ghost"
-              size="sm"
-              label={t("productAnalytics.slides.cta.copyTooltip")}
-              icon={<Copy />}
-              onClick={handleCopy}
-            />
-          </div>
-        </VStack>
+    <VStack height="100%" paddingInline={8} gap={8} align="center" justify="center">
+      <VStack gap={3} align="center">
+        <Heading level={2} type="display-3" justify="center" textWrap="balance">
+          {t("productAnalytics.slides.cta.title")}
+        </Heading>
+        <Text color="secondary" display="block" justify="center">
+          {t("productAnalytics.slides.cta.subtitle")}
+        </Text>
       </VStack>
-    </div>
+
+      <VStack gap={6} align="center">
+        <HStack gap={3} justify="center">
+          <Button variant="primary" label={t("productAnalytics.slides.cta.primary")} />
+          <Button variant="secondary" label={t("productAnalytics.slides.cta.secondary")} />
+        </HStack>
+
+        {/*
+         * The command bar's inline padding is asymmetric (a wide start, a narrow end so the copy
+         * button sits flush), which Stack's symmetric paddingInline cannot express — so the
+         * padding stays in CSS, on tokens. Everything else is a prop.
+         */}
+        <HStack gap={2} align="center" className={styles.commandBar}>
+          <Text type="code">{installCommand}</Text>
+          <IconButton
+            variant="ghost"
+            size="sm"
+            label={t("productAnalytics.slides.cta.copyTooltip")}
+            icon={<Icon icon={Copy} size="sm" />}
+            onClick={handleCopy}
+          />
+        </HStack>
+      </VStack>
+    </VStack>
   );
 }

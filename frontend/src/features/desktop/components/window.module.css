@@ -1,14 +1,12 @@
 /*
- * The window frame — the one piece of desktop chrome Astryx cannot express.
+ * Structural residue for the window frame. Everything with a *value* — border, radius, surface
+ * colour, spacing, icon size — now comes from Astryx: the frame is a `Card`, the bars are
+ * `HStack`/`VStack`, the glyphs are `Icon size="xsm"`. See Window.tsx.
  *
- * Astryx has no window primitive: nothing in it describes an absolutely-positioned, draggable,
- * z-ordered surface, and AppShell/Layout exist to own PAGE structure, which is the opposite of
- * what a window manager needs. So the frame is a motion.div styled here. The window's
- * *contents* — toolbar, text, spinner, error state — are Astryx components.
- *
- * Astryx's own guidance for exactly this case: "Most DOM styling should stay on the
- * CSS-variable path" (bunx astryx docs styling-libraries). Every value below is an Astryx
- * token; there is no hex here.
+ * What is left below is CSS that expresses no design value at all: flex modes, overflow, and
+ * min-width:0. Astryx has no prop for these because they are not tokens — they are layout
+ * mechanics. This is the CSS-variable path Astryx documents for exactly this residue
+ * (`bunx astryx docs styling` lists CSS Modules as a supported approach). No hex, no raw px.
  */
 
 .window {
@@ -16,19 +14,11 @@
   flex-direction: column;
   overflow: hidden;
   user-select: none;
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-element);
-  background-color: var(--color-background-surface);
   box-shadow: var(--shadow-high);
 }
 
 .titleBar {
-  display: flex;
   flex-shrink: 0;
-  align-items: center;
-  gap: var(--spacing-2);
-  height: 38px;
-  padding-inline: var(--spacing-3);
   border-bottom: var(--border-width) solid var(--color-border);
   background-color: var(--color-background-muted);
 }
@@ -41,43 +31,13 @@
  * out of alignment instead of ellipsising.
  */
 .titleArea {
-  display: flex;
   flex: 1;
   min-width: 0;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-1-5);
   cursor: default;
-}
-
-.titleIcon {
-  flex-shrink: 0;
-  width: 14px;
-  height: 14px;
-}
-
-.titleChevron {
-  flex-shrink: 0;
-  /* 12px */
-  width: var(--spacing-3);
-  height: var(--spacing-3);
-}
-
-/* Balances the traffic lights so the title stays optically centred. */
-.controlsSpacer {
-  flex-shrink: 0;
-  width: 52px;
 }
 
 .content {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
   background-color: var(--color-background-surface);
-}
-
-.loading {
-  display: flex;
-  justify-content: center;
-  padding-block: var(--spacing-12);
 }

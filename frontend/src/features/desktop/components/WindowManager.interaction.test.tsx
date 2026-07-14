@@ -132,7 +132,7 @@ describe("WindowManager interactions", () => {
 
     await waitFor(() => {
       const maximized = screen.getByText("home.mdx").closest('[data-testid="desktop-window"]');
-      expect((maximized as HTMLElement).style.width).toBe("calc(100vw - 0px)");
+      expect((maximized as HTMLElement).style.width).toBe("100vw");
     });
   });
 

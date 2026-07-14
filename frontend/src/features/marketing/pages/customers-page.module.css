@@ -1,35 +1,29 @@
 /*
- * What Astryx cannot express here:
- *  - the sticky filter bar that pins to the top of the scrolling table;
- *  - the company logo plate. The source data carries a raw brand hex per company; we do not use
- *    it (no hardcoded colour survives the migration). Instead each company gets one of Astryx's
- *    tinted colour pairs, chosen deterministically from its row id, so the column keeps its
- *    colour differentiation while every value stays a token.
+ * Structural residue plus the logo tints.
+ *
+ * The filter bar's surface and bottom rule are now a `Section dividers={["bottom"]}`, its padding
+ * rides Section's spacing props, and the table's scroll region is `VStack isScrollable` — so all
+ * of that left this file. `position: sticky` is what stays: Astryx has no positioning prop, and
+ * position expresses no design value.
+ *
+ * The logo plate's 28px square rides `width`/`height` props. Its tint cannot. Astryx's stacks
+ * expose no background prop, and `TextColor` (theme/types.ts) is only
+ * primary | secondary | disabled | placeholder | accent | inherit — it has no categorical hue, so
+ * the initials' colour has no prop either. Both stay here, as tokens. The source data carries a
+ * raw brand hex per company; we do not use it. Each company gets one of Astryx's tinted pairs,
+ * chosen deterministically from its row id, so the column keeps its differentiation with no
+ * hardcoded colour anywhere.
  */
 
 .filterBar {
   position: sticky;
   top: 0;
   z-index: 1;
-  background: var(--color-background-surface);
-  border-bottom: 1px solid var(--color-border);
-  padding: var(--spacing-3) var(--spacing-6);
-}
-
-.tableScroll {
-  overflow-x: auto;
 }
 
 .logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
   border-radius: var(--radius-inner);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
 }
 
 .logoBlue {

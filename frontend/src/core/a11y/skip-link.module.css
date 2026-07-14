@@ -2,8 +2,18 @@
  * A skip link is visually hidden until it takes focus, then appears as the first thing a
  * keyboard user sees. Astryx has no component for it — it is a page-level a11y affordance, not
  * a UI element — so it lives here, built from Astryx tokens.
+ *
+ * Every value with design meaning is a token. The z-index is the one raw integer, because
+ * Astryx ships no z-index token at all (its own overlays hardcode 500/9999 in astryx.css); a
+ * stacking order is not a design value the system owns.
  */
 
+/*
+ * The 1px/-1px below are the standard visually-hidden clip idiom, NOT design values — a11y
+ * convention requires a 1x1 clipped box rather than display:none or visibility:hidden, both of
+ * which would remove the link from the accessibility tree and from the tab order, defeating its
+ * entire purpose. They are not spacing and must not become --spacing-* tokens.
+ */
 .skipLink {
   position: absolute;
   width: 1px;

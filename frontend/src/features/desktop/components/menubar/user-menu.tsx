@@ -1,6 +1,8 @@
 import { Avatar } from "@astryxdesign/core/Avatar";
 import { Button } from "@astryxdesign/core/Button";
 import { Divider } from "@astryxdesign/core/Divider";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Icon } from "@astryxdesign/core/Icon";
 import { Item } from "@astryxdesign/core/Item";
 import { Popover } from "@astryxdesign/core/Popover";
 import { Skeleton } from "@astryxdesign/core/Skeleton";
@@ -12,7 +14,13 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useAuthModule } from "@/core/auth/auth-module";
 import { routePaths } from "@/core/routing/route-paths";
-import styles from "./user-menu.module.css";
+
+/**
+ * How wide the name may run before it ellipsises. Past Astryx's spacing scale (which stops at
+ * 48px) and Text has no width prop, so it rides on a VStack — `SizeValue`: "numbers are treated
+ * as pixels", which makes the wrapper's maxWidth the native home for it.
+ */
+const NAME_MAX_WIDTH = 100;
 
 export function UserMenu() {
   const { t } = useTranslation("home");
@@ -54,8 +62,10 @@ export function UserMenu() {
             description={user.email}
           />
           <Divider />
+          {/* Item's startContent is a generic slot, not Button's sized icon slot, so the glyphs
+              have to bring their own size — via Icon's size prop, never a pixel number. */}
           <Item
-            startContent={<UserIcon size={14} />}
+            startContent={<Icon icon={UserIcon} size="sm" />}
             label={t("desktop.menubar.profile")}
             onClick={() => {
               navigate(routePaths.dashboard);
@@ -63,13 +73,13 @@ export function UserMenu() {
             }}
           />
           <Item
-            startContent={<Settings size={14} />}
+            startContent={<Icon icon={Settings} size="sm" />}
             label={t("desktop.menubar.settings")}
             onClick={close}
           />
           <Divider />
           <Item
-            startContent={<LogOut size={14} />}
+            startContent={<Icon icon={LogOut} size="sm" />}
             label={t("desktop.menubar.signOut")}
             onClick={() => {
               logout();
@@ -79,13 +89,33 @@ export function UserMenu() {
         </VStack>
       }
     >
-      <button type="button" data-testid="user-menu-trigger" className={styles.trigger}>
-        <Avatar name={user.name} size="small" />
-        <Text type="label" weight="medium" maxLines={1} className={styles.name}>
-          {user.name}
-        </Text>
-        <ChevronDown size={12} />
-      </button>
+      {/*
+       * The trigger IS an Astryx Button.
+       *
+       * It used to be an `<HStack as="button">` carrying a `type="button"` spread-cast, plus a
+       * CSS module for the native-button reset, the pill radius and an *asymmetric* inline
+       * padding that no prop could express. All of it is gone. Button renders a real
+       * `<button type="button">` — which is exactly what Popover's trigger contract asks for
+       * ("Must contain a <button> or [role='button'] element — the popover locates it") — and it
+       * brings the ghost surface, the pill, the padding, the hover and the focus ring itself.
+       *
+       * The avatar/name/chevron row goes through `children`, not the `icon` slot: Button's icon
+       * slot force-sizes whatever it wraps (`iconSizeStyles[size]`), which would squash the
+       * Avatar, whereas `children` renders as-is in place of the label. `label` still supplies
+       * the accessible name.
+       */}
+      {/* No onClick: Popover finds this button and attaches its own click/keydown handlers. */}
+      <Button variant="ghost" size="sm" label={user.name} data-testid="user-menu-trigger">
+        <HStack gap={1.5} align="center">
+          <Avatar name={user.name} size="small" />
+          <VStack maxWidth={NAME_MAX_WIDTH}>
+            <Text type="label" weight="medium" maxLines={1}>
+              {user.name}
+            </Text>
+          </VStack>
+          <Icon icon={ChevronDown} size="xsm" />
+        </HStack>
+      </Button>
     </Popover>
   );
 }

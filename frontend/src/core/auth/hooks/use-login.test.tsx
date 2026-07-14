@@ -1,11 +1,13 @@
+import { LayerProvider } from "@astryxdesign/core/Layer";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, screen, waitFor } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
 import type { ReactNode } from "react";
+import { I18nextProvider } from "react-i18next";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useAuthStore } from "@/core/auth/auth-store";
-import { useToastStore } from "@/core/notifications/toast-store";
+import i18n from "@/core/i18n/test-config";
 import { server } from "@/test/msw/server";
 import { navigateExternal } from "../external-redirect";
 import { useLogin } from "./use-login";
@@ -61,13 +63,20 @@ function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
+  // `LayerProvider` mounts Astryx's ToastViewport, which is what `useToast()` inside the hook
+  // feeds. The toast is then asserted on where the user meets it — on screen — because there
+  // is no store left to inspect.
   return function Wrapper({ children }: { children: ReactNode }) {
     return (
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter initialEntries={["/?from=http://acme.lvh.me:5174/members"]}>
-          {children}
-        </MemoryRouter>
-      </QueryClientProvider>
+      <I18nextProvider i18n={i18n}>
+        <LayerProvider>
+          <QueryClientProvider client={queryClient}>
+            <MemoryRouter initialEntries={["/?from=http://acme.lvh.me:5174/members"]}>
+              {children}
+            </MemoryRouter>
+          </QueryClientProvider>
+        </LayerProvider>
+      </I18nextProvider>
     );
   };
 }
@@ -102,7 +111,6 @@ describe("useLogin", () => {
   });
 
   it("shows a toast on error", async () => {
-    useToastStore.getState().reset();
     server.use(
       http.post("/api/v1/auth/login", () =>
         HttpResponse.json(
@@ -121,7 +129,7 @@ describe("useLogin", () => {
     ).rejects.toBeDefined();
     await waitFor(() => expect(result.current.isError).toBe(true));
 
-    expect(useToastStore.getState().toasts).toHaveLength(1);
-    expect(useToastStore.getState().toasts[0].type).toBe("error");
+    const toast = await screen.findByRole("alert");
+    expect(toast).toHaveTextContent("Invalid credentials");
   });
 });

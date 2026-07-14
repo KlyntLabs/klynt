@@ -11,15 +11,15 @@
  * consequence of going fully native; the recognisability of the exact macOS hues was the thing
  * being given up, and it was given up knowingly.
  *
- * One token per control. Hover and the glyph are derived with color-mix, so there is a single
- * source of truth per light.
+ * The `.light svg` rules are gone too. Astryx's Icon owns its own size (`size="xsm"` — the
+ * documented step, never a number) and
+ * defaults to color="inherit", so the glyph is revealed by transitioning the *button's* `color`
+ * from transparent to a darkened mix of its own light — one token per control, no element
+ * selector on the SVG, and no icon sized in CSS.
  */
 
 .controls {
-  display: flex;
   flex-shrink: 0;
-  align-items: center;
-  gap: var(--spacing-1-5);
 }
 
 .light {
@@ -27,33 +27,24 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  /* 12px — the macOS control diameter. */
+  /* The control diameter, off the spacing scale. */
   width: var(--spacing-3);
   height: var(--spacing-3);
   padding: 0;
   border: none;
   border-radius: var(--radius-full);
   background-color: var(--traffic-light);
+  /* The glyph inherits this. Transparent until hover, exactly as macOS does it. */
+  color: transparent;
   cursor: pointer;
-  transition: background-color var(--duration-fast) var(--ease-standard);
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
 }
 
 .light:hover {
   background-color: color-mix(in srgb, var(--traffic-light) 88%, black);
-}
-
-/* The glyph only appears on hover, exactly as macOS does it. */
-.light svg {
-  /* 8px */
-  width: var(--spacing-2);
-  height: var(--spacing-2);
   color: color-mix(in srgb, var(--traffic-light) 45%, black);
-  opacity: 0;
-  transition: opacity var(--duration-fast) var(--ease-standard);
-}
-
-.light:hover svg {
-  opacity: 1;
 }
 
 .close {
@@ -69,8 +60,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .light,
-  .light svg {
+  .light {
     transition: none;
   }
 }

@@ -1,46 +1,15 @@
 /*
- * Marketing layout Astryx does not express: an asymmetric 3:2 hero that collapses to a single
- * column, and a square stat plate. Grid can only do equal tracks, so the ratio lives here.
- * Every colour, radius and gap is an Astryx token.
+ * One rule left: the stat plate's 1:1 aspect ratio — a shape, not a size, and Astryx's Card has no
+ * prop for it.
+ *
+ * The 3:2 split is native now. It used to be `flex: 3` / `flex: 2` inside a 640px media query;
+ * it is a `Grid columns={5}` with `GridSpan columns={3}` / `GridSpan columns={2}`, so the ratio is
+ * a prop and the breakpoint is gone. The hero holds its 3:2 at every width rather than stacking —
+ * a deliberate change, and the only way the ratio can be expressed in Astryx.
+ *
+ * No hex, no raw px, no breakpoints.
  */
 
-.columns {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-6);
-}
-
-@media (min-width: 640px) {
-  .columns {
-    flex-direction: row;
-    gap: var(--spacing-4);
-  }
-}
-
-.textColumn {
-  flex: 3;
-  min-width: 0;
-}
-
-.statColumn {
-  flex: 2;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-2);
-}
-
 .statPlate {
-  width: 100%;
-  max-width: 220px;
   aspect-ratio: 1 / 1;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-container);
-  background: var(--color-background-muted);
-}
-
-.statColumn > :last-child {
-  max-width: 220px;
 }

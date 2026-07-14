@@ -1,14 +1,20 @@
 /*
  * The notes pane is a full-bleed document surface: it fills the app window and has no visible
- * label or chrome. Astryx's <TextArea> is a labelled form field whose height is driven by `rows`,
- * so it cannot express "fill the parent" — hence a native <textarea>, styled on tokens only.
+ * label or chrome.
+ *
+ * The read-only view is a VStack, so its size, padding and overflow are props. The editor
+ * cannot be: Astryx's <TextArea> is a labelled form field whose height is driven by `rows`
+ * ("Height is rows-driven ... which suits [the markdown] fixed-height source pane, unlike the
+ * notes editor, which must fill the window"), so it stays a native <textarea> and carries its
+ * own sizing here. Both draw the same skin from .surface, and every value is a token.
+ *
+ * The hairline is `--border-width` — Astryx's own border token, "border width for card and input
+ * borders", which is exactly what these two surfaces are. It is not a hand-set width and it is
+ * not an exception: it is the system's answer, the same token Card itself draws its border with.
  */
 
 .surface {
-  height: 100%;
-  width: 100%;
-  padding: var(--spacing-3);
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-element);
   color: var(--color-text-primary);
   font-family: var(--font-family-body);
@@ -17,19 +23,23 @@
 
 .readonly {
   composes: surface;
-  overflow: auto;
   background: var(--color-background-card);
   box-shadow: var(--shadow-low);
   white-space: pre-wrap;
 }
 
+/* The native <textarea> has no props to carry its box, so it keeps its own — on tokens. */
 .editor {
   composes: surface;
+  width: 100%;
+  height: 100%;
+  padding: var(--spacing-3);
   resize: none;
   background: var(--color-background-surface);
   outline: none;
 }
 
+/* Astryx's documented focus affordance: "inset shadows provide focus and selection rings". */
 .editor:focus-visible {
   border-color: var(--color-border-blue);
   box-shadow: var(--shadow-inset-selected);

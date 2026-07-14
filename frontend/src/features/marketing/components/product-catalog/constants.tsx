@@ -1,3 +1,4 @@
+import type { IconType } from "@astryxdesign/core/Icon";
 import {
   AlertTriangle,
   BarChart3,
@@ -53,35 +54,37 @@ export type ProductIconHue =
   | "red"
   | "yellow";
 
+/**
+ * The mark is stored as a *component*, not an element: Astryx's Icon takes `icon` as a
+ * `ComponentType`, and its docs are explicit — "Don't render raw SVG elements; always wrap in
+ * Icon". `ProductIcon` does the wrapping, so a product declares only a glyph and a hue.
+ */
 export interface ProductIconConfig {
-  icon: React.ReactNode;
+  icon: IconType;
   hue: ProductIconHue;
 }
 
-/** Icon geometry in px, replacing the `w-4 h-4` utility class. */
-export const PRODUCT_ICON_SIZE = 16;
-
 export const productIconMap: Record<string, ProductIconConfig> = {
-  Globe: { icon: <Globe size={PRODUCT_ICON_SIZE} />, hue: "green" },
-  BarChart3: { icon: <BarChart3 size={PRODUCT_ICON_SIZE} />, hue: "orange" },
-  PlayCircle: { icon: <PlayCircle size={PRODUCT_ICON_SIZE} />, hue: "purple" },
-  Filter: { icon: <Filter size={PRODUCT_ICON_SIZE} />, hue: "blue" },
-  Flame: { icon: <Flame size={PRODUCT_ICON_SIZE} />, hue: "red" },
-  TrendingUp: { icon: <TrendingUp size={PRODUCT_ICON_SIZE} />, hue: "green" },
-  RotateCcw: { icon: <RotateCcw size={PRODUCT_ICON_SIZE} />, hue: "yellow" },
-  GitBranch: { icon: <GitBranch size={PRODUCT_ICON_SIZE} />, hue: "blue" },
-  Bot: { icon: <Bot size={PRODUCT_ICON_SIZE} />, hue: "purple" },
-  AlertTriangle: { icon: <AlertTriangle size={PRODUCT_ICON_SIZE} />, hue: "red" },
-  FileText: { icon: <FileText size={PRODUCT_ICON_SIZE} />, hue: "gray" },
-  Clock: { icon: <Clock size={PRODUCT_ICON_SIZE} />, hue: "blue" },
-  Flag: { icon: <Flag size={PRODUCT_ICON_SIZE} />, hue: "green" },
-  Beaker: { icon: <Beaker size={PRODUCT_ICON_SIZE} />, hue: "blue" },
-  TestTube: { icon: <TestTube size={PRODUCT_ICON_SIZE} />, hue: "purple" },
-  Rocket: { icon: <Rocket size={PRODUCT_ICON_SIZE} />, hue: "orange" },
-  Plug: { icon: <Plug size={PRODUCT_ICON_SIZE} />, hue: "gray" },
-  Webhook: { icon: <Webhook size={PRODUCT_ICON_SIZE} />, hue: "yellow" },
-  Workflow: { icon: <Workflow size={PRODUCT_ICON_SIZE} />, hue: "blue" },
-  ClipboardList: { icon: <ClipboardList size={PRODUCT_ICON_SIZE} />, hue: "pink" },
-  LifeBuoy: { icon: <LifeBuoy size={PRODUCT_ICON_SIZE} />, hue: "green" },
-  Users: { icon: <Users size={PRODUCT_ICON_SIZE} />, hue: "purple" },
+  Globe: { icon: Globe, hue: "green" },
+  BarChart3: { icon: BarChart3, hue: "orange" },
+  PlayCircle: { icon: PlayCircle, hue: "purple" },
+  Filter: { icon: Filter, hue: "blue" },
+  Flame: { icon: Flame, hue: "red" },
+  TrendingUp: { icon: TrendingUp, hue: "green" },
+  RotateCcw: { icon: RotateCcw, hue: "yellow" },
+  GitBranch: { icon: GitBranch, hue: "blue" },
+  Bot: { icon: Bot, hue: "purple" },
+  AlertTriangle: { icon: AlertTriangle, hue: "red" },
+  FileText: { icon: FileText, hue: "gray" },
+  Clock: { icon: Clock, hue: "blue" },
+  Flag: { icon: Flag, hue: "green" },
+  Beaker: { icon: Beaker, hue: "blue" },
+  TestTube: { icon: TestTube, hue: "purple" },
+  Rocket: { icon: Rocket, hue: "orange" },
+  Plug: { icon: Plug, hue: "gray" },
+  Webhook: { icon: Webhook, hue: "yellow" },
+  Workflow: { icon: Workflow, hue: "blue" },
+  ClipboardList: { icon: ClipboardList, hue: "pink" },
+  LifeBuoy: { icon: LifeBuoy, hue: "green" },
+  Users: { icon: Users, hue: "purple" },
 };

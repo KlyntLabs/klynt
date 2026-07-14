@@ -1,4 +1,6 @@
 import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Icon } from "@astryxdesign/core/Icon";
 import { Link } from "@astryxdesign/core/Link";
 import { Section } from "@astryxdesign/core/Section";
 import { Text } from "@astryxdesign/core/Text";
@@ -8,6 +10,18 @@ import { Headset } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ContactCards, ContactForm, FaqSection } from "@/features/marketing/components/contact";
 import styles from "./talk-to-human-page.module.css";
+
+/** framer-motion drives the Astryx components directly — no raw motion.div. See Window.tsx. */
+const MotionVStack = motion.create(VStack);
+const MotionSection = motion.create(Section);
+
+/**
+ * The headset plate's diameter and the hero subtitle's cap. Both sit above Astryx's 48px spacing
+ * scale, which has no dimension token; its size props take plain pixel numbers (`SizeValue`:
+ * "numbers are treated as pixels"), so they ride props rather than the stylesheet.
+ */
+const HEADSET_PLATE_SIZE = 64;
+const HERO_SUBTITLE_MAX_WIDTH = 384;
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -33,35 +47,54 @@ export default function TalkToHumanPage() {
   return (
     <VStack height="100%" isScrollable>
       {/* ── Hero ── */}
-      <motion.div
-        className={styles.hero}
+      {/* The hero's padding was 28 / 32 / 20 in CSS — off Astryx's SpacingStep scale, so it could
+          not ride a prop. Landed on the scale (paddingInline={8}, paddingBlock={6}) it can, and
+          the class went with it. */}
+      <MotionVStack
+        gap={3}
+        align="center"
+        paddingInline={8}
+        paddingBlock={6}
         initial="hidden"
         animate="visible"
         variants={staggerContainer}
       >
-        <motion.div variants={fadeUp} custom={0}>
+        <MotionVStack variants={fadeUp} custom={0}>
           <Heading level={1} type="display-3" justify="center" textWrap="balance">
             {t("talkToHuman.hero.title")}
           </Heading>
-        </motion.div>
+        </MotionVStack>
 
-        <motion.div className={styles.heroSubtitle} variants={fadeUp} custom={1}>
+        <MotionVStack maxWidth={HERO_SUBTITLE_MAX_WIDTH} variants={fadeUp} custom={1}>
           <Text type="large" color="secondary" display="block" justify="center">
             {t("talkToHuman.hero.subtitle")}
           </Text>
-        </motion.div>
+        </MotionVStack>
 
-        <motion.div variants={fadeUp} custom={2}>
-          <div className={styles.headsetPlate}>
-            <Headset size={32} aria-hidden="true" />
-          </div>
-        </motion.div>
-      </motion.div>
+        <MotionVStack variants={fadeUp} custom={2}>
+          {/* The glyph's hue is an Icon prop (`IconColor` carries the categorical hues). Only the
+              plate's pill radius and its tinted background are left in CSS — Astryx's stacks have
+              no radius or background prop — and both are tokens. */}
+          <HStack
+            width={HEADSET_PLATE_SIZE}
+            height={HEADSET_PLATE_SIZE}
+            align="center"
+            justify="center"
+            className={styles.headsetPlate}
+          >
+            <Icon icon={Headset} size="lg" color="orange" aria-hidden="true" />
+          </HStack>
+        </MotionVStack>
+      </MotionVStack>
 
       <ContactCards />
 
       {/* ── Contact Form ── */}
-      <motion.div
+      <MotionSection
+        variant="transparent"
+        dividers={["top"]}
+        padding={8}
+        paddingBlock={6}
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{
@@ -70,18 +103,16 @@ export default function TalkToHumanPage() {
           ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
         }}
       >
-        <Section variant="transparent" dividers={["top"]} padding={8} paddingBlock={6}>
-          <VStack gap={5} align="stretch">
-            <VStack gap={1} align="start">
-              <Heading level={2}>{t("talkToHuman.form.title")}</Heading>
-              <Text color="secondary" display="block">
-                {t("talkToHuman.form.subtitle")}
-              </Text>
-            </VStack>
-            <ContactForm />
+        <VStack gap={5} align="stretch">
+          <VStack gap={1} align="start">
+            <Heading level={2}>{t("talkToHuman.form.title")}</Heading>
+            <Text color="secondary" display="block">
+              {t("talkToHuman.form.subtitle")}
+            </Text>
           </VStack>
-        </Section>
-      </motion.div>
+          <ContactForm />
+        </VStack>
+      </MotionSection>
 
       <FaqSection />
 

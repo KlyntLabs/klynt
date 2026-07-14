@@ -12,19 +12,26 @@
 
 /* Astryx portal color-mode fix.
  *
+ * STILL REQUIRED — re-verified against @astryxdesign/core 0.1.4 and
+ * @astryxdesign/theme-neutral 0.1.4 (see the audit below before deleting this).
+ *
  * Astryx's reset maps `html[data-theme]` -> `color-scheme` so that portalled content
  * (Dialog, Popover, Toast, Tooltip, DropdownMenu — all rendered at <body>, outside the
- * <Theme> wrapper) resolves its light-dark() tokens against the app's mode. But
- * @astryxdesign/theme-neutral/theme.css re-declares `:root { color-scheme: light dark }`
- * in the `astryx-theme` layer, which outranks the reset's `:where(html[data-theme])`
- * rule (higher layer, higher specificity). The reset's portal mapping is therefore dead
- * under Astryx's own documented layer order, and portals fall back to the OS preference —
- * rendering dark dialogs inside a light app on a dark-mode machine.
+ * <Theme> wrapper) resolves its light-dark() tokens against the app's mode. Theme.js still
+ * documents this as the contract: "`data-theme` — drives `color-scheme` via reset.css rules".
  *
- * Re-assert the mapping from a layer above astryx-theme. This matters more now than it did
- * during the migration: the app follows the OS by default, so a mismatch is no longer
- * hypothetical. Re-check on every Astryx upgrade; it becomes unnecessary if upstream drops
- * the unconditional :root declaration.
+ * The contract is broken by the theme package, not the reset:
+ *   - core/src/reset.css:379-388  @layer reset  -> :where(html[data-theme="dark"]) { color-scheme: dark }
+ *   - theme-neutral/dist/theme.css:79-80  @layer astryx-theme  -> :root { color-scheme: light dark }
+ *
+ * Our layer order (below) is Astryx's own documented order, and `astryx-theme` sits above
+ * `reset`. Layer order beats specificity outright, so the theme's unconditional `:root`
+ * declaration wins and the reset's data-theme mapping never applies. Portals fall back to the
+ * OS preference — dark dialogs inside a light app on a dark-mode machine.
+ *
+ * Re-assert the mapping from a layer above astryx-theme. This matters: the app follows the OS
+ * by default (mode="system"), so the mismatch is not hypothetical. Re-check on every Astryx
+ * upgrade — this block becomes dead the moment upstream drops that unconditional `:root`.
  */
 @layer overrides {
   html[data-theme="light"] {
@@ -35,8 +42,16 @@
     color-scheme: dark;
   }
 
+  /*
+   * `min-width: 320px` used to sit here as a smallest-supported-viewport floor. It is gone: it was
+   * a legacy guard from the Tailwind layout, and Astryx's components reflow on available width by
+   * themselves (`Grid columns={{minWidth}}` is container-driven, not viewport-driven), so nothing
+   * needs a document-level floor to hold its shape. 320px is also the narrowest real device, so
+   * the rule only ever bit below widths that do not exist.
+   *
+   * min-height stays: it is the document ground, and `100vh` is a viewport unit, not a raw px.
+   */
   body {
-    min-width: 320px;
     min-height: 100vh;
   }
 }

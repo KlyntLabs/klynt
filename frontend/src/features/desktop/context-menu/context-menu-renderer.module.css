@@ -1,62 +1,47 @@
 /*
  * The desktop context-menu surface.
  *
- * This stays hand-rolled rather than moving onto Astryx's <ContextMenu>: that component is
+ * The *structure* stays ours rather than moving onto Astryx's <ContextMenu>: that component is
  * trigger-owned (`children` is the right-click area and it owns its own open state and cursor
  * positioning), whereas this menu is a *controlled* surface — `use-desktop-context-menu` owns
  * open/x/y and `DesktopContextMenu` positions it. Astryx exposes no controlled open/position
  * API, and its `items` model is one flat level of sections, while `ContextMenuSchema` nests
  * groups recursively.
  *
- * So the structure is ours and the styling is Astryx's: every value below is a token.
+ * But the elements are all Astryx now — VStack for the surface and the groups, Button for the
+ * rows, Divider for the separators — so the layout, padding, gaps and every interaction state
+ * are the components'. The native-button reset and the hand-written :hover / :focus-visible /
+ * disabled rules that used to live here are gone with the `as="button"` stack that needed them:
+ * the ghost Button brings all three.
+ *
+ * What is left is the surface's own skin (all tokens) and one structural rule for the row.
+ *
+ * The hairline is `--border-width`, Astryx's own border token — the same one Card draws with —
+ * not a hand-set width.
  */
 
 .surface {
   position: absolute;
   min-width: 10rem;
-  padding: var(--spacing-1);
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-element);
   background: var(--color-background-popover);
   box-shadow: var(--shadow-high);
 }
 
+/* Same skin, wider padding — and the padding is a prop on the VStack, not a value here. */
 .emptySurface {
   composes: surface;
-  padding: var(--spacing-3);
 }
 
+/*
+ * Structure only. Button's content wrapper is `display: contents`, so the label and the shortcut
+ * are direct flex children of the <button> — these two rules make the row fill the menu and push
+ * them to opposite ends. No colour, no spacing, no border: the ghost variant owns all of that.
+ */
 .item {
-  display: flex;
   width: 100%;
-  align-items: center;
   justify-content: space-between;
-  gap: var(--spacing-4);
-  padding: var(--spacing-1-5) var(--spacing-2);
-  border: none;
-  border-radius: var(--radius-inner);
-  background: transparent;
-  text-align: start;
-  cursor: pointer;
-}
-
-.item:hover,
-.item:focus-visible {
-  background: var(--color-overlay-hover);
-}
-
-.item:focus-visible {
-  outline: none;
-}
-
-.itemDisabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.itemDisabled:hover,
-.itemDisabled:focus-visible {
-  background: transparent;
 }
 
 /* Astryx's horizontal Divider is width:100%, so it only needs the surrounding rhythm. */
@@ -74,14 +59,4 @@
 .groupLabel {
   display: block;
   padding: var(--spacing-1) var(--spacing-2);
-}
-
-.groupChildren {
-  display: flex;
-  flex-direction: column;
-}
-
-.groupChildrenIndented {
-  composes: groupChildren;
-  padding-inline-start: var(--spacing-2);
 }

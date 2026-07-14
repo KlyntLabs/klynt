@@ -3,6 +3,7 @@ import { Badge } from "@astryxdesign/core/Badge";
 import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
 import { Divider } from "@astryxdesign/core/Divider";
+import { Grid } from "@astryxdesign/core/Grid";
 import { Heading } from "@astryxdesign/core/Heading";
 import { HStack } from "@astryxdesign/core/HStack";
 import { Icon } from "@astryxdesign/core/Icon";
@@ -14,6 +15,26 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { useMarketingTranslation } from "@/features/marketing/lib/use-marketing-translation";
 import styles from "./about-tab.module.css";
+
+/*
+ * framer-motion drives the Astryx components directly rather than wrapper <div>s — the pattern
+ * the Window reference sets out: every Astryx component keeps `ref`/`style`/`className`, so
+ * `motion.create()` can drive one.
+ */
+const MotionVStack = motion.create(VStack);
+const MotionHStack = motion.create(HStack);
+const MotionCard = motion.create(Card);
+
+/**
+ * The mascot's cap, on the one prop that can carry it (`SizeValue`: "numbers are treated as
+ * pixels"). It used to be a CSS `max-width` that a 768px media query bumped from 200px to 240px;
+ * the letter/mascot split is now a Grid, so there is no breakpoint left to bump it in.
+ */
+const MASCOT_MAX_WIDTH = 240;
+
+/** The narrowest the letter may get before the mascot drops beneath it. Grid reads the container,
+ *  so this replaces the 768px media condition outright. */
+const LETTER_COLUMN_MIN_WIDTH = 280;
 
 interface TimelineEntry {
   year: string;
@@ -55,8 +76,10 @@ function FounderLetter() {
   const { t } = useMarketingTranslation();
 
   return (
-    <div className={styles.columns}>
-      <VStack gap={4} align="start" className={styles.letter}>
+    /* The letter sits beside the mascot when there is room for both, and above it when there is
+       not. Grid reads the container, so there is no breakpoint and no CSS. */
+    <Grid columns={{ minWidth: LETTER_COLUMN_MIN_WIDTH, max: 2 }} gap={8}>
+      <VStack gap={4} align="start">
         <Heading level={1} textWrap="balance">
           {t("about.aboutTab.title")}
         </Heading>
@@ -79,8 +102,10 @@ function FounderLetter() {
         />
       </VStack>
 
-      <div className={styles.mascotColumn}>
-        <motion.div
+      <VStack align="center" gap={2}>
+        <MotionVStack
+          width="100%"
+          maxWidth={MASCOT_MAX_WIDTH}
           animate={{ y: [0, -6, 0] }}
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
         >
@@ -93,12 +118,12 @@ function FounderLetter() {
             decoding="async"
             className={styles.mascot}
           />
-        </motion.div>
+        </MotionVStack>
         <Text type="supporting" justify="center" display="block" className={styles.caption}>
           {t("about.aboutTab.caption")}
         </Text>
-      </div>
-    </div>
+      </VStack>
+    </Grid>
   );
 }
 
@@ -110,68 +135,78 @@ function CompanyStory() {
     <VStack gap={6} align="stretch">
       <Heading level={2}>{t("about.aboutTab.storyTitle")}</Heading>
 
-      <div className={styles.timeline}>
-        <div className={styles.timelineLine} aria-hidden="true" />
-        <VStack gap={6} align="stretch">
-          {timeline.map((item, i) => (
-            <motion.div
-              key={item.title}
-              initial={{ opacity: 0, x: -15 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: i * 0.08 }}
-              className={styles.timelineRow}
-            >
-              <div className={styles.timelineDot} aria-hidden="true" />
-              <VStack gap={1} align="start" className={styles.timelineBody}>
-                <Badge label={item.year} />
-                <Heading level={3}>{item.title}</Heading>
-                <Text type="supporting" display="block">
-                  {item.description}
-                </Text>
-              </VStack>
-            </motion.div>
-          ))}
-        </VStack>
-      </div>
+      <VStack gap={6} align="stretch" className={styles.timeline}>
+        {/*
+         * The rail is an Astryx `Divider` — the component whose whole job is to draw a line, and
+         * which draws it from the theme's own border token. That is what removed the last raw px
+         * from this file: the rail used to be a hand-rolled 2px box, offset by `calc(… - 1px)`.
+         * Only its placement behind the dots is left in CSS; a divider has no position prop.
+         */}
+        <Divider orientation="vertical" aria-hidden="true" className={styles.timelineLine} />
+        {timeline.map((item, i) => (
+          <MotionHStack
+            key={item.title}
+            gap={4}
+            className={styles.timelineRow}
+            initial={{ opacity: 0, x: -15 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, delay: i * 0.08 }}
+          >
+            <HStack
+              aria-hidden="true"
+              align="center"
+              justify="center"
+              className={styles.timelineDot}
+            />
+            <VStack gap={1} align="start" className={styles.timelineBody}>
+              <Badge label={item.year} />
+              <Heading level={3}>{item.title}</Heading>
+              <Text type="supporting" display="block">
+                {item.description}
+              </Text>
+            </VStack>
+          </MotionHStack>
+        ))}
+      </VStack>
 
-      <motion.div
+      <MotionCard
+        variant="muted"
+        padding={6}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.4 }}
       >
-        <Card variant="muted" padding={6}>
-          <VStack gap={1} align="center">
-            <Text type="display-3" color="accent" weight="bold" display="block">
-              {`${t("about.aboutTab.teamCount")}+`}
-            </Text>
-            <Text type="supporting" display="block">
-              {t("about.aboutTab.teamCountLabel")}
-            </Text>
-          </VStack>
-        </Card>
-      </motion.div>
+        <VStack gap={1} align="center">
+          <Text type="display-3" color="accent" weight="bold" display="block">
+            {`${t("about.aboutTab.teamCount")}+`}
+          </Text>
+          <Text type="supporting" display="block">
+            {t("about.aboutTab.teamCountLabel")}
+          </Text>
+        </VStack>
+      </MotionCard>
     </VStack>
   );
 }
 
 export function AboutTab() {
   return (
-    <motion.div
+    <MotionVStack
+      height="100%"
+      isScrollable
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
     >
-      <VStack height="100%" isScrollable>
-        <Section variant="transparent" padding={6}>
-          <VStack gap={8} align="stretch">
-            <FounderHeader />
-            <FounderLetter />
-            <Divider />
-            <CompanyStory />
-          </VStack>
-        </Section>
-      </VStack>
-    </motion.div>
+      <Section variant="transparent" padding={6}>
+        <VStack gap={8} align="stretch">
+          <FounderHeader />
+          <FounderLetter />
+          <Divider />
+          <CompanyStory />
+        </VStack>
+      </Section>
+    </MotionVStack>
   );
 }

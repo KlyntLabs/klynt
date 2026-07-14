@@ -1,3 +1,5 @@
+import { HStack } from "@astryxdesign/core/HStack";
+import { Icon } from "@astryxdesign/core/Icon";
 import { Minus, Square, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import styles from "./window-controls.module.css";
@@ -12,15 +14,12 @@ interface WindowControlsProps {
 /**
  * macOS-style traffic lights.
  *
- * DELIBERATE ASTRYX EXCEPTION — the three colours live in window-controls.module.css as raw
- * hex, and they are the only hardcoded colour left in the desktop chrome. They are not brand
- * or semantic values that should follow a theme; they are literal quotations of the macOS
- * window controls, and the whole desktop metaphor depends on the user recognising them.
- * Mapping them onto Astryx's status tokens would make them theme-dependent and, in a dark
- * theme, no longer red/amber/green. Astryx has no window-control component to replace them.
- *
- * See docs/adr/015-astryx-component-layer.md — the desktop chrome is a bounded exception
- * to the "tokens for every value" rule, and this is one of the two places it applies.
+ * No carve-out left. The three colours are Astryx's categorical icon tokens
+ * (--color-icon-red / -yellow / -green) and the glyphs are Astryx `Icon`s sized with the
+ * documented size prop ("Don't resize icons with arbitrary pixel values; use the provided
+ * size props"), so nothing here is hand-valued. The reveal-on-hover is driven by `color`
+ * inheritance on the button — Icon defaults to color="inherit" — rather than by an element
+ * selector on the SVG. See window-controls.module.css.
  */
 export function WindowControls({
   isMaximized,
@@ -31,7 +30,7 @@ export function WindowControls({
   const { t } = useTranslation("home");
 
   return (
-    <div className={styles.controls}>
+    <HStack className={styles.controls} gap={1.5} align="center">
       <button
         type="button"
         onClick={onClose}
@@ -39,7 +38,7 @@ export function WindowControls({
         title={t("desktop.window.close")}
         className={`${styles.light} ${styles.close}`}
       >
-        <X />
+        <Icon icon={X} size="xsm" />
       </button>
       <button
         type="button"
@@ -48,7 +47,7 @@ export function WindowControls({
         title={t("desktop.window.minimize")}
         className={`${styles.light} ${styles.minimize}`}
       >
-        <Minus />
+        <Icon icon={Minus} size="xsm" />
       </button>
       <button
         type="button"
@@ -57,8 +56,8 @@ export function WindowControls({
         title={isMaximized ? t("desktop.window.restore") : t("desktop.window.maximize")}
         className={`${styles.light} ${styles.maximize}`}
       >
-        <Square />
+        <Icon icon={Square} size="xsm" />
       </button>
-    </div>
+    </HStack>
   );
 }

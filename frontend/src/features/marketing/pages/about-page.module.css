@@ -1,6 +1,10 @@
 /*
- * Page chrome Astryx does not express: the horizontally scrollable tab strip and the
- * decorative "coming soon" icon plate. Colours are Astryx CSS variables only.
+ * Structural residue only. The "coming soon" icon plate is gone — the glyph is now an
+ * `Icon size="lg" color="disabled"`, so its 32px CSS sizing rule (which Icon's docs forbid) and
+ * its colour rule both went with it.
+ *
+ * What is left holds no design value: the page's flex column, and the tab strip's shrink guard
+ * and horizontal scroll. The strip's muted plate is the one value here, and it is a token.
  */
 
 .page {
@@ -12,18 +16,4 @@
   flex-shrink: 0;
   overflow-x: auto;
   background: var(--color-background-muted);
-}
-
-.comingSoon {
-  padding-block: var(--spacing-10);
-}
-
-.comingSoonIcon {
-  display: inline-flex;
-  color: var(--color-icon-disabled);
-}
-
-.comingSoonIcon svg {
-  width: 32px;
-  height: 32px;
 }

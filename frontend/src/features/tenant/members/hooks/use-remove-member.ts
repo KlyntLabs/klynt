@@ -1,13 +1,13 @@
+import { useToast } from "@astryxdesign/core/Toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { createApiError } from "@/core/api/api-error";
-import { useToastStore } from "@/core/notifications/toast-store";
 import { memberApi } from "../api/member-api";
 
 export function useRemoveMember(tenantSlug: string) {
   const { t } = useTranslation("tenant");
   const queryClient = useQueryClient();
-  const addToast = useToastStore((state) => state.addToast);
+  const toast = useToast();
 
   return useMutation({
     mutationFn: (email: string) => memberApi.remove(tenantSlug, email),
@@ -16,10 +16,11 @@ export function useRemoveMember(tenantSlug: string) {
     },
     onError: (error) => {
       const apiError = createApiError(error);
-      addToast({
-        message: t("members.removeError", { message: apiError.message }),
+      toast({
+        body: t("members.removeError", { message: apiError.message }),
         type: "error",
-        duration: 5000,
+        isAutoHide: true,
+        autoHideDuration: 5000,
       });
     },
   });

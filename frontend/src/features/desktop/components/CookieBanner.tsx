@@ -10,6 +10,21 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import styles from "./cookie-banner.module.css";
 
+/*
+ * The banner *is* the Card — an Astryx surface that framer-motion animates, exactly as the
+ * window frame is in Window.tsx. Every Astryx component extends BaseProps, which keeps `ref`,
+ * `style`, `className` and event handlers, so `motion.create()` drives one directly; the old
+ * motion.div wrapper around the Card was a raw div doing nothing the Card could not do itself.
+ */
+const MotionCard = motion.create(Card);
+
+/** The banner's measure. Past the spacing scale, so it rides on Card's `width` (SizeValue:
+ *  "numbers are treated as pixels") rather than sitting in CSS. */
+const BANNER_WIDTH = 380;
+
+/** The mascot's on-screen square. Same reasoning — a wrapper prop, not a CSS px. */
+const MASCOT_SIZE = 64;
+
 const COOKIE_DISMISSED_KEY = "cookie-dismissed";
 
 function getStorage() {
@@ -54,30 +69,30 @@ export default function CookieBanner() {
   return (
     <AnimatePresence>
       {isVisible && !dismissed && (
-        // The motion.div only pins the banner to the corner and animates it in; the surface
-        // itself — border, radius, elevation, padding — is an Astryx Card.
-        <motion.div
+        <MotionCard
+          padding={4}
+          width={BANNER_WIDTH}
+          className={styles.banner}
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] }}
-          className={styles.banner}
         >
-          <Card padding={4}>
-            <VStack gap={2} align="start">
-              <Heading level={3} className={styles.heading}>
-                {t("desktop.cookieBanner.heading")}
-              </Heading>
+          <VStack gap={2} align="start">
+            <Heading level={3} className={styles.heading}>
+              {t("desktop.cookieBanner.heading")}
+            </Heading>
 
-              <Text color="secondary" display="block">
-                {t("desktop.cookieBanner.body")}
-              </Text>
+            <Text color="secondary" display="block">
+              {t("desktop.cookieBanner.body")}
+            </Text>
 
-              <Text color="secondary" display="block">
-                <em>{t("desktop.cookieBanner.aside")}</em>
-              </Text>
+            <Text color="secondary" display="block">
+              <em>{t("desktop.cookieBanner.aside")}</em>
+            </Text>
 
-              <HStack gap={3} align="center">
+            <HStack gap={3} align="center">
+              <VStack className={styles.mascot} width={MASCOT_SIZE} height={MASCOT_SIZE}>
                 <img
                   src="/ursula-cookie.webp"
                   alt={t("desktop.cookieBanner.ursulaAlt")}
@@ -85,14 +100,14 @@ export default function CookieBanner() {
                   height={1024}
                   loading="lazy"
                   decoding="async"
-                  className={styles.mascot}
+                  className={styles.mascotImage}
                 />
-                <Text type="supporting" size="sm">
-                  {t("desktop.cookieBanner.footer")}
-                </Text>
-              </HStack>
-            </VStack>
-          </Card>
+              </VStack>
+              <Text type="supporting" size="sm">
+                {t("desktop.cookieBanner.footer")}
+              </Text>
+            </HStack>
+          </VStack>
 
           <IconButton
             variant="ghost"
@@ -102,7 +117,7 @@ export default function CookieBanner() {
             onClick={handleDismiss}
             className={styles.dismiss}
           />
-        </motion.div>
+        </MotionCard>
       )}
     </AnimatePresence>
   );

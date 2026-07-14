@@ -8,15 +8,5 @@
   right: 0;
   left: 0;
   z-index: 50;
-  height: 40px;
-}
-
-.logoButton {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
+  height: var(--spacing-10);
 }

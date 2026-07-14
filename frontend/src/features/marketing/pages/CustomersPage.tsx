@@ -1,7 +1,9 @@
 import { Badge } from "@astryxdesign/core/Badge";
 import { EmptyState } from "@astryxdesign/core/EmptyState";
 import { HStack } from "@astryxdesign/core/HStack";
+import { Icon } from "@astryxdesign/core/Icon";
 import { Link } from "@astryxdesign/core/Link";
+import { Section } from "@astryxdesign/core/Section";
 import { Selector } from "@astryxdesign/core/Selector";
 import { pixel, proportional, Table, type TableColumn } from "@astryxdesign/core/Table";
 import { Text } from "@astryxdesign/core/Text";
@@ -12,6 +14,13 @@ import { useTranslation } from "react-i18next";
 import type { CustomerRow, Product } from "@/features/marketing/data/customers";
 import { allProducts, customerRows } from "@/features/marketing/data/customers";
 import styles from "./customers-page.module.css";
+
+/**
+ * The company logo plate. Astryx's spacing scale stops at 48px and its size props take plain
+ * pixel numbers (`SizeValue`: "numbers are treated as pixels"), so the square rides `width`/
+ * `height` on the stack rather than the stylesheet.
+ */
+const LOGO_SIZE = 28;
 
 /* ------------------------------------------------------------------ */
 /*  Filter option types                                                */
@@ -45,9 +54,19 @@ function CompanyLogo({ customer }: { customer: CustomerRow }) {
   const tint = LOGO_TINTS[customer.id % LOGO_TINTS.length];
   return (
     <HStack gap={2} align="center">
-      <span className={`${styles.logo} ${tint}`} aria-hidden="true">
-        {customer.logoInitials}
-      </span>
+      <HStack
+        as="span"
+        width={LOGO_SIZE}
+        height={LOGO_SIZE}
+        align="center"
+        justify="center"
+        className={`${styles.logo} ${tint}`}
+        aria-hidden="true"
+      >
+        <Text as="span" size="2xs" weight="bold" color="inherit">
+          {customer.logoInitials}
+        </Text>
+      </HStack>
       <Text type="label" weight="medium">
         {customer.company}
       </Text>
@@ -79,7 +98,7 @@ function CaseStudyLink({ hasLink, tk }: { hasLink: boolean; tk: Translate }) {
     <Link>
       <HStack as="span" gap={1} align="center">
         {tk("customers.table.link")}
-        <ExternalLink size={12} aria-hidden="true" />
+        <Icon icon={ExternalLink} size="xsm" aria-hidden="true" />
       </HStack>
     </Link>
   );
@@ -174,8 +193,9 @@ export default function CustomersPage() {
 
   return (
     <VStack gap={0} width="100%">
-      {/* Filter Bar */}
-      <div className={styles.filterBar}>
+      {/* Filter Bar — a Section carries the surface and the bottom divider; only `position:
+          sticky` is left in CSS, and that is structure, not a value. */}
+      <Section dividers={["bottom"]} padding={6} paddingBlock={3} className={styles.filterBar}>
         <HStack align="center" wrap="wrap" gap={2}>
           <Text color="secondary">{t("customers.filters.where")}</Text>
           <Text color="secondary">{t("customers.filters.productUsed")}</Text>
@@ -211,10 +231,11 @@ export default function CustomersPage() {
             onChange={(v) => setFeaturedFilter(v as FeaturedFilter)}
           />
         </HStack>
-      </div>
+      </Section>
 
-      {/* Data Table */}
-      <div className={styles.tableScroll}>
+      {/* Data Table — isScrollable is Astryx's own overflow prop, so the scroll region needs
+          no CSS at all. */}
+      <VStack isScrollable width="100%">
         <Table
           data={sortedRows}
           columns={columns}
@@ -223,7 +244,7 @@ export default function CustomersPage() {
           dividers="rows"
           hasHover
         />
-      </div>
+      </VStack>
 
       {/* Empty state */}
       {sortedRows.length === 0 && <EmptyState title={t("customers.table.empty")} />}

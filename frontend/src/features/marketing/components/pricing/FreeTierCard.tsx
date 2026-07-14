@@ -13,7 +13,10 @@ export function FreeTierCard({ item }: FreeTierCardProps) {
   return (
     <Card variant="muted" padding={3}>
       <HStack gap={3} align="center">
-        <div className={styles.iconTile}>{item.icon}</div>
+        {/* The tile centres its mark with HStack props; only its surface stays in CSS. */}
+        <HStack align="center" justify="center" className={styles.iconTile}>
+          {item.icon}
+        </HStack>
         <VStack gap={0} align="start" className={styles.copy}>
           {/*
            * The allowance is always green: the pre-migration `included ? green : green`

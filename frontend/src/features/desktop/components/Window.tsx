@@ -1,7 +1,11 @@
 import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
 import { EmptyState } from "@astryxdesign/core/EmptyState";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Icon } from "@astryxdesign/core/Icon";
 import { Spinner } from "@astryxdesign/core/Spinner";
 import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import { motion } from "framer-motion";
 import { ChevronDown, FileText } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
@@ -13,6 +17,27 @@ import { AppErrorBoundary } from "./AppErrorBoundary";
 import styles from "./window.module.css";
 import { WindowControls } from "./window-controls";
 import { WindowToolbar } from "./window-toolbar";
+
+/*
+ * The window frame is an Astryx Card that framer-motion animates.
+ *
+ * Astryx has no window primitive, but it does not need one: a window is a *surface* (border,
+ * elevation, radius, background — that is Card) with *behaviour* attached (drag, z-order,
+ * absolute position — that is framer-motion). Every Astryx component extends BaseProps, which
+ * deliberately keeps `ref`, `style`, `className` and event handlers, so `motion.create()` can
+ * drive one directly. Composing them is the native path; reaching for a raw motion.div is not.
+ */
+const MotionCard = motion.create(Card);
+
+/** Title-bar height. Astryx's spacing scale stops at 48px and has no dimension token; its own
+ *  size props take plain pixel numbers (`SizeValue`: "numbers are treated as pixels"). */
+const TITLE_BAR_HEIGHT = 38;
+
+/** Balances the traffic lights so the title stays optically centred. */
+const CONTROLS_SPACER_WIDTH = 52;
+
+/** Menubar height — the window's top clamp. Shared with window-manager.module.css. */
+const MENUBAR_OFFSET = 36;
 
 type ErrorFallbackProps = { error: Error; retry: () => void };
 
@@ -68,7 +93,10 @@ export default function WindowComponent({
       const currentX = w.x + info.offset.x;
       const currentY = w.y + info.offset.y;
       const clampedX = Math.max(0, Math.min(currentX, window.innerWidth - w.width));
-      const clampedY = Math.max(36, Math.min(currentY, window.innerHeight - 40));
+      const clampedY = Math.max(
+        MENUBAR_OFFSET,
+        Math.min(currentY, window.innerHeight - TITLE_BAR_HEIGHT - 2)
+      );
       moveWindow(desktopId, w.id, { x: clampedX, y: clampedY, width: w.width, height: w.height });
     },
     [desktopId, w.id, w.x, w.y, w.width, w.height, moveWindow]
@@ -81,22 +109,14 @@ export default function WindowComponent({
   }, [desktopId, w.id, isActive, focusWindow]);
 
   return (
-    // DELIBERATE ASTRYX EXCEPTION — this frame stays a motion.div.
-    //
-    // Astryx has no window primitive: nothing in it expresses an absolutely-positioned,
-    // draggable, z-ordered surface, and its layout components (AppShell/Layout) exist to own
-    // page structure, which is the opposite of what a window manager needs. Forcing AppShell
-    // here would fight the metaphor, not express it. The window's *contents* are Astryx —
-    // toolbar, text, spinner, error state — but the frame is ours, styled from
-    // window.module.css with Astryx tokens.
-    //
-    // See docs/adr/015-astryx-component-layer.md.
-    <motion.div
+    <MotionCard
+      padding={0}
+      className={styles.window}
       initial={{ scale: 0.9, opacity: 0, y: 20 }}
       animate={{
         scale: 1,
         opacity: 1,
-        y: isMaximized ? 36 : w.y,
+        y: isMaximized ? MENUBAR_OFFSET : w.y,
         x: isMaximized ? 0 : w.x,
       }}
       exit={{ scale: 0.95, opacity: 0 }}
@@ -110,14 +130,18 @@ export default function WindowComponent({
         zIndex: w.zIndex,
         top: 0,
         left: 0,
-        width: isMaximized ? "calc(100vw - 0px)" : w.width,
-        height: isMaximized ? "calc(100vh - 36px)" : w.height,
+        width: isMaximized ? "100vw" : w.width,
+        height: isMaximized ? `calc(100vh - ${MENUBAR_OFFSET}px)` : w.height,
       }}
-      className={styles.window}
       data-testid="desktop-window"
     >
-      {/* Title bar */}
-      <div className={styles.titleBar}>
+      <HStack
+        className={styles.titleBar}
+        height={TITLE_BAR_HEIGHT}
+        gap={2}
+        align="center"
+        paddingInline={3}
+      >
         {!isLocked && (
           <WindowControls
             isMaximized={isMaximized}
@@ -130,29 +154,29 @@ export default function WindowComponent({
         )}
 
         {/*
-         * .titleArea carries `min-width: 0; flex: 1` — see window.module.css. That min-width is
-         * load-bearing for long titles; it is the same fix the Tailwind `min-w-0 flex-1` did.
+         * .titleArea carries `flex: 1; min-width: 0` — see window.module.css. Those are structural
+         * flex properties, not token values, and Astryx exposes no prop for either. The min-width
+         * is load-bearing: without it a long title refuses to shrink and pushes past the frame.
          */}
-        <div className={styles.titleArea}>
-          <FileText className={styles.titleIcon} />
+        <HStack className={styles.titleArea} gap={1.5} align="center" justify="center">
+          <Icon icon={FileText} size="xsm" color="secondary" />
           <Text type="label" maxLines={1}>
             {title}
           </Text>
-          <ChevronDown className={styles.titleChevron} />
-        </div>
+          <Icon icon={ChevronDown} size="xsm" color="secondary" />
+        </HStack>
 
-        {/* Balances the traffic lights so the title stays optically centred */}
-        {!isLocked && <div className={styles.controlsSpacer} />}
-      </div>
+        {!isLocked && <HStack width={CONTROLS_SPACER_WIDTH} />}
+      </HStack>
 
       {!isLocked && <WindowToolbar />}
 
-      <div className={styles.content}>
+      <VStack className={styles.content} isScrollable>
         <Suspense
           fallback={
-            <div className={styles.loading}>
+            <HStack justify="center" paddingBlock={10}>
               <Spinner />
-            </div>
+            </HStack>
           }
         >
           <AppErrorBoundary
@@ -162,7 +186,7 @@ export default function WindowComponent({
             {children}
           </AppErrorBoundary>
         </Suspense>
-      </div>
-    </motion.div>
+      </VStack>
+    </MotionCard>
   );
 }

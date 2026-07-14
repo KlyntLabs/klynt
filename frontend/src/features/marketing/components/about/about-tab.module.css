@@ -1,10 +1,16 @@
 /*
- * Bespoke marketing layout Astryx does not express: the two-column founder letter, the
- * mascot column, and the timeline rail (a vertical line with dots straddling it).
+ * Structural residue for the About tab. No design values left, and no raw px at all.
  *
- * Every colour, space and radius is an Astryx CSS variable — the CSS-variable path Astryx
- * documents for exactly this case (bunx astryx docs styling-libraries). Bare px values
- * survive only for pure geometry (rail width, mascot size), never for colour or spacing.
+ * What went, and where it went:
+ *  - The three 768px breakpoints. The letter/mascot split is a `Grid columns={{minWidth, max: 2}}`,
+ *    which reflows on the container rather than the viewport, so there is nothing for a media
+ *    query to decide. (CSS forbids var() in a media condition — those literals could never be
+ *    tokenised, only designed away.)
+ *  - The mascot's 200px/240px caps. Now one `maxWidth` prop on its stack.
+ *  - The 2px timeline rail and its `calc(… - 1px)` centring. The rail is an Astryx `Divider` now,
+ *    which draws its own line from the border token; only its placement is left below.
+ *
+ * What remains: two typographic treatments Text has no prop for, and the timeline's positioning.
  */
 
 .eyebrow {
@@ -12,88 +18,46 @@
   letter-spacing: 0.08em;
 }
 
-.columns {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-8);
-}
-
-@media (min-width: 768px) {
-  .columns {
-    flex-direction: row;
-  }
-}
-
-.letter {
-  flex: 1;
-  min-width: 0;
-}
-
-.mascotColumn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-@media (min-width: 768px) {
-  .mascotColumn {
-    width: 240px;
-  }
-}
-
 .mascot {
   width: 100%;
-  max-width: 200px;
   height: auto;
-}
-
-@media (min-width: 768px) {
-  .mascot {
-    max-width: 240px;
-  }
 }
 
 .caption {
   font-style: italic;
 }
 
-/* Timeline rail: the line sits behind the dots, centred on them. */
+/* Timeline rail: the Divider sits behind the dots, centred on them. */
 .timeline {
   position: relative;
 }
 
+/* The dot is 32px — var(--spacing-8) — so its centre is half that: var(--spacing-4). */
 .timelineLine {
   position: absolute;
   inset-block: 0;
-  inset-inline-start: 15px;
-  width: 2px;
-  background: var(--color-border);
+  inset-inline-start: var(--spacing-4);
 }
 
 .timelineRow {
   position: relative;
-  display: flex;
-  gap: var(--spacing-4);
 }
 
+/* The dot is 32px — var(--spacing-8) — and centres its inner pip with HStack props. */
 .timelineDot {
   position: relative;
   z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: var(--spacing-8);
+  height: var(--spacing-8);
   border-radius: var(--radius-full);
   background: var(--color-accent);
 }
 
 .timelineDot::after {
   content: "";
-  width: 8px;
-  height: 8px;
+  width: var(--spacing-2);
+  height: var(--spacing-2);
   border-radius: var(--radius-full);
   background: var(--color-on-accent);
 }

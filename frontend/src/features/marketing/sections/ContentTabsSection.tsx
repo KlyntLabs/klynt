@@ -1,5 +1,6 @@
 import { Section } from "@astryxdesign/core/Section";
 import { Tab, TabList } from "@astryxdesign/core/TabList";
+import { VStack } from "@astryxdesign/core/VStack";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -8,6 +9,9 @@ import { TabDataPanel, TabDebugPanel, TabShipPanel, TabUnderstandPanel } from ".
 interface ContentTabsSectionProps {
   onOpenApp: (route: string, title?: string) => void;
 }
+
+/** framer-motion drives the Astryx stack directly — no raw motion.div. See Window.tsx. */
+const MotionVStack = motion.create(VStack);
 
 const panelMotion = {
   initial: { opacity: 0 },
@@ -43,27 +47,27 @@ export function ContentTabsSection({ onOpenApp }: ContentTabsSectionProps) {
       <Section variant="section" padding={6}>
         <AnimatePresence mode="wait">
           {activeTab === "understand" && (
-            <motion.div key="understand" {...panelMotion}>
+            <MotionVStack key="understand" {...panelMotion}>
               <TabUnderstandPanel onOpenApp={onOpenApp} />
-            </motion.div>
+            </MotionVStack>
           )}
 
           {activeTab === "data" && (
-            <motion.div key="data" {...panelMotion}>
+            <MotionVStack key="data" {...panelMotion}>
               <TabDataPanel onOpenApp={onOpenApp} />
-            </motion.div>
+            </MotionVStack>
           )}
 
           {activeTab === "debug" && (
-            <motion.div key="debug" {...panelMotion}>
+            <MotionVStack key="debug" {...panelMotion}>
               <TabDebugPanel onOpenApp={onOpenApp} />
-            </motion.div>
+            </MotionVStack>
           )}
 
           {activeTab === "ship" && (
-            <motion.div key="ship" {...panelMotion}>
+            <MotionVStack key="ship" {...panelMotion}>
               <TabShipPanel onOpenApp={onOpenApp} />
-            </motion.div>
+            </MotionVStack>
           )}
         </AnimatePresence>
       </Section>

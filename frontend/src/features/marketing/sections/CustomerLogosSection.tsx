@@ -2,6 +2,7 @@ import { Button } from "@astryxdesign/core/Button";
 import { Grid } from "@astryxdesign/core/Grid";
 import { Heading } from "@astryxdesign/core/Heading";
 import { HStack } from "@astryxdesign/core/HStack";
+import { Icon } from "@astryxdesign/core/Icon";
 import { Section } from "@astryxdesign/core/Section";
 import { Text } from "@astryxdesign/core/Text";
 import { Token } from "@astryxdesign/core/Token";
@@ -68,7 +69,7 @@ export function CustomerLogosSection({ onOpenApp }: CustomerLogosSectionProps) {
           <Button
             variant="ghost"
             size="sm"
-            icon={<Shuffle />}
+            icon={<Icon icon={Shuffle} />}
             label={t("home.customers.shuffle")}
             onClick={handleShuffle}
           />

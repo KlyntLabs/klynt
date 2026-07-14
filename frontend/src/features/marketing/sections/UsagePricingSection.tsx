@@ -7,6 +7,9 @@ import { useTranslation } from "react-i18next";
 import { PricingProductCard } from "@/features/marketing/components/pricing";
 import { productPricings } from "@/features/marketing/lib/pricing-data";
 
+/** framer-motion drives the Astryx stack directly — no raw motion.div. See Window.tsx. */
+const MotionVStack = motion.create(VStack);
+
 const staggerContainer = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.05 } },
@@ -27,7 +30,8 @@ export function UsagePricingSection({ tk }: UsagePricingSectionProps) {
           <Text type="supporting">{t("pricing.usagePricing.subtitle")}</Text>
         </VStack>
 
-        <motion.div
+        <MotionVStack
+          gap={0}
           variants={staggerContainer}
           initial="hidden"
           whileInView="visible"
@@ -36,7 +40,7 @@ export function UsagePricingSection({ tk }: UsagePricingSectionProps) {
           {productPricings.map((p) => (
             <PricingProductCard key={p.id} product={p} tk={tk} />
           ))}
-        </motion.div>
+        </MotionVStack>
       </VStack>
     </Section>
   );

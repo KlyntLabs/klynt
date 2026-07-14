@@ -1,3 +1,4 @@
+import { VStack } from "@astryxdesign/core/VStack";
 import { NotesEditor } from "./notes-editor";
 import styles from "./notes-renderer.module.css";
 import { getText } from "./notes-utils";
@@ -17,9 +18,16 @@ export function NotesRenderer({
 
   if (readOnly) {
     return (
-      <div className={styles.readonly} data-testid="notes-readonly">
+      <VStack
+        className={styles.readonly}
+        width="100%"
+        height="100%"
+        padding={3}
+        isScrollable
+        data-testid="notes-readonly"
+      >
         {text}
-      </div>
+      </VStack>
     );
   }
 

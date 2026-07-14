@@ -1,7 +1,9 @@
+import { Center } from "@astryxdesign/core/Center";
 import { Spinner } from "@astryxdesign/core/Spinner";
+import { useToast } from "@astryxdesign/core/Toast";
+import { VStack } from "@astryxdesign/core/VStack";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useToastStore } from "@/core/notifications/toast-store";
 import { backgroundPresets, getPresetById } from "@/features/desktop/backgrounds/presets";
 import { DesktopContextMenu } from "@/features/desktop/context-menu/DesktopContextMenu";
 import { NewAppDialog } from "@/features/desktop/context-menu/new-app-dialog";
@@ -20,6 +22,18 @@ import { useDesktopEnvironmentActions } from "./use-desktop-environment-actions"
 import { useDesktopLayoutSave } from "./use-desktop-layout-save";
 import WindowManager from "./WindowManager";
 
+/**
+ * The wallpaper texture's tile edge, and the hedgehog's on-screen width.
+ *
+ * Both are far past Astryx's spacing scale (which stops at 48px), so per the sizing contract —
+ * `SizeValue`: "numbers are treated as pixels" — they belong on the component, not in CSS.
+ * GARDEN_WIDTH rides on the wrapper's `width` prop; WALLPAPER_TILE_SIZE has no prop to ride on
+ * (background-size is not a design-system concern), so it goes through `style`, which BaseProps
+ * keeps for exactly this.
+ */
+const WALLPAPER_TILE_SIZE = 512;
+const GARDEN_WIDTH = 280;
+
 interface DesktopEnvironmentProps {
   config: DesktopConfig;
 }
@@ -30,7 +44,7 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
   const [backgroundPresetId, setBackgroundPresetId] = useState(config.background.presetId);
   const [isLoading, setIsLoading] = useState(true);
   const { t } = useTranslation("home");
-  const addToast = useToastStore((state) => state.addToast);
+  const toast = useToast();
   const isBelowLg = useMediaQuery("(max-width: 1023px)");
   const configRef = useRef(config);
   configRef.current = config;
@@ -90,13 +104,14 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
   );
 
   const handleLoadError = useCallback(() => {
-    addToast({
-      message: t("desktop.toast.layoutLoadError"),
+    toast({
+      body: t("desktop.toast.layoutLoadError"),
       type: "error",
-      duration: 5000,
+      isAutoHide: true,
+      autoHideDuration: 5000,
     });
     setIsLoading(false);
-  }, [addToast, t]);
+  }, [toast, t]);
 
   const handleReload = useCallback(async () => {
     const { persistence, id } = configRef.current;
@@ -181,23 +196,27 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
   }
 
   return (
-    <div
+    <VStack
       className={styles.root}
+      width="100vw"
+      height="100vh"
       onContextMenu={handleBackgroundContextMenu}
       role="application"
       aria-label={t("desktop.navLabel")}
     >
-      {/* Wallpaper Background — the tint, repeat and tile size live in the module; only the
-          image is dynamic, so only the image is inline. */}
-      <div
+      {/* Wallpaper Background — the tint and the repeat are tokens/keywords in the module; the
+          image and the tile size are values, so both ride on the component. */}
+      <VStack
         className={styles.wallpaper}
         style={{
           backgroundImage: background ? `url(${background.src})` : "url(/wallpaper-texture.webp)",
+          backgroundSize: `${WALLPAPER_TILE_SIZE}px ${WALLPAPER_TILE_SIZE}px`,
         }}
       />
 
-      {/* Decorative hedgehog garden */}
-      <div className={styles.garden}>
+      {/* Decorative hedgehog garden. The width is the wrapper's — a VStack prop, since 280px is
+          far past Astryx's spacing scale — and the image just fills it. */}
+      <VStack className={styles.garden} width={GARDEN_WIDTH}>
         <img
           src="/hedgehog-garden.webp"
           alt=""
@@ -207,7 +226,7 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
           decoding="async"
           className={styles.gardenImage}
         />
-      </div>
+      </VStack>
 
       {/* Menubar */}
       <Menubar config={config} />
@@ -240,11 +259,11 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
 
       {/* Persistence loading overlay */}
       {isLoading && (
-        <div className={styles.loadingOverlay} role="status" aria-live="polite" aria-busy="true">
+        <Center className={styles.loadingOverlay} role="status" aria-live="polite" aria-busy="true">
           <Spinner />
-        </div>
+        </Center>
       )}
-    </div>
+    </VStack>
   );
 }
 

@@ -1,7 +1,9 @@
 import { Button } from "@astryxdesign/core/Button";
+import { Center } from "@astryxdesign/core/Center";
 import { CheckboxInput } from "@astryxdesign/core/CheckboxInput";
 import { Divider } from "@astryxdesign/core/Divider";
 import { HStack } from "@astryxdesign/core/HStack";
+import { StackItem } from "@astryxdesign/core/Stack";
 import { Text } from "@astryxdesign/core/Text";
 import { TextInput } from "@astryxdesign/core/TextInput";
 import { VStack } from "@astryxdesign/core/VStack";
@@ -32,6 +34,9 @@ function createUniqueId(): string {
 }
 
 const DEFAULT_CUSTOM_ACTION = "custom:new-action" as const;
+
+/** The empty state's drop-target height. Center's minHeight takes a SizeValue string as-is. */
+const EMPTY_STATE_MIN_HEIGHT = "8rem";
 
 function createDefaultItem(): ContextMenuItem {
   return {
@@ -75,21 +80,36 @@ export function MenuEditor({
   return (
     <VStack gap={4}>
       {schema.root.length === 0 ? (
-        <div className={styles.emptyState} data-testid="menu-editor-empty-state">
+        <Center
+          className={styles.emptyState}
+          minHeight={EMPTY_STATE_MIN_HEIGHT}
+          data-testid="menu-editor-empty-state"
+        >
           <Text type="body" color="secondary">
             {t("desktop.menuEditor.empty")}
           </Text>
-        </div>
+        </Center>
       ) : (
-        <ul className={styles.rows} aria-label="Menu entries">
+        <VStack as="ul" className={styles.rows} gap={2} aria-label="Menu entries">
           {schema.root.map((entry, index) => {
             if (isContextMenuItem(entry)) {
               const labelId = `item-label-${index}`;
               const disabledId = `item-disabled-${index}`;
 
               return (
-                <li key={entry.id} className={styles.row} data-testid="menu-item">
-                  <div className={styles.rowMain}>
+                <HStack
+                  as="li"
+                  key={entry.id}
+                  className={styles.row}
+                  gap={3}
+                  align="start"
+                  padding={3}
+                  data-testid="menu-item"
+                >
+                  {/* StackItem size="fill" is Astryx's own answer to flex:1 + min-width:0 —
+                      "Use StackItem with size='fill' to make one item stretch and fill the
+                      leftover space" — so the .rowMain div is gone. */}
+                  <StackItem size="fill">
                     <VStack gap={2}>
                       {/* Astryx's TextInput owns its label, so the separate <Label> is gone. */}
                       <TextInput
@@ -103,7 +123,7 @@ export function MenuEditor({
                       />
                       <Text type="supporting">Action: {entry.action}</Text>
                     </VStack>
-                  </div>
+                  </StackItem>
                   <HStack gap={2} align="center">
                     <CheckboxInput
                       id={disabledId}
@@ -126,23 +146,28 @@ export function MenuEditor({
                       />
                     )}
                   </HStack>
-                </li>
+                </HStack>
               );
             }
 
             if (isContextMenuSeparator(entry)) {
               return (
-                <li
+                <HStack
+                  as="li"
                   // biome-ignore lint/suspicious/noArrayIndexKey: separators have no stable identifier in the MVP schema
                   key={`separator-${index}`}
-                  className={styles.separatorRow}
+                  className={styles.row}
+                  gap={2}
+                  align="center"
+                  justify="between"
+                  padding={3}
                   data-testid="menu-separator"
                 >
-                  {/* Astryx's horizontal Divider is width:100% and shrinks, so it holds its
-                      width in this flex row instead of collapsing. */}
-                  <div className={styles.separatorLine}>
+                  {/* The Divider takes the slack via StackItem size="fill"; the delete button
+                      keeps its intrinsic width. The old .separatorLine div is gone. */}
+                  <StackItem size="fill">
                     <Divider />
-                  </div>
+                  </StackItem>
                   {!readOnly && (
                     <Button
                       variant="destructive"
@@ -152,13 +177,21 @@ export function MenuEditor({
                       onClick={() => updateRoot((entries) => removeEntry(entries, index))}
                     />
                   )}
-                </li>
+                </HStack>
               );
             }
 
             if (isContextMenuGroup(entry)) {
               return (
-                <li key={entry.id} className={styles.groupRow} data-testid="menu-group">
+                <VStack
+                  as="li"
+                  key={entry.id}
+                  className={styles.row}
+                  gap={1}
+                  align="stretch"
+                  padding={3}
+                  data-testid="menu-group"
+                >
                   <Text type="body" weight="medium" display="block">
                     {entry.label ?? "Untitled group"}
                   </Text>
@@ -166,13 +199,13 @@ export function MenuEditor({
                   <Text type="supporting" display="block">
                     Group editing is not supported in this MVP view.
                   </Text>
-                </li>
+                </VStack>
               );
             }
 
             return null;
           })}
-        </ul>
+        </VStack>
       )}
       {!readOnly && (
         <HStack gap={2}>

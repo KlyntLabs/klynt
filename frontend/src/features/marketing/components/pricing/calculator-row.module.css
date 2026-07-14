@@ -1,52 +1,19 @@
 /*
- * The calculator row: a responsive three-part strip (name · slider+input · cost) that Astryx's
- * stacks cannot express on their own — it reflows from column to row at the small breakpoint,
- * the middle band flexes, and the outer bands are fixed-width so the costs line up down the
- * column. Every value is an Astryx token.
+ * One rule left, and it holds no length and no colour: the numeric presentation of the usage
+ * field. Astryx's TextInput sizes and themes the control; how its digits read is ours.
+ *
+ * What went:
+ *  - The `1px solid` bottom rule on every row. Rows are separated by an Astryx `Divider` now
+ *    (drawn by PricingCalculatorSection), which is the component that owns that line.
+ *  - The 640px media query that flipped the row from a column to a row, and the `flex: 1` /
+ *    `flex-shrink: 0` bands it switched. The row is a `Grid columns={{minWidth, max: 3}}`, which
+ *    reflows on the container, and the slider fills its cell via `StackItem size="fill"`.
+ *
+ * No hex, no raw px, no breakpoints.
  */
 
-.row {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-3);
-  padding-block: var(--spacing-4);
-  border-block-end: 1px solid var(--color-border);
-}
-
-.row:last-child {
-  border-block-end: none;
-}
-
-@media (min-width: 640px) {
-  .row {
-    flex-direction: row;
-    align-items: center;
-  }
-}
-
-.name {
-  flex-shrink: 0;
-  width: 160px;
-}
-
-.controls {
-  flex: 1;
-  min-width: 0;
-}
-
-.slider {
-  flex: 1;
-  min-width: 0;
-}
-
-/* Astryx's TextInput sizes the field; the numeric presentation of the control is ours. */
 .usageInput input {
   text-align: end;
   font-family: var(--font-family-code);
   font-variant-numeric: tabular-nums;
-}
-
-.cost {
-  flex-shrink: 0;
-  width: 96px;
 }

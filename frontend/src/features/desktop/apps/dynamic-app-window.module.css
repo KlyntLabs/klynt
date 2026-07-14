@@ -1,30 +1,17 @@
 /*
  * The app-window frame: a titled header over a renderer pane that fills the remaining height.
- * Astryx's stacks do not express "fill the parent and let one child take the slack", so the
- * frame stays CSS — on tokens.
+ *
+ * It IS Astryx now — VStack for the frame, StackItem size="fill" for the pane that takes the
+ * slack, Center for the three single-message states — so the frame's own .window and .body
+ * classes are gone. The rule that drew the header's hairline is gone too: a line that separates
+ * two regions is a <Divider/>, the component Astryx ships for exactly that ("A visual separator
+ * that divides content into distinct sections"), so the border-bottom became a component and
+ * .header went with it.
+ *
+ * All that is left is the states' gutter, because Center has no padding prop. It is a token.
  */
-
-.window {
-  display: flex;
-  height: 100%;
-  flex-direction: column;
-}
-
-.header {
-  padding: var(--spacing-2) var(--spacing-4);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.body {
-  min-height: 0;
-  flex: 1;
-}
 
 /* Loading, error and unknown-renderer states all centre a single message in the pane. */
 .centered {
-  display: flex;
-  height: 100%;
-  align-items: center;
-  justify-content: center;
   padding: var(--spacing-4);
 }

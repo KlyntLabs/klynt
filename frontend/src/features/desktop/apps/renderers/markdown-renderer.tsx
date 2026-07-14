@@ -1,8 +1,7 @@
+import { Markdown } from "@astryxdesign/core/Markdown";
 import { TextArea } from "@astryxdesign/core/TextArea";
-import DOMPurify from "isomorphic-dompurify";
-import { marked } from "marked";
+import { VStack } from "@astryxdesign/core/VStack";
 import { useEffect, useMemo, useRef, useState } from "react";
-import styles from "./markdown-renderer.module.css";
 
 type MarkdownContent = {
   text: string;
@@ -21,11 +20,6 @@ function toMarkdownContent(content: Record<string, unknown>): MarkdownContent {
   return { text: typeof text === "string" ? text : "" };
 }
 
-function renderMarkdown(text: string): string {
-  const rawHtml = marked.parse(text, { async: false }) as string;
-  return DOMPurify.sanitize(rawHtml, { USE_PROFILES: { html: true } });
-}
-
 export function MarkdownRenderer({
   content,
   readOnly = false,
@@ -35,8 +29,6 @@ export function MarkdownRenderer({
   const [draft, setDraft] = useState(text);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMountedRef = useRef(true);
-
-  const sanitizedHtml = useMemo(() => renderMarkdown(text), [text]);
 
   useEffect(() => {
     setDraft(text);
@@ -67,13 +59,22 @@ export function MarkdownRenderer({
   };
 
   return (
-    <div className={styles.pane}>
-      <div
-        className={styles.preview}
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is sanitized by DOMPurify before injection.
-        dangerouslySetInnerHTML={{ __html: sanitizedHtml }} // nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml
-        data-testid="markdown-preview"
-      />
+    <VStack height="100%" gap={3} padding={4}>
+      {/*
+       * Astryx's Markdown takes the markdown *string* and renders Astryx components from it.
+       *
+       * This replaced a `marked` -> `DOMPurify.sanitize` -> `dangerouslySetInnerHTML` pipeline,
+       * and it is a security *improvement*, not a like-for-like swap: there is no longer an HTML
+       * injection path to sanitise. Markdown never builds an HTML string and never touches
+       * innerHTML (there is no `dangerouslySetInnerHTML` anywhere in @astryxdesign/core/Markdown,
+       * and it exposes no allowHtml/rawHtml escape), so embedded HTML in the source — a <script>
+       * tag, an onclick= handler — is inert text rather than sanitised markup. Sanitising a thing
+       * you never construct is strictly safer than sanitising it well.
+       *
+       * `marked` and `isomorphic-dompurify` were used only here and are now removed from
+       * package.json.
+       */}
+      <Markdown data-testid="markdown-preview">{text}</Markdown>
       {!readOnly && (
         // Astryx's TextArea owns the label, so the old aria-label becomes a hidden `label` —
         // the accessible name is unchanged. Height is rows-driven here, which suits this
@@ -87,6 +88,6 @@ export function MarkdownRenderer({
           data-testid="markdown-editor"
         />
       )}
-    </div>
+    </VStack>
   );
 }

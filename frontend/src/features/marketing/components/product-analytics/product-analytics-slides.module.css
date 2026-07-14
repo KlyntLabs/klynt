@@ -1,51 +1,22 @@
 /*
- * Bespoke slide compositions for the Product Analytics deck. Astryx has no "slide" primitive:
- * the full-bleed panel, the icon plates and the code columns are marketing layout, so they live
- * here. Content inside every slide is an Astryx component (Heading/Text/Card/Badge/Button/List).
+ * Structural residue for the Product Analytics deck.
  *
- * Every value below is an Astryx token. No literal colour of any kind — the migration removed them.
- * Astryx's own guidance for this case: "Most DOM styling should stay on the CSS-variable path"
- * (bunx astryx docs styling-libraries).
+ * Every slide is an Astryx stack now, and every gap, padding, alignment and icon size is a prop.
+ * The plates keep their surfaces here (Astryx has no icon-plate primitive) but not their layout,
+ * and their sizes are either spacing tokens (<= 48px) or size props (> 48px, where the spacing
+ * scale runs out).
+ *
+ * Every icon is an `Icon` at one of Astryx's four sizes — xsm(12) / sm(16) / md(20) / lg(24) —
+ * so not one `svg` selector survives. Its docs are explicit: "Don't resize icons with arbitrary
+ * pixel values; use the provided size props" and "Don't render raw SVG elements; always wrap in
+ * Icon".
+ *
+ * There are no exceptions left. The Track slide's 192px plate and its 80px BarChart3 glyph — the
+ * one thing in this feature Astryx could not express — are gone: the slide was redesigned onto a
+ * Grid of Cards (see SlideTrack.tsx). No hex, no raw px, no icon sized in CSS.
  */
 
-.titleSlide,
-.trackSlide,
-.featuresSlide,
-.autocaptureSlide,
-.privacySlide,
-.pricingSlide,
-.integrationSlide,
-.ctaSlide {
-  box-sizing: border-box;
-  display: flex;
-  height: 100%;
-  padding-inline: var(--spacing-8);
-}
-
-/* Centred, single-column slides. */
-.titleSlide,
-.featuresSlide,
-.privacySlide,
-.pricingSlide,
-.integrationSlide,
-.ctaSlide {
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.titleSlide,
-.ctaSlide {
-  text-align: center;
-}
-
 /* Two-column slides: copy on the start side, visual on the end side. */
-.trackSlide,
-.autocaptureSlide {
-  align-items: center;
-  gap: var(--spacing-8);
-}
-
 .column {
   flex: 1;
   min-width: 0;
@@ -54,27 +25,14 @@
 .visualColumn {
   flex: 1;
   min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 /* Title slide */
 .brandPlate {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 64px;
-  height: 64px;
   border-radius: var(--radius-container);
   background: linear-gradient(135deg, var(--color-accent), var(--color-icon-orange));
   box-shadow: var(--shadow-med);
   color: var(--color-on-accent);
-}
-
-.brandPlateIcon {
-  width: 32px;
-  height: 32px;
 }
 
 .hint {
@@ -97,71 +55,28 @@
   }
 }
 
-/* Track slide */
+/* Track slide — the dot is 20px, which is var(--spacing-5). */
 .checkDot {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   flex-shrink: 0;
-  width: 20px;
-  height: 20px;
+  width: var(--spacing-5);
+  height: var(--spacing-5);
   border-radius: var(--radius-full);
   background: var(--color-background-green);
   color: var(--color-icon-green);
 }
 
-.checkDotIcon {
-  width: 12px;
-  height: 12px;
-}
-
-.chartPlate {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 192px;
-  height: 192px;
-  border-radius: var(--radius-container);
-  background: var(--color-background-muted);
-}
-
-.chartPlateIcon {
-  width: 80px;
-  height: 80px;
-  color: var(--color-icon-accent);
-  opacity: 0.4;
-}
-
-/* Features slide */
-.featureIcon {
-  width: 28px;
-  height: 28px;
-  color: var(--color-icon-accent);
-}
-
 /* Autocapture slide */
 .checkIcon {
-  width: 14px;
-  height: 14px;
   flex-shrink: 0;
-  color: var(--color-icon-green);
 }
 
-/* Privacy slide */
+/* Privacy slide — the plate is 48px, the top of the spacing scale. */
 .pillarPlate {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
+  flex-shrink: 0;
+  width: var(--spacing-12);
+  height: var(--spacing-12);
   border-radius: var(--radius-full);
   background: var(--color-background-muted);
-}
-
-.pillarIcon {
-  width: 24px;
-  height: 24px;
-  color: var(--color-icon-accent);
 }
 
 /* Pricing slide: the headline figure is the one place the deck leans on the green text token. */
@@ -169,19 +84,14 @@
   color: var(--color-text-green);
 }
 
-/* Integration + autocapture code columns */
-.codeColumn {
-  width: 100%;
-  max-width: 384px;
-}
-
-/* CTA slide */
+/*
+ * CTA slide. The inline padding is asymmetric — a wide start for the command, a narrow end so the
+ * copy button sits flush — which Stack's symmetric `paddingInline` cannot express. It stays here,
+ * on tokens.
+ */
 .commandBar {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
+  padding: var(--spacing-1) var(--spacing-1) var(--spacing-1) var(--spacing-4);
   background: var(--color-background-muted);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-element);
-  padding: var(--spacing-1) var(--spacing-1) var(--spacing-1) var(--spacing-4);
 }

@@ -1,4 +1,5 @@
 import { Button } from "@astryxdesign/core/Button";
+import { Icon } from "@astryxdesign/core/Icon";
 import { Download, Play } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
@@ -73,13 +74,13 @@ export default function ProductAnalyticsPage() {
       <Button
         variant="ghost"
         size="sm"
-        icon={<Download />}
+        icon={<Icon icon={Download} />}
         label={t("productAnalytics.toolbar.exportPdf")}
       />
       <Button
         variant="secondary"
         size="sm"
-        icon={<Play />}
+        icon={<Icon icon={Play} />}
         label={t("productAnalytics.toolbar.present")}
       />
       <Button variant="primary" size="sm" label={t("productAnalytics.toolbar.getStarted")} />

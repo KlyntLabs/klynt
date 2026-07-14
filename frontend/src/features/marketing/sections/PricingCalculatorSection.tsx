@@ -1,17 +1,17 @@
 import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
 import { Divider } from "@astryxdesign/core/Divider";
+import { Grid } from "@astryxdesign/core/Grid";
 import { Heading } from "@astryxdesign/core/Heading";
 import { HStack } from "@astryxdesign/core/HStack";
 import { Section } from "@astryxdesign/core/Section";
 import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
-import { useCallback, useMemo, useState } from "react";
+import { Fragment, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CalculatorRow } from "@/features/marketing/components/pricing";
 import { productPricings } from "@/features/marketing/lib/pricing-data";
 import { calculateCost } from "@/features/marketing/lib/pricing-helpers";
-import styles from "./pricing-calculator-section.module.css";
 
 interface PricingCalculatorSectionProps {
   tk: (key: string, options?: Record<string, unknown>) => string;
@@ -43,17 +43,22 @@ export function PricingCalculatorSection({ tk }: PricingCalculatorSectionProps) 
 
         <Card padding={5}>
           <VStack gap={5}>
-            <div>
-              {productPricings.map((p) => (
-                <CalculatorRow
-                  key={p.id}
-                  product={p}
-                  value={usage[p.id] || 0}
-                  onChange={(v) => handleUsageChange(p.id, v)}
-                  tk={tk}
-                />
+            {/* The rule between rows is an Astryx `Divider` — the component that draws that line
+                from the theme's border token. It replaces the `1px solid` border each row used to
+                carry in CSS, which was the last raw px in calculator-row.module.css. */}
+            <VStack gap={0}>
+              {productPricings.map((p, i) => (
+                <Fragment key={p.id}>
+                  {i > 0 && <Divider />}
+                  <CalculatorRow
+                    product={p}
+                    value={usage[p.id] || 0}
+                    onChange={(v) => handleUsageChange(p.id, v)}
+                    tk={tk}
+                  />
+                </Fragment>
               ))}
-            </div>
+            </VStack>
 
             <Divider />
 
@@ -70,9 +75,11 @@ export function PricingCalculatorSection({ tk }: PricingCalculatorSectionProps) 
                 </Text>
               </HStack>
 
-              <div className={styles.blockAction}>
+              {/* A one-column Grid stretches its child to the track, which is how Astryx
+                  expresses a full-width control — Button has no fill prop. */}
+              <Grid columns={1}>
                 <Button variant="primary" label={t("pricing.calculator.cta")} />
-              </div>
+              </Grid>
             </VStack>
           </VStack>
         </Card>

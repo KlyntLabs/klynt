@@ -1,58 +1,29 @@
 /*
- * The menu-editor list. Astryx's VStack/HStack carry the internal rhythm; what is left here is
- * the bordered list-row chrome, which has to stay on real <ul>/<li> elements for semantics and
- * for the data-testids the tests key off. Tokens only.
+ * The menu-editor list. The rows are Astryx stacks rendered `as="li"` inside an `as="ul"`
+ * VStack, so the list semantics and the data-testids survive while direction, gaps, padding and
+ * alignment all come from props. .rowMain and .separatorLine collapsed into StackItem
+ * size="fill" — "Use StackItem with size='fill' to make one item stretch and fill the leftover
+ * space" — which is why the three row flavours now share the one .row skin.
+ *
+ * What is left: the list reset and the bordered-row chrome. The hairlines are `--border-width`,
+ * Astryx's own border token — the same one Card draws its border with — not hand-set widths.
+ * Everything else is a token too.
  */
 
 .rows {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .row {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--spacing-3);
-  padding: var(--spacing-3);
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-element);
 }
 
-.rowMain {
-  flex: 1;
-  min-width: 0;
-}
-
-/* The separator row: the Divider takes the slack, the delete button keeps its intrinsic width. */
-.separatorRow {
-  composes: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-2);
-}
-
-.separatorLine {
-  flex: 1;
-  min-width: 0;
-}
-
-.groupRow {
-  composes: row;
-  flex-direction: column;
-  align-items: stretch;
-  gap: var(--spacing-1);
-}
-
+/* Center has no padding prop, so the empty state's gutter stays here — as a token. */
 .emptyState {
-  display: flex;
-  min-height: 8rem;
-  align-items: center;
-  justify-content: center;
   padding: var(--spacing-4);
-  border: 1px dashed var(--color-border-emphasized);
+  border: var(--border-width) dashed var(--color-border-emphasized);
   border-radius: var(--radius-element);
 }

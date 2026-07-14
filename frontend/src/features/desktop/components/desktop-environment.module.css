@@ -2,14 +2,15 @@
  * The desktop surface itself: a full-viewport stacking context holding the wallpaper, the
  * menubar, the icon field and the window layer. This is the root of the desktop metaphor, and
  * Astryx has nothing for it — AppShell owns page structure, which is the opposite of a
- * window manager (see window.module.css). Tokens only; the wallpaper image is passed in
- * from the component because it is data, not style.
+ * window manager (see window.module.css).
+ *
+ * The elements are all Astryx (VStack / Center), so sizing, centring and layout come from
+ * props. What is left here is stacking-context residue — position, inset, z-index, overflow —
+ * plus tokens. Every value is a token, a keyword, or a prop on the component. No raw px.
  */
 
 .root {
   position: relative;
-  width: 100vw;
-  height: 100vh;
   overflow: hidden;
 }
 
@@ -19,7 +20,6 @@
   /* The tint the tiling texture is composited over. */
   background-color: var(--color-background-body);
   background-repeat: repeat;
-  background-size: 512px 512px;
 }
 
 .garden {
@@ -32,17 +32,25 @@
 }
 
 .gardenImage {
-  width: 280px;
+  width: 100%;
   height: auto;
 }
 
+/*
+ * The persistence scrim.
+ *
+ * It used to be a translucent overlay over a `backdrop-filter` blur. Astryx ships no blur token
+ * — not in `bunx astryx docs tokens`, not anywhere — so the radius could only ever have been a
+ * number somebody picked, which is exactly the kind of value this migration exists to delete.
+ * Rather than keep it as an exception, the blur is gone.
+ *
+ * --color-overlay is Astryx's own scrim token and it is already opaque enough to do the job on
+ * its own (#01122866 light / #11111299 dark). The desktop behind it now reads as dimmed rather
+ * than dimmed-and-defocused. That is the visible trade, and it was taken knowingly.
+ */
 .loadingOverlay {
   position: absolute;
   inset: 0;
   z-index: 50;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   background-color: var(--color-overlay);
-  backdrop-filter: blur(4px);
 }

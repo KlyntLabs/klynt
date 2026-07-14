@@ -1,12 +1,12 @@
 /*
- * The muted square that holds a card's leading icon. Astryx has no icon-tile primitive, so it
- * lives here on the CSS-variable path. Tokens only, no hex.
+ * The muted square that holds a card's leading icon. Astryx has no icon-tile primitive, so the
+ * tile's *surface* lives here on the CSS-variable path; its layout does not — the tile is an
+ * HStack that centres its mark with props (see DataPlatformSection).
+ *
+ * Tokens only. No hex, no raw px.
  */
 
 .iconTile {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   flex-shrink: 0;
   width: var(--spacing-8);
   height: var(--spacing-8);

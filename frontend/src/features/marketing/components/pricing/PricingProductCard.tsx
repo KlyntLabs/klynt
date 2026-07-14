@@ -9,6 +9,9 @@ import { formatNumber } from "@/features/marketing/lib/pricing-helpers";
 import type { ProductPricing } from "@/features/marketing/lib/pricing-types";
 import styles from "./pricing-product-card.module.css";
 
+/* The card *is* the stagger item — framer-motion drives the Astryx Card, not a wrapper <div>. */
+const MotionCard = motion.create(Card);
+
 const staggerItem = {
   hidden: { opacity: 0, y: 8 },
   visible: {
@@ -79,32 +82,30 @@ export function PricingProductCard({ product, tk }: PricingProductCardProps) {
   ];
 
   return (
-    <motion.div variants={staggerItem} className={styles.card}>
-      <Card padding={5}>
-        <VStack gap={4}>
-          <HStack gap={2} align="center" justify="between">
-            <HStack gap={2} align="center">
-              {product.icon}
-              <Text type="label" weight="semibold">
-                {tk(product.nameKey)}
-              </Text>
-            </HStack>
-            <Badge
-              variant="green"
-              label={`${tk("pricing.usagePricing.free")} ${tk(product.freeLimitKey)}`}
-            />
+    <MotionCard variants={staggerItem} className={styles.card} padding={5}>
+      <VStack gap={4}>
+        <HStack gap={2} align="center" justify="between">
+          <HStack gap={2} align="center">
+            {product.icon}
+            <Text type="label" weight="semibold">
+              {tk(product.nameKey)}
+            </Text>
           </HStack>
-
-          <Table
-            data={rows}
-            columns={columns}
-            idKey="id"
-            density="compact"
-            dividers="none"
-            isStriped
+          <Badge
+            variant="green"
+            label={`${tk("pricing.usagePricing.free")} ${tk(product.freeLimitKey)}`}
           />
-        </VStack>
-      </Card>
-    </motion.div>
+        </HStack>
+
+        <Table
+          data={rows}
+          columns={columns}
+          idKey="id"
+          density="compact"
+          dividers="none"
+          isStriped
+        />
+      </VStack>
+    </MotionCard>
   );
 }

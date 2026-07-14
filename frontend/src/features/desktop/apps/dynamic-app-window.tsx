@@ -1,6 +1,10 @@
+import { Center } from "@astryxdesign/core/Center";
+import { Divider } from "@astryxdesign/core/Divider";
 import { Heading } from "@astryxdesign/core/Heading";
 import { Spinner } from "@astryxdesign/core/Spinner";
+import { StackItem } from "@astryxdesign/core/Stack";
 import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -100,51 +104,56 @@ export function DynamicAppWindow({
 
   if (isLoading) {
     return (
-      <div className={styles.centered}>
+      <Center className={styles.centered} height="100%">
         <Spinner />
-      </div>
+      </Center>
     );
   }
 
   if (error || !app || !manifest) {
     return (
-      <div className={styles.centered}>
+      <Center className={styles.centered} height="100%">
         <Text type="body" color="secondary">
           {t("errors:generic.message")}
         </Text>
-      </div>
+      </Center>
     );
   }
 
   if (!KNOWN_RENDERER_IDS.has(manifest.rendererId)) {
     return (
-      <div className={styles.centered} data-testid="dynamic-app-empty-state">
+      <Center className={styles.centered} height="100%" data-testid="dynamic-app-empty-state">
         <Text type="body" color="secondary">
           {t("app.unknownRenderer")}
         </Text>
-      </div>
+      </Center>
     );
   }
 
   return (
-    <div className={styles.window} data-testid="dynamic-app-window">
-      <div className={styles.header}>
+    <VStack height="100%" data-testid="dynamic-app-window">
+      <VStack paddingBlock={2} paddingInline={4}>
         {/* Heading has no size prop — its scale comes from `level`. The window title needs the
             compact chrome size (heading-4 == the old text-sm) while keeping its place in the
             document outline, so the visual level is 4 and `accessibilityLevel` restores the h2. */}
         <Heading level={4} accessibilityLevel={2}>
           {manifest.title}
         </Heading>
-      </div>
-      <div className={styles.body}>
+      </VStack>
+      {/* The header's hairline used to be a border-bottom in CSS. It is a separator between two
+          regions, which is what Divider is, so it is a component now — not a hand-set width. */}
+      <Divider />
+      {/* The renderer pane takes the slack. StackItem size="fill" is Astryx's own name for
+          flex:1 + the min-height reset, so the .body class is gone with the div. */}
+      <StackItem size="fill">
         <RendererSwitch
           rendererId={manifest.rendererId}
           content={content}
           readOnly={manifest.locked ?? false}
           onChange={setContent}
         />
-      </div>
+      </StackItem>
       <ConflictDialog open={isOpen} onReload={onReload} onRetry={onRetry} onClose={close} />
-    </div>
+    </VStack>
   );
 }

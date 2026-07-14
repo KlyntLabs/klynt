@@ -1,54 +1,16 @@
 /*
- * Marketing layout that Astryx's components do not express: a responsive two-column hero,
- * an inline command bar, and the mascot's float animation.
+ * All that is left of the hero is the mascot's float.
  *
- * Every value is an Astryx token. No hex, no px literals for colour or spacing — those are
- * what the migration removed. Astryx's guidance for exactly this case: "Most DOM styling
- * should stay on the CSS-variable path" (bunx astryx docs styling-libraries).
+ * The breakpoint that used to flip the column stack to a row is gone: the hero is a
+ * `Grid columns={{minWidth, max: 2}}`, which reflows on the container it is actually given rather
+ * than on the viewport, so there is nothing left for a media query to decide. The mascot's cap is
+ * a `width` prop on its stack. The float's one length is an Astryx spacing token.
+ *
+ * No hex, no raw px, no breakpoints.
  */
 
-.columns {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-6);
-}
-
-@media (min-width: 768px) {
-  .columns {
-    flex-direction: row;
-  }
-}
-
-.textColumn {
-  flex: 1;
-  min-width: 0;
-}
-
-.commandBar {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  background: var(--color-background-muted);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-element);
-  padding: var(--spacing-2) var(--spacing-4);
-}
-
-.command {
-  flex: 1;
-  min-width: 0;
-  overflow-x: auto;
-}
-
-.mascotColumn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
 .mascot {
-  width: 260px;
+  width: 100%;
   height: auto;
   animation: float 3s ease-in-out infinite;
 }
@@ -59,7 +21,7 @@
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-8px);
+    transform: translateY(calc(-1 * var(--spacing-2)));
   }
 }
 
