@@ -42,8 +42,10 @@ Run `just` to list recipes.
 
 | Command | Purpose |
 |---|---|
-| `just setup` | First-time setup |
+| `just setup` | First-time setup (also writes `.env` and `frontend/.env`) |
+| `just infra` | Postgres + Redis in Docker |
 | `just dev` | Backend + frontend with hot reload |
+| `just seed-dev` | Create a verified user + tenant (email verification can't be completed locally) |
 | `just test` | Run tests |
 | `just test-coverage` | Run tests with coverage gates |
 | `just check` | Fast gate: fmt-check, lint, typecheck |
@@ -136,7 +138,7 @@ Cargo workspace with dependency direction enforced by the compiler:
 - **Tracing**: `tracing` + `tracing-subscriber` with JSON output, `tracing-error::ErrorLayer` for spanbacktrace correlation, and a curated `EnvFilter` that suppresses noisy crates. `TraceLayer` uses `make_span_with` to embed `request_id` in span roots, and application services are `#[instrument]`-decorated for span trees.
 - **Metrics**: Prometheus `/metrics` endpoint with `http_requests_total`, `http_request_duration_seconds`, and `active_requests`. Path normalization prevents cardinality explosion.
 - **Logging**: Structured JSON request logs with PII sanitization, emitted from `mw_map_response`.
-- **Health**: `/api/v1/health/live` (liveness) and `/api/v1/health/ready` (readiness with per-component latency).
+- **Health**: `/health/live` (liveness) and `/health/ready` (readiness with per-component latency). Note these sit at the root, *not* under `/api/v1`.
 - **Security headers**: `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, and optional HSTS via `KLYNT_HSTS_ENABLED`.
 - **Rate limiting**: IP-based fixed-window rate limiter with Redis TTL; `429` responses include `Retry-After`.
 

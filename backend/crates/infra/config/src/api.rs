@@ -4,6 +4,13 @@ use super::{ConfigError, Validated};
 
 const MIN_PORT: u16 = 1;
 
+/// Accept either a real list or a comma-separated scalar.
+///
+/// Every value from the `config` crate's `Environment` source arrives as a `String`: it is built
+/// with `try_parsing(true)` but no `list_separator`, so it coerces bool/int/float and nothing
+/// else. A `Vec<String>` field therefore cannot be set from an env var at all — it fails with
+/// `invalid type: string, expected a sequence`. This makes the scalar form work, which is the
+/// only way these lists can be configured per-environment.
 fn deserialize_comma_separated_list<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
 where
     D: Deserializer<'de>,
@@ -30,6 +37,7 @@ where
 pub struct ApiConfig {
     pub host: String,
     pub port: u16,
+    #[serde(deserialize_with = "deserialize_comma_separated_list")]
     pub allowed_origins: Vec<String>,
     #[serde(default, deserialize_with = "deserialize_comma_separated_list")]
     pub trusted_proxies: Vec<String>,
@@ -165,6 +173,38 @@ mod tests {
             ..Default::default()
         };
         assert!(config.validated().is_ok());
+    }
+
+    /// A list cannot be supplied through an environment variable unless the field accepts a
+    /// scalar: the `config` crate's `Environment` source is built with `try_parsing(true)` but
+    /// no `list_separator`, so it can coerce bool/int/float and nothing else — every env value
+    /// arrives as a `String`. `trusted_proxies` already handles that; `allowed_origins` did not,
+    /// so `KLYNT_API__ALLOWED_ORIGINS` hard-failed the boot with
+    /// `invalid type: string, expected a sequence`, and the deploy workflow's indexed
+    /// `KLYNT_API__ALLOWED_ORIGINS_0` / `_1` were silently parsed as unrelated keys and dropped —
+    /// leaving production with `default.toml`'s localhost allow-list.
+    #[test]
+    fn comma_separated_allowed_origins_deserialize_to_vec() {
+        let input = r#"{"host":"0.0.0.0","port":3001,"allowed_origins":"https://app.klynt.dev, https://*.klynt.dev"}"#;
+        let config: ApiConfig = serde_json::from_str(input).unwrap();
+        assert_eq!(
+            config.allowed_origins,
+            vec![
+                "https://app.klynt.dev".to_string(),
+                "https://*.klynt.dev".to_string()
+            ]
+        );
+        assert!(config.validated().is_ok());
+    }
+
+    #[test]
+    fn allowed_origins_still_accept_a_real_list() {
+        let input = r#"{"host":"0.0.0.0","port":3001,"allowed_origins":["https://app.klynt.dev"]}"#;
+        let config: ApiConfig = serde_json::from_str(input).unwrap();
+        assert_eq!(
+            config.allowed_origins,
+            vec!["https://app.klynt.dev".to_string()]
+        );
     }
 
     #[test]

@@ -6,12 +6,22 @@ A modern education platform built with Rust + Axum and React + Vite.
 
 ```bash
 git clone <repo-url> && cd klynt-edu
-just setup
-cp .env.example .env
-just dev
+just setup      # installs toolchains and writes .env + frontend/.env
+just infra      # Postgres + Redis in Docker
+just dev        # backend + frontend, hot reload
+just seed-dev   # a verified user and a tenant to log in with
 ```
 
-Open http://localhost:5174 for the frontend and http://localhost:3001/api/v1/health/live for the backend health check.
+Open **http://lvh.me:5174** — not `localhost`. `lvh.me` and every `*.lvh.me` subdomain resolve to
+127.0.0.1, and the app routes on the subdomain: the marketing site is at the apex, login lives at
+`login.lvh.me:5174`, and each tenant workspace at `<slug>.lvh.me:5174`. Session cookies are scoped
+to `.lvh.me`, so on `localhost` a login silently bounces forever.
+
+`just seed-dev` prints the credentials it created. It exists because email verification is enforced
+at login and the dev mailer redacts the token — the verification link cannot be obtained locally, so
+the account has to be activated directly.
+
+Backend health: http://lvh.me:3001/health/live
 
 ## Running with Docker
 
