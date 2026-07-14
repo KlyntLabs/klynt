@@ -1,3 +1,4 @@
+import { Center } from "@astryxdesign/core/Center";
 import { Spinner } from "@astryxdesign/core/Spinner";
 import { Navigate } from "react-router-dom";
 import { buildAdminUrl, buildApexUrl, buildLoginUrl } from "@/core/routing/subdomain-router";
@@ -14,9 +15,9 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <Center height="100vh">
         <Spinner />
-      </div>
+      </Center>
     );
   }
 
@@ -37,9 +38,9 @@ export function GuestRoute({ children }: GuestRouteProps) {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <Center height="100vh">
         <Spinner />
-      </div>
+      </Center>
     );
   }
 

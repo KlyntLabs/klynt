@@ -1,10 +1,14 @@
 import { Button } from "@astryxdesign/core/Button";
 import { CheckboxInput } from "@astryxdesign/core/CheckboxInput";
 import { Divider } from "@astryxdesign/core/Divider";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Text } from "@astryxdesign/core/Text";
 import { TextInput } from "@astryxdesign/core/TextInput";
+import { VStack } from "@astryxdesign/core/VStack";
 import * as React from "react";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import styles from "./menu-editor.module.css";
 import {
   type ContextMenuEntry,
   type ContextMenuItem,
@@ -69,41 +73,38 @@ export function MenuEditor({
   );
 
   return (
-    <div className="space-y-4">
+    <VStack gap={4}>
       {schema.root.length === 0 ? (
-        <div
-          className="flex min-h-[8rem] items-center justify-center rounded-md border border-dashed p-4 text-sm text-muted-foreground"
-          data-testid="menu-editor-empty-state"
-        >
-          {t("desktop.menuEditor.empty")}
+        <div className={styles.emptyState} data-testid="menu-editor-empty-state">
+          <Text type="body" color="secondary">
+            {t("desktop.menuEditor.empty")}
+          </Text>
         </div>
       ) : (
-        <ul className="space-y-2" aria-label="Menu entries">
+        <ul className={styles.rows} aria-label="Menu entries">
           {schema.root.map((entry, index) => {
             if (isContextMenuItem(entry)) {
               const labelId = `item-label-${index}`;
               const disabledId = `item-disabled-${index}`;
 
               return (
-                <li
-                  key={entry.id}
-                  className="flex items-start gap-3 rounded-md border p-3"
-                  data-testid="menu-item"
-                >
-                  <div className="flex-1 space-y-2">
-                    {/* Astryx's TextInput owns its label, so the separate <Label> is gone. */}
-                    <TextInput
-                      id={labelId}
-                      label="Label"
-                      value={entry.label}
-                      isDisabled={readOnly}
-                      onChange={(value) =>
-                        updateRoot((entries) => updateItem(entries, entry.id, { label: value }))
-                      }
-                    />
-                    <p className="text-sm text-muted-foreground">Action: {entry.action}</p>
+                <li key={entry.id} className={styles.row} data-testid="menu-item">
+                  <div className={styles.rowMain}>
+                    <VStack gap={2}>
+                      {/* Astryx's TextInput owns its label, so the separate <Label> is gone. */}
+                      <TextInput
+                        id={labelId}
+                        label="Label"
+                        value={entry.label}
+                        isDisabled={readOnly}
+                        onChange={(value) =>
+                          updateRoot((entries) => updateItem(entries, entry.id, { label: value }))
+                        }
+                      />
+                      <Text type="supporting">Action: {entry.action}</Text>
+                    </VStack>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <HStack gap={2} align="center">
                     <CheckboxInput
                       id={disabledId}
                       label="Disabled"
@@ -124,7 +125,7 @@ export function MenuEditor({
                         onClick={() => updateRoot((entries) => removeEntry(entries, index))}
                       />
                     )}
-                  </div>
+                  </HStack>
                 </li>
               );
             }
@@ -134,10 +135,14 @@ export function MenuEditor({
                 <li
                   // biome-ignore lint/suspicious/noArrayIndexKey: separators have no stable identifier in the MVP schema
                   key={`separator-${index}`}
-                  className="flex items-center justify-between gap-2 rounded-md border p-3"
+                  className={styles.separatorRow}
                   data-testid="menu-separator"
                 >
-                  <Divider />
+                  {/* Astryx's horizontal Divider is width:100% and shrinks, so it holds its
+                      width in this flex row instead of collapsing. */}
+                  <div className={styles.separatorLine}>
+                    <Divider />
+                  </div>
                   {!readOnly && (
                     <Button
                       variant="destructive"
@@ -153,12 +158,14 @@ export function MenuEditor({
 
             if (isContextMenuGroup(entry)) {
               return (
-                <li key={entry.id} className="rounded-md border p-3" data-testid="menu-group">
-                  <p className="font-medium">{entry.label ?? "Untitled group"}</p>
+                <li key={entry.id} className={styles.groupRow} data-testid="menu-group">
+                  <Text type="body" weight="medium" display="block">
+                    {entry.label ?? "Untitled group"}
+                  </Text>
                   {/* Group children are not editable in this MVP view. */}
-                  <p className="text-sm text-muted-foreground">
+                  <Text type="supporting" display="block">
                     Group editing is not supported in this MVP view.
-                  </p>
+                  </Text>
                 </li>
               );
             }
@@ -168,7 +175,7 @@ export function MenuEditor({
         </ul>
       )}
       {!readOnly && (
-        <div className="flex gap-2">
+        <HStack gap={2}>
           <Button
             variant="primary"
             label="Add Item"
@@ -181,8 +188,8 @@ export function MenuEditor({
             aria-label="Add separator"
             onClick={() => updateRoot((entries) => [...entries, { type: "separator" }])}
           />
-        </div>
+        </HStack>
       )}
-    </div>
+    </VStack>
   );
 }

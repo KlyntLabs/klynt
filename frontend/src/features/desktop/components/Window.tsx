@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import type { Window } from "@/features/desktop/window-manager/window-module";
 import { useWindowManager } from "@/features/desktop/window-manager/window-module";
 import { AppErrorBoundary } from "./AppErrorBoundary";
+import styles from "./window.module.css";
 import { WindowControls } from "./window-controls";
 import { WindowToolbar } from "./window-toolbar";
 
@@ -86,7 +87,8 @@ export default function WindowComponent({
     // draggable, z-ordered surface, and its layout components (AppShell/Layout) exist to own
     // page structure, which is the opposite of what a window manager needs. Forcing AppShell
     // here would fight the metaphor, not express it. The window's *contents* are Astryx —
-    // toolbar, text, spinner, error state — but the frame is ours.
+    // toolbar, text, spinner, error state — but the frame is ours, styled from
+    // window.module.css with Astryx tokens.
     //
     // See docs/adr/015-astryx-component-layer.md.
     <motion.div
@@ -111,11 +113,11 @@ export default function WindowComponent({
         width: isMaximized ? "calc(100vw - 0px)" : w.width,
         height: isMaximized ? "calc(100vh - 36px)" : w.height,
       }}
-      className="flex select-none flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-[0_8px_32px_rgba(0,0,0,0.15)]"
+      className={styles.window}
       data-testid="desktop-window"
     >
       {/* Title bar */}
-      <div className="flex h-[38px] shrink-0 items-center gap-2 border-border border-b bg-muted px-3">
+      <div className={styles.titleBar}>
         {!isLocked && (
           <WindowControls
             isMaximized={isMaximized}
@@ -128,30 +130,27 @@ export default function WindowComponent({
         )}
 
         {/*
-         * min-w-0 is load-bearing. Text's maxLines={1} sets overflow/ellipsis on the Text itself,
-         * but a flex item defaults to min-width:auto, so this wrapper's min-content size still
-         * includes the full nowrap title and it refuses to shrink. Without min-w-0 a long title
-         * (app titles allow up to MAX_TITLE_LENGTH = 100 chars) pushes past the window edge and
-         * knocks the centred title bar out of alignment instead of ellipsising.
+         * .titleArea carries `min-width: 0; flex: 1` — see window.module.css. That min-width is
+         * load-bearing for long titles; it is the same fix the Tailwind `min-w-0 flex-1` did.
          */}
-        <div className="flex min-w-0 flex-1 cursor-default items-center justify-center gap-1.5">
-          <FileText className="h-3.5 w-3.5 shrink-0" />
+        <div className={styles.titleArea}>
+          <FileText className={styles.titleIcon} />
           <Text type="label" maxLines={1}>
             {title}
           </Text>
-          <ChevronDown className="h-3 w-3 shrink-0" />
+          <ChevronDown className={styles.titleChevron} />
         </div>
 
         {/* Balances the traffic lights so the title stays optically centred */}
-        {!isLocked && <div className="w-[52px] shrink-0" />}
+        {!isLocked && <div className={styles.controlsSpacer} />}
       </div>
 
       {!isLocked && <WindowToolbar />}
 
-      <div className="min-h-0 flex-1 overflow-y-auto bg-surface">
+      <div className={styles.content}>
         <Suspense
           fallback={
-            <div className="flex justify-center py-12">
+            <div className={styles.loading}>
               <Spinner />
             </div>
           }

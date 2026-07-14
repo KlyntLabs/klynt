@@ -1,7 +1,19 @@
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Icon } from "@astryxdesign/core/Icon";
+import { IconButton } from "@astryxdesign/core/IconButton";
+import { Text } from "@astryxdesign/core/Text";
+import { Token } from "@astryxdesign/core/Token";
+import { VStack } from "@astryxdesign/core/VStack";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, ChevronDown, Copy } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useMarketingTranslation } from "@/features/marketing/lib/use-marketing-translation";
+import styles from "./install-card.module.css";
+
+/** The frameworks named inline in the "supports …" sentence. Not translated: they are proper nouns. */
+const HIGHLIGHTED_FRAMEWORKS = ["Next.js", "React", "Python"];
 
 export function InstallCard() {
   const { t, array } = useMarketingTranslation();
@@ -18,76 +30,64 @@ export function InstallCard() {
   }, [command]);
 
   return (
-    <div className="border border-[#D1D1D1] rounded-lg p-4 bg-white">
-      <div className="flex items-center gap-2 mb-3">
-        <button
-          type="button"
-          className="flex items-center gap-1 px-3 py-1.5 bg-[#F5F3EF] hover:bg-[#EBE8E2] rounded-md text-sm font-medium transition-colors"
-        >
-          {t("products.hero.getStarted")} <ChevronDown className="w-3.5 h-3.5" />
-        </button>
-      </div>
-      <div className="flex items-center gap-2 mb-3">
-        <code className="flex-1 bg-[#F5F3EF] rounded-md px-3 py-2 text-sm font-mono text-[#1A1A1A]">
-          {command}
-        </code>
-        <button
-          type="button"
-          onClick={handleCopy}
-          className="h-9 w-9 flex items-center justify-center rounded-md bg-[#F5F3EF] hover:bg-[#EBE8E2] transition-colors border border-[#D1D1D1]"
-          title={t("products.hero.copyTooltip")}
-        >
-          {copied ? (
-            <Check className="w-4 h-4 text-[#22C55E]" />
-          ) : (
-            <Copy className="w-4 h-4 text-[#6B6B6B]" />
-          )}
-        </button>
-      </div>
-      <div className="text-xs text-[#6B6B6B]">
-        {t("products.hero.supports")}{" "}
-        <button type="button" className="text-[#2563EB] hover:underline">
-          Next.js
-        </button>
-        ,{" "}
-        <button type="button" className="text-[#2563EB] hover:underline">
-          React
-        </button>
-        ,{" "}
-        <button type="button" className="text-[#2563EB] hover:underline">
-          Python
-        </button>
-        , {t("products.hero.and")}{" "}
-        <button
-          type="button"
-          onClick={() => setShowFrameworks(!showFrameworks)}
-          className="text-[#2563EB] hover:underline font-medium"
-        >
-          {t("products.hero.more")}
-        </button>
-        <AnimatePresence>
-          {showFrameworks && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="overflow-hidden"
-            >
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {frameworks.map((fw) => (
-                  <span
-                    key={fw}
-                    className="px-2 py-0.5 bg-[#F5F3EF] rounded text-[11px] text-[#6B6B6B]"
-                  >
-                    {fw}
-                  </span>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </div>
+    <Card padding={4}>
+      <VStack gap={3} align="stretch">
+        <HStack gap={2} align="center">
+          <Button
+            variant="secondary"
+            size="sm"
+            label={t("products.hero.getStarted")}
+            endContent={<Icon icon={ChevronDown} size="sm" />}
+          />
+        </HStack>
+
+        <HStack gap={2} align="center">
+          <Text type="code" display="block" className={styles.command}>
+            {command}
+          </Text>
+          <IconButton
+            variant="secondary"
+            label={t("products.hero.copyTooltip")}
+            icon={copied ? <Check className={styles.copied} /> : <Copy />}
+            onClick={handleCopy}
+          />
+        </HStack>
+
+        {/* `as="div"`: the disclosure below is a block element, which may not nest in a span. */}
+        <Text type="supporting" size="2xs" as="div" display="block">
+          {t("products.hero.supports")}{" "}
+          {HIGHLIGHTED_FRAMEWORKS.map((framework, index) => (
+            <span key={framework}>
+              <Button variant="ghost" size="sm" label={framework} />
+              {index < HIGHLIGHTED_FRAMEWORKS.length - 1 ? ", " : ""}
+            </span>
+          ))}
+          , {t("products.hero.and")}{" "}
+          <Button
+            variant="ghost"
+            size="sm"
+            label={t("products.hero.more")}
+            onClick={() => setShowFrameworks(!showFrameworks)}
+          />
+          <AnimatePresence>
+            {showFrameworks && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className={styles.reveal}
+              >
+                <HStack gap={1.5} wrap="wrap" paddingBlock={2}>
+                  {frameworks.map((fw) => (
+                    <Token key={fw} size="sm" label={fw} />
+                  ))}
+                </HStack>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </Text>
+      </VStack>
+    </Card>
   );
 }

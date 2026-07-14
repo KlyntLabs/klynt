@@ -19,7 +19,16 @@ export default function NotFoundPage() {
           // navigation rather than a full page load. `to` is spread through a cast: Astryx's
           // LinkProps has no `to` (its BaseProps are HTML-attribute based), but Link does
           // forward rest props to the `as` component, so it lands on RouterLink at runtime.
-          <Link as={RouterLink} {...({ to: routePaths.home } as { to?: string })}>
+          //
+          // `href` is NOT redundant next to `to`. Astryx's Link only renders an anchor — and
+          // only honours `as` — when href is set; without it the whole thing degrades to
+          // `<button type="button" to="/">`: no href, no link role, no navigation. It renders
+          // the right label and does nothing. Covered by not-found-page.test.tsx.
+          <Link
+            as={RouterLink}
+            href={routePaths.home}
+            {...({ to: routePaths.home } as { to?: string })}
+          >
             {t("notFound.goHome")}
           </Link>
         }

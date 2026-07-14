@@ -1,5 +1,7 @@
+import { Text } from "@astryxdesign/core/Text";
 import { useTranslation } from "react-i18next";
 import type { IconTreeNode } from "@/features/desktop/desktop-manager/icon-tree-module";
+import styles from "./folder-renderer.module.css";
 
 type FolderRendererProps = {
   content: Record<string, unknown>;
@@ -53,17 +55,16 @@ export function FolderRenderer({
 
   if (items.length === 0) {
     return (
-      <div
-        className="flex h-full items-center justify-center p-4 text-sm text-muted-foreground"
-        data-testid="folder-empty-state"
-      >
-        {t("folder.empty")}
+      <div className={styles.emptyState} data-testid="folder-empty-state">
+        <Text type="body" color="secondary">
+          {t("folder.empty")}
+        </Text>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-[repeat(auto-fill,minmax(5rem,1fr))] gap-4 p-4">
+    <div className={styles.grid}>
       {items.map((node) => {
         const hasChildren = (node.children ?? []).length > 0;
         const icon = getIcon(node, content, hasChildren);
@@ -75,14 +76,17 @@ export function FolderRenderer({
             type="button"
             onClick={() => handleChildClick(node)}
             disabled={readOnly}
-            className="flex flex-col items-center gap-2 rounded-md p-2 text-center transition-colors hover:bg-accent disabled:cursor-default disabled:opacity-50"
+            className={styles.item}
             data-testid={`folder-item-${node.appId}`}
             aria-label={label}
           >
-            <span className="text-2xl" aria-hidden="true">
+            {/* The icon is an emoji glyph, not a lucide icon: it comes from user content. */}
+            <span className={styles.icon} aria-hidden="true">
               {icon}
             </span>
-            <span className="max-w-full truncate text-xs text-foreground">{label}</span>
+            <Text type="supporting" size="sm" className={styles.label}>
+              {label}
+            </Text>
           </button>
         );
       })}

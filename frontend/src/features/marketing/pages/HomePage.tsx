@@ -1,3 +1,4 @@
+import { VStack } from "@astryxdesign/core/VStack";
 import { marketingRegistry } from "@/features/desktop/apps";
 import { useWindowManager } from "@/features/desktop/window-manager/window-module";
 import {
@@ -7,6 +8,7 @@ import {
   HeroSection,
   PricingCardsSection,
 } from "@/features/marketing/sections";
+import styles from "./home-page.module.css";
 
 export default function HomePage() {
   const { openApp } = useWindowManager();
@@ -21,19 +23,12 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-w-0">
+    <VStack gap={0} className={styles.page}>
       <HeroSection onOpenApp={handleOpenApp} />
       <ContentTabsSection onOpenApp={handleOpenApp} />
       <CustomerLogosSection onOpenApp={handleOpenApp} />
       <DataStackSection />
       <PricingCardsSection onOpenApp={handleOpenApp} />
-
-      <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-6px); }
-        }
-      `}</style>
-    </div>
+    </VStack>
   );
 }

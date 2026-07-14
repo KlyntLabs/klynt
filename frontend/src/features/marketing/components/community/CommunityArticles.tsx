@@ -1,6 +1,16 @@
+import { AspectRatio } from "@astryxdesign/core/AspectRatio";
+import { Divider } from "@astryxdesign/core/Divider";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { List, ListItem } from "@astryxdesign/core/List";
+import { Section } from "@astryxdesign/core/Section";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import { motion } from "framer-motion";
+import { Fragment } from "react";
 import { useMarketingTranslation } from "@/features/marketing/lib/use-marketing-translation";
-import type { CommunityArticle, CommunityStats } from "./community-types";
+import styles from "./community-articles.module.css";
+import type { CommunityArticle, CommunityStat, CommunityStats } from "./community-types";
 
 const columnVariants = {
   hidden: { opacity: 0, y: 15 },
@@ -13,6 +23,7 @@ export function CommunityArticles() {
   const stats = object<CommunityStats>("community.stats");
 
   const [featured, ...rest] = articles;
+  const statItems: CommunityStat[] = [stats.slackMembers, stats.messagesSent, stats.countries];
 
   return (
     <motion.section
@@ -23,85 +34,92 @@ export function CommunityArticles() {
         duration: 0.4,
         ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
       }}
-      className="lg:w-[50%]"
+      className={styles.column}
     >
-      <motion.article
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="mb-6 pb-6 border-b border-[#E5E5E5]"
-      >
-        <div className="w-full aspect-[16/10] bg-[#F5F3EF] rounded-lg overflow-hidden mb-4 flex items-center justify-center">
-          <img
-            src="/hedgehog-hero.webp"
-            alt={t("community.header.title")}
-            width={1024}
-            height={1024}
-            className="w-full h-full object-cover"
-          />
-        </div>
-        <span className="text-xs text-[#9CA3AF] uppercase tracking-wider">
-          {featured?.category}
-        </span>
-        <h2 className="text-xl font-bold text-[#1A1A1A] leading-tight hover:text-[#2563EB] cursor-pointer mt-1">
-          {featured?.title}
-        </h2>
-        <p className="text-sm text-[#6B6B6B] leading-relaxed mt-2 line-clamp-3">
-          {featured?.excerpt}
-        </p>
-      </motion.article>
-
-      <div className="space-y-0">
-        {rest.map((article, i) => (
-          <motion.article
-            key={article.title}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: (i + 1) * 0.08 }}
-            className="flex gap-4 mb-6 pb-6 border-b border-[#F0EDE6] last:border-0"
-          >
-            <div className="w-20 h-[60px] bg-[#F5F3EF] rounded shrink-0 overflow-hidden flex items-center justify-center">
+      <VStack gap={6}>
+        <motion.article
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <VStack gap={4}>
+            <AspectRatio ratio={16 / 10} className={styles.featuredMedia}>
               <img
-                src="/product-os-hero.webp"
-                alt=""
+                src="/hedgehog-hero.webp"
+                alt={t("community.header.title")}
                 width={1024}
                 height={1024}
-                loading="lazy"
-                decoding="async"
-                className="w-full h-full object-cover"
+                className={styles.featuredImage}
               />
-            </div>
-            <div className="flex-1 min-w-0">
-              <span className="text-xs text-[#9CA3AF] uppercase tracking-wider">
-                {article.category}
-              </span>
-              <h3 className="text-sm font-bold text-[#1A1A1A] leading-snug hover:text-[#2563EB] cursor-pointer mt-0.5">
-                {article.title}
-              </h3>
-              <p className="text-xs text-[#6B6B6B] leading-relaxed mt-1 line-clamp-2">
-                {article.excerpt}
-              </p>
-            </div>
-          </motion.article>
-        ))}
-      </div>
+            </AspectRatio>
+            <VStack gap={1}>
+              <div className={styles.eyebrow}>
+                <Text type="supporting" size="xsm" display="block">
+                  {featured?.category}
+                </Text>
+              </div>
+              <Heading level={2}>{featured?.title}</Heading>
+              <Text type="supporting" display="block" maxLines={3}>
+                {featured?.excerpt}
+              </Text>
+            </VStack>
+          </VStack>
+        </motion.article>
 
-      <div className="mt-6 bg-[#F5F3EF] rounded-lg p-4 flex items-center justify-around">
-        <div className="text-center">
-          <p className="text-lg font-bold text-[#1A1A1A]">{stats.slackMembers.value}</p>
-          <p className="text-[10px] text-[#6B6B6B]">{stats.slackMembers.label}</p>
-        </div>
-        <div className="w-px h-8 bg-[#D1D1D1]" />
-        <div className="text-center">
-          <p className="text-lg font-bold text-[#1A1A1A]">{stats.messagesSent.value}</p>
-          <p className="text-[10px] text-[#6B6B6B]">{stats.messagesSent.label}</p>
-        </div>
-        <div className="w-px h-8 bg-[#D1D1D1]" />
-        <div className="text-center">
-          <p className="text-lg font-bold text-[#1A1A1A]">{stats.countries.value}</p>
-          <p className="text-[10px] text-[#6B6B6B]">{stats.countries.label}</p>
-        </div>
-      </div>
+        <Divider />
+
+        <List hasDividers>
+          {rest.map((article) => (
+            <ListItem
+              key={article.title}
+              startContent={
+                <img
+                  src="/product-os-hero.webp"
+                  alt=""
+                  width={1024}
+                  height={1024}
+                  loading="lazy"
+                  decoding="async"
+                  className={styles.thumbnail}
+                />
+              }
+              label={
+                <VStack gap={0.5}>
+                  <div className={styles.eyebrow}>
+                    <Text type="supporting" size="xsm" display="block">
+                      {article.category}
+                    </Text>
+                  </div>
+                  <Heading level={3}>{article.title}</Heading>
+                </VStack>
+              }
+              description={
+                <Text type="supporting" display="block" maxLines={2}>
+                  {article.excerpt}
+                </Text>
+              }
+            />
+          ))}
+        </List>
+
+        <Section variant="muted" padding={4}>
+          <HStack justify="around">
+            {statItems.map((stat, index) => (
+              <Fragment key={stat.label}>
+                {index > 0 && <Divider orientation="vertical" />}
+                <VStack gap={0.5} align="center">
+                  <Text type="large" weight="bold">
+                    {stat.value}
+                  </Text>
+                  <Text type="supporting" size="2xs">
+                    {stat.label}
+                  </Text>
+                </VStack>
+              </Fragment>
+            ))}
+          </HStack>
+        </Section>
+      </VStack>
     </motion.section>
   );
 }

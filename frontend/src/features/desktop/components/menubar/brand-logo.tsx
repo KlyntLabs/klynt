@@ -1,6 +1,14 @@
+import { Text } from "@astryxdesign/core/Text";
+import styles from "./brand-logo.module.css";
+
 export function BrandLogo({ label, alt }: { label: string; alt: string }) {
   return (
-    <div className="flex items-center gap-2 rounded-lg px-2 py-1">
+    <div className={styles.brand}>
+      {/*
+       * The wordmark is a brand asset, not a themed surface: its geometry is fixed. The accent
+       * is drawn from the theme so it tracks the brand colour, and the plate uses the inverted
+       * background token so the mark stays legible in both colour modes.
+       */}
       <svg
         width="24"
         height="24"
@@ -10,11 +18,13 @@ export function BrandLogo({ label, alt }: { label: string; alt: string }) {
         role="img"
         aria-label={alt}
       >
-        <rect width="32" height="32" rx="7" fill="hsl(var(--foreground))" />
-        <path d="M8 10h3v8h5v-8h3v12h-3v-4h-5v4H8V10z" fill="var(--color-brand)" />
-        <circle cx="22" cy="12" r="2" fill="var(--color-brand)" />
+        <rect width="32" height="32" rx="7" fill="var(--color-background-inverted)" />
+        <path d="M8 10h3v8h5v-8h3v12h-3v-4h-5v4H8V10z" fill="var(--color-accent)" />
+        <circle cx="22" cy="12" r="2" fill="var(--color-accent)" />
       </svg>
-      <span className="text-[13px] font-semibold tracking-tight text-foreground">{label}</span>
+      <Text type="label" weight="semibold">
+        {label}
+      </Text>
     </div>
   );
 }

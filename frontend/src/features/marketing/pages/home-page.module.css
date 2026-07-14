@@ -1,0 +1,11 @@
+/*
+ * The home page column. Only thing Astryx's VStack cannot express: min-width 0, which lets the
+ * page shrink inside the desktop window shell instead of forcing its parent to scroll.
+ *
+ * The global `@keyframes float` that used to live in a <style> tag here is gone: the only
+ * consumer (the hero mascot) now owns a scoped copy in hero-section.module.css.
+ */
+
+.page {
+  min-width: 0;
+}

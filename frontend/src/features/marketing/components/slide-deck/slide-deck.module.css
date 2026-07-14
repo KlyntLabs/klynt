@@ -1,0 +1,139 @@
+/*
+ * The deck chrome: a thumbnail rail, a full-bleed slide stage, a presenter-notes strip and a
+ * navigation bar. Astryx has no deck primitive, so the frame lives here — but every control
+ * inside it is an Astryx component, and every value below is an Astryx token.
+ */
+
+.deck {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  user-select: none;
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-4);
+  border-bottom: var(--border-width) solid var(--color-border);
+  background: var(--color-background-surface);
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Thumbnail rail */
+.thumbnails {
+  flex-shrink: 0;
+  width: 180px;
+  padding: var(--spacing-3);
+  overflow-y: auto;
+  background: var(--color-background-muted);
+  border-right: var(--border-width) solid var(--color-border);
+}
+
+.thumbnail {
+  display: block;
+  width: 100%;
+  margin-bottom: var(--spacing-2);
+  padding: 0;
+  text-align: start;
+  background: none;
+  border: none;
+  border-radius: var(--radius-element);
+  cursor: pointer;
+}
+
+.thumbnail:focus-visible {
+  outline: 2px solid var(--color-border-blue);
+  outline-offset: 2px;
+}
+
+.thumbnailFrame {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--color-background-surface);
+  border: var(--border-width) solid var(--color-border-emphasized);
+  border-radius: var(--radius-inner);
+  opacity: 0.7;
+  transition: opacity var(--duration-fast) var(--ease-standard);
+}
+
+.thumbnail:hover .thumbnailFrame {
+  opacity: 1;
+}
+
+.thumbnail[data-selected="true"] .thumbnailFrame {
+  opacity: 1;
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-inset-selected);
+}
+
+.thumbnailLabel {
+  margin-top: var(--spacing-0-5);
+  padding-inline: var(--spacing-0-5);
+  overflow: hidden;
+}
+
+/* Slide stage */
+.stage {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  background: var(--color-background-surface);
+}
+
+.slideViewport {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
+
+.slideLayer {
+  position: absolute;
+  inset: 0;
+}
+
+/* Presenter notes */
+.notes {
+  flex-shrink: 0;
+  height: 90px;
+  padding: var(--spacing-2) var(--spacing-4);
+  overflow-y: auto;
+  background: var(--color-background-muted);
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.notesLabel {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Navigation bar */
+.navigation {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-4);
+  border-top: var(--border-width) solid var(--color-border);
+  background: var(--color-background-surface);
+}
+
+.counter {
+  min-width: 3ch;
+  text-align: center;
+}

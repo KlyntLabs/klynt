@@ -1,0 +1,46 @@
+/*
+ * Marketing layout Astryx does not express: an asymmetric 3:2 hero that collapses to a single
+ * column, and a square stat plate. Grid can only do equal tracks, so the ratio lives here.
+ * Every colour, radius and gap is an Astryx token.
+ */
+
+.columns {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+@media (min-width: 640px) {
+  .columns {
+    flex-direction: row;
+    gap: var(--spacing-4);
+  }
+}
+
+.textColumn {
+  flex: 3;
+  min-width: 0;
+}
+
+.statColumn {
+  flex: 2;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+}
+
+.statPlate {
+  width: 100%;
+  max-width: 220px;
+  aspect-ratio: 1 / 1;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-container);
+  background: var(--color-background-muted);
+}
+
+.statColumn > :last-child {
+  max-width: 220px;
+}

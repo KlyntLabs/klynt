@@ -1,0 +1,37 @@
+/*
+ * Doc-card chrome Astryx does not express: the round icon plate inside each card and the
+ * card's minimum height so a grid row stays even. Colours are Astryx CSS variables only.
+ */
+
+.section {
+  margin-block-end: var(--spacing-4);
+}
+
+.collapse {
+  overflow: hidden;
+}
+
+.card {
+  min-height: 100px;
+}
+
+.cardBody {
+  height: 100%;
+}
+
+.cardIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--color-background-muted);
+  color: var(--color-icon-secondary);
+}
+
+.cardIcon svg {
+  width: 20px;
+  height: 20px;
+}

@@ -1,4 +1,6 @@
+import { Heading } from "@astryxdesign/core/Heading";
 import { Spinner } from "@astryxdesign/core/Spinner";
+import { Text } from "@astryxdesign/core/Text";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -6,6 +8,7 @@ import { type DesktopApp, desktopAppsApi } from "@/features/desktop/api/desktop-
 import { ConflictDialog } from "@/features/desktop/components/ConflictDialog";
 import { useConflictHandler } from "@/features/desktop/components/use-conflict-handler";
 import { buildAppManifest } from "./dynamic-app-manifest";
+import styles from "./dynamic-app-window.module.css";
 import { KNOWN_RENDERER_IDS, RendererSwitch } from "./renderers/renderer-switch";
 import { useContentAutosave } from "./use-content-autosave";
 
@@ -97,7 +100,7 @@ export function DynamicAppWindow({
 
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center">
+      <div className={styles.centered}>
         <Spinner />
       </div>
     );
@@ -105,29 +108,35 @@ export function DynamicAppWindow({
 
   if (error || !app || !manifest) {
     return (
-      <div className="flex h-full items-center justify-center p-4 text-sm text-muted-foreground">
-        {t("errors:generic.message")}
+      <div className={styles.centered}>
+        <Text type="body" color="secondary">
+          {t("errors:generic.message")}
+        </Text>
       </div>
     );
   }
 
   if (!KNOWN_RENDERER_IDS.has(manifest.rendererId)) {
     return (
-      <div
-        className="flex h-full items-center justify-center p-4 text-sm text-muted-foreground"
-        data-testid="dynamic-app-empty-state"
-      >
-        {t("app.unknownRenderer")}
+      <div className={styles.centered} data-testid="dynamic-app-empty-state">
+        <Text type="body" color="secondary">
+          {t("app.unknownRenderer")}
+        </Text>
       </div>
     );
   }
 
   return (
-    <div className="flex h-full flex-col" data-testid="dynamic-app-window">
-      <div className="border-b border-border px-4 py-2">
-        <h2 className="text-sm font-medium text-foreground">{manifest.title}</h2>
+    <div className={styles.window} data-testid="dynamic-app-window">
+      <div className={styles.header}>
+        {/* Heading has no size prop — its scale comes from `level`. The window title needs the
+            compact chrome size (heading-4 == the old text-sm) while keeping its place in the
+            document outline, so the visual level is 4 and `accessibilityLevel` restores the h2. */}
+        <Heading level={4} accessibilityLevel={2}>
+          {manifest.title}
+        </Heading>
       </div>
-      <div className="min-h-0 flex-1">
+      <div className={styles.body}>
         <RendererSwitch
           rendererId={manifest.rendererId}
           content={content}

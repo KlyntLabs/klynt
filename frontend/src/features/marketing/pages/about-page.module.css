@@ -1,0 +1,29 @@
+/*
+ * Page chrome Astryx does not express: the horizontally scrollable tab strip and the
+ * decorative "coming soon" icon plate. Colours are Astryx CSS variables only.
+ */
+
+.page {
+  display: flex;
+  flex-direction: column;
+}
+
+.tabBar {
+  flex-shrink: 0;
+  overflow-x: auto;
+  background: var(--color-background-muted);
+}
+
+.comingSoon {
+  padding-block: var(--spacing-10);
+}
+
+.comingSoonIcon {
+  display: inline-flex;
+  color: var(--color-icon-disabled);
+}
+
+.comingSoonIcon svg {
+  width: 32px;
+  height: 32px;
+}

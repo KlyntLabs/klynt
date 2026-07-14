@@ -1,9 +1,20 @@
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { Grid } from "@astryxdesign/core/Grid";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Section } from "@astryxdesign/core/Section";
+import { SegmentedControl, SegmentedControlItem } from "@astryxdesign/core/SegmentedControl";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import { AnimatePresence, motion } from "framer-motion";
+import { Check } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FreeTierCard } from "@/features/marketing/components/pricing";
 import { freeTierIconMap } from "@/features/marketing/lib/pricing-data";
 import type { FreeTierItem } from "@/features/marketing/lib/pricing-types";
+import styles from "./pricing-plans-section.module.css";
 
 const staggerContainer = {
   hidden: {},
@@ -17,6 +28,13 @@ const staggerItem = {
     y: 0,
     transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
   },
+};
+
+const panelMotion = {
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -8 },
+  transition: { duration: 0.2 },
 };
 
 export function PricingPlansSection() {
@@ -41,113 +59,104 @@ export function PricingPlansSection() {
   }) as unknown as string[];
 
   return (
-    <section className="px-6 sm:px-8 py-6 border-b border-[#E5E5E5]">
-      {/* Toggle */}
-      <div className="flex items-center justify-center mb-6">
-        <div className="inline-flex rounded-lg overflow-hidden border border-[#D1D1D1]">
-          <button
-            type="button"
-            onClick={() => setPlanTab("free")}
-            className={`px-5 py-2 text-sm font-medium transition-colors ${
-              planTab === "free"
-                ? "bg-[#F0EDE6] text-[#1A1A1A]"
-                : "bg-white text-[#6B6B6B] hover:bg-[#FAFAF8]"
-            }`}
+    <Section variant="transparent" padding={6} dividers={["bottom"]}>
+      <VStack gap={6}>
+        {/*
+         * Astryx models this as SegmentedControl, not TabList: it is an input that always has
+         * exactly one selection and switches a mode within the section, rather than navigation
+         * between page-level views. Segments expose role="radio" with the label as the
+         * accessible name.
+         */}
+        <HStack justify="center">
+          <SegmentedControl
+            value={planTab}
+            onChange={(value) => setPlanTab(value as "free" | "scale")}
+            label={`${t("pricing.planToggle.free")} / ${t("pricing.planToggle.scale")}`}
           >
-            {t("pricing.planToggle.free")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setPlanTab("scale")}
-            className={`px-5 py-2 text-sm font-medium transition-colors border-l border-[#D1D1D1] ${
-              planTab === "scale"
-                ? "bg-[#F0EDE6] text-[#1A1A1A]"
-                : "bg-white text-[#6B6B6B] hover:bg-[#FAFAF8]"
-            }`}
-          >
-            {t("pricing.planToggle.scale")}
-          </button>
-        </div>
-      </div>
+            <SegmentedControlItem value="free" label={t("pricing.planToggle.free")} />
+            <SegmentedControlItem value="scale" label={t("pricing.planToggle.scale")} />
+          </SegmentedControl>
+        </HStack>
 
-      <AnimatePresence mode="wait">
-        {planTab === "free" ? (
-          <motion.div
-            key="free"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="text-center mb-6">
-              <h2 className="text-xl font-bold text-[#1A1A1A] mb-1">
-                {t("pricing.freeTier.title")}
-              </h2>
-              <p className="text-sm text-[#6B6B6B]">{t("pricing.freeTier.subtitle")}</p>
-            </div>
-            <motion.div
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
-              variants={staggerContainer}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-            >
-              {freeTierWithIcons.map((item) => (
-                <motion.div key={item.product} variants={staggerItem}>
-                  <FreeTierCard item={item as FreeTierItem} />
-                </motion.div>
-              ))}
-            </motion.div>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="scale"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="text-center mb-6">
-              <h2 className="text-xl font-bold text-[#1A1A1A] mb-1">
-                {t("pricing.scalePlan.title")}
-              </h2>
-              <p className="text-sm text-[#6B6B6B]">{t("pricing.scalePlan.subtitle")}</p>
-            </div>
-            <div className="max-w-lg mx-auto">
-              <div className="border border-[#D1D1D1] rounded-lg p-6 bg-white">
-                <div className="text-center mb-4">
-                  <span className="text-3xl font-bold text-[#1A1A1A]">
-                    {t("pricing.scalePlan.price")}
-                  </span>
-                  <span className="text-sm text-[#6B6B6B]">
-                    {t("pricing.scalePlan.priceSuffix")}
-                  </span>
-                </div>
-                <ul className="space-y-2">
-                  {scaleFeatures.map((feature, i) => (
-                    <li key={feature} className="flex items-start gap-2 text-sm">
-                      {i === 0 ? (
-                        <span className="text-[#6B6B6B] font-medium">{feature}</span>
-                      ) : (
-                        <>
-                          <span className="text-[#22C55E] mt-0.5">&#10003;</span>
-                          <span className="text-[#1A1A1A]">{feature}</span>
-                        </>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  type="button"
-                  className="w-full mt-5 px-4 py-2.5 bg-[#F76E18] hover:bg-[#E56310] text-white text-sm font-medium rounded-md transition-colors"
+        <AnimatePresence mode="wait">
+          {planTab === "free" ? (
+            <motion.div key="free" {...panelMotion}>
+              <VStack gap={6}>
+                <VStack gap={1} align="center">
+                  <Heading level={2} justify="center">
+                    {t("pricing.freeTier.title")}
+                  </Heading>
+                  <Text type="supporting" justify="center">
+                    {t("pricing.freeTier.subtitle")}
+                  </Text>
+                </VStack>
+
+                <motion.div
+                  variants={staggerContainer}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
                 >
-                  {t("pricing.scalePlan.cta")}
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </section>
+                  <Grid columns={{ minWidth: 240, max: 3 }} gap={3}>
+                    {freeTierWithIcons.map((item) => (
+                      <motion.div key={item.product} variants={staggerItem}>
+                        <FreeTierCard item={item as FreeTierItem} />
+                      </motion.div>
+                    ))}
+                  </Grid>
+                </motion.div>
+              </VStack>
+            </motion.div>
+          ) : (
+            <motion.div key="scale" {...panelMotion}>
+              <VStack gap={6}>
+                <VStack gap={1} align="center">
+                  <Heading level={2} justify="center">
+                    {t("pricing.scalePlan.title")}
+                  </Heading>
+                  <Text type="supporting" justify="center">
+                    {t("pricing.scalePlan.subtitle")}
+                  </Text>
+                </VStack>
+
+                <div className={styles.scalePanel}>
+                  <Card padding={6}>
+                    <VStack gap={4}>
+                      <HStack gap={1} align="end" justify="center">
+                        <Text size="3xl" weight="bold">
+                          {t("pricing.scalePlan.price")}
+                        </Text>
+                        <Text type="supporting">{t("pricing.scalePlan.priceSuffix")}</Text>
+                      </HStack>
+
+                      <VStack as="ul" gap={2} align="start">
+                        {scaleFeatures.map((feature, i) => (
+                          <HStack as="li" key={feature} gap={2} align="start">
+                            {i === 0 ? (
+                              <Text type="label" color="secondary" weight="medium">
+                                {feature}
+                              </Text>
+                            ) : (
+                              <>
+                                <Check size={16} className={styles.check} aria-hidden="true" />
+                                <Text type="label">{feature}</Text>
+                              </>
+                            )}
+                          </HStack>
+                        ))}
+                      </VStack>
+
+                      <div className={styles.blockAction}>
+                        <Button variant="primary" label={t("pricing.scalePlan.cta")} />
+                      </div>
+                    </VStack>
+                  </Card>
+                </div>
+              </VStack>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </VStack>
+    </Section>
   );
 }

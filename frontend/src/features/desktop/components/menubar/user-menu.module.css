@@ -1,0 +1,21 @@
+/*
+ * The Popover's trigger. It has to stay a plain <button> — Popover clones its child as the
+ * anchor, and an Astryx Button would bring its own surface and padding to a control that is
+ * really just an avatar with a name beside it.
+ */
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1-5);
+  padding-block: var(--spacing-1);
+  padding-left: var(--spacing-1);
+  padding-right: var(--spacing-3);
+  border: none;
+  border-radius: var(--radius-full);
+  background: none;
+  cursor: pointer;
+}
+
+.name {
+  max-width: 100px;
+}

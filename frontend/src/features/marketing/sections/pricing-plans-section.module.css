@@ -1,0 +1,25 @@
+/*
+ * Two things Astryx's components do not express, both kept on the CSS-variable path:
+ * - the scale card is capped and centred in the section (no margin-inline auto on VStack),
+ * - the feature ticks are green, and Text/icon colour props only cover the semantic set.
+ */
+
+.scalePanel {
+  max-width: 512px;
+  width: 100%;
+  margin-inline: auto;
+}
+
+.check {
+  color: var(--color-text-green);
+  flex-shrink: 0;
+  margin-top: var(--spacing-0-5);
+}
+
+.blockAction {
+  display: flex;
+}
+
+.blockAction > * {
+  flex: 1;
+}

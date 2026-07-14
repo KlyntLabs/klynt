@@ -1,0 +1,42 @@
+/*
+ * The products hero: a responsive two-column layout (copy + mascot) that Astryx's Grid and
+ * Stacks cannot express, because the breakpoint switch and the mascot's intrinsic max width
+ * are bespoke marketing layout. Every value is an Astryx token or a plain length.
+ */
+
+.heroColumns {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+@media (min-width: 640px) {
+  .heroColumns {
+    flex-direction: row;
+    gap: var(--spacing-4);
+  }
+}
+
+.heroText {
+  flex: 1;
+  min-width: 0;
+}
+
+.heroMedia {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.heroImage {
+  width: 100%;
+  max-width: 260px;
+  height: auto;
+}
+
+@media (min-width: 640px) {
+  .heroImage {
+    max-width: 280px;
+  }
+}

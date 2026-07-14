@@ -4,6 +4,7 @@ import { DynamicAppWindow } from "@/features/desktop/apps/dynamic-app-window";
 import { useWindowManager } from "@/features/desktop/window-manager/window-module";
 import type { DesktopConfig } from "../factory/types";
 import WindowComponent from "./Window";
+import styles from "./window-manager.module.css";
 
 const EMPTY_WINDOWS: [] = [];
 
@@ -17,7 +18,7 @@ export default function WindowManager({ config }: WindowManagerProps) {
   const windows = desktopWindows ?? EMPTY_WINDOWS;
 
   return (
-    <div className="absolute inset-0" style={{ top: 36 }}>
+    <div className={styles.layer}>
       <AnimatePresence>
         {windows
           .filter((w) => w.state !== "minimized")

@@ -37,76 +37,51 @@ export const staggerItem = {
   },
 };
 
-export const productIconMap: Record<string, { icon: React.ReactNode; bg: string; color: string }> =
-  {
-    Globe: { icon: <Globe className="w-4 h-4" />, bg: "bg-[#DCFCE7]", color: "text-[#166534]" },
-    BarChart3: {
-      icon: <BarChart3 className="w-4 h-4" />,
-      bg: "bg-[#FFF7ED]",
-      color: "text-[#9A3412]",
-    },
-    PlayCircle: {
-      icon: <PlayCircle className="w-4 h-4" />,
-      bg: "bg-[#F3E8FF]",
-      color: "text-[#6B21A8]",
-    },
-    Filter: { icon: <Filter className="w-4 h-4" />, bg: "bg-[#DBEAFE]", color: "text-[#1E40AF]" },
-    Flame: { icon: <Flame className="w-4 h-4" />, bg: "bg-[#FEE2E2]", color: "text-[#991B1B]" },
-    TrendingUp: {
-      icon: <TrendingUp className="w-4 h-4" />,
-      bg: "bg-[#DCFCE7]",
-      color: "text-[#166534]",
-    },
-    RotateCcw: {
-      icon: <RotateCcw className="w-4 h-4" />,
-      bg: "bg-[#FEF9C3]",
-      color: "text-[#854D0E]",
-    },
-    GitBranch: {
-      icon: <GitBranch className="w-4 h-4" />,
-      bg: "bg-[#DBEAFE]",
-      color: "text-[#1E40AF]",
-    },
-    Bot: { icon: <Bot className="w-4 h-4" />, bg: "bg-[#F3E8FF]", color: "text-[#6B21A8]" },
-    AlertTriangle: {
-      icon: <AlertTriangle className="w-4 h-4" />,
-      bg: "bg-[#FEE2E2]",
-      color: "text-[#991B1B]",
-    },
-    FileText: {
-      icon: <FileText className="w-4 h-4" />,
-      bg: "bg-[#F3F4F6]",
-      color: "text-[#374151]",
-    },
-    Clock: { icon: <Clock className="w-4 h-4" />, bg: "bg-[#DBEAFE]", color: "text-[#1E40AF]" },
-    Flag: { icon: <Flag className="w-4 h-4" />, bg: "bg-[#DCFCE7]", color: "text-[#166534]" },
-    Beaker: { icon: <Beaker className="w-4 h-4" />, bg: "bg-[#DBEAFE]", color: "text-[#1E40AF]" },
-    TestTube: {
-      icon: <TestTube className="w-4 h-4" />,
-      bg: "bg-[#F3E8FF]",
-      color: "text-[#6B21A8]",
-    },
-    Rocket: { icon: <Rocket className="w-4 h-4" />, bg: "bg-[#FFF7ED]", color: "text-[#9A3412]" },
-    Plug: { icon: <Plug className="w-4 h-4" />, bg: "bg-[#F3F4F6]", color: "text-[#374151]" },
-    Webhook: {
-      icon: <Webhook className="w-4 h-4" />,
-      bg: "bg-[#FEF9C3]",
-      color: "text-[#854D0E]",
-    },
-    Workflow: {
-      icon: <Workflow className="w-4 h-4" />,
-      bg: "bg-[#DBEAFE]",
-      color: "text-[#1E40AF]",
-    },
-    ClipboardList: {
-      icon: <ClipboardList className="w-4 h-4" />,
-      bg: "bg-[#FCE7F3]",
-      color: "text-[#9D174D]",
-    },
-    LifeBuoy: {
-      icon: <LifeBuoy className="w-4 h-4" />,
-      bg: "bg-[#DCFCE7]",
-      color: "text-[#166534]",
-    },
-    Users: { icon: <Users className="w-4 h-4" />, bg: "bg-[#F3E8FF]", color: "text-[#6B21A8]" },
-  };
+/**
+ * The categorical hues Astryx ships a full token family for: every hue below has a matching
+ * `--color-background-*`, `--color-border-*`, `--color-icon-*` and `--color-text-*`. `ProductIcon`
+ * turns the hue into a tinted tile via `product-icon.module.css` — the old per-category
+ * hand-picked tint/ink hex pairs are gone; a hue name is now the only thing a product declares.
+ */
+export type ProductIconHue =
+  | "blue"
+  | "gray"
+  | "green"
+  | "orange"
+  | "pink"
+  | "purple"
+  | "red"
+  | "yellow";
+
+export interface ProductIconConfig {
+  icon: React.ReactNode;
+  hue: ProductIconHue;
+}
+
+/** Icon geometry in px, replacing the `w-4 h-4` utility class. */
+export const PRODUCT_ICON_SIZE = 16;
+
+export const productIconMap: Record<string, ProductIconConfig> = {
+  Globe: { icon: <Globe size={PRODUCT_ICON_SIZE} />, hue: "green" },
+  BarChart3: { icon: <BarChart3 size={PRODUCT_ICON_SIZE} />, hue: "orange" },
+  PlayCircle: { icon: <PlayCircle size={PRODUCT_ICON_SIZE} />, hue: "purple" },
+  Filter: { icon: <Filter size={PRODUCT_ICON_SIZE} />, hue: "blue" },
+  Flame: { icon: <Flame size={PRODUCT_ICON_SIZE} />, hue: "red" },
+  TrendingUp: { icon: <TrendingUp size={PRODUCT_ICON_SIZE} />, hue: "green" },
+  RotateCcw: { icon: <RotateCcw size={PRODUCT_ICON_SIZE} />, hue: "yellow" },
+  GitBranch: { icon: <GitBranch size={PRODUCT_ICON_SIZE} />, hue: "blue" },
+  Bot: { icon: <Bot size={PRODUCT_ICON_SIZE} />, hue: "purple" },
+  AlertTriangle: { icon: <AlertTriangle size={PRODUCT_ICON_SIZE} />, hue: "red" },
+  FileText: { icon: <FileText size={PRODUCT_ICON_SIZE} />, hue: "gray" },
+  Clock: { icon: <Clock size={PRODUCT_ICON_SIZE} />, hue: "blue" },
+  Flag: { icon: <Flag size={PRODUCT_ICON_SIZE} />, hue: "green" },
+  Beaker: { icon: <Beaker size={PRODUCT_ICON_SIZE} />, hue: "blue" },
+  TestTube: { icon: <TestTube size={PRODUCT_ICON_SIZE} />, hue: "purple" },
+  Rocket: { icon: <Rocket size={PRODUCT_ICON_SIZE} />, hue: "orange" },
+  Plug: { icon: <Plug size={PRODUCT_ICON_SIZE} />, hue: "gray" },
+  Webhook: { icon: <Webhook size={PRODUCT_ICON_SIZE} />, hue: "yellow" },
+  Workflow: { icon: <Workflow size={PRODUCT_ICON_SIZE} />, hue: "blue" },
+  ClipboardList: { icon: <ClipboardList size={PRODUCT_ICON_SIZE} />, hue: "pink" },
+  LifeBuoy: { icon: <LifeBuoy size={PRODUCT_ICON_SIZE} />, hue: "green" },
+  Users: { icon: <Users size={PRODUCT_ICON_SIZE} />, hue: "purple" },
+};

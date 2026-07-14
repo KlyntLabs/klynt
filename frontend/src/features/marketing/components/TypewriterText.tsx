@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import styles from "./typewriter-text.module.css";
 
 interface TypewriterTextProps {
   text: string;
@@ -48,7 +49,7 @@ export function TypewriterText({ text, speed = 80 }: TypewriterTextProps) {
   return (
     <span>
       {displayed}
-      <span className="animate-pulse">|</span>
+      <span className={styles.caret}>|</span>
     </span>
   );
 }

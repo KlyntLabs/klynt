@@ -1,0 +1,9 @@
+/*
+ * Astryx's Text exposes a semantic colour set (primary / secondary / disabled / accent) but not
+ * the status hues, and the free-tier line is deliberately green. The token is the same one the
+ * design system uses for success copy, so it tracks the theme in both colour modes.
+ */
+
+.freeTier {
+  color: var(--color-text-green);
+}

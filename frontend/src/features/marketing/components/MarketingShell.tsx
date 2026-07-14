@@ -1,8 +1,16 @@
 import { Spinner } from "@astryxdesign/core/Spinner";
+import { VStack } from "@astryxdesign/core/VStack";
 import { lazy, Suspense } from "react";
 import { marketingRegistry } from "@/features/desktop/apps";
 
 const NotFoundPage = lazy(() => import("@/core/routing/not-found-page"));
+
+/* The centred loading plate the lazy routes fall back to. */
+const loadingFallback = (
+  <VStack align="center" paddingBlock={10}>
+    <Spinner />
+  </VStack>
+);
 
 interface MarketingShellProps {
   route: string;
@@ -13,7 +21,7 @@ export function MarketingShell({ route }: MarketingShellProps) {
 
   if (!app) {
     return (
-      <Suspense fallback={<Spinner className="mx-auto my-12" />}>
+      <Suspense fallback={loadingFallback}>
         <NotFoundPage />
       </Suspense>
     );
@@ -22,7 +30,7 @@ export function MarketingShell({ route }: MarketingShellProps) {
   const AppComponent = app.component;
 
   return (
-    <Suspense fallback={<Spinner className="mx-auto my-12" />}>
+    <Suspense fallback={loadingFallback}>
       <AppComponent />
     </Suspense>
   );

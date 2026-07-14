@@ -1,3 +1,4 @@
+import { Section } from "@astryxdesign/core/Section";
 import { VStack } from "@astryxdesign/core/VStack";
 import {
   CommunityArticles,
@@ -5,18 +6,19 @@ import {
   CommunityLeftColumn,
   CommunityRightColumn,
 } from "@/features/marketing/components/community";
+import styles from "./community-page.module.css";
 
 export default function CommunityPage() {
   return (
-    <VStack height="100%" isScrollable className="h-full bg-white">
-      <div className="min-h-full">
+    <VStack height="100%" isScrollable>
+      <Section padding={0} minHeight="100%">
         <CommunityHeader />
-        <div className="flex flex-col lg:flex-row gap-6 p-6 md:p-8">
+        <div className={styles.columns}>
           <CommunityLeftColumn />
           <CommunityArticles />
           <CommunityRightColumn />
         </div>
-      </div>
+      </Section>
     </VStack>
   );
 }

@@ -1,0 +1,21 @@
+/*
+ * Sidebar chrome Astryx does not express: the fixed rail width and the muted leading icon
+ * on each row. Colours are Astryx CSS variables only.
+ */
+
+.sidebar {
+  width: 260px;
+  flex-shrink: 0;
+}
+
+.rowIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--color-icon-disabled);
+  padding-block-start: var(--spacing-0-5);
+}
+
+.rowIcon svg {
+  width: 16px;
+  height: 16px;
+}

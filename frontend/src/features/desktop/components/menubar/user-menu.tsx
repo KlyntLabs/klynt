@@ -4,6 +4,7 @@ import { Divider } from "@astryxdesign/core/Divider";
 import { Item } from "@astryxdesign/core/Item";
 import { Popover } from "@astryxdesign/core/Popover";
 import { Skeleton } from "@astryxdesign/core/Skeleton";
+import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
 import { ChevronDown, LogOut, Settings, User as UserIcon } from "lucide-react";
 import { useState } from "react";
@@ -11,6 +12,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useAuthModule } from "@/core/auth/auth-module";
 import { routePaths } from "@/core/routing/route-paths";
+import styles from "./user-menu.module.css";
 
 export function UserMenu() {
   const { t } = useTranslation("home");
@@ -77,13 +79,11 @@ export function UserMenu() {
         </VStack>
       }
     >
-      <button
-        type="button"
-        data-testid="user-menu-trigger"
-        className="flex items-center gap-1.5 rounded-full py-1 pr-2.5 pl-1"
-      >
+      <button type="button" data-testid="user-menu-trigger" className={styles.trigger}>
         <Avatar name={user.name} size="small" />
-        <span className="max-w-[100px] truncate text-[12px] font-medium">{user.name}</span>
+        <Text type="label" weight="medium" maxLines={1} className={styles.name}>
+          {user.name}
+        </Text>
         <ChevronDown size={12} />
       </button>
     </Popover>

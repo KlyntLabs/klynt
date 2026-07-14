@@ -1,5 +1,13 @@
 import { Badge } from "@astryxdesign/core/Badge";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { ClickableCard } from "@astryxdesign/core/ClickableCard";
 import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
+import { Divider } from "@astryxdesign/core/Divider";
+import { Grid } from "@astryxdesign/core/Grid";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Section } from "@astryxdesign/core/Section";
+import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
 import { motion } from "framer-motion";
 import {
@@ -13,6 +21,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import styles from "./trash-page.module.css";
 
 /* ──────────────────────────── types ──────────────────────────── */
 
@@ -30,20 +39,33 @@ interface TrashItem {
 
 /* ──────────────────────────── helpers ──────────────────────────── */
 
-function getFileIcon(type: TrashItem["type"] | undefined) {
+/**
+ * The icon for a file type. `size` is a pixel size so the same helper can serve the 32px grid
+ * tiles and the 16px dialog header. Colour comes from Astryx icon tokens via a CSS module class;
+ * lucide strokes with currentColor, so setting `color` is enough.
+ */
+function getFileIcon(type: TrashItem["type"], size = 32) {
   switch (type) {
     case "image":
-      return <ImageIcon className="w-8 h-8 text-[#2563EB]" />;
+      return <ImageIcon size={size} className={styles.iconBlue} aria-hidden="true" />;
     case "spreadsheet":
     case "csv":
-      return <FileSpreadsheet className="w-8 h-8 text-[#22C55E]" />;
+      return <FileSpreadsheet size={size} className={styles.iconGreen} aria-hidden="true" />;
     case "audio":
-      return <Music className="w-8 h-8 text-[#F76E18]" />;
+      return <Music size={size} className={styles.iconOrange} aria-hidden="true" />;
     case "pdf":
-      return <FileText className="w-8 h-8 text-[#DC2626]" />;
+      return <FileText size={size} className={styles.iconRed} aria-hidden="true" />;
     default:
-      return <FileText className="w-8 h-8 text-[#6B6B6B]" />;
+      return <FileText size={size} className={styles.iconNeutral} aria-hidden="true" />;
   }
+}
+
+/** The icon for a trash item: a lock when the item is redacted, otherwise its file-type icon. */
+function getItemIcon(item: TrashItem, size = 32) {
+  if (item.redacted) {
+    return <Lock size={size} className={styles.iconDisabled} aria-hidden="true" />;
+  }
+  return getFileIcon(item.type, size);
 }
 
 /* ──────────────────────────── page ──────────────────────────── */
@@ -59,68 +81,94 @@ export default function TrashPage() {
   >;
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <VStack height="100%">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        className="flex items-center justify-between px-6 py-4 bg-[#F5F3EF] border-b border-[#E5E5E5] shrink-0"
       >
-        <div className="flex items-center gap-2">
-          <Trash2 className="w-5 h-5 text-[#6B6B6B]" />
-          <span className="text-sm font-semibold text-[#1A1A1A]">{t("trash.header.title")}</span>
-        </div>
-        <span className="text-xs text-[#6B6B6B]">{t("trash.header.subtitle")}</span>
-        <Badge
-          variant="neutral"
-          label={t("trash.header.itemsCount", { count: trashItems.length })}
-        />
+        <Section variant="muted" dividers={["bottom"]} padding={6} paddingBlock={4}>
+          <HStack justify="between" align="center" gap={3} wrap="wrap">
+            <HStack gap={2} align="center">
+              <Trash2 size={20} className={styles.iconNeutral} aria-hidden="true" />
+              <Text type="label" weight="semibold">
+                {t("trash.header.title")}
+              </Text>
+            </HStack>
+            <Text type="supporting" size="sm">
+              {t("trash.header.subtitle")}
+            </Text>
+            <Badge
+              variant="neutral"
+              label={t("trash.header.itemsCount", { count: trashItems.length })}
+            />
+          </HStack>
+        </Section>
       </motion.div>
 
       {/* Subtitle */}
-      <div className="px-6 py-3 border-b border-[#E5E5E5] shrink-0">
-        <p className="text-xs text-[#6B6B6B]">{t("trash.header.description")}</p>
-      </div>
+      <Section variant="transparent" dividers={["bottom"]} padding={6} paddingBlock={3}>
+        <Text type="supporting" size="sm" display="block">
+          {t("trash.header.description")}
+        </Text>
+      </Section>
 
       {/* Grid */}
-      <VStack height="100%" isScrollable className="flex-1">
-        <div className="p-6">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {trashItems.map((item, i) => (
-              <motion.button
-                key={item.id ?? item.filename}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.2, delay: i * 0.03 }}
-                whileHover={{ scale: 1.02 }}
+      <VStack height="100%" isScrollable padding={6} className={styles.grid}>
+        <Grid columns={{ minWidth: 160, max: 4 }} gap={4}>
+          {trashItems.map((item, i) => (
+            <motion.div
+              key={item.id ?? item.filename}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.2, delay: i * 0.03 }}
+              whileHover={{ scale: 1.02 }}
+            >
+              <ClickableCard
+                label={item.filename}
                 onClick={() => setSelectedItem(item)}
-                className="flex flex-col items-center p-4 border border-[#E5E5E5] rounded-md bg-white hover:shadow-sm hover:bg-[#FAFAF8] hover:border-[#D1D1D1] transition-all text-left cursor-pointer"
+                height="100%"
               >
-                {item.redacted ? (
-                  <Lock className="w-8 h-8 text-[#9CA3AF]" />
-                ) : (
-                  getFileIcon(item.type)
-                )}
-                <p className="text-xs font-medium text-center mt-3 break-words w-full line-clamp-2">
-                  {item.filename}
-                </p>
-                <p className="text-[10px] text-[#9CA3AF] text-center mt-1">
-                  {item.redacted ? t("trash.redacted") : fileTypeLabels[item.type ?? "txt"]}
-                </p>
-                <div className="flex justify-between w-full mt-2 text-[10px] text-[#9CA3AF]">
-                  <span>{item.size}</span>
-                  <span>{item.dateDeleted}</span>
-                </div>
-                {!item.redacted && (
-                  <p className="text-[10px] text-[#6B6B6B] text-center mt-2 line-clamp-2 leading-tight">
-                    {item.description}
-                  </p>
-                )}
-              </motion.button>
-            ))}
-          </div>
-        </div>
+                <VStack gap={1} align="center">
+                  {getItemIcon(item)}
+                  <Text
+                    type="label"
+                    size="sm"
+                    justify="center"
+                    maxLines={2}
+                    hasTruncateTooltip={false}
+                    wordBreak="break-word"
+                  >
+                    {item.filename}
+                  </Text>
+                  <Text type="supporting" size="xsm" color="disabled" justify="center">
+                    {item.redacted ? t("trash.redacted") : fileTypeLabels[item.type ?? "txt"]}
+                  </Text>
+                  <HStack justify="between" width="100%">
+                    <Text type="supporting" size="xsm" color="disabled">
+                      {item.size}
+                    </Text>
+                    <Text type="supporting" size="xsm" color="disabled">
+                      {item.dateDeleted}
+                    </Text>
+                  </HStack>
+                  {!item.redacted && (
+                    <Text
+                      type="supporting"
+                      size="xsm"
+                      justify="center"
+                      maxLines={2}
+                      hasTruncateTooltip={false}
+                    >
+                      {item.description}
+                    </Text>
+                  )}
+                </VStack>
+              </ClickableCard>
+            </motion.div>
+          ))}
+        </Grid>
       </VStack>
 
       {/* Detail Modal */}
@@ -132,52 +180,50 @@ export default function TrashPage() {
               subtitle={
                 selectedItem.redacted ? selectedItem.redactedReason : selectedItem.description
               }
-              startContent={
-                selectedItem.redacted ? (
-                  <Lock className="w-4 h-4" />
-                ) : (
-                  getFileIcon(selectedItem.type)
-                )
-              }
+              startContent={getItemIcon(selectedItem, 16)}
               onOpenChange={() => setSelectedItem(null)}
             />
 
-            <div className="flex-1 overflow-y-auto my-4">
+            <VStack isScrollable paddingBlock={4} className={styles.dialogBody}>
               {selectedItem.redacted ? (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <AlertTriangle className="w-12 h-12 text-[#F76E18] mb-3" />
-                  <p className="text-sm font-medium text-[#1A1A1A]">{t("trash.detail.niceTry")}</p>
-                  <p className="text-xs text-[#6B6B6B] mt-1">{selectedItem.redactedReason}</p>
-                </div>
+                <VStack gap={1} align="center" paddingBlock={6}>
+                  <AlertTriangle size={48} className={styles.iconOrange} aria-hidden="true" />
+                  <Text type="label" weight="medium" justify="center">
+                    {t("trash.detail.niceTry")}
+                  </Text>
+                  <Text type="supporting" size="sm" justify="center">
+                    {selectedItem.redactedReason}
+                  </Text>
+                </VStack>
               ) : (
-                <div className="bg-[#F5F3EF] rounded-md p-4">
-                  <pre className="text-xs text-[#1A1A1A] whitespace-pre-wrap leading-relaxed font-mono">
+                <Card variant="muted" padding={4}>
+                  <Text type="code" size="sm" display="block" className={styles.preformatted}>
                     {Array.isArray(selectedItem.content)
                       ? selectedItem.content.join("\n")
                       : selectedItem.content}
-                  </pre>
-                </div>
+                  </Text>
+                </Card>
               )}
-            </div>
+            </VStack>
 
-            <div className="shrink-0 pt-3 border-t border-[#E5E5E5] flex items-center justify-between">
-              <span className="text-[10px] text-[#9CA3AF]">
+            <Divider />
+            <HStack justify="between" align="center" gap={2} paddingBlock={3}>
+              <Text type="supporting" size="xsm" color="disabled">
                 {selectedItem.type?.toUpperCase() ?? "UNKNOWN"} &bull; {selectedItem.size} &bull;{" "}
                 {t("trash.detail.deleted")} {selectedItem.dateDeleted}
-              </span>
-              <button
-                type="button"
+              </Text>
+              <Button
+                size="sm"
+                variant="secondary"
+                label={t("trash.detail.restore")}
+                tooltip={t("trash.detail.restoreTooltip")}
+                isDisabled
                 onClick={() => setSelectedItem(null)}
-                disabled
-                className="text-xs text-[#9CA3AF] bg-[#F0EDE6] px-3 py-1.5 rounded cursor-not-allowed opacity-60"
-                title={t("trash.detail.restoreTooltip")}
-              >
-                {t("trash.detail.restore")}
-              </button>
-            </div>
+              />
+            </HStack>
           </>
         )}
       </Dialog>
-    </div>
+    </VStack>
   );
 }

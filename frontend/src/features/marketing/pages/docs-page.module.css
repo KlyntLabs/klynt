@@ -1,0 +1,76 @@
+/*
+ * Marketing layout Astryx does not express: the striped hero banner with its image scrim,
+ * the search rail, and the docs / sidebar split.
+ *
+ * The banner's stripes are brand decoration, so they are drawn from the accent tokens rather
+ * than the old hard-coded reds. The title sits on that dark plate, so it is wrapped in
+ * MediaTheme mode="dark" (bunx astryx component MediaTheme) and its scrim uses the overlay
+ * token — no hex, no rgb().
+ */
+
+.page {
+  width: 100%;
+}
+
+.banner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--color-accent),
+    var(--color-accent) 12px,
+    var(--color-border-orange) 12px,
+    var(--color-border-orange) 24px
+  );
+}
+
+.bannerImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bannerTitle {
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 2px 8px var(--color-overlay);
+}
+
+.searchRow {
+  max-width: 720px;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+}
+
+.content {
+  display: flex;
+  gap: var(--spacing-6);
+  padding-inline: var(--spacing-6);
+  padding-block-end: var(--spacing-8);
+}
+
+.categories {
+  flex: 1;
+  min-width: 0;
+}
+
+/* The sidebar is supplementary; it drops out before the doc grid gets cramped. */
+.sidebarSlot {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .sidebarSlot {
+    display: block;
+  }
+}

@@ -1,256 +1,14 @@
-/* Astryx + Tailwind coexistence during the migration (see docs/astryx-migration-plan.md).
-   Layer order is load-bearing: Astryx reset/theme must land before Tailwind utilities so
-   migrated components keep Astryx defaults while legacy utility classes still win locally.
-   Tailwind is removed surface-by-surface; this block goes with the last one. */
-@layer reset, theme, base, astryx-base, astryx-theme, components, utilities;
+/* Astryx is the whole styling system. Tailwind is gone (ADR-015, Phase 5).
+ *
+ * Layer order is still load-bearing: the reset lands first, then the base component styles,
+ * then the theme's tokens, and finally our own overrides — which must outrank the theme to
+ * work at all (see the portal fix below).
+ */
+@layer reset, astryx-base, astryx-theme, overrides;
 
-@import "tailwindcss/theme.css" layer(theme);
-@import "tailwindcss/preflight.css" layer(base);
 @import "@astryxdesign/core/reset.css";
 @import "@astryxdesign/core/astryx.css";
 @import "@astryxdesign/theme-neutral/theme.css";
-@import "@astryxdesign/core/tailwind-theme.css";
-@import "tailwindcss/utilities.css" layer(utilities);
-
-@theme {
-  /* v2 design-system colors (HSL variables defined below) */
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
-
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
-
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
-
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
-
-  --color-destructive: hsl(var(--destructive));
-  --color-destructive-foreground: hsl(var(--destructive-foreground));
-
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
-
-  --color-success: #22c55e;
-  --color-success-foreground: #000000;
-  --color-warning: #f59e0b;
-  --color-warning-foreground: #000000;
-
-  /* Sidebar tokens used by shadcn/ui sidebar primitive */
-  --color-sidebar: hsl(var(--sidebar-background));
-  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
-  --color-sidebar-primary: hsl(var(--sidebar-primary));
-  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
-  --color-sidebar-accent: hsl(var(--sidebar-accent));
-  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
-  --color-sidebar-border: hsl(var(--sidebar-border));
-  --color-sidebar-ring: hsl(var(--sidebar-ring));
-
-  /* Radius scale matching frontend-v2/tailwind.config.js */
-  --radius-xs: calc(var(--radius) - 6px);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-
-  /* Legacy hard-shadow utilities kept during the strangler migration */
-  --shadow-hard: 4px 4px 0 0 #000000;
-  --shadow-hard-sm: 2px 2px 0 0 #000000;
-  --shadow-hard-lg: 6px 6px 0 0 #000000;
-
-  /* ── macOS Tahoe glassmorphism system ─────────────────────────── */
-  /* Brand accent — the Klynt orange used throughout the desktop UI */
-  --color-brand: #f76e18;
-  --color-brand-hover: #e56310;
-  --color-brand-foreground: #ffffff;
-
-  /* Glass surfaces — translucency channels consumed via hsl(var(--token)) */
-  --color-glass: hsl(var(--glass));
-  --color-glass-strong: hsl(var(--glass-strong));
-  --color-glass-border: hsl(var(--glass-border));
-  --color-glass-highlight: hsl(var(--glass-highlight));
-
-  /* Elevation shadows — soft, layered, Apple-style */
-  --shadow-elevation-1: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
-  --shadow-elevation-2: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04);
-  --shadow-elevation-3: 0 8px 24px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06);
-  --shadow-elevation-4: 0 16px 48px rgba(0, 0, 0, 0.14), 0 4px 16px rgba(0, 0, 0, 0.08);
-
-  /* Animation tokens */
-  --animate-fade-in: fade-in 0.2s ease-out;
-  --animate-fade-out: fade-out 0.2s ease-in;
-  --animate-spin: spin 1s linear infinite;
-  --animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  --animate-accordion-down: accordion-down 0.2s ease-out;
-  --animate-accordion-up: accordion-up 0.2s ease-out;
-  --animate-caret-blink: caret-blink 1.25s ease-out infinite;
-
-  @keyframes fade-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  @keyframes fade-out {
-    from {
-      opacity: 1;
-    }
-    to {
-      opacity: 0;
-    }
-  }
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  @keyframes pulse {
-    0%,
-    100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.5;
-    }
-  }
-
-  @keyframes accordion-down {
-    from {
-      height: 0;
-    }
-    to {
-      height: var(--radix-accordion-content-height);
-    }
-  }
-
-  @keyframes accordion-up {
-    from {
-      height: var(--radix-accordion-content-height);
-    }
-    to {
-      height: 0;
-    }
-  }
-
-  @keyframes caret-blink {
-    0%,
-    70%,
-    100% {
-      opacity: 1;
-    }
-    20%,
-    50% {
-      opacity: 0;
-    }
-  }
-}
-
-@custom-variant dark (&:where(.dark, .dark *));
-
-:root {
-  --background: 0 0% 100%;
-  --foreground: 240 10% 3.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 240 10% 3.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 3.9%;
-  --primary: 240 5.9% 10%;
-  --primary-foreground: 0 0% 98%;
-  --secondary: 240 4.8% 95.9%;
-  --secondary-foreground: 240 5.9% 10%;
-  --muted: 240 4.8% 95.9%;
-  --muted-foreground: 240 3.8% 46.1%;
-  --accent: 240 4.8% 95.9%;
-  --accent-foreground: 240 5.9% 10%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 240 5.9% 90%;
-  --input: 240 5.9% 90%;
-  --ring: 240 5.9% 10%;
-  --radius: 0.625rem;
-  --sidebar-background: 0 0% 98%;
-  --sidebar-foreground: 240 5.3% 26.1%;
-  --sidebar-primary: 240 5.9% 10%;
-  --sidebar-primary-foreground: 0 0% 98%;
-  --sidebar-accent: 240 4.8% 95.9%;
-  --sidebar-accent-foreground: 240 5.9% 10%;
-  --sidebar-border: 220 13% 91%;
-  --sidebar-ring: 217.2 91.2% 59.8%;
-
-  /* macOS Tahoe glass tokens (light) */
-  --glass: 40 12% 90%; /* warm beige translucent base */
-  --glass-strong: 40 12% 88%; /* denser variant for dropdowns */
-  --glass-border: 40 5% 82%; /* soft warm border */
-  --glass-highlight: 0 0% 100%; /* top-edge inner glow */
-}
-
-.dark {
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
-  --card: 240 10% 3.9%;
-  --card-foreground: 0 0% 98%;
-  --popover: 240 10% 3.9%;
-  --popover-foreground: 0 0% 98%;
-  --primary: 0 0% 98%;
-  --primary-foreground: 240 5.9% 10%;
-  --secondary: 240 3.7% 15.9%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 64.9%;
-  --accent: 240 3.7% 15.9%;
-  --accent-foreground: 0 0% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 240 3.7% 15.9%;
-  --input: 240 3.7% 15.9%;
-  --ring: 240 4.9% 83.9%;
-  --sidebar-background: 240 5.9% 10%;
-  --sidebar-foreground: 240 4.8% 95.9%;
-  --sidebar-primary: 224.3 76.3% 48%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 240 3.7% 15.9%;
-  --sidebar-accent-foreground: 240 4.8% 95.9%;
-  --sidebar-border: 240 3.7% 15.9%;
-  --sidebar-ring: 217.2 91.2% 59.8%;
-
-  /* macOS Tahoe glass tokens (dark) */
-  --glass: 240 6% 14%;
-  --glass-strong: 240 6% 18%;
-  --glass-border: 240 4% 28%;
-  --glass-highlight: 240 10% 30%;
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-
-  body {
-    @apply bg-background text-foreground antialiased;
-    font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-    font-display: swap;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    min-width: 320px;
-    min-height: 100vh;
-  }
-}
 
 /* Astryx portal color-mode fix.
  *
@@ -263,15 +21,22 @@
  * under Astryx's own documented layer order, and portals fall back to the OS preference —
  * rendering dark dialogs inside a light app on a dark-mode machine.
  *
- * Re-assert the mapping from a layer above astryx-theme. Re-check on Astryx upgrades;
- * this should become unnecessary if upstream drops the unconditional :root declaration.
+ * Re-assert the mapping from a layer above astryx-theme. This matters more now than it did
+ * during the migration: the app follows the OS by default, so a mismatch is no longer
+ * hypothetical. Re-check on every Astryx upgrade; it becomes unnecessary if upstream drops
+ * the unconditional :root declaration.
  */
-@layer components {
+@layer overrides {
   html[data-theme="light"] {
     color-scheme: light;
   }
 
   html[data-theme="dark"] {
     color-scheme: dark;
+  }
+
+  body {
+    min-width: 320px;
+    min-height: 100vh;
   }
 }

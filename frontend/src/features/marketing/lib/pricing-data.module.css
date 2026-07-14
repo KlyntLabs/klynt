@@ -1,0 +1,10 @@
+/*
+ * Astryx's Icon exposes a fixed set of semantic colours (accent, error, success, …) but no
+ * "blue". The feature-flags mark keeps its blue by inheriting from the icon-blue token —
+ * Icon defaults to color="inherit", so currentColor carries it through.
+ */
+
+.blueIcon {
+  display: inline-flex;
+  color: var(--color-icon-blue);
+}

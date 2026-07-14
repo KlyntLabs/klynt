@@ -1,0 +1,25 @@
+/*
+ * The blinking caret of the typewriter effect. Astryx has no caret primitive, so this is the
+ * CSS-variable path: a keyframe animation, no colour of its own (the caret inherits the
+ * surrounding Text colour via currentColor).
+ */
+
+.caret {
+  animation: caret-blink 1s ease-in-out infinite;
+}
+
+@keyframes caret-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caret {
+    animation: none;
+  }
+}

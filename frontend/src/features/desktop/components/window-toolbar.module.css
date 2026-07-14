@@ -1,0 +1,9 @@
+/*
+ * Astryx's vertical Divider has no intrinsic height: inside a Toolbar its flex line box
+ * computes to height 0px and it disappears entirely. The consumer has to supply the height,
+ * so this class exists purely to give it one.
+ */
+.divider {
+  /* 16px */
+  height: var(--spacing-4);
+}

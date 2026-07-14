@@ -1,3 +1,4 @@
+import { Text } from "@astryxdesign/core/Text";
 import { FileText, Folder, Play, StickyNote } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -10,9 +11,10 @@ import {
 import { useCurrentFolderContents } from "@/features/desktop/desktop-manager/use-current-folder";
 import { useIconDragDrop } from "@/features/desktop/desktop-manager/use-icon-drag-drop";
 import { useWindowManager } from "@/features/desktop/window-manager/window-module";
-import { cn } from "@/lib/utils";
+import iconStyles from "./desktop-icon.module.css";
+import styles from "./desktop-icon-grid.module.css";
 
-const typeIconMap: Record<AppType, React.ComponentType<{ className?: string }>> = {
+const typeIconMap: Record<AppType, React.ComponentType> = {
   folder: Folder,
   markdown: FileText,
   notes: StickyNote,
@@ -60,6 +62,9 @@ function DraggableIcon({
   const title = node.title ?? app?.title ?? t("desktop.app.defaultTitle");
   const Icon = app?.type ? typeIconMap[app.type] : FileText;
 
+  // Plain conditional class composition — the old class-joining helper went with Tailwind.
+  const tileClass = isSelected ? `${iconStyles.tile} ${iconStyles.tileSelected}` : iconStyles.tile;
+
   return (
     <button
       key={node.appId}
@@ -73,20 +78,23 @@ function DraggableIcon({
       onContextMenu={(event) => onOpenContextMenu(event, node.appId, isFolder)}
       {...bindDrag(node.appId)}
       {...(isFolder ? bindDrop({ folderId: node.appId }) : {})}
-      className="flex flex-col items-center gap-1 w-[72px] group cursor-pointer"
+      className={iconStyles.icon}
       data-testid={`desktop-icon-${node.appId}`}
     >
-      <div
-        className={cn(
-          "w-12 h-12 flex items-center justify-center rounded-xl bg-white/80 backdrop-blur-sm border border-white/40 shadow-sm group-hover:bg-white group-hover:scale-105 group-hover:shadow-md transition-all duration-150",
-          isSelected && "ring-2 ring-[#3B82F6] border-[#3B82F6]"
-        )}
-      >
-        <Icon className="w-6 h-6 text-[#6B6B6B]" />
+      <div className={tileClass}>
+        <Icon />
       </div>
-      <span className="text-[11px] font-medium text-center text-[#1A1A1A] leading-tight max-w-[72px] line-clamp-2 drop-shadow-[0_1px_2px_rgba(255,255,255,0.8)]">
+      <Text
+        type="supporting"
+        size="xsm"
+        weight="medium"
+        color="primary"
+        maxLines={2}
+        justify="center"
+        className={iconStyles.label}
+      >
         {title}
-      </span>
+      </Text>
     </button>
   );
 }
@@ -135,18 +143,18 @@ export function DesktopIconGrid({
   if (currentNodes.length === 0) {
     return (
       <div
-        className="flex-1 w-full flex items-center justify-center text-sm text-[#1A1A1A]/70"
+        className={styles.emptyDropZone}
         {...bindDrop("desktop")}
         data-testid="desktop-empty-grid"
       >
-        {t("desktop.empty.noIcons")}
+        <Text color="secondary">{t("desktop.empty.noIcons")}</Text>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 w-full" {...bindDrop("desktop")} data-testid="desktop-icon-grid">
-      <div className="grid grid-cols-6 gap-6 p-6">
+    <div className={styles.dropZone} {...bindDrop("desktop")} data-testid="desktop-icon-grid">
+      <div className={styles.grid}>
         {currentNodes.map((node) => (
           <DraggableIcon
             key={node.appId}

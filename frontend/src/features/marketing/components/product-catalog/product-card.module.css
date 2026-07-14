@@ -1,0 +1,8 @@
+/*
+ * The only thing Astryx's Stack cannot express here: the `min-width: 0` that lets the
+ * description truncate instead of stretching the row (the old `min-w-0`).
+ */
+
+.body {
+  min-width: 0;
+}

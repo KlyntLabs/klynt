@@ -1,6 +1,7 @@
 import { Button } from "@astryxdesign/core/Button";
 import { screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { useThemeStore } from "@/core/theme/theme-store";
 import { render } from "@/test/render";
 
 /**
@@ -25,12 +26,27 @@ describe("Astryx foundation", () => {
     expect(document.documentElement).toHaveAttribute("data-astryx-theme");
   });
 
-  it("pins light mode while the legacy layer has no dark mode", () => {
+  /**
+   * The mode was pinned to "light" for the whole migration, because the Tailwind layer had no
+   * working dark mode. It is now driven by the theme store, defaulting to "system".
+   *
+   * Both modes are asserted here because `data-theme` on <html> is what portalled content —
+   * dialogs, popovers, toasts, all rendered at <body>, outside the <Theme> wrapper — reads to
+   * resolve its light-dark() tokens. If it stops landing, every portal silently follows the OS
+   * instead of the app.
+   *
+   * Only the pinned modes are asserted. Under "system" Astryx resolves the mode through
+   * matchMedia, which jsdom only stubs, so the attribute never lands in this environment. That
+   * is a limit of the test environment, not of the app — the system path is verified in a real
+   * browser, where matchMedia is real.
+   */
+  it.each(["light", "dark"] as const)("stamps a pinned %s mode onto <html>", (mode) => {
+    useThemeStore.getState().setMode(mode);
+
     render(<Button label="Save" />);
 
-    // The shadcn layer never applies `.dark`, so the app is light-only. Until a real theme
-    // control exists, Theme must not follow the OS — on a dark-mode machine, mode="system"
-    // would render Astryx components dark inside a light app.
-    expect(document.documentElement).toHaveAttribute("data-theme", "light");
+    expect(document.documentElement).toHaveAttribute("data-theme", mode);
+
+    useThemeStore.getState().reset();
   });
 });

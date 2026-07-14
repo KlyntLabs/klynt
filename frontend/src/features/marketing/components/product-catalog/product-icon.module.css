@@ -1,0 +1,58 @@
+/*
+ * The tinted icon tile behind each product entry. Astryx has no "icon tile" primitive (Card is
+ * for discrete items, Badge for status), so the tile lives on the CSS-variable path — every
+ * value is an Astryx token, no hex.
+ *
+ * Each hue pairs `--color-background-<hue>` with `--color-text-<hue>`, which is the token family
+ * Astryx designs for tinted-surface-plus-legible-foreground. lucide strokes `currentColor`.
+ */
+
+.tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--spacing-8);
+  height: var(--spacing-8);
+  border-radius: var(--radius-element);
+}
+
+.blue {
+  background-color: var(--color-background-blue);
+  color: var(--color-text-blue);
+}
+
+.gray {
+  background-color: var(--color-background-gray);
+  color: var(--color-text-gray);
+}
+
+.green {
+  background-color: var(--color-background-green);
+  color: var(--color-text-green);
+}
+
+.orange {
+  background-color: var(--color-background-orange);
+  color: var(--color-text-orange);
+}
+
+.pink {
+  background-color: var(--color-background-pink);
+  color: var(--color-text-pink);
+}
+
+.purple {
+  background-color: var(--color-background-purple);
+  color: var(--color-text-purple);
+}
+
+.red {
+  background-color: var(--color-background-red);
+  color: var(--color-text-red);
+}
+
+.yellow {
+  background-color: var(--color-background-yellow);
+  color: var(--color-text-yellow);
+}

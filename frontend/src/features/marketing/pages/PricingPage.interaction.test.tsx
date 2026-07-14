@@ -14,11 +14,13 @@ describe("PricingPage interactions", () => {
 
     expect(screen.getByText("Free tier on all plans")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Scale" }));
+    // The plan toggle is an Astryx SegmentedControl: a single-select input, so its segments are
+    // radios in a radiogroup rather than the plain buttons the old markup used.
+    await user.click(screen.getByRole("radio", { name: "Scale" }));
     expect(screen.getByText("Scale plan")).toBeInTheDocument();
     expect(screen.getByText("$199")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Free" }));
+    await user.click(screen.getByRole("radio", { name: "Free" }));
     expect(screen.getByText("Free tier on all plans")).toBeInTheDocument();
   });
 

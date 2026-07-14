@@ -1,0 +1,25 @@
+/*
+ * The icon tile: a raised square inside the muted card. Astryx has no "icon tile" primitive,
+ * so it lives here — every value is a token.
+ */
+
+.iconTile {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--spacing-8);
+  height: var(--spacing-8);
+  border-radius: var(--radius-inner);
+  background: var(--color-background-surface);
+  color: var(--color-icon-secondary);
+}
+
+.copy {
+  min-width: 0;
+}
+
+/* Astryx's Text colour union has no "green"; the allowance takes the green text token. */
+.allowance {
+  color: var(--color-text-green);
+}

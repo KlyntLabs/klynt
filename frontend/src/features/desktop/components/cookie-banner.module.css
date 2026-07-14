@@ -1,0 +1,32 @@
+/*
+ * The banner's surface (border, radius, elevation, padding) is an Astryx Card. What is left
+ * here is the bit Astryx does not express: pinning the card to the bottom-right of the
+ * viewport above the window layer, and floating the dismiss button over the card's padding.
+ */
+.banner {
+  position: fixed;
+  right: var(--spacing-4);
+  bottom: var(--spacing-4);
+  /* Above the window layer and the menubar. */
+  z-index: 60;
+  width: 380px;
+}
+
+.dismiss {
+  position: absolute;
+  top: var(--spacing-2);
+  right: var(--spacing-2);
+}
+
+/* Keeps the heading clear of the floating dismiss button. */
+.heading {
+  padding-right: var(--spacing-6);
+}
+
+.mascot {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-inner);
+  object-fit: cover;
+}

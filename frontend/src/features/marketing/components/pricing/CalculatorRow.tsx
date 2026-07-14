@@ -1,7 +1,12 @@
+import { HStack } from "@astryxdesign/core/HStack";
 import { Slider } from "@astryxdesign/core/Slider";
+import { Text } from "@astryxdesign/core/Text";
+import { TextInput } from "@astryxdesign/core/TextInput";
+import { VStack } from "@astryxdesign/core/VStack";
 import { useMemo } from "react";
 import { calculateCost, formatNumber } from "@/features/marketing/lib/pricing-helpers";
 import type { ProductPricing } from "@/features/marketing/lib/pricing-types";
+import styles from "./calculator-row.module.css";
 
 interface CalculatorRowProps {
   product: ProductPricing;
@@ -14,13 +19,22 @@ export function CalculatorRow({ product, value, onChange, tk }: CalculatorRowPro
   const cost = useMemo(() => calculateCost(value, product), [value, product]);
   const sliderMax = product.sliderMax;
 
+  const handleUsageInput = (raw: string) => {
+    const cleaned = raw.replace(/[^0-9KMkm.+\s]/g, "");
+    let num = parseInt(cleaned.replace(/[^0-9]/g, "") || "0", 10);
+    if (cleaned.toLowerCase().includes("m")) num *= 1_000_000;
+    if (cleaned.toLowerCase().includes("k")) num *= 1_000;
+    onChange(Math.min(num, sliderMax));
+  };
+
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-3 py-4 border-b border-[#E5E5E5] last:border-b-0">
-      <div className="flex items-center gap-2 w-40 shrink-0">
+    <div className={styles.row}>
+      <HStack gap={2} align="center" className={styles.name}>
         {product.icon}
-        <span className="text-sm font-medium text-[#1A1A1A]">{tk(product.nameKey)}</span>
-      </div>
-      <div className="flex-1 flex items-center gap-3">
+        <Text type="label">{tk(product.nameKey)}</Text>
+      </HStack>
+
+      <HStack gap={3} align="center" className={styles.controls}>
         <Slider
           label={tk(product.nameKey)}
           isLabelHidden
@@ -31,28 +45,27 @@ export function CalculatorRow({ product, value, onChange, tk }: CalculatorRowPro
           onChange={
             ((next: number) => onChange(next)) as (value: number | [number, number]) => void
           }
-          className="flex-1"
+          className={styles.slider}
         />
-        <input
-          type="text"
+        <TextInput
+          label={tk("pricing.calculator.usageAmount")}
+          isLabelHidden
+          size="sm"
+          width={80}
           value={formatNumber(value)}
-          aria-label={tk("pricing.calculator.usageAmount")}
-          onChange={(e) => {
-            const raw = e.target.value.replace(/[^0-9KMkm.+\s]/g, "");
-            let num = parseInt(raw.replace(/[^0-9]/g, "") || "0", 10);
-            if (raw.toLowerCase().includes("m")) num *= 1_000_000;
-            if (raw.toLowerCase().includes("k")) num *= 1_000;
-            onChange(Math.min(num, sliderMax));
-          }}
-          className="w-20 px-2 py-1.5 text-sm font-mono text-right border border-[#D1D1D1] rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#F76E18]/30"
+          onChange={handleUsageInput}
+          className={styles.usageInput}
         />
-      </div>
-      <div className="w-24 text-right shrink-0">
-        <span className="text-sm font-mono font-medium text-[#1A1A1A]">
+      </HStack>
+
+      <VStack gap={0} align="end" className={styles.cost}>
+        <Text type="label" hasTabularNumbers>
           {cost === 0 ? "$0" : `$${cost.toFixed(2)}`}
-        </span>
-        <span className="text-xs text-[#9CA3AF] block">{tk("pricing.calculator.perMonth")}</span>
-      </div>
+        </Text>
+        <Text type="supporting" color="disabled" display="block">
+          {tk("pricing.calculator.perMonth")}
+        </Text>
+      </VStack>
     </div>
   );
 }

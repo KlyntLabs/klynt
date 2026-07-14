@@ -1,0 +1,12 @@
+/*
+ * The wordmark plate. HStack would give the row and the gap, but not the padding pocket the
+ * mark needs inside the menubar's hit target, so it stays one class.
+ */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding-inline: var(--spacing-2);
+  padding-block: var(--spacing-1);
+  border-radius: var(--radius-element);
+}

@@ -1,0 +1,32 @@
+/*
+ * Hue classes for the marketing icon lookup table.
+ *
+ * Astryx has no per-hue colour prop on `Icon` (it only exposes the semantic set:
+ * primary/secondary/accent/success/error/warning), so the categorical hues live here on the
+ * CSS-variable path Astryx documents for exactly this case. lucide strokes `currentColor`,
+ * so setting `color` is enough. No hex — every value is an Astryx icon token.
+ */
+
+.blue {
+  color: var(--color-icon-blue);
+}
+
+.green {
+  color: var(--color-icon-green);
+}
+
+.orange {
+  color: var(--color-icon-orange);
+}
+
+.purple {
+  color: var(--color-icon-purple);
+}
+
+.red {
+  color: var(--color-icon-red);
+}
+
+.gray {
+  color: var(--color-icon-gray);
+}

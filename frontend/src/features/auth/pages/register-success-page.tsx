@@ -25,7 +25,10 @@ export default function RegisterSuccessPage() {
             : t("auth:register.success.message")
         }
         actions={
-          <Link as={RouterLink} {...({ to: "/login" } as { to?: string })}>
+          // href is load-bearing, not redundant: Astryx's Link renders an anchor (and honours
+          // `as`) only when href is set. Without it this degrades to a non-navigating button —
+          // the one action a freshly-registered user needs. See register-success-page.test.tsx.
+          <Link as={RouterLink} href="/login" {...({ to: "/login" } as { to?: string })}>
             {t("auth:register.success.goToLogin")}
           </Link>
         }

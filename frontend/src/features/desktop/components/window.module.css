@@ -1,0 +1,83 @@
+/*
+ * The window frame — the one piece of desktop chrome Astryx cannot express.
+ *
+ * Astryx has no window primitive: nothing in it describes an absolutely-positioned, draggable,
+ * z-ordered surface, and AppShell/Layout exist to own PAGE structure, which is the opposite of
+ * what a window manager needs. So the frame is a motion.div styled here. The window's
+ * *contents* — toolbar, text, spinner, error state — are Astryx components.
+ *
+ * Astryx's own guidance for exactly this case: "Most DOM styling should stay on the
+ * CSS-variable path" (bunx astryx docs styling-libraries). Every value below is an Astryx
+ * token; there is no hex here.
+ */
+
+.window {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-element);
+  background-color: var(--color-background-surface);
+  box-shadow: var(--shadow-high);
+}
+
+.titleBar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--spacing-2);
+  height: 38px;
+  padding-inline: var(--spacing-3);
+  border-bottom: var(--border-width) solid var(--color-border);
+  background-color: var(--color-background-muted);
+}
+
+/*
+ * min-width: 0 is load-bearing. Text's maxLines={1} sets overflow/ellipsis on the Text itself,
+ * but a flex item defaults to min-width:auto, so this wrapper's min-content size still includes
+ * the full nowrap title and it refuses to shrink. Without it a long title (app titles allow up
+ * to MAX_TITLE_LENGTH = 100 chars) pushes past the window edge and knocks the centred title bar
+ * out of alignment instead of ellipsising.
+ */
+.titleArea {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-1-5);
+  cursor: default;
+}
+
+.titleIcon {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+
+.titleChevron {
+  flex-shrink: 0;
+  /* 12px */
+  width: var(--spacing-3);
+  height: var(--spacing-3);
+}
+
+/* Balances the traffic lights so the title stays optically centred. */
+.controlsSpacer {
+  flex-shrink: 0;
+  width: 52px;
+}
+
+.content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  background-color: var(--color-background-surface);
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding-block: var(--spacing-12);
+}

@@ -46,5 +46,11 @@
     "title": "Admin",
     "description": "Administrator overview",
     "placeholder": "Admin tools will appear here."
+  },
+  "theme": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
   }
 }

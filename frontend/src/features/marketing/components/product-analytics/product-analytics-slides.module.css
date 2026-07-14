@@ -1,0 +1,187 @@
+/*
+ * Bespoke slide compositions for the Product Analytics deck. Astryx has no "slide" primitive:
+ * the full-bleed panel, the icon plates and the code columns are marketing layout, so they live
+ * here. Content inside every slide is an Astryx component (Heading/Text/Card/Badge/Button/List).
+ *
+ * Every value below is an Astryx token. No literal colour of any kind — the migration removed them.
+ * Astryx's own guidance for this case: "Most DOM styling should stay on the CSS-variable path"
+ * (bunx astryx docs styling-libraries).
+ */
+
+.titleSlide,
+.trackSlide,
+.featuresSlide,
+.autocaptureSlide,
+.privacySlide,
+.pricingSlide,
+.integrationSlide,
+.ctaSlide {
+  box-sizing: border-box;
+  display: flex;
+  height: 100%;
+  padding-inline: var(--spacing-8);
+}
+
+/* Centred, single-column slides. */
+.titleSlide,
+.featuresSlide,
+.privacySlide,
+.pricingSlide,
+.integrationSlide,
+.ctaSlide {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.titleSlide,
+.ctaSlide {
+  text-align: center;
+}
+
+/* Two-column slides: copy on the start side, visual on the end side. */
+.trackSlide,
+.autocaptureSlide {
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
+.column {
+  flex: 1;
+  min-width: 0;
+}
+
+.visualColumn {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Title slide */
+.brandPlate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-container);
+  background: linear-gradient(135deg, var(--color-accent), var(--color-icon-orange));
+  box-shadow: var(--shadow-med);
+  color: var(--color-on-accent);
+}
+
+.brandPlateIcon {
+  width: 32px;
+  height: 32px;
+}
+
+.hint {
+  animation: hint-pulse 2s ease-in-out infinite;
+}
+
+@keyframes hint-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hint {
+    animation: none;
+  }
+}
+
+/* Track slide */
+.checkDot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  background: var(--color-background-green);
+  color: var(--color-icon-green);
+}
+
+.checkDotIcon {
+  width: 12px;
+  height: 12px;
+}
+
+.chartPlate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 192px;
+  height: 192px;
+  border-radius: var(--radius-container);
+  background: var(--color-background-muted);
+}
+
+.chartPlateIcon {
+  width: 80px;
+  height: 80px;
+  color: var(--color-icon-accent);
+  opacity: 0.4;
+}
+
+/* Features slide */
+.featureIcon {
+  width: 28px;
+  height: 28px;
+  color: var(--color-icon-accent);
+}
+
+/* Autocapture slide */
+.checkIcon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--color-icon-green);
+}
+
+/* Privacy slide */
+.pillarPlate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background: var(--color-background-muted);
+}
+
+.pillarIcon {
+  width: 24px;
+  height: 24px;
+  color: var(--color-icon-accent);
+}
+
+/* Pricing slide: the headline figure is the one place the deck leans on the green text token. */
+.priceFigure {
+  color: var(--color-text-green);
+}
+
+/* Integration + autocapture code columns */
+.codeColumn {
+  width: 100%;
+  max-width: 384px;
+}
+
+/* CTA slide */
+.commandBar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  background: var(--color-background-muted);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-element);
+  padding: var(--spacing-1) var(--spacing-1) var(--spacing-1) var(--spacing-4);
+}

@@ -1,0 +1,22 @@
+/*
+ * The menubar is an Astryx TopNav; all this adds is the one thing TopNav does not do — pin it
+ * to the top of the viewport above the window layer, the way a desktop menubar behaves.
+ */
+.topNav {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 50;
+  height: 40px;
+}
+
+.logoButton {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}

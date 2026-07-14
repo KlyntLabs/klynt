@@ -13,6 +13,7 @@ import i18n from "@/core/i18n/config";
 import { HtmlLang } from "@/core/i18n/html-lang";
 import { ToastContainer } from "@/core/notifications/toast-container";
 import { useToastStore } from "@/core/notifications/toast-store";
+import { useThemeStore } from "@/core/theme/theme-store";
 
 interface AppProvidersProps {
   children: React.ReactNode;
@@ -20,6 +21,7 @@ interface AppProvidersProps {
 
 export function AppProviders({ children }: AppProvidersProps) {
   const addToast = useToastStore((state) => state.addToast);
+  const themeMode = useThemeStore((state) => state.mode);
   const [queryClient] = useState(() =>
     createQueryClient({
       onMutationError: (error, mutation) => {
@@ -32,11 +34,15 @@ export function AppProviders({ children }: AppProvidersProps) {
   );
 
   return (
-    // mode is pinned to "light" on purpose: the legacy shadcn layer has no working dark mode
-    // (nothing applies the `.dark` class), so mode="system" would render Astryx components dark
-    // inside a hard-light app on an OS in dark mode. Switch to "system" once the migration adds
-    // a real theme control that drives this prop. See docs/astryx-migration-plan.md.
-    <Theme theme={klyntTheme} mode="light">
+    // `mode` was pinned to "light" for the whole migration, because the legacy Tailwind layer
+    // had no working dark mode — nothing ever applied the `.dark` class — so "system" would
+    // have rendered Astryx components dark inside a hard-light app on a dark-mode machine.
+    //
+    // Tailwind is gone and every surface is Astryx, so the pin is lifted: the theme store now
+    // drives it, defaulting to "system", with ThemeToggle as the control. Astryx syncs
+    // `data-theme` onto <html> from this prop, which is also what portalled content (dialogs,
+    // popovers, toasts) reads to resolve its light-dark() tokens.
+    <Theme theme={klyntTheme} mode={themeMode}>
       <HelmetProvider>
         <I18nextProvider i18n={i18n}>
           <HtmlLang />

@@ -1,0 +1,18 @@
+/*
+ * A full-viewport centring shell. Astryx's layout components size themselves to their content;
+ * pinning a panel to the middle of the whole viewport is page-chrome, so it lives here.
+ */
+.screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  height: 100vh;
+  padding: var(--spacing-6);
+  background-color: var(--color-background-body);
+}
+
+.panel {
+  max-width: 28rem;
+  text-align: center;
+}

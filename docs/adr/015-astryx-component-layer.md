@@ -2,7 +2,31 @@
 
 ## Status
 
-Proposed
+**Accepted** — 2026-07-14. Migration complete.
+
+Astryx is the entire component and styling layer. `components/ui/` is deleted, Radix is at zero,
+and Tailwind (`tailwindcss`, `@tailwindcss/vite`, `tailwind-merge`, `clsx`,
+`class-variance-authority`, the `cn()` helper, the Vite plugin) is out of the build. The 912
+`className` sites and 644 hardcoded hex values are gone.
+
+Three questions this ADR left open were answered by doing the work:
+
+- **The escape hatch is CSS Modules on Astryx CSS variables, not StyleX.** `xstyle` needs a
+  compiler in the build; Astryx's own guidance is that "most DOM styling should stay on the
+  CSS-variable path". No new toolchain was added. Pattern and token map:
+  `docs/astryx-marketing-conventions.md`.
+- **The `features/desktop` gate resolved in favour of proceeding.** No swizzling was needed.
+  The window frame stays a `motion.div` — Astryx has no window primitive, and `AppShell`/`Layout`
+  own *page* structure, which is the inverse of what a window manager needs.
+- **The marketing palette question resolved by adopting Astryx's tokens**, accepting the visual
+  shift. The neutrals are warmer than the old bespoke palette, and the link blue is Astryx's.
+
+Two hex values survive, deliberately: the brand accent in `klynt-theme.ts` (which `defineTheme`
+derives every other token from) and the three macOS traffic lights (literal quotations; theming
+them would stop them being red/amber/green in dark mode).
+
+Dark mode now works for the first time — `<Theme mode>` defaults to `system` and is driven by a
+real control. It never worked before: nothing ever applied the old `.dark` class.
 
 ## Date
 

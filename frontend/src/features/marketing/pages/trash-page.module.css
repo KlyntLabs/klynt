@@ -1,0 +1,47 @@
+/*
+ * What Astryx cannot express here:
+ *  - per-file-type icon colour (lucide icons stroke with currentColor, so the colour is set on
+ *    the icon element from Astryx's icon tokens — Astryx's own Icon component only exposes a
+ *    fixed semantic palette and four sizes, none of them the 32px/16px this grid needs);
+ *  - the scroll region and dialog body flexing to fill the remaining height;
+ *  - `white-space: pre-wrap` on the preformatted file contents.
+ */
+
+.iconBlue {
+  color: var(--color-icon-blue);
+}
+
+.iconGreen {
+  color: var(--color-icon-green);
+}
+
+.iconOrange {
+  color: var(--color-icon-orange);
+}
+
+.iconRed {
+  color: var(--color-icon-red);
+}
+
+.iconNeutral {
+  color: var(--color-icon-secondary);
+}
+
+.iconDisabled {
+  color: var(--color-icon-disabled);
+}
+
+.grid {
+  flex: 1;
+  min-height: 0;
+}
+
+.dialogBody {
+  flex: 1;
+  min-height: 0;
+}
+
+.preformatted {
+  white-space: pre-wrap;
+  word-break: break-word;
+}

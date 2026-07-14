@@ -1,5 +1,10 @@
+import { ClickableCard } from "@astryxdesign/core/ClickableCard";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import type { ProductItem } from "@/features/marketing/data/products";
 import { ProductIcon } from "./ProductIcon";
+import styles from "./product-card.module.css";
 
 interface ProductCardProps {
   product: ProductItem;
@@ -7,20 +12,23 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, tk }: ProductCardProps) {
+  const label = tk(product.labelKey);
+
   return (
-    <a
-      href={product.route}
-      className="flex items-center gap-3 p-3 rounded-lg border border-transparent hover:border-[#E5E5E5] hover:bg-[#FAFAF8] transition-all cursor-pointer group"
-    >
-      <ProductIcon name={product.icon} />
-      <div className="min-w-0">
-        <div className="text-sm font-medium text-[#1A1A1A] group-hover:text-[#2563EB] transition-colors">
-          {tk(product.labelKey)}
-        </div>
-        {product.descriptionKey && (
-          <div className="text-xs text-[#9CA3AF] truncate">{tk(product.descriptionKey)}</div>
-        )}
-      </div>
-    </a>
+    <ClickableCard variant="transparent" padding={3} href={product.route} label={label}>
+      <HStack gap={3} align="center">
+        <ProductIcon name={product.icon} />
+        <VStack gap={0} align="start" className={styles.body}>
+          <Text weight="medium" display="block">
+            {label}
+          </Text>
+          {product.descriptionKey && (
+            <Text type="supporting" size="2xs" color="disabled" display="block" maxLines={1}>
+              {tk(product.descriptionKey)}
+            </Text>
+          )}
+        </VStack>
+      </HStack>
+    </ClickableCard>
   );
 }

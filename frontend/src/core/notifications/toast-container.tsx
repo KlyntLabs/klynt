@@ -1,6 +1,19 @@
 import { Button } from "@astryxdesign/core/Button";
-import { useEffect } from "react";
+import { Toast } from "@astryxdesign/core/Toast";
+import styles from "./toast-container.module.css";
 import { useToastStore } from "./toast-store";
+
+/**
+ * Astryx's Toast has two types: `info` and `error`. It has no `success`.
+ *
+ * The store still models success separately — the distinction is meaningful to callers, and
+ * collapsing it there would lose information — but on screen a success renders as an info
+ * toast. That is the design system's opinion (a success is a confirmation, not an alert), and
+ * adopting Astryx means taking it. The visible change: success toasts are no longer green.
+ */
+function toastType(type: string): "info" | "error" {
+  return type === "error" ? "error" : "info";
+}
 
 function ToastItem({
   id,
@@ -20,38 +33,29 @@ function ToastItem({
 }) {
   const removeToast = useToastStore((state) => state.removeToast);
 
-  useEffect(() => {
-    const timer = setTimeout(() => removeToast(id), duration);
-    return () => clearTimeout(timer);
-  }, [id, duration, removeToast]);
-
-  const color =
-    type === "error"
-      ? "bg-destructive text-destructive-foreground"
-      : type === "success"
-        ? "bg-success text-success-foreground"
-        : "bg-primary text-primary-foreground";
-
   return (
-    <output
-      aria-live="polite"
-      aria-atomic="true"
-      className={`flex items-center gap-3 rounded-md px-4 py-2 shadow ${color}`}
-    >
-      <span>{message}</span>
-      {action && (
-        <Button
-          variant="secondary"
-          size="sm"
-          label={action.label}
-          onClick={() => {
-            action.onClick();
-            removeToast(id);
-          }}
-          className="border-current bg-transparent text-current hover:bg-white/20"
-        />
-      )}
-    </output>
+    // Astryx owns the dismiss timer (and pauses it on hover/focus, which the hand-rolled
+    // setTimeout never did); onDismiss is what evicts the entry from the store.
+    <Toast
+      body={message}
+      type={toastType(type)}
+      isAutoHide
+      autoHideDuration={duration}
+      onDismiss={() => removeToast(id)}
+      endContent={
+        action ? (
+          <Button
+            variant="secondary"
+            size="sm"
+            label={action.label}
+            onClick={() => {
+              action.onClick();
+              removeToast(id);
+            }}
+          />
+        ) : undefined
+      }
+    />
   );
 }
 
@@ -63,11 +67,7 @@ export function ToastContainer() {
   }
 
   return (
-    <div
-      aria-live="polite"
-      aria-atomic="true"
-      className="fixed bottom-4 right-4 z-50 flex flex-col gap-2"
-    >
+    <div aria-live="polite" aria-atomic="true" className={styles.stack}>
       {toasts.map((toast) => (
         <ToastItem key={toast.id} {...toast} />
       ))}

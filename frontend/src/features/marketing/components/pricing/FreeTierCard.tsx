@@ -1,4 +1,9 @@
+import { Card } from "@astryxdesign/core/Card";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import type { FreeTierItem } from "@/features/marketing/lib/pricing-types";
+import styles from "./free-tier-card.module.css";
 
 interface FreeTierCardProps {
   item: FreeTierItem;
@@ -6,18 +11,20 @@ interface FreeTierCardProps {
 
 export function FreeTierCard({ item }: FreeTierCardProps) {
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg bg-[#F5F3EF]">
-      <div className="w-8 h-8 rounded-md bg-white flex items-center justify-center text-[#6B6B6B] shrink-0">
-        {item.icon}
-      </div>
-      <div className="min-w-0">
-        <div className="text-sm font-medium text-[#1A1A1A]">{item.product}</div>
-        <div
-          className={`text-xs font-medium ${item.included ? "text-[#22C55E]" : "text-[#22C55E]"}`}
-        >
-          {item.allowance}
-        </div>
-      </div>
-    </div>
+    <Card variant="muted" padding={3}>
+      <HStack gap={3} align="center">
+        <div className={styles.iconTile}>{item.icon}</div>
+        <VStack gap={0} align="start" className={styles.copy}>
+          {/*
+           * The allowance is always green: the pre-migration `included ? green : green`
+           * ternary had identical branches, so it never varied. Behaviour is unchanged.
+           */}
+          <Text type="label">{item.product}</Text>
+          <Text type="supporting" weight="medium" className={styles.allowance}>
+            {item.allowance}
+          </Text>
+        </VStack>
+      </HStack>
+    </Card>
   );
 }

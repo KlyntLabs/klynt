@@ -1,0 +1,46 @@
+/*
+ * The contact-card grid. Astryx covers the grid, the cards and the type; what it has no
+ * primitive for is the tinted icon disc at the top of each card, so that lives here — one class
+ * per channel, each drawing its tint and its mark from the matching colour-family tokens.
+ *
+ * The region padding is the card strip's own (it was `px-8 pb-6` pre-migration and
+ * TalkToHumanPage still relies on it).
+ */
+
+.region {
+  padding-inline: var(--spacing-8);
+  padding-block-end: var(--spacing-6);
+}
+
+.iconDisc {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--spacing-10);
+  height: var(--spacing-10);
+  border-radius: var(--radius-full);
+}
+
+.iconDiscDiscord {
+  composes: iconDisc;
+  background: var(--color-background-purple);
+  color: var(--color-icon-purple);
+}
+
+.iconDiscEmail {
+  composes: iconDisc;
+  background: var(--color-accent-muted);
+  color: var(--color-icon-accent);
+}
+
+.iconDiscGithub {
+  composes: iconDisc;
+  background: var(--color-background-gray);
+  color: var(--color-icon-primary);
+}
+
+/* Pushes the link to the foot of the card so the three links align across the row. */
+.body {
+  flex: 1;
+}

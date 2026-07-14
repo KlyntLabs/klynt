@@ -122,7 +122,7 @@ describe("WindowManager interactions", () => {
 
     render(<WindowManager config={config} />);
 
-    const windowEl = screen.getByText("home.mdx").closest("div[class*='rounded-lg']");
+    const windowEl = screen.getByText("home.mdx").closest('[data-testid="desktop-window"]');
     expect(windowEl).toBeTruthy();
     expect((windowEl as HTMLElement).style.width).toBe("400px");
 
@@ -131,7 +131,7 @@ describe("WindowManager interactions", () => {
     });
 
     await waitFor(() => {
-      const maximized = screen.getByText("home.mdx").closest("div[class*='rounded-lg']");
+      const maximized = screen.getByText("home.mdx").closest('[data-testid="desktop-window"]');
       expect((maximized as HTMLElement).style.width).toBe("calc(100vw - 0px)");
     });
   });

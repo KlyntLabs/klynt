@@ -1,0 +1,77 @@
+/*
+ * macOS-style traffic lights.
+ *
+ * DELIBERATE ASTRYX EXCEPTION — the three colours below are the only hardcoded hex left in
+ * the desktop chrome. They are not brand or semantic values that should follow a theme; they
+ * are literal quotations of the macOS window controls, and the whole desktop metaphor depends
+ * on the user recognising them. Mapping them onto Astryx's status tokens would make them
+ * theme-dependent and, in a dark theme, no longer red/amber/green. Astryx has no
+ * window-control component to replace them.
+ *
+ * See docs/adr/015-astryx-component-layer.md — the desktop chrome is a bounded exception to
+ * the "tokens for every value" rule, and this is where it applies.
+ *
+ * Only the three resting colours are literals. The hover shade and the glyph colour are
+ * *derived* from them with color-mix, so there is exactly one source of truth per light and
+ * no fourth, fifth or sixth hex to keep in sync.
+ */
+
+.controls {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--spacing-1-5);
+}
+
+.light {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  /* 12px — the macOS control diameter. */
+  width: var(--spacing-3);
+  height: var(--spacing-3);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-full);
+  background-color: var(--traffic-light);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.light:hover {
+  background-color: color-mix(in srgb, var(--traffic-light) 88%, black);
+}
+
+/* The glyph only appears on hover, exactly as macOS does it. */
+.light svg {
+  /* 8px */
+  width: var(--spacing-2);
+  height: var(--spacing-2);
+  color: color-mix(in srgb, var(--traffic-light) 45%, black);
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-standard);
+}
+
+.light:hover svg {
+  opacity: 1;
+}
+
+.close {
+  --traffic-light: #ff5f57;
+}
+
+.minimize {
+  --traffic-light: #febc2e;
+}
+
+.maximize {
+  --traffic-light: #28c840;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .light,
+  .light svg {
+    transition: none;
+  }
+}

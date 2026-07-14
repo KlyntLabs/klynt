@@ -1,0 +1,36 @@
+/*
+ * The notes pane is a full-bleed document surface: it fills the app window and has no visible
+ * label or chrome. Astryx's <TextArea> is a labelled form field whose height is driven by `rows`,
+ * so it cannot express "fill the parent" — hence a native <textarea>, styled on tokens only.
+ */
+
+.surface {
+  height: 100%;
+  width: 100%;
+  padding: var(--spacing-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-element);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-body);
+  font-size: var(--font-size-base);
+}
+
+.readonly {
+  composes: surface;
+  overflow: auto;
+  background: var(--color-background-card);
+  box-shadow: var(--shadow-low);
+  white-space: pre-wrap;
+}
+
+.editor {
+  composes: surface;
+  resize: none;
+  background: var(--color-background-surface);
+  outline: none;
+}
+
+.editor:focus-visible {
+  border-color: var(--color-border-blue);
+  box-shadow: var(--shadow-inset-selected);
+}

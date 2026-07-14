@@ -1,0 +1,22 @@
+/*
+ * The unread dot on the notifications bell. Astryx's StatusDot is a semantic state indicator
+ * (success/warning/error), not an "there is something new" badge, so this is a plain dot in
+ * the brand accent. Tokens only.
+ */
+.bell {
+  position: relative;
+  display: inline-flex;
+}
+
+.bellDot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  /* 8px */
+  width: var(--spacing-2);
+  height: var(--spacing-2);
+  border-radius: var(--radius-full);
+  background-color: var(--color-accent);
+  /* Punches the dot out of the bar behind it so it reads as separate from the icon. */
+  box-shadow: 0 0 0 1px var(--color-background-surface);
+}

@@ -1,0 +1,12 @@
+/*
+ * Astryx's Button sizes to its label and exposes no full-width prop, but a card's closing CTA is
+ * a full-bleed block. Stretching it from the wrapper keeps every button token intact.
+ */
+
+.blockAction {
+  display: flex;
+}
+
+.blockAction > * {
+  flex: 1;
+}

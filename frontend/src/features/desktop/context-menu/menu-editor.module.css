@@ -1,0 +1,58 @@
+/*
+ * The menu-editor list. Astryx's VStack/HStack carry the internal rhythm; what is left here is
+ * the bordered list-row chrome, which has to stay on real <ul>/<li> elements for semantics and
+ * for the data-testids the tests key off. Tokens only.
+ */
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-element);
+}
+
+.rowMain {
+  flex: 1;
+  min-width: 0;
+}
+
+/* The separator row: the Divider takes the slack, the delete button keeps its intrinsic width. */
+.separatorRow {
+  composes: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+}
+
+.separatorLine {
+  flex: 1;
+  min-width: 0;
+}
+
+.groupRow {
+  composes: row;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-1);
+}
+
+.emptyState {
+  display: flex;
+  min-height: 8rem;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-4);
+  border: 1px dashed var(--color-border-emphasized);
+  border-radius: var(--radius-element);
+}

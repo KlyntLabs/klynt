@@ -1,7 +1,17 @@
+import { Button } from "@astryxdesign/core/Button";
+import { Grid } from "@astryxdesign/core/Grid";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Section } from "@astryxdesign/core/Section";
+import { Text } from "@astryxdesign/core/Text";
+import { Token } from "@astryxdesign/core/Token";
+import { VStack } from "@astryxdesign/core/VStack";
 import { Shuffle } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { Customer } from "@/features/marketing/data/homeData";
 import { engineerCustomers, vcCustomers } from "@/features/marketing/data/homeData";
+import styles from "./customer-logos-section.module.css";
 
 interface CustomerLogosSectionProps {
   onOpenApp: (route: string, title?: string) => void;
@@ -16,6 +26,27 @@ function shuffleArray<T>(prev: T[]): T[] {
   return arr;
 }
 
+function LogoGroup({ label, customers }: { label: string; customers: Customer[] }) {
+  return (
+    <VStack gap={3} align="start">
+      <Text
+        type="supporting"
+        size="xsm"
+        weight="semibold"
+        color="disabled"
+        className={styles.eyebrow}
+      >
+        {label}
+      </Text>
+      <HStack gap={3} wrap="wrap">
+        {customers.map((c) => (
+          <Token key={c.id} label={c.logo} />
+        ))}
+      </HStack>
+    </VStack>
+  );
+}
+
 export function CustomerLogosSection({ onOpenApp }: CustomerLogosSectionProps) {
   const { t } = useTranslation("marketing");
   const [shuffledVC, setShuffledVC] = useState(vcCustomers);
@@ -27,62 +58,34 @@ export function CustomerLogosSection({ onOpenApp }: CustomerLogosSectionProps) {
   }, []);
 
   return (
-    <section className="mb-8 pt-6 border-t border-[#E5E5E5]">
-      <div className="flex items-center justify-between mb-5">
-        <div>
-          <h2 className="text-2xl font-bold text-[#1A1A1A]">{t("home.customers.title")}</h2>
-          <p className="text-sm text-[#6B6B6B] mt-1">{t("home.customers.subtitle")}</p>
-        </div>
-        <button
-          type="button"
-          onClick={handleShuffle}
-          className="flex items-center gap-1.5 text-sm text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors shrink-0"
-        >
-          <Shuffle className="w-4 h-4" />
-          {t("home.customers.shuffle")}
-        </button>
-      </div>
+    <Section variant="transparent" padding={0} paddingBlock={6} dividers={["top"]}>
+      <VStack gap={5} align="start">
+        <HStack gap={4} align="center" justify="between" width="100%">
+          <VStack gap={1} align="start">
+            <Heading level={2}>{t("home.customers.title")}</Heading>
+            <Text type="supporting">{t("home.customers.subtitle")}</Text>
+          </VStack>
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={<Shuffle />}
+            label={t("home.customers.shuffle")}
+            onClick={handleShuffle}
+          />
+        </HStack>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <p className="text-xs font-semibold text-[#9CA3AF] uppercase tracking-wide mb-3">
-            {t("home.customers.vcLabel")}
-          </p>
-          <div className="flex flex-wrap gap-3">
-            {shuffledVC.map((c) => (
-              <div
-                key={c.id}
-                className="h-8 px-3 flex items-center bg-[#F5F3EF] rounded-md text-sm font-medium text-[#6B6B6B] grayscale hover:grayscale-0 transition-all duration-200 cursor-pointer"
-              >
-                {c.logo}
-              </div>
-            ))}
-          </div>
-        </div>
-        <div>
-          <p className="text-xs font-semibold text-[#9CA3AF] uppercase tracking-wide mb-3">
-            {t("home.customers.engineerLabel")}
-          </p>
-          <div className="flex flex-wrap gap-3">
-            {shuffledEng.map((c) => (
-              <div
-                key={c.id}
-                className="h-8 px-3 flex items-center bg-[#F5F3EF] rounded-md text-sm font-medium text-[#6B6B6B] grayscale hover:grayscale-0 transition-all duration-200 cursor-pointer"
-              >
-                {c.logo}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+        <Grid columns={{ minWidth: 280, max: 2 }} gap={6} width="100%">
+          <LogoGroup label={t("home.customers.vcLabel")} customers={shuffledVC} />
+          <LogoGroup label={t("home.customers.engineerLabel")} customers={shuffledEng} />
+        </Grid>
 
-      <button
-        type="button"
-        onClick={() => onOpenApp("/customers", t("home.customers.openCustomers"))}
-        className="text-sm text-[#2563EB] hover:underline mt-4 inline-block"
-      >
-        {t("home.customers.openCustomers")}
-      </button>
-    </section>
+        <Button
+          variant="ghost"
+          size="sm"
+          label={t("home.customers.openCustomers")}
+          onClick={() => onOpenApp("/customers", t("home.customers.openCustomers"))}
+        />
+      </VStack>
+    </Section>
   );
 }

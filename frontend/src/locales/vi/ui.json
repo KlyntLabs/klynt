@@ -46,5 +46,11 @@
     "title": "Quản trị",
     "description": "Tổng quan quản trị viên",
     "placeholder": "Công cụ quản trị sẽ hiển thị tại đây."
+  },
+  "theme": {
+    "label": "Giao diện",
+    "light": "Sáng",
+    "dark": "Tối",
+    "system": "Hệ thống"
   }
 }

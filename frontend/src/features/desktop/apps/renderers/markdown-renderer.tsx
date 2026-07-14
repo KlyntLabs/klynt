@@ -1,6 +1,8 @@
+import { TextArea } from "@astryxdesign/core/TextArea";
 import DOMPurify from "isomorphic-dompurify";
 import { marked } from "marked";
 import { useEffect, useMemo, useRef, useState } from "react";
+import styles from "./markdown-renderer.module.css";
 
 type MarkdownContent = {
   text: string;
@@ -50,8 +52,7 @@ export function MarkdownRenderer({
     };
   }, []);
 
-  const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = event.target.value;
+  const handleChange = (newValue: string) => {
     setDraft(newValue);
 
     if (timeoutRef.current) {
@@ -66,20 +67,24 @@ export function MarkdownRenderer({
   };
 
   return (
-    <div className="flex h-full flex-col gap-3 p-4">
+    <div className={styles.pane}>
       <div
-        className="flex-1 overflow-auto rounded-md border border-border bg-card p-4 text-foreground shadow-elevation-1"
+        className={styles.preview}
         // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is sanitized by DOMPurify before injection.
         dangerouslySetInnerHTML={{ __html: sanitizedHtml }} // nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml
         data-testid="markdown-preview"
       />
       {!readOnly && (
-        <textarea
+        // Astryx's TextArea owns the label, so the old aria-label becomes a hidden `label` —
+        // the accessible name is unchanged. Height is rows-driven here, which suits this
+        // fixed-height source pane (unlike the notes editor, which must fill the window).
+        <TextArea
+          label="Markdown editor"
+          isLabelHidden
+          rows={5}
           value={draft}
           onChange={handleChange}
-          className="h-32 w-full resize-none rounded-md border border-border bg-background p-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
           data-testid="markdown-editor"
-          aria-label="Markdown editor"
         />
       )}
     </div>

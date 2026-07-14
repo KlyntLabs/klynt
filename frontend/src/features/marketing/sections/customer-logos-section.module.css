@@ -1,0 +1,10 @@
+/*
+ * The uppercase eyebrow label is a marketing typographic treatment; Astryx's Text exposes size,
+ * weight and colour but no text-transform, so the casing lives here. Colour and size stay on
+ * the Text component so the theme still owns them.
+ */
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

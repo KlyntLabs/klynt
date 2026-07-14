@@ -1,0 +1,23 @@
+/*
+ * The inline install command bar — the same shape as the hero's, and the same reason it needs
+ * CSS: Astryx has no "command line + copy affordance" primitive. Tokens only, no hex.
+ */
+
+.command {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  background-color: var(--color-background-muted);
+  border-radius: var(--radius-element);
+  padding: var(--spacing-2) var(--spacing-3);
+}
+
+/* The copied state is a success signal, so it takes Astryx's green icon token. */
+.copied {
+  color: var(--color-icon-green);
+}
+
+/* framer-motion animates height; the content must be clipped while it does. */
+.reveal {
+  overflow: hidden;
+}

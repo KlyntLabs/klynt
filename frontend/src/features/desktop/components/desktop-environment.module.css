@@ -1,0 +1,48 @@
+/*
+ * The desktop surface itself: a full-viewport stacking context holding the wallpaper, the
+ * menubar, the icon field and the window layer. This is the root of the desktop metaphor, and
+ * Astryx has nothing for it — AppShell owns page structure, which is the opposite of a
+ * window manager (see window.module.css). Tokens only; the wallpaper image is passed in
+ * from the component because it is data, not style.
+ */
+
+.root {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.wallpaper {
+  position: absolute;
+  inset: 0;
+  /* The tint the tiling texture is composited over. */
+  background-color: var(--color-background-body);
+  background-repeat: repeat;
+  background-size: 512px 512px;
+}
+
+.garden {
+  position: absolute;
+  right: var(--spacing-4);
+  bottom: var(--spacing-4);
+  z-index: 0;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.gardenImage {
+  width: 280px;
+  height: auto;
+}
+
+.loadingOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-overlay);
+  backdrop-filter: blur(4px);
+}

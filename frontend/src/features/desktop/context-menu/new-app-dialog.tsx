@@ -86,6 +86,10 @@ export function NewAppDialog({
               value={title}
               onChange={setTitle}
               status={error ? { type: "error", message: error } : undefined}
+              // maxLength is spread, not passed as a typed prop: Astryx's BaseProps extends
+              // React.HTMLAttributes rather than InputHTMLAttributes, so input-only attributes
+              // are absent from TextInputProps even though rest props DO reach the <input>.
+              // Same rationale as the autoComplete cast in src/components/form/form-text-input.tsx.
               {...({ maxLength: MAX_TITLE_LENGTH } as { maxLength?: number })}
             />
             <Selector

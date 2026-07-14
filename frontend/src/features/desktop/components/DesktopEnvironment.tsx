@@ -12,6 +12,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import type { DesktopConfig } from "../factory/types";
 import CookieBanner from "./CookieBanner";
 import DesktopIcons from "./DesktopIcons";
+import styles from "./desktop-environment.module.css";
 import Menubar from "./Menubar";
 import { MobileFallback } from "./MobileFallback";
 import { useDesktopBundle } from "./use-desktop-bundle";
@@ -181,24 +182,22 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
 
   return (
     <div
-      className="w-screen h-screen overflow-hidden relative"
+      className={styles.root}
       onContextMenu={handleBackgroundContextMenu}
       role="application"
       aria-label={t("desktop.navLabel")}
     >
-      {/* Wallpaper Background */}
+      {/* Wallpaper Background — the tint, repeat and tile size live in the module; only the
+          image is dynamic, so only the image is inline. */}
       <div
-        className="absolute inset-0"
+        className={styles.wallpaper}
         style={{
-          backgroundColor: "#D8D2C8",
           backgroundImage: background ? `url(${background.src})` : "url(/wallpaper-texture.webp)",
-          backgroundRepeat: "repeat",
-          backgroundSize: "512px 512px",
         }}
       />
 
       {/* Decorative hedgehog garden */}
-      <div className="absolute bottom-4 right-4 opacity-30 pointer-events-none z-0">
+      <div className={styles.garden}>
         <img
           src="/hedgehog-garden.webp"
           alt=""
@@ -206,7 +205,7 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
           height={1536}
           loading="lazy"
           decoding="async"
-          className="w-[280px] h-auto"
+          className={styles.gardenImage}
         />
       </div>
 
@@ -241,12 +240,7 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
 
       {/* Persistence loading overlay */}
       {isLoading && (
-        <div
-          className="absolute inset-0 z-50 flex items-center justify-center bg-background/50 backdrop-blur-sm"
-          role="status"
-          aria-live="polite"
-          aria-busy="true"
-        >
+        <div className={styles.loadingOverlay} role="status" aria-live="polite" aria-busy="true">
           <Spinner />
         </div>
       )}

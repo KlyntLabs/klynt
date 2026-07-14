@@ -1,6 +1,9 @@
+import { Button } from "@astryxdesign/core/Button";
+import { Text } from "@astryxdesign/core/Text";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import styles from "./slide-deck.module.css";
 
 export interface Slide {
   id: string | number;
@@ -73,44 +76,37 @@ export function SlideDeck({
   const CurrentSlide = slides[current].render;
 
   return (
-    <div className="flex flex-col h-full select-none">
-      {topBar && (
-        <div className="flex items-center justify-end px-4 py-2 border-b border-[#E5E5E5] bg-white gap-2 shrink-0">
-          {topBar}
-        </div>
-      )}
+    <div className={styles.deck}>
+      {topBar && <div className={styles.topBar}>{topBar}</div>}
 
-      <div className="flex flex-1 min-h-0">
+      <div className={styles.body}>
         {/* Slide thumbnails panel */}
-        <div className="w-[180px] shrink-0 bg-[#F5F3EF] border-r border-[#E5E5E5] overflow-y-auto p-3">
+        <div className={styles.thumbnails}>
           {slides.map((slide, idx) => (
             <button
               type="button"
               key={slide.id}
               onClick={() => goTo(idx)}
-              className={`w-full mb-2 text-left group ${
-                idx === current ? "ring-2 ring-[#F76E18] rounded" : ""
-              }`}
+              className={styles.thumbnail}
+              data-selected={idx === current ? "true" : undefined}
             >
-              <div
-                className={`w-full aspect-[4/3] rounded border bg-white relative overflow-hidden transition-opacity ${
-                  idx === current
-                    ? "border-[#F76E18] shadow-sm"
-                    : "border-[#D1D1D1] opacity-70 group-hover:opacity-100"
-                }`}
-              >
-                <div className="absolute inset-0 flex items-center justify-center p-1">
-                  <span className="text-[10px] text-[#9CA3AF]">{idx + 1}</span>
-                </div>
+              <div className={styles.thumbnailFrame}>
+                <Text type="supporting" size="2xs">
+                  {idx + 1}
+                </Text>
               </div>
-              <p className="text-[10px] text-[#6B6B6B] truncate mt-0.5 px-0.5">{slide.title}</p>
+              <div className={styles.thumbnailLabel}>
+                <Text type="supporting" size="2xs" display="block" maxLines={1}>
+                  {slide.title}
+                </Text>
+              </div>
             </button>
           ))}
         </div>
 
         {/* Slide content */}
-        <div className="flex-1 flex flex-col min-w-0 bg-white">
-          <div className="flex-1 relative overflow-hidden">
+        <div className={styles.stage}>
+          <div className={styles.slideViewport}>
             <AnimatePresence initial={false} custom={direction} mode="wait">
               <motion.div
                 key={current}
@@ -120,7 +116,7 @@ export function SlideDeck({
                 animate="center"
                 exit="exit"
                 transition={slideTransition}
-                className="absolute inset-0"
+                className={styles.slideLayer}
               >
                 <CurrentSlide />
               </motion.div>
@@ -128,32 +124,40 @@ export function SlideDeck({
           </div>
 
           {/* Presenter notes */}
-          <div className="shrink-0 h-[90px] bg-[#FAFAF8] border-t border-[#E5E5E5] px-4 py-2.5 overflow-y-auto">
-            <p className="text-[10px] text-[#9CA3AF] uppercase tracking-wider mb-1">{notesLabel}</p>
-            <p className="text-xs text-[#6B6B6B] leading-relaxed">{slides[current].notes}</p>
+          <div className={styles.notes}>
+            <div className={styles.notesLabel}>
+              <Text type="supporting" size="2xs" color="disabled" display="block">
+                {notesLabel}
+              </Text>
+            </div>
+            <Text type="supporting" size="xsm" display="block">
+              {slides[current].notes}
+            </Text>
           </div>
 
           {/* Bottom navigation */}
-          <div className="shrink-0 flex items-center justify-end px-4 py-2 border-t border-[#E5E5E5] bg-white gap-2">
-            <button
-              type="button"
+          <div className={styles.navigation}>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<ChevronLeft />}
+              label={prevLabel}
+              isDisabled={current === 0}
               onClick={goPrev}
-              disabled={current === 0}
-              className="flex items-center gap-1 text-sm px-3 py-1.5 rounded-md border border-[#D1D1D1] hover:bg-[#F5F3EF] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <ChevronLeft className="w-4 h-4" /> {prevLabel}
-            </button>
-            <span className="text-sm text-[#6B6B6B] min-w-[3ch] text-center">
-              {current + 1} / {slides.length}
-            </span>
-            <button
-              type="button"
+            />
+            <div className={styles.counter}>
+              <Text color="secondary">
+                {current + 1} / {slides.length}
+              </Text>
+            </div>
+            <Button
+              variant="primary"
+              size="sm"
+              endContent={<ChevronRight />}
+              label={nextLabel}
+              isDisabled={current === slides.length - 1}
               onClick={goNext}
-              disabled={current === slides.length - 1}
-              className="flex items-center gap-1 text-sm px-3 py-1.5 rounded-md bg-[#1A1A1A] text-white hover:bg-[#333] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {nextLabel} <ChevronRight className="w-4 h-4" />
-            </button>
+            />
           </div>
         </div>
       </div>

@@ -1,4 +1,6 @@
+import { Banner } from "@astryxdesign/core/Banner";
 import { Button } from "@astryxdesign/core/Button";
+import { Section } from "@astryxdesign/core/Section";
 import { ErrorBoundary as ReactErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
 import { logger } from "@/core/logger";
@@ -18,16 +20,17 @@ function Fallback({
   const message = error instanceof Error ? error.message : t("boundary.unknownError");
 
   return (
-    <div className="p-6" role="alert">
-      <h2 className="text-lg font-semibold">{t("boundary.title")}</h2>
-      <pre className="mt-2 text-sm text-destructive">{message}</pre>
-      <Button
-        variant="primary"
-        label={t("boundary.tryAgain")}
-        onClick={resetErrorBoundary}
-        className="mt-4"
+    <Section variant="transparent" padding={6}>
+      <Banner
+        status="error"
+        role="alert"
+        title={t("boundary.title")}
+        description={message}
+        endContent={
+          <Button variant="primary" label={t("boundary.tryAgain")} onClick={resetErrorBoundary} />
+        }
       />
-    </div>
+    </Section>
   );
 }
 

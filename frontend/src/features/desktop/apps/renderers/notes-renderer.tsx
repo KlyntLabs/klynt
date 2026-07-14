@@ -1,4 +1,5 @@
 import { NotesEditor } from "./notes-editor";
+import styles from "./notes-renderer.module.css";
 import { getText } from "./notes-utils";
 
 type NotesRendererProps = {
@@ -16,10 +17,7 @@ export function NotesRenderer({
 
   if (readOnly) {
     return (
-      <div
-        className="h-full w-full overflow-auto whitespace-pre-wrap rounded-md border border-border bg-card p-4 text-foreground shadow-elevation-1"
-        data-testid="notes-readonly"
-      >
+      <div className={styles.readonly} data-testid="notes-readonly">
         {text}
       </div>
     );

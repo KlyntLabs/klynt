@@ -1,0 +1,20 @@
+/*
+ * The app's outermost frame. Astryx's AppShell owns *page* structure and assumes a
+ * TopNav/SideNav frame; the apex of this app is a virtual desktop, so the root stays a plain
+ * flex column and lets each router decide what fills it.
+ *
+ * Colour comes from the theme, not from here: Astryx's reset sets the body ground and text.
+ */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  outline: none;
+}

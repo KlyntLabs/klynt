@@ -4,6 +4,7 @@ import { TopNav } from "@astryxdesign/core/TopNav";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { ThemeToggle } from "@/core/theme/theme-toggle";
 import { useWindowManager } from "@/features/desktop/window-manager/window-module";
 import type { DesktopAction } from "../apps/types";
 import type { DesktopConfig } from "../factory/types";
@@ -13,6 +14,7 @@ import { useMenuGroups } from "./menubar/menu-helpers";
 import { toDropdownEntries } from "./menubar/menu-items";
 import { TrailingActions } from "./menubar/trailing-actions";
 import { UserMenu } from "./menubar/user-menu";
+import styles from "./menubar.module.css";
 
 interface MenubarProps {
   config: DesktopConfig;
@@ -68,9 +70,9 @@ export default function Menubar({ config }: MenubarProps) {
 
   return (
     <TopNav
-      className="fixed top-0 right-0 left-0 z-50 h-10"
+      className={styles.topNav}
       heading={
-        <button type="button" onClick={handleLogoClick} className="flex shrink-0 items-center">
+        <button type="button" onClick={handleLogoClick} className={styles.logoButton}>
           <BrandLogo
             label={t("desktop.menubar.logo") || config.menubar.brand.label}
             alt={t("desktop.menubar.logoAlt")}
@@ -110,8 +112,14 @@ export default function Menubar({ config }: MenubarProps) {
         </HStack>
       }
       endContent={
-        <HStack gap={2}>
+        <HStack gap={2} align="center">
           <TrailingActions schema={filteredSchema} onAction={handleTrailingClick} />
+          {/*
+           * The theme control lives in the menubar rather than a settings page because it is
+           * global: it drives <Theme mode>, which is the single thing allowed to set the colour
+           * mode. Every desktop shows the menubar, so the control is always reachable.
+           */}
+          <ThemeToggle />
           <UserMenu />
         </HStack>
       }

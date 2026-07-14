@@ -46,5 +46,11 @@
     "title": "管理员",
     "description": "管理员概览",
     "placeholder": "管理工具将显示在这里。"
+  },
+  "theme": {
+    "label": "主题",
+    "light": "浅色",
+    "dark": "深色",
+    "system": "跟随系统"
   }
 }

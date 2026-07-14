@@ -1,3 +1,4 @@
+import { Text } from "@astryxdesign/core/Text";
 import { ExternalLink, Monitor } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -8,6 +9,8 @@ import { useWindowManager } from "@/features/desktop/window-manager/window-modul
 import type { AppManifest } from "../apps/types";
 import type { DesktopConfig } from "../factory/types";
 import { DesktopIconGrid } from "./DesktopIconGrid";
+import iconStyles from "./desktop-icon.module.css";
+import styles from "./desktop-icons.module.css";
 
 interface DesktopIconItemProps {
   icon: React.ReactNode;
@@ -17,17 +20,19 @@ interface DesktopIconItemProps {
 
 function DesktopIconItem({ icon, label, onClick }: DesktopIconItemProps) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex flex-col items-center gap-1 w-[72px] group cursor-pointer"
-    >
-      <div className="w-12 h-12 flex items-center justify-center rounded-xl bg-white/80 backdrop-blur-sm border border-white/40 shadow-sm group-hover:bg-white group-hover:scale-105 group-hover:shadow-md transition-all duration-150">
-        {icon}
-      </div>
-      <span className="text-[11px] font-medium text-center text-[#1A1A1A] leading-tight max-w-[72px] line-clamp-2 drop-shadow-[0_1px_2px_rgba(255,255,255,0.8)]">
+    <button type="button" onClick={onClick} className={iconStyles.icon}>
+      <div className={iconStyles.tile}>{icon}</div>
+      <Text
+        type="supporting"
+        size="xsm"
+        weight="medium"
+        color="primary"
+        maxLines={2}
+        justify="center"
+        className={iconStyles.label}
+      >
         {label}
-      </span>
+      </Text>
     </button>
   );
 }
@@ -39,7 +44,7 @@ function AppIcon({ app, desktopId }: { app: AppManifest; desktopId: string }) {
   return (
     <DesktopIconItem
       key={app.id}
-      icon={<Icon className="w-6 h-6" />}
+      icon={<Icon />}
       label={t(app.title as never)}
       onClick={() =>
         openApp(desktopId, app.id, { width: app.defaultSize.width, height: app.defaultSize.height })
@@ -98,17 +103,17 @@ export default function DesktopIcons({
   return (
     <>
       {/* Left column */}
-      <div className="fixed left-4 top-[52px] z-10 flex flex-col gap-5">
+      <div className={`${styles.dock} ${styles.dockLeft}`}>
         <DockIcons config={config} position="left" />
         {isMarketing && (
           <>
             <DesktopIconItem
-              icon={<ExternalLink className="w-6 h-6 text-[#6B6B6B]" />}
+              icon={<ExternalLink />}
               label={t("desktop.icons.left.signUp")}
               onClick={handleSignUpClick}
             />
             <DesktopIconItem
-              icon={<Monitor className="w-6 h-6 text-[#6B6B6B]" />}
+              icon={<Monitor />}
               label={t("desktop.icons.switchToWebsite")}
               onClick={() => setViewMode("website")}
             />
@@ -117,10 +122,7 @@ export default function DesktopIcons({
       </div>
 
       {/* Center icon grid */}
-      <div
-        className="absolute inset-0 flex flex-col items-center pt-20 px-24"
-        data-testid="desktop-center-grid"
-      >
+      <div className={styles.centerGrid} data-testid="desktop-center-grid">
         <FolderBreadcrumb desktopId={config.id} titleMap={titleMap} />
         <DesktopIconGrid
           desktopId={config.id}
@@ -133,7 +135,7 @@ export default function DesktopIcons({
       </div>
 
       {/* Right column */}
-      <div className="fixed right-4 top-[52px] z-10 flex flex-col gap-5">
+      <div className={`${styles.dock} ${styles.dockRight}`}>
         <DockIcons config={config} position="right" />
       </div>
     </>

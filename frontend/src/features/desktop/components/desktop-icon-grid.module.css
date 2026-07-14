@@ -1,0 +1,26 @@
+/*
+ * The draggable icon field. The tiles themselves come from desktop-icon.module.css; this file
+ * only lays them out and styles the empty state. Astryx's Grid is a page-layout grid with a
+ * fixed column model; the desktop field is a free 6-up icon field that doubles as a drop zone,
+ * so it stays plain CSS. Tokens only.
+ */
+
+.dropZone {
+  flex: 1;
+  width: 100%;
+}
+
+.emptyDropZone {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--spacing-6);
+  padding: var(--spacing-6);
+}

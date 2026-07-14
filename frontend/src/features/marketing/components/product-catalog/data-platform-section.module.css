@@ -1,0 +1,16 @@
+/*
+ * The muted square that holds a card's leading icon. Astryx has no icon-tile primitive, so it
+ * lives here on the CSS-variable path. Tokens only, no hex.
+ */
+
+.iconTile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--spacing-8);
+  height: var(--spacing-8);
+  border-radius: var(--radius-element);
+  background-color: var(--color-background-muted);
+  color: var(--color-icon-secondary);
+}

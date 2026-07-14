@@ -1,22 +1,58 @@
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Link } from "@astryxdesign/core/Link";
+import { Section } from "@astryxdesign/core/Section";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import { motion } from "framer-motion";
 import { ExternalLink, Link as LinkIcon, Play, Users } from "lucide-react";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import {
   DataPlatformSection,
   InstallCard,
   ProductCatalog,
 } from "@/features/marketing/components/product-catalog";
+import styles from "./products-page.module.css";
+
+/** An icon + label pair used as the content of a Link. Link has no icon slot of its own. */
+function LinkContent({
+  icon,
+  label,
+  iconPlacement = "start",
+}: {
+  icon: ReactNode;
+  label: string;
+  iconPlacement?: "start" | "end";
+}) {
+  return (
+    <HStack as="span" gap={1} align="center">
+      {iconPlacement === "start" && icon}
+      {label}
+      {iconPlacement === "end" && icon}
+    </HStack>
+  );
+}
+
+/** The `•` / `|` separators between the inline link rows. */
+function Separator({ children }: { children: string }) {
+  return (
+    <Text color="disabled" aria-hidden="true">
+      {children}
+    </Text>
+  );
+}
 
 export default function ProductsPage() {
   const { t } = useTranslation("marketing");
 
   return (
-    <div className="w-full">
+    <VStack gap={0} width="100%">
       {/* ── Hero ── */}
-      <section className="px-6 sm:px-8 pt-6 sm:pt-7 pb-6 border-b border-[#E5E5E5]">
-        <div className="flex flex-col sm:flex-row gap-6 sm:gap-4">
+      <Section variant="transparent" dividers={["bottom"]} padding={6}>
+        <div className={styles.heroColumns}>
           <motion.div
-            className="flex-1 min-w-0"
+            className={styles.heroText}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{
@@ -24,44 +60,39 @@ export default function ProductsPage() {
               ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
             }}
           >
-            <h1
-              className="text-2xl sm:text-3xl font-bold text-[#1A1A1A] leading-tight mb-4"
-              style={{ letterSpacing: "-0.02em" }}
-            >
-              {t("products.hero.title")}
-            </h1>
-            <p className="text-base text-[#6B6B6B] leading-relaxed mb-5">
-              {t("products.hero.body")}
-            </p>
+            <VStack gap={5} align="stretch">
+              <VStack gap={4} align="start">
+                <Heading level={1} type="display-3" textWrap="balance">
+                  {t("products.hero.title")}
+                </Heading>
+                <Text type="large" color="secondary" display="block">
+                  {t("products.hero.body")}
+                </Text>
+              </VStack>
 
-            <InstallCard />
+              <InstallCard />
 
-            <div className="flex flex-wrap items-center gap-3 mt-5 text-sm">
-              <a
-                href="/docs/model-context-protocol"
-                className="flex items-center gap-1 text-[#2563EB] hover:underline"
-              >
-                <LinkIcon className="w-4 h-4" /> {t("products.hero.links.mcp")}
-              </a>
-              <span className="text-[#D1D1D1]">&bull;</span>
-              <button
-                type="button"
-                className="flex items-center gap-1 text-[#2563EB] hover:underline"
-              >
-                <Play className="w-4 h-4" /> {t("products.hero.links.demo")}
-              </button>
-              <span className="text-[#D1D1D1]">&bull;</span>
-              <a
-                href="/talk-to-a-human"
-                className="flex items-center gap-1 text-[#2563EB] hover:underline"
-              >
-                <Users className="w-4 h-4" /> {t("products.hero.links.talkToHuman")}
-              </a>
-            </div>
+              <HStack gap={3} align="center" wrap="wrap">
+                <Link href="/docs/model-context-protocol">
+                  <LinkContent icon={<LinkIcon size={16} />} label={t("products.hero.links.mcp")} />
+                </Link>
+                <Separator>&bull;</Separator>
+                <Link>
+                  <LinkContent icon={<Play size={16} />} label={t("products.hero.links.demo")} />
+                </Link>
+                <Separator>&bull;</Separator>
+                <Link href="/talk-to-a-human">
+                  <LinkContent
+                    icon={<Users size={16} />}
+                    label={t("products.hero.links.talkToHuman")}
+                  />
+                </Link>
+              </HStack>
+            </VStack>
           </motion.div>
 
           <motion.div
-            className="flex items-center justify-center shrink-0"
+            className={styles.heroMedia}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.15, duration: 0.4 }}
@@ -72,48 +103,48 @@ export default function ProductsPage() {
               width={1024}
               height={1024}
               fetchPriority="high"
-              className="max-w-[260px] sm:max-w-[280px] w-full h-auto"
-              style={{ imageRendering: "auto" }}
+              className={styles.heroImage}
             />
           </motion.div>
         </div>
-      </section>
+      </Section>
 
       <DataPlatformSection />
 
       {/* ── Automatic Tooling ── */}
-      <section className="px-6 sm:px-8 py-6 border-b border-[#E5E5E5]">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-2xl font-bold text-[#1A1A1A]">
-            {t("products.automaticTooling.title")}
-          </h2>
-          <div className="flex items-center gap-2 text-sm">
-            <button
-              type="button"
-              className="text-[#2563EB] hover:underline flex items-center gap-1"
-            >
-              {t("products.automaticTooling.readme")} <ExternalLink className="w-3.5 h-3.5" />
-            </button>
-            <span className="text-[#D1D1D1]">|</span>
-            <button
-              type="button"
-              className="text-[#2563EB] hover:underline flex items-center gap-1"
-            >
-              {t("products.automaticTooling.llmInstructions")}{" "}
-              <ExternalLink className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-        <p className="text-sm text-[#6B6B6B]">
-          {t("products.automaticTooling.bodyBefore")}
-          <a href="/docs/model-context-protocol" className="text-[#2563EB] hover:underline">
-            {t("products.automaticTooling.mcp")}
-          </a>
-          {t("products.automaticTooling.bodyAfter")}
-        </p>
-      </section>
+      <Section variant="transparent" dividers={["bottom"]} padding={6}>
+        <VStack gap={3} align="stretch">
+          <HStack justify="between" align="center" gap={3} wrap="wrap">
+            <Heading level={2}>{t("products.automaticTooling.title")}</Heading>
+            <HStack gap={2} align="center">
+              <Link>
+                <LinkContent
+                  icon={<ExternalLink size={14} />}
+                  iconPlacement="end"
+                  label={t("products.automaticTooling.readme")}
+                />
+              </Link>
+              <Separator>|</Separator>
+              <Link>
+                <LinkContent
+                  icon={<ExternalLink size={14} />}
+                  iconPlacement="end"
+                  label={t("products.automaticTooling.llmInstructions")}
+                />
+              </Link>
+            </HStack>
+          </HStack>
+          <Text color="secondary" display="block">
+            {t("products.automaticTooling.bodyBefore")}
+            <Link href="/docs/model-context-protocol" type="inherit">
+              {t("products.automaticTooling.mcp")}
+            </Link>
+            {t("products.automaticTooling.bodyAfter")}
+          </Text>
+        </VStack>
+      </Section>
 
       <ProductCatalog />
-    </div>
+    </VStack>
   );
 }

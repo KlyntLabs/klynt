@@ -1,6 +1,10 @@
+import { Button } from "@astryxdesign/core/Button";
+import { HStack } from "@astryxdesign/core/HStack";
+import { IconButton } from "@astryxdesign/core/IconButton";
 import { Bell, Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { MenubarItem, MenubarSchema } from "@/features/desktop/menubar/types";
+import styles from "./trailing-actions.module.css";
 
 export function TrailingActions({
   schema,
@@ -12,7 +16,7 @@ export function TrailingActions({
   const { t } = useTranslation("home");
 
   return (
-    <div className="flex items-center gap-1">
+    <HStack gap={1} align="center">
       {schema.trailing.map((item) => {
         if (item.type !== "action") return null;
         const Icon = item.icon;
@@ -20,42 +24,41 @@ export function TrailingActions({
         const label = t(item.label as never);
 
         if (isPrimary) {
+          // Brand orange comes from the klynt theme's accent, not a hardcoded brand hex.
           return (
-            <button
+            <Button
               key={item.label}
-              type="button"
+              variant="primary"
+              size="sm"
+              label={label}
               onClick={() => onAction(item)}
-              className="flex h-8 items-center gap-1.5 rounded-full bg-brand px-3.5 text-[12px] font-semibold text-brand-foreground transition-colors hover:bg-brand-hover"
-            >
-              {label}
-            </button>
+            />
           );
         }
 
         const icon =
           item.label === "desktop.menubar.search" ? (
-            <Search className="size-4" />
+            <Search />
           ) : item.label === "desktop.menubar.notifications" ? (
-            <div className="relative">
-              <Bell className="size-4" />
-              <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-brand ring-1 ring-glass/80" />
-            </div>
+            <span className={styles.bell}>
+              <Bell />
+              <span className={styles.bellDot} />
+            </span>
           ) : Icon ? (
-            <Icon className="size-4" />
+            <Icon />
           ) : null;
 
         return (
-          <button
+          <IconButton
             key={item.label}
-            type="button"
+            variant="ghost"
+            size="sm"
+            label={label}
+            icon={icon}
             onClick={() => onAction(item)}
-            aria-label={label}
-            className="flex size-8 items-center justify-center rounded-full text-foreground/70 transition-colors hover:bg-foreground/8 hover:text-foreground"
-          >
-            {icon}
-          </button>
+          />
         );
       })}
-    </div>
+    </HStack>
   );
 }

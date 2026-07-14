@@ -1,7 +1,6 @@
 export interface CustomerRow {
   id: number;
   company: string;
-  logoColor: string;
   logoInitials: string;
   products: Product[];
   caseStudy: boolean;
@@ -29,7 +28,6 @@ export const customerRows: CustomerRow[] = [
   {
     id: 1,
     company: "Y Combinator",
-    logoColor: "#F76E18",
     logoInitials: "YC",
     products: ["experiments", "productAnalytics"],
     caseStudy: true,
@@ -38,7 +36,6 @@ export const customerRows: CustomerRow[] = [
   {
     id: 2,
     company: "Mistral AI",
-    logoColor: "#5B21B6",
     logoInitials: "MA",
     products: ["aiObservability", "productAnalytics"],
     caseStudy: false,
@@ -47,7 +44,6 @@ export const customerRows: CustomerRow[] = [
   {
     id: 3,
     company: "Supabase",
-    logoColor: "#22C55E",
     logoInitials: "SB",
     products: ["klyntAI", "experiments", "productAnalytics"],
     caseStudy: true,
@@ -56,7 +52,6 @@ export const customerRows: CustomerRow[] = [
   {
     id: 4,
     company: "ElevenLabs",
-    logoColor: "#F97316",
     logoInitials: "EL",
     products: ["featureFlags", "productAnalytics", "sessionReplay", "surveys"],
     caseStudy: true,
@@ -65,7 +60,6 @@ export const customerRows: CustomerRow[] = [
   {
     id: 5,
     company: "Lovable",
-    logoColor: "#EC4899",
     logoInitials: "LV",
     products: ["aiObservability", "experiments", "featureFlags"],
     caseStudy: true,
@@ -74,7 +68,6 @@ export const customerRows: CustomerRow[] = [
   {
     id: 6,
     company: "Raycast",
-    logoColor: "#DC2626",
     logoInitials: "RC",
     products: ["webAnalytics", "productAnalytics"],
     caseStudy: false,
@@ -83,7 +76,6 @@ export const customerRows: CustomerRow[] = [
   {
     id: 7,
     company: "Airbus",
-    logoColor: "#1E3A5F",
     logoInitials: "AB",
     products: ["webAnalytics", "productAnalytics", "featureFlags"],
     caseStudy: false,
@@ -92,7 +84,6 @@ export const customerRows: CustomerRow[] = [
   {
     id: 8,
     company: "Arena",
-    logoColor: "#7C3AED",
     logoInitials: "AR",
     products: [
       "webAnalytics",
@@ -109,7 +100,6 @@ export const customerRows: CustomerRow[] = [
   {
     id: 9,
     company: "ResearchGate",
-    logoColor: "#059669",
     logoInitials: "RG",
     products: ["experiments", "featureFlags", "productAnalytics"],
     caseStudy: true,
@@ -118,7 +108,6 @@ export const customerRows: CustomerRow[] = [
   {
     id: 10,
     company: "Republic",
-    logoColor: "#2563EB",
     logoInitials: "RP",
     products: ["webAnalytics", "productAnalytics", "featureFlags", "experiments", "surveys"],
     caseStudy: true,
@@ -127,7 +116,6 @@ export const customerRows: CustomerRow[] = [
   {
     id: 11,
     company: "Exa",
-    logoColor: "#0891B2",
     logoInitials: "EX",
     products: ["klyntAI", "sessionReplay", "productAnalytics"],
     caseStudy: true,
@@ -136,7 +124,6 @@ export const customerRows: CustomerRow[] = [
   {
     id: 12,
     company: "Hasura",
-    logoColor: "#1D4ED8",
     logoInitials: "HS",
     products: ["sessionReplay"],
     caseStudy: true,
@@ -145,7 +132,6 @@ export const customerRows: CustomerRow[] = [
   {
     id: 13,
     company: "Tray.io",
-    logoColor: "#4F46E5",
     logoInitials: "TR",
     products: ["webAnalytics", "productAnalytics", "sessionReplay"],
     caseStudy: false,
@@ -154,7 +140,6 @@ export const customerRows: CustomerRow[] = [
   {
     id: 14,
     company: "Jitter",
-    logoColor: "#7C3AED",
     logoInitials: "JT",
     products: ["webAnalytics", "productAnalytics", "featureFlags"],
     caseStudy: false,
@@ -163,7 +148,6 @@ export const customerRows: CustomerRow[] = [
   {
     id: 15,
     company: "Pulumi",
-    logoColor: "#8B5CF6",
     logoInitials: "PL",
     products: ["webAnalytics", "productAnalytics", "featureFlags", "experiments", "surveys"],
     caseStudy: false,
@@ -172,7 +156,6 @@ export const customerRows: CustomerRow[] = [
   {
     id: 16,
     company: "Klynt",
-    logoColor: "#F76E18",
     logoInitials: "KL",
     products: [
       "webAnalytics",

@@ -1,9 +1,11 @@
 "use client";
 
+import { Divider } from "@astryxdesign/core/Divider";
+import { Text } from "@astryxdesign/core/Text";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/utils";
 import { type ActionContext, executeContextMenuAction } from "./action-registry";
+import styles from "./context-menu-renderer.module.css";
 import {
   type ContextMenuEntry,
   type ContextMenuGroup,
@@ -61,20 +63,24 @@ function MenuItem({
       data-testid={`context-menu-item-${item.id}`}
       disabled={item.disabled}
       onClick={handleClick}
-      className={cn(
-        "flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-sm",
-        "text-white/90 hover:bg-white/10 focus:bg-white/10 focus:outline-hidden",
-        item.disabled && "cursor-not-allowed opacity-50 hover:bg-transparent"
-      )}
+      className={item.disabled ? `${styles.item} ${styles.itemDisabled}` : styles.item}
     >
-      <span>{label}</span>
-      {item.shortcut ? <span className="ml-4 text-xs text-white/50">{item.shortcut}</span> : null}
+      <Text type="body">{label}</Text>
+      {item.shortcut ? (
+        <Text type="supporting" size="sm" color="secondary">
+          {item.shortcut}
+        </Text>
+      ) : null}
     </button>
   );
 }
 
 function MenuSeparator() {
-  return <hr className="my-1 border-white/10" />;
+  return (
+    <div className={styles.separator}>
+      <Divider />
+    </div>
+  );
 }
 
 function MenuGroup({
@@ -92,12 +98,16 @@ function MenuGroup({
     <fieldset
       data-testid={`context-menu-group-${group.id}`}
       aria-label={label}
-      className="border-0 p-0 m-0"
+      className={styles.group}
     >
       {label ? (
-        <legend className="block px-2 py-1 text-xs font-medium text-white/50">{label}</legend>
+        <legend className={styles.groupLabel}>
+          <Text type="supporting" size="sm" color="secondary" weight="medium">
+            {label}
+          </Text>
+        </legend>
       ) : null}
-      <div className={cn("flex flex-col", label ? "pl-2" : "")}>
+      <div className={label ? styles.groupChildrenIndented : styles.groupChildren}>
         <MenuEntries entries={group.children} actionContext={actionContext} onClose={onClose} />
       </div>
     </fieldset>
@@ -156,10 +166,7 @@ export function ContextMenuRenderer({
   return (
     <div
       data-testid="context-menu-renderer"
-      className={cn(
-        "absolute min-w-[10rem] rounded-lg border border-white/10 bg-black/80 p-1 shadow-xl",
-        "backdrop-blur-sm"
-      )}
+      className={styles.surface}
       role="menu"
       aria-label={schema.id}
     >
@@ -173,14 +180,11 @@ function EmptyContextMenu({ schema }: { schema: ContextMenuSchema }): React.JSX.
   return (
     <div
       data-testid="context-menu-empty-state"
-      className={cn(
-        "absolute min-w-[10rem] rounded-lg border border-white/10 bg-black/80 p-3 shadow-xl",
-        "backdrop-blur-sm text-sm text-white/90"
-      )}
+      className={styles.emptySurface}
       role="menu"
       aria-label={schema.id}
     >
-      {t("desktop.contextMenu.empty")}
+      <Text type="body">{t("desktop.contextMenu.empty")}</Text>
     </div>
   );
 }

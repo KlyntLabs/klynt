@@ -1,0 +1,87 @@
+/*
+ * The markdown pane: a rendered preview that takes the slack, over the source editor.
+ *
+ * The preview is a raw <div> because it takes sanitized HTML via dangerouslySetInnerHTML, so it
+ * cannot be an Astryx <Text>. Its descendants are markdown-generated (h1, p, code, ...) and are
+ * styled here off the type and colour tokens.
+ */
+
+.pane {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  padding: var(--spacing-4);
+}
+
+.preview {
+  flex: 1;
+  overflow: auto;
+  padding: var(--spacing-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-element);
+  background: var(--color-background-card);
+  box-shadow: var(--shadow-low);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-base);
+}
+
+.preview :is(h1, h2, h3, h4, h5, h6) {
+  margin-block: var(--spacing-3) var(--spacing-2);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.4;
+}
+
+.preview h1 {
+  font-size: var(--font-size-2xl);
+}
+
+.preview h2 {
+  font-size: var(--font-size-xl);
+}
+
+.preview h3 {
+  font-size: var(--font-size-lg);
+}
+
+.preview p,
+.preview ul,
+.preview ol {
+  margin-block: var(--spacing-2);
+}
+
+.preview :is(ul, ol) {
+  padding-inline-start: var(--spacing-5);
+}
+
+.preview a {
+  color: var(--color-text-accent);
+  text-decoration: underline;
+}
+
+.preview code {
+  padding: var(--spacing-0-5) var(--spacing-1);
+  border-radius: var(--radius-inner);
+  background: var(--color-background-muted);
+  font-family: var(--font-family-code);
+  font-size: var(--font-size-sm);
+}
+
+.preview pre {
+  overflow-x: auto;
+  padding: var(--spacing-3);
+  border-radius: var(--radius-element);
+  background: var(--color-background-muted);
+}
+
+.preview pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.preview blockquote {
+  margin-inline: 0;
+  padding-inline-start: var(--spacing-3);
+  border-inline-start: 2px solid var(--color-border-emphasized);
+  color: var(--color-text-secondary);
+}

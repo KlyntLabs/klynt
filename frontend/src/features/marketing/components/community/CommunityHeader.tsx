@@ -1,6 +1,11 @@
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Icon } from "@astryxdesign/core/Icon";
+import { Text } from "@astryxdesign/core/Text";
 import { motion } from "framer-motion";
 import { CheckCircle2 } from "lucide-react";
 import { useMarketingTranslation } from "@/features/marketing/lib/use-marketing-translation";
+import styles from "./community-header.module.css";
 
 function getTodayDate(language: string): string {
   const d = new Date();
@@ -20,22 +25,30 @@ export function CommunityHeader() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="px-6 md:px-8 pt-6 pb-4 border-b-[3px] border-double border-[#1A1A1A]"
+      className={styles.header}
     >
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
-        <p className="text-sm text-[#6B6B6B]">{getTodayDate(language)}</p>
-        <h1
-          className="text-2xl md:text-3xl font-bold text-[#1A1A1A] text-center"
-          style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
-        >
-          {t("community.header.title")}
-        </h1>
-        <div className="flex items-center gap-2 text-xs text-[#22C55E]">
-          <CheckCircle2 className="w-3.5 h-3.5" />
-          {t("community.header.operational")}
+      <div className={styles.row}>
+        <Text color="secondary">{getTodayDate(language)}</Text>
+
+        <div className={styles.masthead}>
+          <Heading level={1} justify="center">
+            {t("community.header.title")}
+          </Heading>
+        </div>
+
+        <div className={styles.operational}>
+          <HStack gap={1} align="center">
+            <Icon icon={CheckCircle2} color="success" size="xsm" />
+            <Text type="supporting" color="inherit">
+              {t("community.header.operational")}
+            </Text>
+          </HStack>
         </div>
       </div>
-      <p className="text-xs text-[#6B6B6B] text-center italic">{t("community.header.tagline")}</p>
+
+      <Text type="supporting" display="block" justify="center">
+        <em>{t("community.header.tagline")}</em>
+      </Text>
     </motion.header>
   );
 }

@@ -1,4 +1,29 @@
-# Astryx Migration Plan
+# Astryx Migration Plan — COMPLETE
+
+**Status: done (2026-07-14).** Tailwind is out of the build; Astryx is the whole styling layer.
+ADR-015 is Accepted. This document is kept as the record of how it went and what it cost.
+
+**If you are writing UI, you want `docs/astryx-marketing-conventions.md`, not this file** — that
+is the live contract (component map, token map, the CSS-Module escape hatch).
+
+## How the three open questions resolved
+
+| Question the plan left open | Answer |
+|---|---|
+| StyleX, or something else, as the escape hatch? | **CSS Modules on Astryx CSS variables.** `xstyle` needs a compiler in the build; Astryx's own docs say most DOM styling should stay on the CSS-variable path. No new toolchain. |
+| Does `features/desktop` survive the gate, or does ADR-015 reopen? | **Survives.** Zero swizzling. The window frame stays a `motion.div` — Astryx has no window primitive and `AppShell` owns page structure, the inverse of a window manager. |
+| Marketing palette: adopt Astryx's neutrals, or preserve the bespoke one as token overrides? | **Adopted Astryx's**, with the visual shift accepted. Neutrals are warmer; the link blue is Astryx's. |
+
+Dark mode works now, for the first time — `<Theme mode>` defaults to `system` with a real
+toggle in the menubar. It never worked before: nothing ever applied the old `.dark` class.
+
+Two hex values survive on purpose: the brand accent in `klynt-theme.ts` (the source `defineTheme`
+derives everything from), and the three macOS traffic lights.
+
+---
+
+*Everything below is the original plan, preserved as written.*
+
 
 Replacing `frontend/src/components/ui/` (shadcn/Radix/Tailwind) with Astryx. Decision: [ADR-015](adr/015-astryx-component-layer.md).
 

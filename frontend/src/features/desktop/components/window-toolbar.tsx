@@ -15,6 +15,7 @@ import {
   Underline,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import styles from "./window-toolbar.module.css";
 
 /**
  * The window's document toolbar.
@@ -22,12 +23,11 @@ import { useTranslation } from "react-i18next";
  * These controls are chrome: they exist to make a window read as a document window and have
  * no handlers yet, exactly as before the Astryx migration. Astryx's Toolbar adds roving
  * arrow-key navigation across them for free, which the hand-rolled button row did not have.
- */
-/**
+ *
  * Astryx's vertical Divider has no intrinsic height: inside a Toolbar it computes to
- * height 0px and disappears. The consumer has to supply one.
+ * height 0px and disappears. The consumer has to supply one — styles.divider does.
  */
-const DIVIDER_HEIGHT = "h-4";
+const DIVIDER_HEIGHT = styles.divider;
 
 export function WindowToolbar() {
   const { t } = useTranslation("home");
@@ -100,7 +100,7 @@ export function WindowToolbar() {
             label={t("desktop.window.toolbar.settings")}
             icon={<Settings />}
           />
-          {/* Brand orange now comes from the klynt theme's accent, not a hardcoded #F76E18. */}
+          {/* Brand orange comes from the klynt theme's accent, not a hardcoded brand hex. */}
           <Button variant="primary" size="sm" label={t("desktop.window.share")} icon={<Share2 />} />
         </>
       }
