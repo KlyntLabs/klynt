@@ -36,4 +36,16 @@ describe("astryx-motion", () => {
     expect(t).toMatchObject({ type: "tween", delay: 0.2, repeat: 3 });
     expect(typeof t.duration).toBe("number");
   });
+
+  it("falls back when a stamped duration is non-numeric or zero", () => {
+    document.documentElement.style.setProperty("--duration-medium", "0ms");
+    expect(tween("medium").duration).toBeCloseTo(0.3, 3); // 0 is rejected -> fallback
+    document.documentElement.style.setProperty("--duration-medium", "garbage");
+    expect(tween("medium").duration).toBeCloseTo(0.3, 3);
+  });
+
+  it("falls back when a stamped easing is not a cubic-bezier", () => {
+    document.documentElement.style.setProperty("--ease-standard", "ease-in-out");
+    expect(easeStandard()).toEqual([0.24, 1, 0.4, 1]);
+  });
 });
