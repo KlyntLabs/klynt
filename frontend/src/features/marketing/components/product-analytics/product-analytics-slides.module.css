@@ -1,0 +1,77 @@
+/*
+ * Structural residue for the Product Analytics deck.
+ *
+ * Every slide is an Astryx stack now, and every gap, padding, alignment and icon size is a prop.
+ * The plates keep their surfaces here (Astryx has no icon-plate primitive) but not their layout,
+ * and their sizes are either spacing tokens (<= 48px) or size props (> 48px, where the spacing
+ * scale runs out).
+ *
+ * Every icon is an `Icon` at one of Astryx's four sizes — xsm(12) / sm(16) / md(20) / lg(24) —
+ * so not one `svg` selector survives. Its docs are explicit: "Don't resize icons with arbitrary
+ * pixel values; use the provided size props" and "Don't render raw SVG elements; always wrap in
+ * Icon".
+ *
+ * There are no exceptions left. The Track slide's 192px plate and its 80px BarChart3 glyph — the
+ * one thing in this feature Astryx could not express — are gone: the slide was redesigned onto a
+ * Grid of Cards (see SlideTrack.tsx). No hex, no raw px, no icon sized in CSS.
+ */
+
+/* Two-column slides: copy on the start side, visual on the end side. */
+.column {
+  flex: 1;
+  min-width: 0;
+}
+
+.visualColumn {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Title slide */
+.brandPlate {
+  border-radius: var(--radius-container);
+  background-color: var(--color-accent);
+  box-shadow: var(--shadow-med);
+  color: var(--color-on-accent);
+}
+
+/* Track slide — the dot is 20px, which is var(--spacing-5). */
+.checkDot {
+  flex-shrink: 0;
+  width: var(--spacing-5);
+  height: var(--spacing-5);
+  border-radius: var(--radius-full);
+  background: var(--color-background-green);
+  color: var(--color-icon-green);
+}
+
+/* Autocapture slide */
+.checkIcon {
+  flex-shrink: 0;
+}
+
+/* Privacy slide — the plate is 48px, the top of the spacing scale. */
+.pillarPlate {
+  flex-shrink: 0;
+  width: var(--spacing-12);
+  height: var(--spacing-12);
+  border-radius: var(--radius-full);
+  background: var(--color-background-muted);
+}
+
+/* Pricing slide: the headline figure is the one place the deck leans on the green text token. */
+.priceFigure {
+  color: var(--color-text-green);
+}
+
+/*
+ * CTA slide. The inline padding is asymmetric — a wide start for the command, a narrow end so the
+ * copy button sits flush — which Stack's symmetric `paddingInline` cannot express. It stays here,
+ * on tokens.
+ */
+.commandBar {
+  padding: var(--spacing-1) var(--spacing-1) var(--spacing-1) var(--spacing-4);
+  background: var(--color-background-muted);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-element);
+}

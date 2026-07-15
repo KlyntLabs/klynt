@@ -149,8 +149,12 @@ jobs:
           KLYNT_REDIS_URL: ${{ secrets.KLYNT_REDIS_URL }}
           KLYNT_API__HOST: ${{ vars.KLYNT_API__HOST || '0.0.0.0' }}
           KLYNT_API__PORT: ${{ vars.KLYNT_API__PORT || '3001' }}
-          KLYNT_API__ALLOWED_ORIGINS_0: ${{ steps.env_config.outputs.frontend_url }}
-          KLYNT_API__ALLOWED_ORIGINS_1: ${{ steps.env_config.outputs.frontend_wildcard_origin }}
+          # Comma-separated, NOT indexed `_0` / `_1` keys. The config loader splits env keys on
+          # `__`, so `KLYNT_API__ALLOWED_ORIGINS_0` resolved to the key `api.allowed_origins_0`,
+          # which no field matches — it was silently dropped, and the backend fell back to
+          # `config/default.toml`'s localhost allow-list. Every cross-origin call from the
+          # deployed frontend was therefore refused an `access-control-allow-origin` header.
+          KLYNT_API__ALLOWED_ORIGINS: ${{ steps.env_config.outputs.frontend_url }},${{ steps.env_config.outputs.frontend_wildcard_origin }}
           KLYNT_API__TRUSTED_PROXIES: ${{ vars.KLYNT_API__TRUSTED_PROXIES || '' }}
           KLYNT_COOKIE_DOMAIN: ${{ secrets.KLYNT_COOKIE_DOMAIN }}
           KLYNT_COOKIE_SECURE: ${{ secrets.KLYNT_COOKIE_SECURE }}

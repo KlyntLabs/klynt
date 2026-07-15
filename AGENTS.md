@@ -14,7 +14,7 @@ This file is for AI coding agents. It tells you what you need to know to work in
 Klynt is a foundation-phase education platform:
 
 - **Backend**: Rust HTTP API with Axum/Tokio (`backend/`)
-- **Frontend**: React SPA with Vite/TypeScript/Tailwind (`frontend/`)
+- **Frontend**: React SPA with Vite/TypeScript, styled entirely with Astryx (`frontend/`)
 
 The backend has real Postgres repositories (users, sessions, tokens, audit), Redis (rate limiter + idempotency), email-verification/password-reset flows, bearer-token session auth, and a middleware/observability stack. The frontend is a React SPA shell.
 
@@ -25,7 +25,7 @@ The backend has real Postgres repositories (users, sessions, tokens, audit), Red
 | Backend language | Rust (stable, see `rust-toolchain.toml`) |
 | Web framework | Axum 0.8, Tokio 1, tower-http |
 | Frontend framework | React 19, Vite 8, TypeScript 6, React Router 7 |
-| Styling | Tailwind CSS 4 |
+| Styling | Astryx design system (`@astryxdesign/core`). No Tailwind — see ADR-015. |
 | State/forms | TanStack Query 5, React Hook Form 7, Zod 4 |
 | HTTP client | Axios 1 |
 | Lint/format | Biome 1.9, rustfmt, Clippy |
@@ -42,8 +42,10 @@ Run `just` to list recipes.
 
 | Command | Purpose |
 |---|---|
-| `just setup` | First-time setup |
+| `just setup` | First-time setup (also writes `.env` and `frontend/.env`) |
+| `just infra` | Postgres + Redis in Docker |
 | `just dev` | Backend + frontend with hot reload |
+| `just seed-dev` | Create a verified user + tenant (email verification can't be completed locally) |
 | `just test` | Run tests |
 | `just test-coverage` | Run tests with coverage gates |
 | `just check` | Fast gate: fmt-check, lint, typecheck |
@@ -65,7 +67,7 @@ Before changing code:
 3. Read `docs/ARCHITECTURE.md` for structure.
 4. Read the files you'll modify and their tests.
 5. Find an existing example of the same pattern.
-6. For UI work, reuse `frontend/src/components/ui/` primitives.
+6. For UI work, build with Astryx (see **UI Components** below and the `ASTRYX` block at the end of this file).
 
 ## Code Conventions
 
@@ -93,7 +95,7 @@ Before changing code:
 - 2-space indent, line width 100, double quotes, semicolons, ES5 trailing commas.
 - Strict TypeScript; `noUnusedLocals` and `noUnusedParameters` are errors.
 - Avoid `any`. `useImportType` is disabled.
-- Use `cn()` for conditional classes.
+- There is no `cn()` helper and no utility-class framework. Compose CSS-Module class names with a plain template literal.
 
 ### Internationalization
 
@@ -102,9 +104,28 @@ Before changing code:
 
 ### UI Components
 
-- Reuse `frontend/src/components/ui/` primitives. These are shadcn/ui-style components migrated from `frontend-v2/` and adapted for Tailwind CSS v4.
-- The legacy `frontend/src/core/ui/` NeoBrutalist primitives and `frontend/src/features/home/` OS desktop have been removed; see `docs/adr/0001-frontend-v2-ui-migration.md`.
-- New UI must feel native to Klynt — browser-default styling is a signal that an existing primitive is missing.
+**Astryx is the entire component and styling layer.** There is no second system: no Tailwind, no
+shadcn, no `components/ui/`, no `cn()`. Decision: `docs/adr/015-astryx-component-layer.md`.
+
+- **Build with Astryx components.** Its conventions (no `<div>`, tokens for every value) are in
+  the `ASTRYX` block at the end of this file. Start with `bunx astryx build "<idea>"` from
+  `frontend/`, and check props with `bunx astryx component <Name>` rather than guessing.
+- **Where Astryx cannot express something**, use a co-located `*.module.css` built from Astryx
+  CSS variables — `var(--color-*)`, `var(--spacing-*)`, `var(--radius-*)`. Never a raw hex or a
+  magic colour. This is Astryx's own documented path (`bunx astryx docs styling-libraries`);
+  the pattern and the token map are in `docs/astryx-marketing-conventions.md`.
+- **Do NOT use `xstyle`/StyleX.** Astryx offers it, but there is no StyleX compiler in this
+  build — the `xstyle` prop will silently do nothing.
+- **There is no hardcoded colour anywhere, and no exceptions.** The app runs on Astryx's stock
+  `neutralTheme` — no `defineTheme`, no accent, no token overrides, no brand colour. Every
+  colour resolves from a token. **A `#` in a colour position is a bug**, including in the
+  window chrome and including a brand mark: the wordmark is `--color-accent` plated with
+  `--color-on-accent`.
+- **Colour mode is owned by `<Theme mode>`**, driven by `src/core/theme/theme-store.ts` and the
+  menubar's `ThemeToggle`. It defaults to `system`. Nothing else may set the mode — Astryx syncs
+  `data-theme` onto `<html>` from this prop, and portalled content (dialogs, popovers, toasts)
+  reads it to resolve `light-dark()` tokens. **Check both modes in a browser**; jsdom evaluates
+  no CSS, so no test will catch a contrast or colour-mode fault.
 
 ### File Size
 
@@ -132,7 +153,7 @@ Cargo workspace with dependency direction enforced by the compiler:
 - **Tracing**: `tracing` + `tracing-subscriber` with JSON output, `tracing-error::ErrorLayer` for spanbacktrace correlation, and a curated `EnvFilter` that suppresses noisy crates. `TraceLayer` uses `make_span_with` to embed `request_id` in span roots, and application services are `#[instrument]`-decorated for span trees.
 - **Metrics**: Prometheus `/metrics` endpoint with `http_requests_total`, `http_request_duration_seconds`, and `active_requests`. Path normalization prevents cardinality explosion.
 - **Logging**: Structured JSON request logs with PII sanitization, emitted from `mw_map_response`.
-- **Health**: `/api/v1/health/live` (liveness) and `/api/v1/health/ready` (readiness with per-component latency).
+- **Health**: `/health/live` (liveness) and `/health/ready` (readiness with per-component latency). Note these sit at the root, *not* under `/api/v1`.
 - **Security headers**: `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, and optional HSTS via `KLYNT_HSTS_ENABLED`.
 - **Rate limiting**: IP-based fixed-window rate limiter with Redis TTL; `429` responses include `Retry-After`.
 
@@ -244,3 +265,39 @@ Five canonical triage roles mapped 1:1 to label strings (`needs-triage`, `needs-
 ### Domain docs
 
 Single-context: root `CONTEXT.md` and `docs/adr/`. See `docs/agents/domain.md`.
+
+<!-- ASTRYX:START -->
+# AGENTS-astryx-new
+
+Project-specific guidance for AI coding agents.
+
+<!-- ASTRYX:START -->
+Astryx v0.1.4 · 149 components
+CLI: run every command as `bunx astryx <cmd>` (shown below as `astryx ...`).
+
+SETUP (once, in your app entry e.g. main.tsx) — without these, components render unstyled:
+  import "@astryxdesign/core/reset.css";
+  import "@astryxdesign/core/astryx.css";
+
+WORKFLOW — discover, don't guess. Before writing UI:
+1. `astryx build "<idea>"` — START HERE: returns a kit (closest [page] + [block]s + [component]s). No args = full playbook.
+2. `astryx template <name> [--skeleton]` — scaffold the [page]/[block]s it named, or study their layout. Templates are reference code.
+3. `astryx component <Name>` — props + examples for every component you use.
+
+RULES:
+- No <div> — components do all layout/spacing. Full page → AppShell; sidebar nav → SideNav.
+- Frame first: pick the shell (AppShell / Layout+LayoutPanel) and budget regions in px BEFORE writing content (`astryx docs layout`).
+- Dense data = rows (Table, List/Item) edge-to-edge — never Card-wrapped list items. Card = dashboard widgets, galleries, settings groups only.
+- Status → StatusDot/Token; Badge only for counts and enumerated states, never decoration.
+- Custom styling: component props first; else style/className with tokens — var(--color-*|--spacing-*|--radius-*). No raw hex/px. (No StyleX/Tailwind compiler here — don't use xstyle/utility classes.)
+- Tokens for every value (`astryx docs tokens`). Brand/accent via `astryx theme` — never override --color-* in :root.
+
+MORE CLI:
+  search "<query>"   find any component / hook / doc / template / block
+  component --list   149 components by category
+  template --list    page + block recipes
+  docs <topic>       color, elevation, icons, illustrations, layout, migration, motion, principles, shape, spacing, styling, theme, tokens, typography
+  swizzle <Name>     eject component source for deep customization
+  upgrade --apply    run after any @astryxdesign/core bump
+<!-- ASTRYX:END -->
+<!-- ASTRYX:END -->

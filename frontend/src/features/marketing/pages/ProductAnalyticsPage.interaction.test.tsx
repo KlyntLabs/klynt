@@ -43,7 +43,8 @@ describe("ProductAnalyticsPage interactions", () => {
     });
 
     expect(screen.getByText("bun add @klynt/js")).toBeInTheDocument();
-    const copyButton = screen.getAllByTitle("Copy")[0];
+    // Astryx exposes IconButton's `label` as the accessible name (aria-label), not a title attr.
+    const copyButton = screen.getByRole("button", { name: "Copy" });
     await user.click(copyButton);
     expect(copyButton).toBeInTheDocument();
   });

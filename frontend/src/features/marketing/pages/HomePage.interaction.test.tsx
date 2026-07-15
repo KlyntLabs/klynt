@@ -12,7 +12,9 @@ describe("HomePage interactions", () => {
     const user = userEvent.setup();
     render(<Default />);
 
-    const copyButton = screen.getByTitle("Copy to clipboard");
+    // Queried by accessible name, not `title`: Astryx's IconButton exposes its `label` as an
+    // aria-label rather than a title attribute — a stronger guarantee than the old markup gave.
+    const copyButton = screen.getByRole("button", { name: "Copy to clipboard" });
     expect(copyButton.querySelector(".lucide-copy")).toBeInTheDocument();
 
     await user.click(copyButton);

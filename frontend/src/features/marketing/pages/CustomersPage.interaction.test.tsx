@@ -8,33 +8,31 @@ import * as stories from "./CustomersPage.stories";
 const { Default } = composeStories(stories);
 
 describe("CustomersPage interactions", () => {
-  it("filters the customer table with the custom dropdowns", async () => {
+  it("filters the customer table with the filter selectors", async () => {
     const user = userEvent.setup();
     render(<Default />);
 
     expect(screen.getAllByRole("row")).toHaveLength(17);
 
-    // Product filter -> Product Analytics
-    const productDropdown = screen.getAllByRole("button", { name: /^Any$/ })[0];
-    await user.click(productDropdown);
-    await user.click(screen.getByRole("button", { name: "Product Analytics" }));
+    // The three filters are now Astryx Selectors — comboboxes with a listbox popover, not
+    // hand-rolled <button> dropdowns. Same user-facing action (open, pick an option), so the
+    // queries move from getAllByRole("button", {name: "Any"}) to the combobox/option roles,
+    // which also names each control instead of relying on its position on the page.
+    await user.click(screen.getByRole("combobox", { name: "product(s) used" }));
+    await user.click(await screen.findByRole("option", { name: "Product Analytics" }));
     await waitFor(() => {
       expect(screen.queryByText("Hasura")).not.toBeInTheDocument();
     });
 
-    // Case study filter -> Has link
-    const caseDropdown = screen.getAllByRole("button", { name: /^Any$/ })[0];
-    await user.click(caseDropdown);
-    await user.click(screen.getByRole("button", { name: "Has link" }));
+    await user.click(screen.getByRole("combobox", { name: "case study" }));
+    await user.click(await screen.findByRole("option", { name: "Has link" }));
     await waitFor(() => {
       expect(screen.getByText("Y Combinator")).toBeInTheDocument();
       expect(screen.queryByText("Mistral AI")).not.toBeInTheDocument();
     });
 
-    // Featured filter -> TRUE
-    const featuredDropdown = screen.getAllByRole("button", { name: /^Any$/ })[0];
-    await user.click(featuredDropdown);
-    await user.click(screen.getByRole("button", { name: "TRUE" }));
+    await user.click(screen.getByRole("combobox", { name: "featured" }));
+    await user.click(await screen.findByRole("option", { name: "TRUE" }));
     await waitFor(() => {
       expect(screen.getByText("Republic")).toBeInTheDocument();
       expect(screen.queryByText("Exa")).not.toBeInTheDocument();

@@ -1,8 +1,23 @@
+import { Avatar } from "@astryxdesign/core/Avatar";
+import { Badge } from "@astryxdesign/core/Badge";
+import { Blockquote } from "@astryxdesign/core/Blockquote";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { Divider } from "@astryxdesign/core/Divider";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Icon } from "@astryxdesign/core/Icon";
+import { List, ListItem } from "@astryxdesign/core/List";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import { motion } from "framer-motion";
 import { ArrowRight, Calendar } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { tween } from "@/core/motion/astryx-motion";
 import { useMarketingTranslation } from "@/features/marketing/lib/use-marketing-translation";
 import type { CommunityEvent, CommunitySlackThread, CommunitySpotlight } from "./community-types";
+
+/* framer-motion drives the Astryx stack directly; `as="aside"` keeps the landmark. */
+const MotionVStack = motion.create(VStack);
 
 const columnVariants = {
   hidden: { opacity: 0, x: -15 },
@@ -16,94 +31,90 @@ export function CommunityLeftColumn() {
   const events = array<CommunityEvent>("community.events.items");
 
   return (
-    <motion.aside
+    /* The column's width is its Grid track (see CommunityPage) — it used to be a CSS `width: 25%`
+       behind a 1024px media query, which is exactly what Grid's container-driven columns replace. */
+    <MotionVStack
+      as="aside"
+      gap={6}
       variants={columnVariants}
       initial="hidden"
       animate="visible"
-      transition={{
-        duration: 0.4,
-        ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
-      }}
-      className="lg:w-[25%] space-y-6"
+      transition={tween("medium")}
     >
-      <div className="border border-[#D1D1D1] p-4 bg-[#FAFAF8] rounded-md">
-        <p className="text-xs text-[#6B6B6B] leading-relaxed">{t("community.editor.welcome")}</p>
-        <p className="text-xs text-[#9CA3AF] italic mt-2">{t("community.editor.signature")}</p>
-      </div>
+      <Card variant="muted">
+        <VStack gap={2}>
+          <Text type="supporting" display="block">
+            {t("community.editor.welcome")}
+          </Text>
+          <Text type="supporting" color="disabled" display="block">
+            <em>{t("community.editor.signature")}</em>
+          </Text>
+        </VStack>
+      </Card>
 
-      <div className="border-t border-[#E5E5E5] pt-4">
-        <p className="text-sm text-[#1A1A1A] italic leading-relaxed">
-          &ldquo;{t("community.wisdom.quote")}&rdquo;
-        </p>
-        <p className="text-xs text-[#9CA3AF] mt-2">{t("community.wisdom.attribution")}</p>
-      </div>
+      <Divider />
 
-      <div>
-        <h2 className="text-xs font-semibold uppercase tracking-wider mb-3 text-[#1A1A1A]">
-          {t("community.slack.title")}
-        </h2>
-        <div className="space-y-3">
-          {slackThreads.map((thread) => (
-            <div key={thread.title} className="pb-3 border-b border-[#F0EDE6] last:border-0">
-              <Badge
-                variant="secondary"
-                className="text-[10px] text-[#9CA3AF] bg-[#F5F3EF] px-1 py-0 mb-1 font-normal"
-              >
-                {thread.channel}
-              </Badge>
-              <p className="text-sm font-medium text-[#1A1A1A] hover:text-[#2563EB] cursor-pointer leading-snug">
-                {thread.title}
-              </p>
-              <p className="text-xs text-[#6B6B6B] line-clamp-2 mt-1">{thread.preview}</p>
-            </div>
-          ))}
-        </div>
-      </div>
+      <Blockquote cite={t("community.wisdom.attribution")}>
+        &ldquo;{t("community.wisdom.quote")}&rdquo;
+      </Blockquote>
 
-      <div className="border border-[#D1D1D1] p-4 bg-[#FAFAF8] rounded-md">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-12 h-12 rounded-full bg-[#E5E5E5] flex items-center justify-center text-sm font-semibold text-[#6B6B6B]">
-            {spotlight.name[0]}
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-[#1A1A1A]">{spotlight.name}</p>
-            <p className="text-xs text-[#6B6B6B]">{spotlight.role}</p>
-          </div>
-        </div>
-        <p className="text-xs text-[#6B6B6B] leading-relaxed">{spotlight.bio}</p>
-        <button
-          type="button"
-          className="text-xs text-[#2563EB] mt-2 hover:underline inline-flex items-center gap-0.5"
-        >
-          {t("community.spotlight.cta", { name: spotlight.name })}{" "}
-          <ArrowRight className="w-3 h-3" />
-        </button>
-      </div>
+      <List hasDividers header={<Heading level={2}>{t("community.slack.title")}</Heading>}>
+        {slackThreads.map((thread) => (
+          <ListItem
+            key={thread.title}
+            label={thread.title}
+            description={
+              <Text type="supporting" display="block" maxLines={2}>
+                {thread.preview}
+              </Text>
+            }
+            endContent={<Badge variant="neutral" label={thread.channel} />}
+          />
+        ))}
+      </List>
 
-      <div>
-        <h2 className="text-xs font-semibold uppercase tracking-wider mb-3 text-[#1A1A1A]">
-          {t("community.events.title")}
-        </h2>
-        <div className="space-y-3">
-          {events.map((event) => (
-            <div
-              key={event.title}
-              className="flex items-start gap-2 pb-3 border-b border-[#F0EDE6] last:border-0"
-            >
-              <Calendar className="w-4 h-4 text-[#F76E18] shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-[#1A1A1A]">{event.title}</p>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-xs text-[#6B6B6B]">{event.date}</span>
-                  <Badge variant="outline" className="text-[10px] px-1 py-0 h-auto font-normal">
-                    {event.type}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </motion.aside>
+      <Card variant="muted">
+        <VStack gap={2}>
+          <HStack gap={3} align="center">
+            <Avatar name={spotlight.name} size="large" />
+            <VStack gap={0.5}>
+              <Text weight="semibold" display="block">
+                {spotlight.name}
+              </Text>
+              <Text type="supporting" display="block">
+                {spotlight.role}
+              </Text>
+            </VStack>
+          </HStack>
+          <Text type="supporting" display="block">
+            {spotlight.bio}
+          </Text>
+          <HStack>
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={<Icon icon={ArrowRight} size="sm" />}
+              label={t("community.spotlight.cta", { name: spotlight.name })}
+            />
+          </HStack>
+        </VStack>
+      </Card>
+
+      <List hasDividers header={<Heading level={2}>{t("community.events.title")}</Heading>}>
+        {events.map((event) => (
+          <ListItem
+            key={event.title}
+            startContent={<Icon icon={Calendar} color="accent" size="sm" />}
+            label={event.title}
+            description={
+              <HStack gap={2} align="center">
+                <Text type="supporting">{event.date}</Text>
+                <Badge variant="neutral" label={event.type} />
+              </HStack>
+            }
+          />
+        ))}
+      </List>
+    </MotionVStack>
   );
 }

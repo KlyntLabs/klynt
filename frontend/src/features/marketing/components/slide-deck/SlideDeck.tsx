@@ -1,6 +1,24 @@
+import { Button } from "@astryxdesign/core/Button";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Icon } from "@astryxdesign/core/Icon";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { tween } from "@/core/motion/astryx-motion";
+import styles from "./slide-deck.module.css";
+
+/* The slide layer is absolutely positioned inside the viewport and cross-fades on change. */
+const MotionVStack = motion.create(VStack);
+
+/*
+ * The deck's two fixed bands. Both are past the top of Astryx's spacing scale (which stops at
+ * 48px), so they ride the stacks' own size props — SizeValue is explicit that "numbers are
+ * treated as pixels" — instead of sitting as raw px in the stylesheet.
+ */
+const THUMBNAIL_RAIL_WIDTH = 180;
+const NOTES_HEIGHT = 90;
 
 export interface Slide {
   id: string | number;
@@ -24,8 +42,9 @@ const slideVariants = {
 };
 
 const slideTransition = {
-  x: { type: "spring" as const, stiffness: 400, damping: 32 },
-  opacity: { duration: 0.2 },
+  // Astryx motion is tween-only, so the slide's x travel rides a token tween like everything else.
+  x: tween("fast"),
+  opacity: tween("fast"),
 };
 
 export function SlideDeck({
@@ -73,46 +92,63 @@ export function SlideDeck({
   const CurrentSlide = slides[current].render;
 
   return (
-    <div className="flex flex-col h-full select-none">
+    <VStack height="100%" className={styles.deck}>
       {topBar && (
-        <div className="flex items-center justify-end px-4 py-2 border-b border-[#E5E5E5] bg-white gap-2 shrink-0">
+        <HStack
+          gap={2}
+          align="center"
+          justify="end"
+          paddingBlock={2}
+          paddingInline={4}
+          className={styles.topBar}
+        >
           {topBar}
-        </div>
+        </HStack>
       )}
 
-      <div className="flex flex-1 min-h-0">
+      <HStack className={styles.body}>
         {/* Slide thumbnails panel */}
-        <div className="w-[180px] shrink-0 bg-[#F5F3EF] border-r border-[#E5E5E5] overflow-y-auto p-3">
+        <VStack
+          width={THUMBNAIL_RAIL_WIDTH}
+          padding={3}
+          gap={2}
+          isScrollable
+          className={styles.thumbnails}
+        >
           {slides.map((slide, idx) => (
-            <button
-              type="button"
+            /*
+             * The thumbnail is a real <button> — an Astryx stack rendered `as="button"`, which
+             * keeps the click target, the keyboard focus and the data-selected hook intact
+             * without reaching for a raw element.
+             */
+            <VStack
+              as="button"
               key={slide.id}
+              gap={0.5}
+              width="100%"
               onClick={() => goTo(idx)}
-              className={`w-full mb-2 text-left group ${
-                idx === current ? "ring-2 ring-[#F76E18] rounded" : ""
-              }`}
+              className={styles.thumbnail}
+              data-selected={idx === current ? "true" : undefined}
             >
-              <div
-                className={`w-full aspect-[4/3] rounded border bg-white relative overflow-hidden transition-opacity ${
-                  idx === current
-                    ? "border-[#F76E18] shadow-sm"
-                    : "border-[#D1D1D1] opacity-70 group-hover:opacity-100"
-                }`}
-              >
-                <div className="absolute inset-0 flex items-center justify-center p-1">
-                  <span className="text-[10px] text-[#9CA3AF]">{idx + 1}</span>
-                </div>
-              </div>
-              <p className="text-[10px] text-[#6B6B6B] truncate mt-0.5 px-0.5">{slide.title}</p>
-            </button>
+              <HStack align="center" justify="center" className={styles.thumbnailFrame}>
+                <Text type="supporting" size="2xs">
+                  {idx + 1}
+                </Text>
+              </HStack>
+              <HStack paddingInline={0.5} className={styles.thumbnailLabel}>
+                <Text type="supporting" size="2xs" display="block" maxLines={1}>
+                  {slide.title}
+                </Text>
+              </HStack>
+            </VStack>
           ))}
-        </div>
+        </VStack>
 
         {/* Slide content */}
-        <div className="flex-1 flex flex-col min-w-0 bg-white">
-          <div className="flex-1 relative overflow-hidden">
+        <VStack className={styles.stage}>
+          <VStack className={styles.slideViewport}>
             <AnimatePresence initial={false} custom={direction} mode="wait">
-              <motion.div
+              <MotionVStack
                 key={current}
                 custom={direction}
                 variants={slideVariants}
@@ -120,43 +156,72 @@ export function SlideDeck({
                 animate="center"
                 exit="exit"
                 transition={slideTransition}
-                className="absolute inset-0"
+                className={styles.slideLayer}
               >
                 <CurrentSlide />
-              </motion.div>
+              </MotionVStack>
             </AnimatePresence>
-          </div>
+          </VStack>
 
           {/* Presenter notes */}
-          <div className="shrink-0 h-[90px] bg-[#FAFAF8] border-t border-[#E5E5E5] px-4 py-2.5 overflow-y-auto">
-            <p className="text-[10px] text-[#9CA3AF] uppercase tracking-wider mb-1">{notesLabel}</p>
-            <p className="text-xs text-[#6B6B6B] leading-relaxed">{slides[current].notes}</p>
-          </div>
+          <VStack
+            height={NOTES_HEIGHT}
+            paddingBlock={2}
+            paddingInline={4}
+            isScrollable
+            className={styles.notes}
+          >
+            <Text
+              type="supporting"
+              size="2xs"
+              color="disabled"
+              display="block"
+              className={styles.notesLabel}
+            >
+              {notesLabel}
+            </Text>
+            <Text type="supporting" size="xsm" display="block">
+              {slides[current].notes}
+            </Text>
+          </VStack>
 
           {/* Bottom navigation */}
-          <div className="shrink-0 flex items-center justify-end px-4 py-2 border-t border-[#E5E5E5] bg-white gap-2">
-            <button
-              type="button"
+          <HStack
+            gap={2}
+            align="center"
+            justify="end"
+            paddingBlock={2}
+            paddingInline={4}
+            className={styles.navigation}
+          >
+            {/* Astryx's Button sizes its icon slot to 16px ("Matches Icon sizing: sm/md=16px"),
+                so the mark goes in as an `Icon size="sm"` — a bare lucide element would render at
+                lucide's own 24px default and overflow the slot. */}
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<Icon icon={ChevronLeft} size="sm" />}
+              label={prevLabel}
+              isDisabled={current === 0}
               onClick={goPrev}
-              disabled={current === 0}
-              className="flex items-center gap-1 text-sm px-3 py-1.5 rounded-md border border-[#D1D1D1] hover:bg-[#F5F3EF] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <ChevronLeft className="w-4 h-4" /> {prevLabel}
-            </button>
-            <span className="text-sm text-[#6B6B6B] min-w-[3ch] text-center">
-              {current + 1} / {slides.length}
-            </span>
-            <button
-              type="button"
+            />
+            {/* The counter keeps a 3ch floor so the nav does not jitter as the index grows. */}
+            <HStack justify="center" className={styles.counter}>
+              <Text color="secondary">
+                {current + 1} / {slides.length}
+              </Text>
+            </HStack>
+            <Button
+              variant="primary"
+              size="sm"
+              endContent={<Icon icon={ChevronRight} size="sm" />}
+              label={nextLabel}
+              isDisabled={current === slides.length - 1}
               onClick={goNext}
-              disabled={current === slides.length - 1}
-              className="flex items-center gap-1 text-sm px-3 py-1.5 rounded-md bg-[#1A1A1A] text-white hover:bg-[#333] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {nextLabel} <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+            />
+          </HStack>
+        </VStack>
+      </HStack>
+    </VStack>
   );
 }

@@ -1,8 +1,69 @@
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { Grid } from "@astryxdesign/core/Grid";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Icon } from "@astryxdesign/core/Icon";
+import { IconButton } from "@astryxdesign/core/IconButton";
+import { Section } from "@astryxdesign/core/Section";
+import { StackItem } from "@astryxdesign/core/Stack";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import { motion } from "framer-motion";
 import { Check, Copy, Link as LinkIcon, Play, User } from "lucide-react";
+import type { SVGProps } from "react";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { tween } from "@/core/motion/astryx-motion";
 import { TypewriterText } from "@/features/marketing/components/TypewriterText";
+import styles from "./hero-section.module.css";
+
+/*
+ * framer-motion drives Astryx components directly. Every Astryx component extends BaseProps,
+ * which deliberately keeps `ref`, `style`, `className` and event handlers, so `motion.create()`
+ * can animate one without a wrapper. Composing them is the native path; a raw `motion.div` is
+ * not — see the same note in features/desktop/components/Window.tsx.
+ */
+const MotionVStack = motion.create(VStack);
+const MotionHStack = motion.create(HStack);
+
+/**
+ * Mascot render width. Astryx's spacing scale stops at 48px and has no dimension token; its size
+ * props take plain pixel numbers (`SizeValue`: "numbers are treated as pixels"), so anything
+ * above the scale rides a prop rather than the stylesheet.
+ */
+const MASCOT_WIDTH = 260;
+
+/**
+ * The narrowest a hero column may get before the two columns collapse into one. This is Astryx's
+ * container-driven responsive API — `Grid columns={{minWidth, max}}` reflows on the space actually
+ * available, so the hero needs no breakpoint at all. (A media condition cannot hold a var(), which
+ * is why the 768px literal this replaces could never be tokenised.)
+ */
+const HERO_COLUMN_MIN_WIDTH = 340;
+
+/**
+ * The brand wordmark, authored as an `IconType` (`ComponentType<SVGProps<SVGSVGElement>>`) so it
+ * can be handed to Astryx's `Icon` rather than rendered as a raw `<svg>` — "Don't render raw SVG
+ * elements; always wrap in Icon" (`bunx astryx component Icon`). Icon owns the geometry; this
+ * component owns only the path data and the token fills, so the mark tracks the theme.
+ */
+function KlyntWordmark({ "aria-label": label, ...props }: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 32 32"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-label={label}
+      {...props}
+    >
+      <title>{label}</title>
+      <rect width="32" height="32" rx="6" fill="var(--color-accent)" />
+      <path d="M8 10h3v8h5v-8h3v12h-3v-4h-5v4H8V10z" fill="var(--color-on-accent)" />
+      <circle cx="22" cy="12" r="2" fill="var(--color-on-accent)" />
+    </svg>
+  );
+}
 
 interface HeroSectionProps {
   onOpenApp: (route: string, title?: string) => void;
@@ -19,155 +80,149 @@ export function HeroSection({ onOpenApp }: HeroSectionProps) {
   }, [t]);
 
   return (
-    <section className="mb-8">
-      <div className="flex flex-col md:flex-row gap-6">
-        {/* Left: Text */}
-        <motion.div
+    <Section variant="transparent" padding={0}>
+      {/* Two columns when there is room for two, one when there is not — Grid decides from the
+          container, so the hero carries no breakpoint and no CSS. */}
+      <Grid columns={{ minWidth: HERO_COLUMN_MIN_WIDTH, max: 2 }} gap={6}>
+        <MotionVStack
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: 0.4,
-            ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
-          }}
-          className="flex-1 min-w-0"
+          transition={tween("medium")}
         >
-          {/* Logo Lockup */}
-          <div className="flex items-center gap-2 mb-5">
-            <svg
-              width="32"
-              height="32"
-              viewBox="0 0 32 32"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-label={t("home.hero.logoAlt")}
-            >
-              <title>{t("home.hero.logoAlt")}</title>
-              <rect width="32" height="32" rx="6" fill="#1A1A2E" />
-              <path d="M8 10h3v8h5v-8h3v12h-3v-4h-5v4H8V10z" fill="#F76E18" />
-              <circle cx="22" cy="12" r="2" fill="#F76E18" />
-            </svg>
-            <span className="text-xl font-bold tracking-tight text-[#1A1A1A]">
-              {t("home.hero.brand")}
-            </span>
-          </div>
+          <VStack gap={5} align="start">
+            <HStack gap={2} align="center">
+              <Icon
+                icon={KlyntWordmark}
+                size="lg"
+                aria-hidden={false}
+                aria-label={t("home.hero.logoAlt")}
+              />
+              <Text type="large" weight="bold">
+                {t("home.hero.brand")}
+              </Text>
+            </HStack>
 
-          {/* Headline */}
-          <h1 className="text-4xl font-bold text-[#1A1A1A] leading-tight mb-3">
-            {t("home.hero.title")}
-          </h1>
+            <VStack gap={3} align="start">
+              <Heading level={1} type="display-2" textWrap="balance">
+                {t("home.hero.title")}
+              </Heading>
 
-          {/* Subheadline */}
-          <p className="text-base text-[#6B6B6B] leading-relaxed mb-1">
-            {t("home.hero.subtitle1")}
-          </p>
-          <p className="text-base text-[#6B6B6B] leading-relaxed mb-5">
-            {t("home.hero.subtitle2")}
-            <em className="text-[#1A1A1A]">
-              <TypewriterText text={t("home.hero.subtitle2Emphasis")} speed={80} />
-            </em>
-            .
-          </p>
+              <VStack gap={1} align="start">
+                <Text color="secondary" display="block">
+                  {t("home.hero.subtitle1")}
+                </Text>
+                <Text color="secondary" display="block">
+                  {t("home.hero.subtitle2")}
+                  <Text color="primary" as="span">
+                    <em>
+                      <TypewriterText text={t("home.hero.subtitle2Emphasis")} speed={80} />
+                    </em>
+                  </Text>
+                  .
+                </Text>
+              </VStack>
+            </VStack>
 
-          {/* CTA Row */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.4 }}
-            className="flex flex-wrap gap-3 mb-4"
-          >
-            <button
-              type="button"
-              onClick={() => onOpenApp("/pricing", t("home.hero.ctaPrimary"))}
-              className="px-5 py-2.5 rounded-md bg-[#F76E18] hover:bg-[#E56310] text-white font-semibold transition-colors"
+            <MotionHStack
+              gap={3}
+              wrap="wrap"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={tween("medium", { delay: 0.1 })}
             >
-              {t("home.hero.ctaPrimary")}
-            </button>
-            <button
-              type="button"
-              className="px-5 py-2.5 rounded-md border border-[#D1D1D1] bg-white text-[#1A1A1A] font-medium hover:bg-[#F5F3EF] transition-colors"
-            >
-              {t("home.hero.ctaSecondary")}
-            </button>
-          </motion.div>
+              <Button
+                variant="primary"
+                label={t("home.hero.ctaPrimary")}
+                onClick={() => onOpenApp("/pricing", t("home.hero.ctaPrimary"))}
+              />
+              <Button variant="secondary" label={t("home.hero.ctaSecondary")} />
+            </MotionHStack>
 
-          {/* Install Command */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.4 }}
-            className="mb-4"
-          >
-            <div className="flex items-center gap-2 bg-[#F5F3EF] border border-[#E5E5E5] rounded-md px-4 py-2.5">
-              <code className="text-sm font-mono text-[#1A1A1A] flex-1">
-                {t("home.hero.installCommand")}
-              </code>
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="w-8 h-8 flex items-center justify-center rounded hover:bg-[#E5E5E5] transition-colors"
-                title={t("home.hero.copyTooltip")}
-              >
-                {copied ? (
-                  <Check className="w-4 h-4 text-[#22C55E]" />
-                ) : (
-                  <Copy className="w-4 h-4 text-[#6B6B6B]" />
-                )}
-              </button>
-            </div>
-            <p className="text-xs text-[#9CA3AF] mt-1.5">{t("home.hero.installHint")}</p>
-          </motion.div>
+            <MotionVStack
+              gap={1.5}
+              align="start"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={tween("medium", { delay: 0.2 })}
+            >
+              {/* The command bar is a *surface* — border, radius, muted background — which is
+                  exactly what Card is. Padding and gap ride the inner HStack's spacing props. */}
+              <Card variant="muted" padding={0}>
+                <HStack gap={2} align="center" paddingBlock={2} paddingInline={4}>
+                  <StackItem size="fill" isScrollable>
+                    <Text type="code" display="block">
+                      {t("home.hero.installCommand")}
+                    </Text>
+                  </StackItem>
+                  <IconButton
+                    variant="ghost"
+                    size="sm"
+                    label={t("home.hero.copyTooltip")}
+                    icon={copied ? <Icon icon={Check} /> : <Icon icon={Copy} />}
+                    onClick={handleCopy}
+                  />
+                </HStack>
+              </Card>
+              <Text type="supporting" size="2xs">
+                {t("home.hero.installHint")}
+              </Text>
+            </MotionVStack>
 
-          {/* Link Row */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.4 }}
-            className="flex items-center gap-2 text-sm text-[#6B6B6B]"
-          >
-            <button
-              type="button"
-              onClick={() => onOpenApp("/docs", t("home.hero.links.mcp"))}
-              className="text-[#2563EB] hover:underline flex items-center gap-1"
+            <MotionHStack
+              gap={1}
+              align="center"
+              wrap="wrap"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={tween("medium", { delay: 0.3 })}
             >
-              <LinkIcon className="w-3.5 h-3.5" /> {t("home.hero.links.mcp")}
-            </button>
-            <span>&bull;</span>
-            <button
-              type="button"
-              onClick={() => onOpenApp("/demo", t("home.hero.links.demo"))}
-              className="text-[#2563EB] hover:underline flex items-center gap-1"
-            >
-              <Play className="w-3.5 h-3.5" /> {t("home.hero.links.demo")}
-            </button>
-            <span>&bull;</span>
-            <button
-              type="button"
-              onClick={() => onOpenApp("/talk-to-a-human", t("home.hero.links.talkToHuman"))}
-              className="text-[#2563EB] hover:underline flex items-center gap-1"
-            >
-              <User className="w-3.5 h-3.5" /> {t("home.hero.links.talkToHuman")}
-            </button>
-          </motion.div>
-        </motion.div>
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={<Icon icon={LinkIcon} />}
+                label={t("home.hero.links.mcp")}
+                onClick={() => onOpenApp("/docs", t("home.hero.links.mcp"))}
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={<Icon icon={Play} />}
+                label={t("home.hero.links.demo")}
+                onClick={() => onOpenApp("/demo", t("home.hero.links.demo"))}
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={<Icon icon={User} />}
+                label={t("home.hero.links.talkToHuman")}
+                onClick={() => onOpenApp("/talk-to-a-human", t("home.hero.links.talkToHuman"))}
+              />
+            </MotionHStack>
+          </VStack>
+        </MotionVStack>
 
-        {/* Right: Hero Illustration */}
-        <motion.div
+        {/* The mascot's cap rides a `width` prop on its own stack; the stack that holds it fills
+            the grid track and centres it. No CSS width, no breakpoint. */}
+        <MotionHStack
+          align="center"
+          justify="center"
+          width="100%"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-          className="flex items-center justify-center shrink-0"
+          transition={tween("medium-max", { delay: 0.2 })}
         >
-          <img
-            src="/hedgehog-hero.webp"
-            alt={t("home.hero.mascotAlt")}
-            width={1024}
-            height={1024}
-            fetchPriority="high"
-            className="w-[260px] h-auto animate-bounce"
-            style={{ animation: "float 3s ease-in-out infinite" }}
-          />
-        </motion.div>
-      </div>
-    </section>
+          <VStack width={MASCOT_WIDTH}>
+            <img
+              src="/hedgehog-hero.webp"
+              alt={t("home.hero.mascotAlt")}
+              width={1024}
+              height={1024}
+              fetchPriority="high"
+              className={styles.mascot}
+            />
+          </VStack>
+        </MotionHStack>
+      </Grid>
+    </Section>
   );
 }

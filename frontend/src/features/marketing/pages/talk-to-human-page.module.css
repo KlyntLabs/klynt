@@ -1,0 +1,19 @@
+/*
+ * One rule left. The hero column, its gap, its centring and now its padding are all VStack props;
+ * the subtitle's cap and the headset plate's 64px square ride Astryx size props; the glyph is an
+ * `Icon size="lg" color="orange"`.
+ *
+ * The hero's padding used to sit here because it was asymmetric — 7 / 8 / 5, and Astryx's
+ * SpacingStep scale (0, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10) has no 7. Rather than keep a
+ * calc()-free-but-still-off-scale rule, the padding was landed *on* the scale
+ * (paddingInline={8}, paddingBlock={6}) so it could become a prop. Top and bottom shift by 4px.
+ *
+ * The plate's pill radius and its tinted background stay because Astryx's stacks expose no radius
+ * or background prop. Both are tokens. No hex, no raw px.
+ */
+
+.headsetPlate {
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-background-orange);
+}

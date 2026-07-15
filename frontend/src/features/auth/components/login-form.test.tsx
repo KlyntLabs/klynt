@@ -61,6 +61,12 @@ describe("LoginForm", () => {
     await user.type(screen.getByLabelText(/password/i), "Str0ng!pass");
     await user.click(screen.getByRole("button", { name: /log in/i }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(/invalid credentials/i);
+    // Two alerts, both correct: the inline Banner on the form and the error Toast. The toast
+    // only became an `alert` when it moved onto Astryx — the hand-rolled one was a polite
+    // <output>, so a screen-reader user was never interrupted by a failed login. Assert the
+    // message is announced, not that exactly one thing announces it.
+    const alerts = await screen.findAllByRole("alert");
+
+    expect(alerts.some((alert) => /invalid credentials/i.test(alert.textContent ?? ""))).toBe(true);
   });
 });

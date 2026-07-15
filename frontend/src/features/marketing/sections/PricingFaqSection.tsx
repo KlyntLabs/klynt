@@ -1,10 +1,9 @@
+import { Collapsible, CollapsibleGroup } from "@astryxdesign/core/Collapsible";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Section } from "@astryxdesign/core/Section";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import { useTranslation } from "react-i18next";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 
 export function PricingFaqSection() {
   const { t } = useTranslation("marketing");
@@ -14,24 +13,26 @@ export function PricingFaqSection() {
   }[];
 
   return (
-    <section className="px-6 sm:px-8 py-6 pb-8">
-      <h2 className="text-2xl font-bold text-[#1A1A1A] mb-6">{t("pricing.faq.title")}</h2>
-      <Accordion type="single" collapsible className="w-full">
-        {faqItems.map((item, i) => (
-          <AccordionItem
-            key={item.question}
-            value={`faq-${i}`}
-            className="border-b border-[#E5E5E5]"
-          >
-            <AccordionTrigger className="text-sm font-medium text-[#1A1A1A] py-4 hover:no-underline hover:text-[#2563EB] transition-colors">
-              {item.question}
-            </AccordionTrigger>
-            <AccordionContent className="text-sm text-[#6B6B6B] pb-4">
-              {item.answer}
-            </AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
-    </section>
+    <Section variant="transparent">
+      <VStack gap={6}>
+        <Heading level={2}>{t("pricing.faq.title")}</Heading>
+
+        {/* Astryx models an accordion as CollapsibleGroup + Collapsible, not
+            Accordion/AccordionItem/Trigger/Content. type="single" preserves the
+            one-open-at-a-time behaviour the shadcn version had. */}
+        <CollapsibleGroup type="single">
+          {faqItems.map((item, index) => (
+            <Collapsible
+              key={item.question}
+              value={`faq-${index}`}
+              defaultIsOpen={false}
+              trigger={<Text weight="medium">{item.question}</Text>}
+            >
+              <Text type="supporting">{item.answer}</Text>
+            </Collapsible>
+          ))}
+        </CollapsibleGroup>
+      </VStack>
+    </Section>
   );
 }

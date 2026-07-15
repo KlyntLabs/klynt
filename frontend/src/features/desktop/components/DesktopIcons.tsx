@@ -1,4 +1,9 @@
+import { ClickableCard } from "@astryxdesign/core/ClickableCard";
+import { Icon } from "@astryxdesign/core/Icon";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import { ExternalLink, Monitor } from "lucide-react";
+import type { ComponentType, SVGProps } from "react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -7,39 +12,82 @@ import { FolderBreadcrumb } from "@/features/desktop/desktop-manager/FolderBread
 import { useWindowManager } from "@/features/desktop/window-manager/window-module";
 import type { AppManifest } from "../apps/types";
 import type { DesktopConfig } from "../factory/types";
-import { DesktopIconGrid } from "./DesktopIconGrid";
+import {
+  DESKTOP_ICON_PADDING,
+  DESKTOP_ICON_WIDTH,
+  DesktopIconGrid,
+  ICON_FIELD_PADDING,
+} from "./DesktopIconGrid";
+import styles from "./desktop-icons.module.css";
 
 interface DesktopIconItemProps {
-  icon: React.ReactNode;
+  /*
+   * The icon COMPONENT, not an element. Astryx's Icon takes `icon` as a ComponentType and owns
+   * the sizing and the colour from there ("Don't render raw SVG elements; always wrap in Icon"),
+   * so the caller can no longer hand over a pre-rendered <Icon /> element.
+   */
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
   label: string;
   onClick: () => void;
 }
 
+/*
+ * A dock icon IS an Astryx ClickableCard.
+ *
+ * The old tile was a hand-built chip: a translucent surface over a backdrop-filter blur, a
+ * hand-rolled border, a hover shadow/scale, a scrim behind the caption, and an `as="button"`
+ * stack that needed a `type="button"` spread-cast because BaseProps is not
+ * ButtonHTMLAttributes. Every one of those is a value Astryx has no token for — the blur most
+ * of all: there is no blur token anywhere in the system.
+ *
+ * ClickableCard replaces the lot. It renders an opaque Card (border, radius, background,
+ * elevation — all tokens) with a real sr-only <button> inside for the role, the accessible name
+ * and the focus ring, so there is nothing left to cast and nothing left to hand-value. The
+ * caption now sits on the card's own themed background instead of on the wallpaper, which is
+ * what the scrim was faking; the dark-mode contrast bug the scrim existed to fix cannot recur.
+ */
 function DesktopIconItem({ icon, label, onClick }: DesktopIconItemProps) {
   return (
-    <button
-      type="button"
+    <ClickableCard
+      label={label}
       onClick={onClick}
-      className="flex flex-col items-center gap-1 w-[72px] group cursor-pointer"
+      width={DESKTOP_ICON_WIDTH}
+      padding={DESKTOP_ICON_PADDING}
     >
-      <div className="w-12 h-12 flex items-center justify-center rounded-xl bg-white/80 backdrop-blur-sm border border-white/40 shadow-sm group-hover:bg-white group-hover:scale-105 group-hover:shadow-md transition-all duration-150">
-        {icon}
-      </div>
-      <span className="text-[11px] font-medium text-center text-[#1A1A1A] leading-tight max-w-[72px] line-clamp-2 drop-shadow-[0_1px_2px_rgba(255,255,255,0.8)]">
-        {label}
-      </span>
-    </button>
+      <VStack gap={1} align="center" width="100%">
+        <Icon icon={icon} size="lg" color="secondary" />
+        {/*
+         * The caption needs its own full-width stack. `align="center"` above shrinks every child
+         * to its content width, and Text has no width prop — so a long single word ("Documentation")
+         * sized past the 72px card, overflowed it, and got clipped on both sides. maxLines alone
+         * cannot save it: it clamps *lines*, and one unbroken word is one line. This stack bounds
+         * the measure; `wordBreak="break-all"` lets the word wrap inside it.
+         */}
+        <VStack width="100%">
+          <Text
+            type="supporting"
+            size="xsm"
+            weight="medium"
+            color="primary"
+            maxLines={2}
+            justify="center"
+            wordBreak="break-word"
+          >
+            {label}
+          </Text>
+        </VStack>
+      </VStack>
+    </ClickableCard>
   );
 }
 
 function AppIcon({ app, desktopId }: { app: AppManifest; desktopId: string }) {
   const { openApp } = useWindowManager();
   const { t } = useTranslation("home");
-  const Icon = app.icon;
   return (
     <DesktopIconItem
       key={app.id}
-      icon={<Icon className="w-6 h-6" />}
+      icon={app.icon}
       label={t(app.title as never)}
       onClick={() =>
         openApp(desktopId, app.id, { width: app.defaultSize.width, height: app.defaultSize.height })
@@ -98,27 +146,33 @@ export default function DesktopIcons({
   return (
     <>
       {/* Left column */}
-      <div className="fixed left-4 top-[52px] z-10 flex flex-col gap-5">
+      <VStack className={`${styles.dock} ${styles.dockLeft}`} gap={5}>
         <DockIcons config={config} position="left" />
         {isMarketing && (
           <>
             <DesktopIconItem
-              icon={<ExternalLink className="w-6 h-6 text-[#6B6B6B]" />}
+              icon={ExternalLink}
               label={t("desktop.icons.left.signUp")}
               onClick={handleSignUpClick}
             />
             <DesktopIconItem
-              icon={<Monitor className="w-6 h-6 text-[#6B6B6B]" />}
+              icon={Monitor}
               label={t("desktop.icons.switchToWebsite")}
               onClick={() => setViewMode("website")}
             />
           </>
         )}
-      </div>
+      </VStack>
 
-      {/* Center icon grid */}
-      <div
-        className="absolute inset-0 flex flex-col items-center pt-20 px-24"
+      {/* Center icon grid. The gutter is a real `padding` prop now: it used to be
+          calc(--spacing-10 * 2) / calc(--spacing-12 * 2) — 80px and 96px, composites that are
+          raw pixels wearing a token's coat — and it is now ICON_FIELD_PADDING, a single step ON
+          Astryx's scale. The clearance those oversized gutters bought (keeping the field off the
+          two docks) is bought instead by capping the field's measure; see DesktopIconGrid. */}
+      <VStack
+        className={styles.centerGrid}
+        align="center"
+        padding={ICON_FIELD_PADDING}
         data-testid="desktop-center-grid"
       >
         <FolderBreadcrumb desktopId={config.id} titleMap={titleMap} />
@@ -130,12 +184,12 @@ export default function DesktopIcons({
           selectedAppId={selectedAppId}
           onSelectAppId={onSelectAppId}
         />
-      </div>
+      </VStack>
 
       {/* Right column */}
-      <div className="fixed right-4 top-[52px] z-10 flex flex-col gap-5">
+      <VStack className={`${styles.dock} ${styles.dockRight}`} gap={5}>
         <DockIcons config={config} position="right" />
-      </div>
+      </VStack>
     </>
   );
 }

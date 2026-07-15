@@ -659,8 +659,7 @@
   },
   "docs": {
     "hero": {
-      "title": "Documentation",
-      "bannerAlt": "Documentation hero illustration"
+      "title": "Documentation"
     },
     "search": {
       "placeholder": "Search the docs...",

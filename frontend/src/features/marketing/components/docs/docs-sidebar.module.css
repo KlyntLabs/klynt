@@ -1,0 +1,17 @@
+/*
+ * Structural residue for the docs rail.
+ *
+ * The rail's width is now a prop (`width={SIDEBAR_WIDTH}`) and the row's icon is an
+ * `Icon size="sm" color="disabled"`, so the fixed width and the `svg { width: 16px }` rule are
+ * both gone. What is left expresses no design value: flex mechanics and one token'd nudge.
+ */
+
+.sidebar {
+  flex-shrink: 0;
+}
+
+/* Optically centres the mark against the first line of the row's label. */
+.rowIcon {
+  flex-shrink: 0;
+  padding-block-start: var(--spacing-0-5);
+}

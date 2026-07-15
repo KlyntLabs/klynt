@@ -1,0 +1,43 @@
+/*
+ * Structural residue for the window frame. Everything with a *value* — border, radius, surface
+ * colour, spacing, icon size — now comes from Astryx: the frame is a `Card`, the bars are
+ * `HStack`/`VStack`, the glyphs are `Icon size="xsm"`. See Window.tsx.
+ *
+ * What is left below is CSS that expresses no design value at all: flex modes, overflow, and
+ * min-width:0. Astryx has no prop for these because they are not tokens — they are layout
+ * mechanics. This is the CSS-variable path Astryx documents for exactly this residue
+ * (`bunx astryx docs styling` lists CSS Modules as a supported approach). No hex, no raw px.
+ */
+
+.window {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+  box-shadow: var(--shadow-high);
+}
+
+.titleBar {
+  flex-shrink: 0;
+  border-bottom: var(--border-width) solid var(--color-border);
+  background-color: var(--color-background-muted);
+}
+
+/*
+ * min-width: 0 is load-bearing. Text's maxLines={1} sets overflow/ellipsis on the Text itself,
+ * but a flex item defaults to min-width:auto, so this wrapper's min-content size still includes
+ * the full nowrap title and it refuses to shrink. Without it a long title (app titles allow up
+ * to MAX_TITLE_LENGTH = 100 chars) pushes past the window edge and knocks the centred title bar
+ * out of alignment instead of ellipsising.
+ */
+.titleArea {
+  flex: 1;
+  min-width: 0;
+  cursor: default;
+}
+
+.content {
+  flex: 1;
+  min-height: 0;
+  background-color: var(--color-background-surface);
+}

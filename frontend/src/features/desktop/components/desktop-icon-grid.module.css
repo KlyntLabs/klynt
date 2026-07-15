@@ -1,0 +1,20 @@
+/*
+ * The draggable icon field. The tiles come from desktop-icon.module.css; the 6-up track list
+ * and the gap are now Astryx's <Grid columns={6} gap={6}>, and the empty state is <Center>.
+ *
+ * What is left is structural residue with no design value — flex:1 so the field takes the
+ * slack under the breadcrumb — plus the Grid's padding, which is a token: Grid exposes
+ * gap/rowGap/columnGap props but no padding prop.
+ */
+
+.dropZone {
+  flex: 1;
+}
+
+.emptyDropZone {
+  flex: 1;
+}
+
+.grid {
+  padding: var(--spacing-6);
+}

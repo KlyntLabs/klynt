@@ -1,22 +1,11 @@
+import { Button } from "@astryxdesign/core/Button";
+import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Selector } from "@astryxdesign/core/Selector";
+import { TextInput } from "@astryxdesign/core/TextInput";
+import { VStack } from "@astryxdesign/core/VStack";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { type InviteMemberInput, ROLE_OPTIONS, type TenantRole } from "../types";
 
 interface InviteMemberDialogProps {
@@ -55,59 +44,50 @@ export function InviteMemberDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t("members.inviteTitle")}</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} data-testid="invite-member-form">
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="member-email">{t("members.emailLabel")}</Label>
-              <Input
-                id="member-email"
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                disabled={isPending}
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="member-role">{t("members.roleLabel")}</Label>
-              <Select
-                value={role}
-                onValueChange={(value) => setRole(value as TenantRole)}
-                disabled={isPending}
-              >
-                <SelectTrigger id="member-role" data-testid="invite-role-select">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {ROLE_OPTIONS.map((roleOption) => (
-                    <SelectItem key={roleOption} value={roleOption}>
-                      {t(`members.roles.${roleOption}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
+    // purpose="form" stops a stray backdrop click from discarding a part-typed invite;
+    // Escape still works. This form holds local state, not RHF, so there is nothing to
+    // restore if it is dismissed by accident.
+    <Dialog isOpen={open} onOpenChange={handleOpenChange} purpose="form">
+      <DialogHeader title={t("members.inviteTitle")} onOpenChange={handleOpenChange} />
+      <form onSubmit={handleSubmit} data-testid="invite-member-form">
+        <VStack gap={4}>
+          <TextInput
+            label={t("members.emailLabel")}
+            type="email"
+            value={email}
+            onChange={setEmail}
+            isDisabled={isPending}
+            isRequired
+          />
+          <Selector
+            label={t("members.roleLabel")}
+            value={role}
+            onChange={(value) => setRole(value as TenantRole)}
+            isDisabled={isPending}
+            data-testid="invite-role-select"
+            options={ROLE_OPTIONS.map((roleOption) => ({
+              value: roleOption,
+              label: t(`members.roles.${roleOption}`),
+            }))}
+          />
+          <HStack gap={2} justify="end">
             <Button
               type="button"
-              variant="outline"
+              variant="secondary"
+              label={t("members.cancelButton")}
               onClick={() => handleOpenChange(false)}
-              disabled={isPending}
-            >
-              {t("members.cancelButton")}
-            </Button>
-            <Button type="submit" disabled={email.trim().length === 0 || isPending}>
-              {t("members.inviteButton")}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
+              isDisabled={isPending}
+            />
+            <Button
+              type="submit"
+              variant="primary"
+              label={t("members.inviteButton")}
+              isDisabled={email.trim().length === 0}
+              isLoading={isPending}
+            />
+          </HStack>
+        </VStack>
+      </form>
     </Dialog>
   );
 }

@@ -144,9 +144,9 @@ describe("useWindowManager", () => {
     const maximized = result.current.windows["desktop-1"]?.find((w) => w.id === windowId);
     expect(maximized?.state).toBe("maximized");
     expect(maximized?.x).toBe(0);
-    expect(maximized?.y).toBe(36);
+    expect(maximized?.y).toBe(40);
     expect(maximized?.width).toBe(window.innerWidth);
-    expect(maximized?.height).toBe(window.innerHeight - 36);
+    expect(maximized?.height).toBe(window.innerHeight - 40);
 
     act(() => {
       if (windowId) {
@@ -161,9 +161,9 @@ describe("useWindowManager", () => {
 
     const stillMaximized = result.current.windows["desktop-1"]?.find((w) => w.id === windowId);
     expect(stillMaximized?.x).toBe(0);
-    expect(stillMaximized?.y).toBe(36);
+    expect(stillMaximized?.y).toBe(40);
     expect(stillMaximized?.width).toBe(window.innerWidth);
-    expect(stillMaximized?.height).toBe(window.innerHeight - 36);
+    expect(stillMaximized?.height).toBe(window.innerHeight - 40);
   });
 
   it("compacts z-indexes when the threshold is exceeded", () => {

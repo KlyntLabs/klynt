@@ -1,0 +1,17 @@
+/*
+ * Layout Astryx does not express for the usage-pricing card.
+ *
+ * `.card` keeps the vertical rhythm the pre-migration card owned (`mb-4`): UsagePricingSection
+ * still renders these back-to-back with no gap of its own. If that section later stacks them in
+ * a VStack, drop this rule.
+ *
+ * `.free` exists because Astryx's Text colour union has no "green".
+ */
+
+.card {
+  margin-block-end: var(--spacing-4);
+}
+
+.free {
+  color: var(--color-text-green);
+}

@@ -1,0 +1,14 @@
+/*
+ * One rule left: the uppercase eyebrow, a typographic treatment Text has no prop for. Its size,
+ * weight and colour still come from the component.
+ *
+ * The 768px breakpoint that used to flip the "understand" tab's stack to a row is gone — the tab
+ * is a `Grid columns={{minWidth, max: 2}}`, which reflows on the container. Equal tracks are a
+ * deliberate change: the copy column and the product grid now share the width evenly.
+ *
+ * No hex, no raw px, no breakpoints.
+ */
+
+.eyebrow {
+  text-transform: uppercase;
+}

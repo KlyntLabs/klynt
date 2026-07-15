@@ -25,7 +25,8 @@
     "slugLabel": "Tenant slug",
     "createTitle": "Create tenant",
     "createButton": "Create tenant",
-    "createError": "Failed to create tenant. Please try again."
+    "createError": "Failed to create tenant. Please try again.",
+    "switchLabel": "Switch workspace"
   },
   "roles": {
     "title": "Roles",
@@ -36,6 +37,7 @@
     "permissionsLabel": "Permissions",
     "systemBadge": "System",
     "createButton": "Create role",
+    "editButton": "Edit",
     "saveButton": "Save",
     "deleteButton": "Delete",
     "noRoles": "No roles found."
@@ -44,5 +46,11 @@
     "title": "Admin",
     "description": "Administrator overview",
     "placeholder": "Admin tools will appear here."
+  },
+  "theme": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
   }
 }

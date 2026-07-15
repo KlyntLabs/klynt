@@ -25,7 +25,8 @@
     "slugLabel": "Mã tổ chức",
     "createTitle": "Tạo tổ chức",
     "createButton": "Tạo tổ chức",
-    "createError": "Không thể tạo tổ chức. Vui lòng thử lại."
+    "createError": "Không thể tạo tổ chức. Vui lòng thử lại.",
+    "switchLabel": "Chuyển không gian làm việc"
   },
   "roles": {
     "title": "Vai trò",
@@ -36,6 +37,7 @@
     "permissionsLabel": "Quyền hạn",
     "systemBadge": "Hệ thống",
     "createButton": "Tạo vai trò",
+    "editButton": "Chỉnh sửa",
     "saveButton": "Lưu",
     "deleteButton": "Xóa",
     "noRoles": "Không tìm thấy vai trò nào."
@@ -44,5 +46,11 @@
     "title": "Quản trị",
     "description": "Tổng quan quản trị viên",
     "placeholder": "Công cụ quản trị sẽ hiển thị tại đây."
+  },
+  "theme": {
+    "label": "Giao diện",
+    "light": "Sáng",
+    "dark": "Tối",
+    "system": "Hệ thống"
   }
 }

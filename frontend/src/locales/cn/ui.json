@@ -25,7 +25,8 @@
     "slugLabel": "租户标识",
     "createTitle": "创建租户",
     "createButton": "创建租户",
-    "createError": "创建租户失败，请重试。"
+    "createError": "创建租户失败，请重试。",
+    "switchLabel": "切换工作区"
   },
   "roles": {
     "title": "角色",
@@ -36,6 +37,7 @@
     "permissionsLabel": "权限",
     "systemBadge": "系统",
     "createButton": "创建角色",
+    "editButton": "编辑",
     "saveButton": "保存",
     "deleteButton": "删除",
     "noRoles": "未找到角色。"
@@ -44,5 +46,11 @@
     "title": "管理员",
     "description": "管理员概览",
     "placeholder": "管理工具将显示在这里。"
+  },
+  "theme": {
+    "label": "主题",
+    "light": "浅色",
+    "dark": "深色",
+    "system": "跟随系统"
   }
 }

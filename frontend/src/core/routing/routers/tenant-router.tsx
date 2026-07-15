@@ -1,6 +1,6 @@
+import { Spinner } from "@astryxdesign/core/Spinner";
 import { lazy, Suspense } from "react";
 import { createBrowserRouter } from "react-router-dom";
-import { Spinner } from "@/components/ui/spinner";
 import { ProtectedRoute } from "@/core/auth/route-guards";
 import { TenantGuard } from "@/core/routing/components/tenant-guard";
 

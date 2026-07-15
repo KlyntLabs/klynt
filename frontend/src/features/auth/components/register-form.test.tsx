@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw";
 import { describe, expect, it } from "vitest";
@@ -47,15 +47,21 @@ describe("RegisterForm", () => {
       )
     );
 
-    render(<RegisterForm />);
+    const { container } = render(<RegisterForm />);
     await user.type(screen.getByLabelText(/full name/i), "Ada Lovelace");
     await user.type(screen.getByLabelText(/username/i), "ada_lovelace");
     await user.type(screen.getByLabelText(/email/i), "duplicate@example.com");
     await user.type(screen.getByLabelText(/password/i), "Str0ng!pass");
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
+    // A conflict puts the API's message in two places: inline on the form (here) and, from
+    // `useRegister`'s own `onError`, in a toast. It always has — the toast used to be a store
+    // plus a fixed container, now it is Astryx's viewport — but the toast used to win the race
+    // and satisfy a document-wide `findByText` on its own. This test is about the *inline*
+    // error, so it now looks only inside the form.
+    const form = within(container.querySelector("form") as HTMLElement);
     expect(
-      await screen.findByText(/email already registered/i, {}, { timeout: 5000 })
+      await form.findByText(/email already registered/i, {}, { timeout: 5000 })
     ).toBeInTheDocument();
   });
 
@@ -77,6 +83,11 @@ describe("RegisterForm", () => {
     await user.type(screen.getByLabelText(/password/i), "Str0ng!pass");
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(/invalid input/i);
+    // Two alerts, both correct: the inline Banner on the form and the error Toast (which only
+    // became an `alert` once it moved onto Astryx — the hand-rolled toast was a polite
+    // <output>). Assert the message is announced, not that exactly one thing announces it.
+    const alerts = await screen.findAllByRole("alert");
+
+    expect(alerts.some((alert) => /invalid input/i.test(alert.textContent ?? ""))).toBe(true);
   });
 });

@@ -12,7 +12,8 @@ describe("ProductsPage interactions", () => {
     const user = userEvent.setup();
     render(<Default />);
 
-    const copyButton = screen.getByTitle("Copy to clipboard");
+    // Astryx's IconButton exposes `label` as the accessible name (aria-label), not `title`.
+    const copyButton = screen.getByRole("button", { name: "Copy to clipboard" });
     expect(copyButton.querySelector(".lucide-copy")).toBeInTheDocument();
 
     await user.click(copyButton);

@@ -1,4 +1,5 @@
-import { Spinner } from "@/components/ui/spinner";
+import { Center } from "@astryxdesign/core/Center";
+import { Spinner } from "@astryxdesign/core/Spinner";
 import { useTenantPublic } from "@/features/tenant/hooks/use-tenant";
 import { InvalidTenantPage } from "./invalid-tenant-page";
 
@@ -12,9 +13,9 @@ export function TenantGuard({ slug, children }: TenantGuardProps) {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <Center height="100vh">
         <Spinner />
-      </div>
+      </Center>
     );
   }
 

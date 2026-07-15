@@ -1,154 +1,121 @@
-import { AnimatePresence, motion } from "framer-motion";
+import { Avatar } from "@astryxdesign/core/Avatar";
+import { Button } from "@astryxdesign/core/Button";
+import { Divider } from "@astryxdesign/core/Divider";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Icon } from "@astryxdesign/core/Icon";
+import { Item } from "@astryxdesign/core/Item";
+import { Popover } from "@astryxdesign/core/Popover";
+import { Skeleton } from "@astryxdesign/core/Skeleton";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import { ChevronDown, LogOut, Settings, User as UserIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { GlassDivider, GlassPanel } from "@/components/ui/glass-panel";
 import { useAuthModule } from "@/core/auth/auth-module";
 import { routePaths } from "@/core/routing/route-paths";
-import { cn } from "@/lib/utils";
+
+/**
+ * How wide the name may run before it ellipsises. Past Astryx's spacing scale (which stops at
+ * 48px) and Text has no width prop, so it rides on a VStack — `SizeValue`: "numbers are treated
+ * as pixels", which makes the wrapper's maxWidth the native home for it.
+ */
+const NAME_MAX_WIDTH = 100;
 
 export function UserMenu() {
   const { t } = useTranslation("home");
   const { user, isLoading, logout } = useAuthModule();
   const navigate = useNavigate();
+  // Controlled so selecting an item closes the popover. Astryx's Popover owns
+  // light-dismiss and Escape, so the old click-outside listener and ref are gone.
   const [isOpen, setIsOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   if (isLoading) {
-    return (
-      <div
-        className="size-7 animate-pulse rounded-full bg-muted"
-        aria-hidden="true"
-        data-testid="user-menu-loading"
-      />
-    );
+    return <Skeleton width={28} height={28} radius="rounded" data-testid="user-menu-loading" />;
   }
 
   if (!user) {
     return (
-      <button
-        type="button"
+      <Button
+        label={t("desktop.menubar.signIn")}
+        variant="primary"
+        size="sm"
         onClick={() => navigate(routePaths.login)}
-        className="flex h-8 items-center gap-1.5 rounded-full bg-brand px-3.5 text-[12px] font-semibold text-brand-foreground transition-colors hover:bg-brand-hover"
-      >
-        {t("desktop.menubar.signIn")}
-      </button>
+      />
     );
   }
 
-  const initials = user.name
-    .split(" ")
-    .map((n) => n[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-
-  const menuItems = [
-    {
-      icon: UserIcon,
-      label: t("desktop.menubar.profile"),
-      onClick: () => navigate(routePaths.dashboard),
-    },
-    {
-      icon: Settings,
-      label: t("desktop.menubar.settings"),
-      onClick: () => {},
-    },
-  ];
+  const close = () => setIsOpen(false);
 
   return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setIsOpen((v) => !v)}
-        className={cn(
-          "flex items-center gap-1.5 rounded-full py-1 pl-1 pr-2.5 transition-colors",
-          isOpen ? "bg-foreground/8" : "hover:bg-foreground/5"
-        )}
-      >
-        <Avatar className="size-7 ring-1 ring-glass-border/50">
-          <AvatarFallback className="bg-brand/10 text-[11px] font-semibold text-brand">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-        <span className="max-w-[100px] truncate text-[12px] font-medium text-foreground/80">
-          {user.name}
-        </span>
-        <ChevronDown className="size-3 text-muted-foreground" />
-      </button>
-
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: -4 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: -4 }}
-            transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            style={{ originY: 0 }}
-          >
-            <GlassPanel
-              variant="dropdown"
-              radius="lg"
-              className="absolute right-0 top-full mt-1.5 min-w-[220px] overflow-hidden p-1.5"
-            >
-              <div className="flex items-center gap-2.5 rounded-md px-2.5 py-2">
-                <Avatar className="size-9 ring-1 ring-glass-border/50">
-                  <AvatarFallback className="bg-brand/10 text-xs font-semibold text-brand">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0">
-                  <p className="truncate text-[13px] font-semibold text-foreground">{user.name}</p>
-                  <p className="truncate text-[11px] text-muted-foreground">{user.email}</p>
-                </div>
-              </div>
-
-              <GlassDivider className="mb-1.5 mt-1" />
-
-              {menuItems.map((item) => (
-                <button
-                  key={item.label}
-                  type="button"
-                  onClick={() => {
-                    item.onClick();
-                    setIsOpen(false);
-                  }}
-                  className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] text-foreground/90 transition-colors hover:bg-brand hover:text-brand-foreground"
-                >
-                  <item.icon className="size-3.5" />
-                  {item.label}
-                </button>
-              ))}
-
-              <GlassDivider className="my-1" />
-
-              <button
-                type="button"
-                onClick={() => {
-                  logout();
-                  setIsOpen(false);
-                }}
-                className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] text-foreground/90 transition-colors hover:bg-destructive hover:text-destructive-foreground"
-              >
-                <LogOut className="size-3.5" />
-                {t("desktop.menubar.signOut")}
-              </button>
-            </GlassPanel>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    <Popover
+      isOpen={isOpen}
+      onOpenChange={setIsOpen}
+      placement="below"
+      alignment="end"
+      label={t("desktop.menubar.profile")}
+      content={
+        <VStack gap={1}>
+          <Item
+            startContent={<Avatar name={user.name} size="medium" />}
+            label={user.name}
+            description={user.email}
+          />
+          <Divider />
+          {/* Item's startContent is a generic slot, not Button's sized icon slot, so the glyphs
+              have to bring their own size — via Icon's size prop, never a pixel number. */}
+          <Item
+            startContent={<Icon icon={UserIcon} size="sm" />}
+            label={t("desktop.menubar.profile")}
+            onClick={() => {
+              navigate(routePaths.dashboard);
+              close();
+            }}
+          />
+          <Item
+            startContent={<Icon icon={Settings} size="sm" />}
+            label={t("desktop.menubar.settings")}
+            onClick={close}
+          />
+          <Divider />
+          <Item
+            startContent={<Icon icon={LogOut} size="sm" />}
+            label={t("desktop.menubar.signOut")}
+            onClick={() => {
+              logout();
+              close();
+            }}
+          />
+        </VStack>
+      }
+    >
+      {/*
+       * The trigger IS an Astryx Button.
+       *
+       * It used to be an `<HStack as="button">` carrying a `type="button"` spread-cast, plus a
+       * CSS module for the native-button reset, the pill radius and an *asymmetric* inline
+       * padding that no prop could express. All of it is gone. Button renders a real
+       * `<button type="button">` — which is exactly what Popover's trigger contract asks for
+       * ("Must contain a <button> or [role='button'] element — the popover locates it") — and it
+       * brings the ghost surface, the pill, the padding, the hover and the focus ring itself.
+       *
+       * The avatar/name/chevron row goes through `children`, not the `icon` slot: Button's icon
+       * slot force-sizes whatever it wraps (`iconSizeStyles[size]`), which would squash the
+       * Avatar, whereas `children` renders as-is in place of the label. `label` still supplies
+       * the accessible name.
+       */}
+      {/* No onClick: Popover finds this button and attaches its own click/keydown handlers. */}
+      <Button variant="ghost" size="sm" label={user.name} data-testid="user-menu-trigger">
+        <HStack gap={1.5} align="center">
+          <Avatar name={user.name} size="small" />
+          <VStack maxWidth={NAME_MAX_WIDTH}>
+            <Text type="label" weight="medium" maxLines={1}>
+              {user.name}
+            </Text>
+          </VStack>
+          <Icon icon={ChevronDown} size="xsm" />
+        </HStack>
+      </Button>
+    </Popover>
   );
 }

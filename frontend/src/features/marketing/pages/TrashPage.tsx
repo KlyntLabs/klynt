@@ -1,4 +1,16 @@
-import { AnimatePresence, motion } from "framer-motion";
+import { Badge } from "@astryxdesign/core/Badge";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { ClickableCard } from "@astryxdesign/core/ClickableCard";
+import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
+import { Divider } from "@astryxdesign/core/Divider";
+import { Grid } from "@astryxdesign/core/Grid";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Icon, type IconSize } from "@astryxdesign/core/Icon";
+import { Section } from "@astryxdesign/core/Section";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
+import { motion } from "framer-motion";
 import {
   AlertTriangle,
   FileSpreadsheet,
@@ -10,15 +22,17 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { tween } from "@/core/motion/astryx-motion";
+import styles from "./trash-page.module.css";
+
+/*
+ * framer-motion drives the Astryx components directly: the header is a MotionSection, each tile a
+ * MotionClickableCard. Every Astryx component extends BaseProps, which keeps `ref`, `style`,
+ * `className` and event handlers, so `motion.create()` can animate one without a wrapper div —
+ * the same composition Window.tsx uses.
+ */
+const MotionSection = motion.create(Section);
+const MotionClickableCard = motion.create(ClickableCard);
 
 /* ──────────────────────────── types ──────────────────────────── */
 
@@ -36,20 +50,40 @@ interface TrashItem {
 
 /* ──────────────────────────── helpers ──────────────────────────── */
 
-function getFileIcon(type: TrashItem["type"] | undefined) {
+/**
+ * The icon for a file type.
+ *
+ * Both the geometry and the hue are Astryx `Icon` props: "Don't resize icons with arbitrary pixel
+ * values; use the provided size props" and "Use color tokens for icon colors"
+ * (`bunx astryx component Icon`). `size` is an `IconSize` (xsm | sm | md | lg), so the one helper
+ * serves the grid tiles (`lg`) and the dialog header (`sm`).
+ *
+ * `IconColor` carries the categorical hues (blue, green, orange, red, …) alongside the semantic
+ * ones, and each resolves to the very same `--color-icon-<hue>` token the old CSS module set by
+ * hand — so the colour is now a prop and the hue classes are gone, with no shift in appearance.
+ */
+function getFileIcon(type: TrashItem["type"], size: IconSize = "lg") {
   switch (type) {
     case "image":
-      return <ImageIcon className="w-8 h-8 text-[#2563EB]" />;
+      return <Icon icon={ImageIcon} size={size} color="blue" aria-hidden="true" />;
     case "spreadsheet":
     case "csv":
-      return <FileSpreadsheet className="w-8 h-8 text-[#22C55E]" />;
+      return <Icon icon={FileSpreadsheet} size={size} color="green" aria-hidden="true" />;
     case "audio":
-      return <Music className="w-8 h-8 text-[#F76E18]" />;
+      return <Icon icon={Music} size={size} color="orange" aria-hidden="true" />;
     case "pdf":
-      return <FileText className="w-8 h-8 text-[#DC2626]" />;
+      return <Icon icon={FileText} size={size} color="red" aria-hidden="true" />;
     default:
-      return <FileText className="w-8 h-8 text-[#6B6B6B]" />;
+      return <Icon icon={FileText} size={size} color="secondary" aria-hidden="true" />;
   }
+}
+
+/** The icon for a trash item: a lock when the item is redacted, otherwise its file-type icon. */
+function getItemIcon(item: TrashItem, size: IconSize = "lg") {
+  if (item.redacted) {
+    return <Icon icon={Lock} size={size} color="disabled" aria-hidden="true" />;
+  }
+  return getFileIcon(item.type, size);
 }
 
 /* ──────────────────────────── page ──────────────────────────── */
@@ -65,130 +99,148 @@ export default function TrashPage() {
   >;
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <VStack height="100%">
       {/* Header */}
-      <motion.div
+      <MotionSection
+        variant="muted"
+        dividers={["bottom"]}
+        padding={6}
+        paddingBlock={4}
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2 }}
-        className="flex items-center justify-between px-6 py-4 bg-[#F5F3EF] border-b border-[#E5E5E5] shrink-0"
+        transition={tween("fast")}
       >
-        <div className="flex items-center gap-2">
-          <Trash2 className="w-5 h-5 text-[#6B6B6B]" />
-          <span className="text-sm font-semibold text-[#1A1A1A]">{t("trash.header.title")}</span>
-        </div>
-        <span className="text-xs text-[#6B6B6B]">{t("trash.header.subtitle")}</span>
-        <Badge
-          variant="secondary"
-          className="bg-[#E5E5E5] text-[#6B6B6B] text-xs px-2 py-0.5 rounded-full font-normal"
-        >
-          {t("trash.header.itemsCount", { count: trashItems.length })}
-        </Badge>
-      </motion.div>
+        <HStack justify="between" align="center" gap={3} wrap="wrap">
+          <HStack gap={2} align="center">
+            <Icon icon={Trash2} size="md" color="secondary" aria-hidden="true" />
+            <Text type="label" weight="semibold">
+              {t("trash.header.title")}
+            </Text>
+          </HStack>
+          <Text type="supporting" size="sm">
+            {t("trash.header.subtitle")}
+          </Text>
+          <Badge
+            variant="neutral"
+            label={t("trash.header.itemsCount", { count: trashItems.length })}
+          />
+        </HStack>
+      </MotionSection>
 
       {/* Subtitle */}
-      <div className="px-6 py-3 border-b border-[#E5E5E5] shrink-0">
-        <p className="text-xs text-[#6B6B6B]">{t("trash.header.description")}</p>
-      </div>
+      <Section variant="transparent" dividers={["bottom"]} padding={6} paddingBlock={3}>
+        <Text type="supporting" size="sm" display="block">
+          {t("trash.header.description")}
+        </Text>
+      </Section>
 
       {/* Grid */}
-      <ScrollArea className="flex-1">
-        <div className="p-6">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {trashItems.map((item, i) => (
-              <motion.button
-                key={item.id ?? item.filename}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.2, delay: i * 0.03 }}
-                whileHover={{ scale: 1.02 }}
-                onClick={() => setSelectedItem(item)}
-                className="flex flex-col items-center p-4 border border-[#E5E5E5] rounded-md bg-white hover:shadow-sm hover:bg-[#FAFAF8] hover:border-[#D1D1D1] transition-all text-left cursor-pointer"
-              >
-                {item.redacted ? (
-                  <Lock className="w-8 h-8 text-[#9CA3AF]" />
-                ) : (
-                  getFileIcon(item.type)
-                )}
-                <p className="text-xs font-medium text-center mt-3 break-words w-full line-clamp-2">
+      <VStack height="100%" isScrollable padding={6} className={styles.grid}>
+        <Grid columns={{ minWidth: 160, max: 4 }} gap={4}>
+          {trashItems.map((item, i) => (
+            <MotionClickableCard
+              key={item.id ?? item.filename}
+              label={item.filename}
+              onClick={() => setSelectedItem(item)}
+              height="100%"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={tween("fast", { delay: i * 0.03 })}
+              whileHover={{ scale: 1.02 }}
+            >
+              <VStack gap={1} align="center">
+                {getItemIcon(item)}
+                <Text
+                  type="label"
+                  size="sm"
+                  justify="center"
+                  maxLines={2}
+                  hasTruncateTooltip={false}
+                  wordBreak="break-word"
+                >
                   {item.filename}
-                </p>
-                <p className="text-[10px] text-[#9CA3AF] text-center mt-1">
+                </Text>
+                <Text type="supporting" size="xsm" color="disabled" justify="center">
                   {item.redacted ? t("trash.redacted") : fileTypeLabels[item.type ?? "txt"]}
-                </p>
-                <div className="flex justify-between w-full mt-2 text-[10px] text-[#9CA3AF]">
-                  <span>{item.size}</span>
-                  <span>{item.dateDeleted}</span>
-                </div>
+                </Text>
+                <HStack justify="between" width="100%">
+                  <Text type="supporting" size="xsm" color="disabled">
+                    {item.size}
+                  </Text>
+                  <Text type="supporting" size="xsm" color="disabled">
+                    {item.dateDeleted}
+                  </Text>
+                </HStack>
                 {!item.redacted && (
-                  <p className="text-[10px] text-[#6B6B6B] text-center mt-2 line-clamp-2 leading-tight">
+                  <Text
+                    type="supporting"
+                    size="xsm"
+                    justify="center"
+                    maxLines={2}
+                    hasTruncateTooltip={false}
+                  >
                     {item.description}
-                  </p>
+                  </Text>
                 )}
-              </motion.button>
-            ))}
-          </div>
-        </div>
-      </ScrollArea>
+              </VStack>
+            </MotionClickableCard>
+          ))}
+        </Grid>
+      </VStack>
 
       {/* Detail Modal */}
-      <Dialog open={selectedItem !== null} onOpenChange={() => setSelectedItem(null)}>
-        <AnimatePresence>
-          {selectedItem && (
-            <DialogContent className="max-w-md max-h-[80vh] overflow-hidden flex flex-col">
-              <DialogHeader className="shrink-0">
-                <DialogTitle className="flex items-center gap-2 text-base">
-                  {selectedItem.redacted ? (
-                    <Lock className="w-4 h-4 text-[#9CA3AF]" />
-                  ) : (
-                    getFileIcon(selectedItem.type)
-                  )}
-                  <span className="truncate">{selectedItem.filename}</span>
-                </DialogTitle>
-                <DialogDescription className="text-xs">
-                  {selectedItem.redacted ? selectedItem.redactedReason : selectedItem.description}
-                </DialogDescription>
-              </DialogHeader>
+      <Dialog isOpen={selectedItem !== null} onOpenChange={() => setSelectedItem(null)} width={448}>
+        {selectedItem && (
+          <>
+            <DialogHeader
+              title={selectedItem.filename}
+              subtitle={
+                selectedItem.redacted ? selectedItem.redactedReason : selectedItem.description
+              }
+              startContent={getItemIcon(selectedItem, "sm")}
+              onOpenChange={() => setSelectedItem(null)}
+            />
 
-              <div className="flex-1 overflow-y-auto my-4">
-                {selectedItem.redacted ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <AlertTriangle className="w-12 h-12 text-[#F76E18] mb-3" />
-                    <p className="text-sm font-medium text-[#1A1A1A]">
-                      {t("trash.detail.niceTry")}
-                    </p>
-                    <p className="text-xs text-[#6B6B6B] mt-1">{selectedItem.redactedReason}</p>
-                  </div>
-                ) : (
-                  <div className="bg-[#F5F3EF] rounded-md p-4">
-                    <pre className="text-xs text-[#1A1A1A] whitespace-pre-wrap leading-relaxed font-mono">
-                      {Array.isArray(selectedItem.content)
-                        ? selectedItem.content.join("\n")
-                        : selectedItem.content}
-                    </pre>
-                  </div>
-                )}
-              </div>
+            <VStack isScrollable paddingBlock={4} className={styles.dialogBody}>
+              {selectedItem.redacted ? (
+                <VStack gap={1} align="center" paddingBlock={6}>
+                  <Icon icon={AlertTriangle} size="lg" color="orange" aria-hidden="true" />
+                  <Text type="label" weight="medium" justify="center">
+                    {t("trash.detail.niceTry")}
+                  </Text>
+                  <Text type="supporting" size="sm" justify="center">
+                    {selectedItem.redactedReason}
+                  </Text>
+                </VStack>
+              ) : (
+                <Card variant="muted" padding={4}>
+                  <Text type="code" size="sm" display="block" className={styles.preformatted}>
+                    {Array.isArray(selectedItem.content)
+                      ? selectedItem.content.join("\n")
+                      : selectedItem.content}
+                  </Text>
+                </Card>
+              )}
+            </VStack>
 
-              <div className="shrink-0 pt-3 border-t border-[#E5E5E5] flex items-center justify-between">
-                <span className="text-[10px] text-[#9CA3AF]">
-                  {selectedItem.type?.toUpperCase() ?? "UNKNOWN"} &bull; {selectedItem.size} &bull;{" "}
-                  {t("trash.detail.deleted")} {selectedItem.dateDeleted}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setSelectedItem(null)}
-                  disabled
-                  className="text-xs text-[#9CA3AF] bg-[#F0EDE6] px-3 py-1.5 rounded cursor-not-allowed opacity-60"
-                  title={t("trash.detail.restoreTooltip")}
-                >
-                  {t("trash.detail.restore")}
-                </button>
-              </div>
-            </DialogContent>
-          )}
-        </AnimatePresence>
+            <Divider />
+            <HStack justify="between" align="center" gap={2} paddingBlock={3}>
+              <Text type="supporting" size="xsm" color="disabled">
+                {selectedItem.type?.toUpperCase() ?? "UNKNOWN"} &bull; {selectedItem.size} &bull;{" "}
+                {t("trash.detail.deleted")} {selectedItem.dateDeleted}
+              </Text>
+              <Button
+                size="sm"
+                variant="secondary"
+                label={t("trash.detail.restore")}
+                tooltip={t("trash.detail.restoreTooltip")}
+                isDisabled
+                onClick={() => setSelectedItem(null)}
+              />
+            </HStack>
+          </>
+        )}
       </Dialog>
-    </div>
+    </VStack>
   );
 }

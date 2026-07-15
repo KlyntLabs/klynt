@@ -1,3 +1,8 @@
+import { Button } from "@astryxdesign/core/Button";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Icon } from "@astryxdesign/core/Icon";
+import { IconButton } from "@astryxdesign/core/IconButton";
+import { StatusDot } from "@astryxdesign/core/StatusDot";
 import { Bell, Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { MenubarItem, MenubarSchema } from "@/features/desktop/menubar/types";
@@ -12,50 +17,65 @@ export function TrailingActions({
   const { t } = useTranslation("home");
 
   return (
-    <div className="flex items-center gap-1">
+    <HStack gap={1} align="center">
       {schema.trailing.map((item) => {
         if (item.type !== "action") return null;
-        const Icon = item.icon;
+        const ItemIcon = item.icon;
         const isPrimary = item.variant === "primary";
         const label = t(item.label as never);
 
         if (isPrimary) {
           return (
-            <button
+            <Button
               key={item.label}
-              type="button"
+              variant="primary"
+              size="sm"
+              label={label}
               onClick={() => onAction(item)}
-              className="flex h-8 items-center gap-1.5 rounded-full bg-brand px-3.5 text-[12px] font-semibold text-brand-foreground transition-colors hover:bg-brand-hover"
-            >
-              {label}
-            </button>
+            />
           );
         }
 
-        const icon =
-          item.label === "desktop.menubar.search" ? (
-            <Search className="size-4" />
-          ) : item.label === "desktop.menubar.notifications" ? (
-            <div className="relative">
-              <Bell className="size-4" />
-              <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-brand ring-1 ring-glass/80" />
-            </div>
-          ) : Icon ? (
-            <Icon className="size-4" />
-          ) : null;
+        const isNotifications = item.label === "desktop.menubar.notifications";
 
-        return (
-          <button
+        /*
+         * Resolve the icon COMPONENT, not an element. Building bare `<Icon/>` elements at
+         * statement level inside a .map() callback trips biome's useJsxKeyInIterable — it cannot
+         * tell that they are icon slots for a keyed sibling rather than iterated children. Every
+         * element in this callback now hangs off the keyed IconButton, and the glyph is a plain
+         * ComponentType until the moment it is handed to <Icon>, which owns its size and colour.
+         */
+        const GlyphIcon =
+          item.label === "desktop.menubar.search" ? Search : isNotifications ? Bell : ItemIcon;
+
+        const button = (
+          <IconButton
             key={item.label}
-            type="button"
+            variant="ghost"
+            size="sm"
+            label={label}
+            icon={GlyphIcon ? <Icon icon={GlyphIcon} /> : undefined}
             onClick={() => onAction(item)}
-            aria-label={label}
-            className="flex size-8 items-center justify-center rounded-full text-foreground/70 transition-colors hover:bg-foreground/8 hover:text-foreground"
-          >
-            {icon}
-          </button>
+          />
+        );
+
+        /*
+         * The unread marker used to be a hand-positioned dot overlaid on the bell — two spans and
+         * an absolutely-positioned pseudo-element. Astryx names the primitive for this outright
+         * ("Status → StatusDot/Token"), so the dot now sits *beside* the bell rather than on it.
+         * That is a deliberate redesign to fit the design system, not a reproduction of the old
+         * chrome: StatusDot carries its own accessible name and its own token, and there is no
+         * overlay geometry left to maintain.
+         */
+        return isNotifications ? (
+          <HStack key={item.label} gap={0.5} align="center">
+            {button}
+            <StatusDot variant="accent" label={t("desktop.menubar.unreadNotifications")} />
+          </HStack>
+        ) : (
+          button
         );
       })}
-    </div>
+    </HStack>
   );
 }

@@ -88,6 +88,7 @@
       "getStarted": "Get started – free",
       "search": "搜索",
       "notifications": "通知",
+      "unreadNotifications": "未读通知",
       "profile": "个人资料",
       "signIn": "登录",
       "signOut": "退出登录",
@@ -197,6 +198,7 @@
       "share": "Share",
       "zoom": "100%",
       "toolbar": {
+        "label": "文档工具栏",
         "back": "Back",
         "forward": "Forward",
         "bold": "Bold",

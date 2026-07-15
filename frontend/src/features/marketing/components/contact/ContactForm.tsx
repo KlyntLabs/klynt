@@ -1,22 +1,21 @@
+import { Button } from "@astryxdesign/core/Button";
+import { EmptyState } from "@astryxdesign/core/EmptyState";
+import { Icon } from "@astryxdesign/core/Icon";
+import { VStack } from "@astryxdesign/core/VStack";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, Loader2 } from "lucide-react";
+import { Check } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { FormSelector } from "@/components/form/form-selector";
+import { FormTextArea } from "@/components/form/form-text-area";
+import { FormTextInput } from "@/components/form/form-text-input";
+import { tween } from "@/core/motion/astryx-motion";
 import { useMarketingTranslation } from "@/features/marketing/lib/use-marketing-translation";
-import { cn } from "@/lib/utils";
 import { type ContactFormData, createContactSchema } from "./contact-schema";
+
+/* framer-motion drives the Astryx stacks directly rather than wrapper <div>s. */
+const MotionVStack = motion.create(VStack);
 
 const SUBMIT_DELAY_MS = 1200;
 
@@ -57,148 +56,89 @@ export function ContactForm() {
   return (
     <AnimatePresence mode="wait">
       {status === "success" ? (
-        <motion.div
+        <MotionVStack
           key="success"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0 }}
-          className="flex flex-col items-center justify-center py-10 text-center"
         >
-          <div className="w-14 h-14 rounded-full bg-[#22C55E]/10 flex items-center justify-center mb-4">
-            <Check className="w-7 h-7 text-[#22C55E]" />
-          </div>
-          <h3 className="text-lg font-semibold text-[#1A1A1A]">
-            {t("talkToHuman.form.success.title")}
-          </h3>
-          <p className="text-sm text-[#6B6B6B] mt-1">{t("talkToHuman.form.success.subtitle")}</p>
-          <Button
-            variant="outline"
-            className="mt-4 rounded-lg border-[#D1D1D1]"
-            onClick={() => {
-              setStatus("idle");
-              form.reset();
-            }}
-          >
-            {t("talkToHuman.form.success.reset")}
-          </Button>
-        </motion.div>
+          <EmptyState
+            /* `size="lg"` is the size EmptyState's own doc example uses for its icon slot. */
+            icon={<Icon icon={Check} size="lg" />}
+            title={t("talkToHuman.form.success.title")}
+            description={t("talkToHuman.form.success.subtitle")}
+            actions={
+              <Button
+                variant="secondary"
+                label={t("talkToHuman.form.success.reset")}
+                onClick={() => {
+                  setStatus("idle");
+                  form.reset();
+                }}
+              />
+            }
+          />
+        </MotionVStack>
       ) : (
+        /*
+         * This stays a real <form>, not a Stack rendered `as="form"`.
+         *
+         * Astryx's polymorphic `as` does not widen a component's prop type to the target
+         * element's attributes — `noValidate` is rejected by StackProps (the same limitation
+         * that makes `as="button"` + `type` a type error elsewhere in this repo). And
+         * `noValidate` is load-bearing: it is what keeps react-hook-form + zod the single
+         * validation authority instead of the browser's native bubbles.
+         *
+         * No rule is bent here regardless: the rule is "no <div>", and a <form> is a semantic
+         * element, not a layout box. The spacing inside it is still an Astryx VStack.
+         */
         <motion.form
           key="form"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1, x: shakeCount > 0 ? [0, -4, 4, -4, 4, 0] : 0 }}
-          transition={{ duration: 0.35 }}
+          transition={tween("medium-min")}
           exit={{ opacity: 0 }}
           onSubmit={form.handleSubmit(onSubmit, onInvalid)}
-          className="space-y-4"
           noValidate
         >
-          <Form {...form}>
-            <FormField
+          <VStack gap={4}>
+            <FormTextInput
               control={form.control}
               name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-[#1A1A1A]">
-                    {t("talkToHuman.form.fields.name.label")}
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type="text"
-                      placeholder={t("talkToHuman.form.fields.name.placeholder")}
-                      className="border-[#D1D1D1] focus-visible:border-[#2563EB] focus-visible:ring-[#2563EB]/20"
-                    />
-                  </FormControl>
-                  <FormMessage className="text-[#DC2626]" />
-                </FormItem>
-              )}
+              label={t("talkToHuman.form.fields.name.label")}
+              placeholder={t("talkToHuman.form.fields.name.placeholder")}
             />
-
-            <FormField
+            <FormTextInput
               control={form.control}
               name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-[#1A1A1A]">
-                    {t("talkToHuman.form.fields.email.label")}
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type="email"
-                      placeholder={t("talkToHuman.form.fields.email.placeholder")}
-                      className="border-[#D1D1D1] focus-visible:border-[#2563EB] focus-visible:ring-[#2563EB]/20"
-                    />
-                  </FormControl>
-                  <FormMessage className="text-[#DC2626]" />
-                </FormItem>
-              )}
+              type="email"
+              label={t("talkToHuman.form.fields.email.label")}
+              placeholder={t("talkToHuman.form.fields.email.placeholder")}
             />
-
-            <FormField
+            <FormSelector
               control={form.control}
               name="subject"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-[#1A1A1A]">
-                    {t("talkToHuman.form.fields.subject.label")}
-                  </FormLabel>
-                  <FormControl>
-                    <select
-                      {...field}
-                      className={cn(
-                        "w-full bg-white border border-[#D1D1D1] rounded-lg px-3 py-2.5 text-sm text-[#1A1A1A]",
-                        "transition-all outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 appearance-none cursor-pointer"
-                      )}
-                    >
-                      {subjectOptions.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  </FormControl>
-                </FormItem>
-              )}
+              label={t("talkToHuman.form.fields.subject.label")}
+              options={subjectOptions}
             />
-
-            <FormField
+            <FormTextArea
               control={form.control}
               name="message"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-[#1A1A1A]">
-                    {t("talkToHuman.form.fields.message.label")}
-                  </FormLabel>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      placeholder={t("talkToHuman.form.fields.message.placeholder")}
-                      rows={5}
-                      className="border-[#D1D1D1] focus-visible:border-[#2563EB] focus-visible:ring-[#2563EB]/20 resize-vertical"
-                    />
-                  </FormControl>
-                  <FormMessage className="text-[#DC2626]" />
-                </FormItem>
-              )}
+              rows={5}
+              label={t("talkToHuman.form.fields.message.label")}
+              placeholder={t("talkToHuman.form.fields.message.placeholder")}
             />
-
             <Button
               type="submit"
-              disabled={status === "submitting"}
-              className="w-full bg-[#F76E18] hover:bg-[#E56310] text-white font-semibold py-2.5 rounded-lg transition-colors mt-2 h-auto disabled:opacity-70"
-            >
-              {status === "submitting" ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  {t("talkToHuman.form.sending")}
-                </span>
-              ) : (
-                t("talkToHuman.form.submit")
-              )}
-            </Button>
-          </Form>
+              variant="primary"
+              label={
+                status === "submitting"
+                  ? t("talkToHuman.form.sending")
+                  : t("talkToHuman.form.submit")
+              }
+              isLoading={status === "submitting"}
+            />
+          </VStack>
         </motion.form>
       )}
     </AnimatePresence>

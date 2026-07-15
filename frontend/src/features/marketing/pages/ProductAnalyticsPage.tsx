@@ -1,6 +1,7 @@
+import { Button } from "@astryxdesign/core/Button";
+import { Icon } from "@astryxdesign/core/Icon";
 import { Download, Play } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
 import {
   SlideAutocapture,
   SlideCTA,
@@ -70,26 +71,19 @@ export default function ProductAnalyticsPage() {
 
   const topBar = (
     <>
-      <button
-        type="button"
-        className="flex items-center gap-1.5 text-xs text-[#6B6B6B] hover:text-[#1A1A1A] px-3 py-1.5 rounded-md border border-[#D1D1D1] hover:bg-[#F5F3EF] transition-colors"
-      >
-        <Download className="w-3.5 h-3.5" />
-        {t("productAnalytics.toolbar.exportPdf")}
-      </button>
-      <button
-        type="button"
-        className="flex items-center gap-1.5 text-xs text-white bg-[#1A1A1A] hover:bg-[#333] px-3 py-1.5 rounded-md transition-colors"
-      >
-        <Play className="w-3.5 h-3.5" />
-        {t("productAnalytics.toolbar.present")}
-      </button>
       <Button
+        variant="ghost"
         size="sm"
-        className="bg-[#F76E18] hover:bg-[#E56310] text-white text-xs rounded-md ml-1"
-      >
-        {t("productAnalytics.toolbar.getStarted")}
-      </Button>
+        icon={<Icon icon={Download} />}
+        label={t("productAnalytics.toolbar.exportPdf")}
+      />
+      <Button
+        variant="secondary"
+        size="sm"
+        icon={<Icon icon={Play} />}
+        label={t("productAnalytics.toolbar.present")}
+      />
+      <Button variant="primary" size="sm" label={t("productAnalytics.toolbar.getStarted")} />
     </>
   );
 

@@ -12,7 +12,9 @@ describe("TrashPage interactions", () => {
     const user = userEvent.setup();
     render(<Default />);
 
-    await user.click(screen.getByText("bad-logo-1.svg").parentElement as HTMLElement);
+    // The tile is an Astryx ClickableCard: a real button whose accessible name is the filename,
+    // so the click target is queryable by role+name instead of by walking up from the text node.
+    await user.click(screen.getByRole("button", { name: "bad-logo-1.svg" }));
     const dialog = screen.getByRole("dialog");
     expect(dialog).toBeInTheDocument();
     expect(within(dialog).getByText(/Our first logo attempt/)).toBeInTheDocument();
@@ -27,7 +29,7 @@ describe("TrashPage interactions", () => {
     const user = userEvent.setup();
     render(<Default />);
 
-    await user.click(screen.getByText("ceo-browser-history.csv").parentElement as HTMLElement);
+    await user.click(screen.getByRole("button", { name: "ceo-browser-history.csv" }));
     const dialog = screen.getByRole("dialog");
     expect(dialog).toBeInTheDocument();
     await waitFor(() => {

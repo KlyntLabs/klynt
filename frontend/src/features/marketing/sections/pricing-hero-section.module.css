@@ -1,0 +1,15 @@
+/*
+ * One rule left: the stat plate's 1:1 aspect ratio — a shape, not a size, and Astryx's Card has no
+ * prop for it.
+ *
+ * The 3:2 split is native now. It used to be `flex: 3` / `flex: 2` inside a 640px media query;
+ * it is a `Grid columns={5}` with `GridSpan columns={3}` / `GridSpan columns={2}`, so the ratio is
+ * a prop and the breakpoint is gone. The hero holds its 3:2 at every width rather than stacking —
+ * a deliberate change, and the only way the ratio can be expressed in Astryx.
+ *
+ * No hex, no raw px, no breakpoints.
+ */
+
+.statPlate {
+  aspect-ratio: 1 / 1;
+}

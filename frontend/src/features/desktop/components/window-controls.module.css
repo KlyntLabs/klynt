@@ -1,0 +1,66 @@
+/*
+ * Window controls.
+ *
+ * These were literal quotations of the macOS traffic lights (#ff5f57 / #febc2e / #28c840) —
+ * the last hardcoded colours in the app. They now come from Astryx's categorical hue tokens,
+ * so the app is 100% native to the design system with no colour of its own anywhere.
+ *
+ * The trade that buys: the controls are now theme-derived rather than literal. Astryx's red,
+ * yellow and green are not macOS's, and in dark mode they resolve to the dark-mode variants —
+ * so they read as red/amber/green but no longer as *the* macOS lights. That is the intended
+ * consequence of going fully native; the recognisability of the exact macOS hues was the thing
+ * being given up, and it was given up knowingly.
+ *
+ * The `.light svg` rules are gone too. Astryx's Icon owns its own size (`size="xsm"` — the
+ * documented step, never a number) and
+ * defaults to color="inherit", so the glyph is revealed by transitioning the *button's* `color`
+ * from transparent to a darkened mix of its own light — one token per control, no element
+ * selector on the SVG, and no icon sized in CSS.
+ */
+
+.controls {
+  flex-shrink: 0;
+}
+
+.light {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  /* The control diameter, off the spacing scale. */
+  width: var(--spacing-3);
+  height: var(--spacing-3);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-full);
+  background-color: var(--traffic-light);
+  /* The glyph inherits this. Transparent until hover, exactly as macOS does it. */
+  color: transparent;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.light:hover {
+  background-color: color-mix(in srgb, var(--traffic-light) 88%, black);
+  color: color-mix(in srgb, var(--traffic-light) 45%, black);
+}
+
+.close {
+  --traffic-light: var(--color-icon-red);
+}
+
+.minimize {
+  --traffic-light: var(--color-icon-yellow);
+}
+
+.maximize {
+  --traffic-light: var(--color-icon-green);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .light {
+    transition: none;
+  }
+}

@@ -1,5 +1,10 @@
+import { Grid } from "@astryxdesign/core/Grid";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Section } from "@astryxdesign/core/Section";
+import { VStack } from "@astryxdesign/core/VStack";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
+import { tween } from "@/core/motion/astryx-motion";
 import {
   tab1Products,
   tab3Products,
@@ -7,8 +12,16 @@ import {
   tab4FeatureDev,
   tab4Feedback,
 } from "@/features/marketing/data/products";
-import { staggerContainer, staggerItem } from "./constants";
+import { staggerContainer } from "./constants";
 import { ProductCard } from "./ProductCard";
+
+/*
+ * framer-motion drives the Astryx components themselves — the category *is* the fading VStack and
+ * the grid *is* the stagger container. No wrapper <div> survives. (staggerItem now lives on
+ * ProductCard, which is the stagger item.)
+ */
+const MotionVStack = motion.create(VStack);
+const MotionGrid = motion.create(Grid);
 
 interface ProductCategoryProps {
   title: string;
@@ -18,28 +31,28 @@ interface ProductCategoryProps {
 
 function ProductCategory({ title, products, tk }: ProductCategoryProps) {
   return (
-    <motion.div
-      className="mt-8 first:mt-0"
+    <MotionVStack
+      gap={4}
+      align="stretch"
       initial={{ opacity: 0, y: 12 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.35 }}
+      transition={tween("medium-min")}
     >
-      <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">{title}</h3>
-      <motion.div
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1"
+      <Heading level={3}>{title}</Heading>
+      <MotionGrid
+        columns={{ minWidth: 260, max: 3 }}
+        gap={1}
         variants={staggerContainer}
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true }}
       >
         {products.map((p) => (
-          <motion.div key={p.id} variants={staggerItem}>
-            <ProductCard product={p} tk={tk} />
-          </motion.div>
+          <ProductCard key={p.id} product={p} tk={tk} />
         ))}
-      </motion.div>
-    </motion.div>
+      </MotionGrid>
+    </MotionVStack>
   );
 }
 
@@ -48,18 +61,20 @@ export function ProductCatalog() {
   const tk = (key: string) => t(key as never);
 
   return (
-    <section className="px-6 sm:px-8 py-6 pb-8">
-      <ProductCategory
-        title={t("products.categories.understand")}
-        products={tab1Products}
-        tk={tk}
-      />
-      <ProductCategory title={t("products.categories.debug")} products={tab3Products} tk={tk} />
-      <ProductCategory
-        title={t("products.categories.ship")}
-        products={[...tab4FeatureDev, ...tab4Automation, ...tab4Feedback]}
-        tk={tk}
-      />
-    </section>
+    <Section variant="transparent" padding={6}>
+      <VStack gap={8} align="stretch">
+        <ProductCategory
+          title={t("products.categories.understand")}
+          products={tab1Products}
+          tk={tk}
+        />
+        <ProductCategory title={t("products.categories.debug")} products={tab3Products} tk={tk} />
+        <ProductCategory
+          title={t("products.categories.ship")}
+          products={[...tab4FeatureDev, ...tab4Automation, ...tab4Feedback]}
+          tk={tk}
+        />
+      </VStack>
+    </Section>
   );
 }

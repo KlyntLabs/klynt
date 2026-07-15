@@ -1,0 +1,29 @@
+/*
+ * The menu-editor list. The rows are Astryx stacks rendered `as="li"` inside an `as="ul"`
+ * VStack, so the list semantics and the data-testids survive while direction, gaps, padding and
+ * alignment all come from props. .rowMain and .separatorLine collapsed into StackItem
+ * size="fill" — "Use StackItem with size='fill' to make one item stretch and fill the leftover
+ * space" — which is why the three row flavours now share the one .row skin.
+ *
+ * What is left: the list reset and the bordered-row chrome. The hairlines are `--border-width`,
+ * Astryx's own border token — the same one Card draws its border with — not hand-set widths.
+ * Everything else is a token too.
+ */
+
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-element);
+}
+
+/* Center has no padding prop, so the empty state's gutter stays here — as a token. */
+.emptyState {
+  padding: var(--spacing-4);
+  border: var(--border-width) dashed var(--color-border-emphasized);
+  border-radius: var(--radius-element);
+}

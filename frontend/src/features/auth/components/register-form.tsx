@@ -1,17 +1,10 @@
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { VStack } from "@astryxdesign/core/VStack";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
+import { FormTextInput } from "@/components/form/form-text-input";
 import { ApiError } from "@/core/api/api-error";
 import { useRegister } from "@/core/auth/hooks/use-register";
 import { useRegisterSchema } from "@/features/auth/schemas/register-schema";
@@ -43,71 +36,44 @@ export function RegisterForm() {
     }
   });
 
+  const rootError = form.formState.errors.root;
+
   return (
-    <Form {...form}>
-      <form onSubmit={onSubmit} className="space-y-4">
-        <FormField
+    <form onSubmit={onSubmit}>
+      <VStack gap={4}>
+        <FormTextInput
           control={form.control}
           name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("auth:register.name.label")}</FormLabel>
-              <FormControl>
-                <Input placeholder={t("auth:register.name.placeholder")} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          label={t("auth:register.name.label")}
+          placeholder={t("auth:register.name.placeholder")}
         />
-        <FormField
+        <FormTextInput
           control={form.control}
           name="username"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("auth:register.username.label")}</FormLabel>
-              <FormControl>
-                <Input placeholder={t("auth:register.username.placeholder")} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          label={t("auth:register.username.label")}
+          placeholder={t("auth:register.username.placeholder")}
         />
-        <FormField
+        <FormTextInput
           control={form.control}
           name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("auth:register.email.label")}</FormLabel>
-              <FormControl>
-                <Input type="email" placeholder={t("auth:register.email.placeholder")} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          type="email"
+          label={t("auth:register.email.label")}
+          placeholder={t("auth:register.email.placeholder")}
         />
-        <FormField
+        <FormTextInput
           control={form.control}
           name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("auth:register.password.label")}</FormLabel>
-              <FormControl>
-                <Input type="password" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          type="password"
+          label={t("auth:register.password.label")}
         />
-        {form.formState.errors.root && (
-          <p className="text-sm text-destructive" role="alert">
-            {form.formState.errors.root.message}
-          </p>
-        )}
-        <Button type="submit" disabled={register.isPending} className="w-full">
-          {register.isPending && <Spinner className="mr-2 size-4" />}
-          {t("auth:register.submit")}
-        </Button>
-      </form>
-    </Form>
+        {rootError && <Banner role="alert" status="error" title={rootError.message ?? ""} />}
+        <Button
+          type="submit"
+          variant="primary"
+          label={t("auth:register.submit")}
+          isLoading={register.isPending}
+        />
+      </VStack>
+    </form>
   );
 }

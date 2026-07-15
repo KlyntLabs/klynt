@@ -1,4 +1,6 @@
+import { VStack } from "@astryxdesign/core/VStack";
 import { NotesEditor } from "./notes-editor";
+import styles from "./notes-renderer.module.css";
 import { getText } from "./notes-utils";
 
 type NotesRendererProps = {
@@ -16,12 +18,16 @@ export function NotesRenderer({
 
   if (readOnly) {
     return (
-      <div
-        className="h-full w-full overflow-auto whitespace-pre-wrap rounded-md border border-border bg-card p-4 text-foreground shadow-elevation-1"
+      <VStack
+        className={styles.readonly}
+        width="100%"
+        height="100%"
+        padding={3}
+        isScrollable
         data-testid="notes-readonly"
       >
         {text}
-      </div>
+      </VStack>
     );
   }
 

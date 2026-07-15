@@ -1,4 +1,13 @@
-import { useCallback, useMemo, useState } from "react";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { Divider } from "@astryxdesign/core/Divider";
+import { Grid } from "@astryxdesign/core/Grid";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Section } from "@astryxdesign/core/Section";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
+import { Fragment, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CalculatorRow } from "@/features/marketing/components/pricing";
 import { productPricings } from "@/features/marketing/lib/pricing-data";
@@ -25,42 +34,56 @@ export function PricingCalculatorSection({ tk }: PricingCalculatorSectionProps) 
   }, [usage]);
 
   return (
-    <section className="px-6 sm:px-8 py-6 bg-[#FAFAF8] border-b border-[#E5E5E5]">
-      <h2 className="text-2xl font-bold text-[#1A1A1A] mb-2">{t("pricing.calculator.title")}</h2>
-      <p className="text-sm text-[#6B6B6B] mb-6">{t("pricing.calculator.subtitle")}</p>
+    <Section variant="muted" padding={6} dividers={["bottom"]}>
+      <VStack gap={6}>
+        <VStack gap={2}>
+          <Heading level={2}>{t("pricing.calculator.title")}</Heading>
+          <Text type="supporting">{t("pricing.calculator.subtitle")}</Text>
+        </VStack>
 
-      <div className="bg-white rounded-lg border border-[#D1D1D1] p-5">
-        {productPricings.map((p) => (
-          <CalculatorRow
-            key={p.id}
-            product={p}
-            value={usage[p.id] || 0}
-            onChange={(v) => handleUsageChange(p.id, v)}
-            tk={tk}
-          />
-        ))}
+        <Card padding={5}>
+          <VStack gap={5}>
+            {/* The rule between rows is an Astryx `Divider` — the component that draws that line
+                from the theme's border token. It replaces the `1px solid` border each row used to
+                carry in CSS, which was the last raw px in calculator-row.module.css. */}
+            <VStack gap={0}>
+              {productPricings.map((p, i) => (
+                <Fragment key={p.id}>
+                  {i > 0 && <Divider />}
+                  <CalculatorRow
+                    product={p}
+                    value={usage[p.id] || 0}
+                    onChange={(v) => handleUsageChange(p.id, v)}
+                    tk={tk}
+                  />
+                </Fragment>
+              ))}
+            </VStack>
 
-        {/* Total */}
-        <div className="mt-5 pt-4 border-t border-[#E5E5E5]">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm text-[#6B6B6B]">{t("pricing.calculator.estimatedCost")}</div>
-              <div className="text-xs text-[#9CA3AF]">{t("pricing.calculator.estimateNote")}</div>
-            </div>
-            <div className="text-right">
-              <div className="text-3xl font-bold font-mono text-[#1A1A1A]">
-                {totalCost === 0 ? "$0" : `$${totalCost.toFixed(2)}`}
-              </div>
-            </div>
-          </div>
-          <button
-            type="button"
-            className="w-full mt-5 px-4 py-2.5 bg-[#F76E18] hover:bg-[#E56310] text-white text-sm font-medium rounded-md transition-colors"
-          >
-            {t("pricing.calculator.cta")}
-          </button>
-        </div>
-      </div>
-    </section>
+            <Divider />
+
+            <VStack gap={5}>
+              <HStack justify="between" align="center" gap={4}>
+                <VStack gap={0.5} align="start">
+                  <Text type="supporting">{t("pricing.calculator.estimatedCost")}</Text>
+                  <Text type="supporting" size="xsm" color="disabled">
+                    {t("pricing.calculator.estimateNote")}
+                  </Text>
+                </VStack>
+                <Text size="3xl" weight="bold" hasTabularNumbers justify="end">
+                  {totalCost === 0 ? "$0" : `$${totalCost.toFixed(2)}`}
+                </Text>
+              </HStack>
+
+              {/* A one-column Grid stretches its child to the track, which is how Astryx
+                  expresses a full-width control — Button has no fill prop. */}
+              <Grid columns={1}>
+                <Button variant="primary" label={t("pricing.calculator.cta")} />
+              </Grid>
+            </VStack>
+          </VStack>
+        </Card>
+      </VStack>
+    </Section>
   );
 }

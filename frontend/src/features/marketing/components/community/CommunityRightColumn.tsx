@@ -1,14 +1,27 @@
+import { Badge } from "@astryxdesign/core/Badge";
+import { Blockquote } from "@astryxdesign/core/Blockquote";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Icon } from "@astryxdesign/core/Icon";
+import { List, ListItem } from "@astryxdesign/core/List";
+import { Text } from "@astryxdesign/core/Text";
+import { TextInput } from "@astryxdesign/core/TextInput";
+import { VStack } from "@astryxdesign/core/VStack";
 import { motion } from "framer-motion";
 import { ArrowRight, ExternalLink, MessageCircle, ThumbsUp } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { tween } from "@/core/motion/astryx-motion";
 import { useMarketingTranslation } from "@/features/marketing/lib/use-marketing-translation";
 import type {
   CommunityChangelogItem,
   CommunityFeatureRequest,
   CommunityQuestion,
 } from "./community-types";
+
+/* framer-motion drives the Astryx stack directly; `as="aside"` keeps the landmark. */
+const MotionVStack = motion.create(VStack);
 
 const columnVariants = {
   hidden: { opacity: 0, x: 15 },
@@ -24,131 +37,147 @@ export function CommunityRightColumn() {
   const featureRequests = array<CommunityFeatureRequest>("community.featureRequests.items");
 
   return (
-    <motion.aside
+    /* The column's width is its Grid track (see CommunityPage) — it used to be a CSS `width: 25%`
+       behind a 1024px media query, which is exactly what Grid's container-driven columns replace. */
+    <MotionVStack
+      as="aside"
+      gap={6}
       variants={columnVariants}
       initial="hidden"
       animate="visible"
-      transition={{
-        duration: 0.4,
-        ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
-      }}
-      className="lg:w-[25%] space-y-6"
+      transition={tween("medium")}
     >
-      <div className="border border-[#D1D1D1] p-4 bg-[#F0EDE6] rounded-md">
-        <h2 className="text-sm font-semibold text-[#1A1A1A]">{t("community.newsletter.title")}</h2>
-        <p className="text-xs text-[#F76E18] font-medium mt-0.5">
-          {t("community.newsletter.subtitle")}
-        </p>
-        <p className="text-xs text-[#6B6B6B] mt-0.5">{t("community.newsletter.body")}</p>
-        <div className="mt-3 space-y-2">
-          <Input
-            type="email"
-            placeholder={t("community.newsletter.placeholder")}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-white border-[#D1D1D1] rounded px-3 py-2 text-sm h-auto"
+      <Card variant="muted">
+        <VStack gap={3}>
+          <VStack gap={0.5}>
+            <Heading level={2}>{t("community.newsletter.title")}</Heading>
+            <Text type="supporting" color="accent" weight="medium" display="block">
+              {t("community.newsletter.subtitle")}
+            </Text>
+            <Text type="supporting" display="block">
+              {t("community.newsletter.body")}
+            </Text>
+          </VStack>
+          <VStack gap={2}>
+            <TextInput
+              label={t("community.newsletter.title")}
+              isLabelHidden
+              type="email"
+              placeholder={t("community.newsletter.placeholder")}
+              value={email}
+              onChange={setEmail}
+            />
+            <Button variant="primary" label={t("community.newsletter.cta")} />
+          </VStack>
+        </VStack>
+      </Card>
+
+      <Card>
+        <VStack gap={2}>
+          <HStack gap={2} align="center">
+            <Icon icon={MessageCircle} color="accent" size="sm" />
+            <Heading level={2}>{t("community.slackJoin.title")}</Heading>
+          </HStack>
+          <Text type="supporting" display="block">
+            {t("community.slackJoin.body")}
+          </Text>
+          <Button variant="primary" label={t("community.slackJoin.cta")} />
+        </VStack>
+      </Card>
+
+      <List
+        hasDividers
+        density="compact"
+        header={
+          <HStack justify="between" align="center">
+            <Heading level={2}>{t("community.questions.title")}</Heading>
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={<Icon icon={ArrowRight} size="sm" />}
+              label={t("community.questions.viewAll")}
+            />
+          </HStack>
+        }
+      >
+        {questions.map((question) => (
+          <ListItem
+            key={question.topic}
+            label={question.topic}
+            description={t("community.questions.reply", { time: question.reply })}
           />
-          <Button className="w-full bg-[#1A1A1A] text-white text-sm font-medium rounded px-3 py-2 hover:bg-[#333] h-auto">
-            {t("community.newsletter.cta")}
-          </Button>
-        </div>
-      </div>
+        ))}
+      </List>
 
-      <div className="border border-[#D1D1D1] p-4 bg-[#FAFAF8] rounded-md">
-        <div className="flex items-center gap-2 mb-2">
-          <MessageCircle className="w-5 h-5 text-[#F76E18]" />
-          <h2 className="text-sm font-semibold text-[#1A1A1A]">{t("community.slackJoin.title")}</h2>
-        </div>
-        <p className="text-xs text-[#6B6B6B] leading-relaxed mb-3">
-          {t("community.slackJoin.body")}
-        </p>
-        <button
-          type="button"
-          className="w-full text-center text-xs text-white bg-[#F76E18] hover:bg-[#E56310] font-medium px-3 py-2 rounded transition-colors"
+      <VStack gap={2}>
+        <List
+          listStyle="disc"
+          density="compact"
+          header={
+            <VStack gap={1}>
+              <Heading level={2}>{t("community.changelog.title")}</Heading>
+              <Text type="supporting" display="block">
+                {t("community.changelog.body")}
+              </Text>
+            </VStack>
+          }
         >
-          {t("community.slackJoin.cta")}
-        </button>
-      </div>
-
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-sm font-semibold text-[#1A1A1A]">{t("community.questions.title")}</h2>
-          <button type="button" className="text-xs text-[#2563EB] hover:underline">
-            {t("community.questions.viewAll")} <ArrowRight className="w-3 h-3 inline" />
-          </button>
-        </div>
-        <div>
-          {questions.map((q) => (
-            <div key={q.topic} className="py-2 border-b border-[#F0EDE6] last:border-0">
-              <p className="text-sm text-[#1A1A1A] hover:text-[#2563EB] cursor-pointer">
-                {q.topic}
-              </p>
-              <p className="text-xs text-[#9CA3AF]">
-                {t("community.questions.reply", { time: q.reply })}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <h2 className="text-sm font-semibold text-[#1A1A1A] mb-2">
-          {t("community.changelog.title")}
-        </h2>
-        <p className="text-xs text-[#6B6B6B] mb-3">{t("community.changelog.body")}</p>
-        <div className="space-y-2">
           {changelogItems.map((item) => (
-            <div key={item.text} className="flex items-start gap-2">
-              <span className="w-2 h-2 rounded-full mt-1 shrink-0 bg-[#F76E18]" />
-              <div>
-                <span className="text-[10px] text-[#9CA3AF]">{item.category}:</span>
-                <p className="text-xs text-[#1A1A1A]">{item.text}</p>
-              </div>
-            </div>
+            <ListItem key={item.text} label={item.text} description={item.category} />
           ))}
-        </div>
-        <button type="button" className="text-xs text-[#2563EB] mt-2 hover:underline">
-          {t("community.changelog.viewAll")} <ArrowRight className="w-3 h-3 inline" />
-        </button>
-      </div>
+        </List>
+        <HStack>
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={<Icon icon={ArrowRight} size="sm" />}
+            label={t("community.changelog.viewAll")}
+          />
+        </HStack>
+      </VStack>
 
-      <div>
-        <h2 className="text-sm font-semibold text-[#1A1A1A] mb-2">
-          {t("community.featureRequests.title")}
-        </h2>
-        <div>
-          {featureRequests.map((req) => (
-            <div
-              key={req.name}
-              className="flex justify-between items-center py-1.5 border-b border-[#F0EDE6] last:border-0"
-            >
-              <span className="text-xs text-[#1A1A1A]">{req.name}</span>
-              <span className="text-xs text-[#6B6B6B] bg-[#F5F3EF] px-1.5 py-0.5 rounded flex items-center gap-1">
-                <ThumbsUp className="w-3 h-3" />
-                {req.votes}
-              </span>
-            </div>
-          ))}
-        </div>
-        <button type="button" className="text-xs text-[#2563EB] mt-2 hover:underline">
-          {t("community.featureRequests.voteCta")} <ArrowRight className="w-3 h-3 inline" />
-        </button>
-      </div>
-
-      <div>
-        <h2 className="text-sm font-semibold text-[#1A1A1A] mb-2">
-          {t("community.ceoMusings.title")}
-        </h2>
-        <p className="text-sm text-[#1A1A1A] leading-relaxed italic">
-          &ldquo;{t("community.ceoMusings.quote")}&rdquo;
-        </p>
-        <button
-          type="button"
-          className="text-xs text-[#2563EB] mt-2 hover:underline inline-flex items-center gap-0.5"
+      <VStack gap={2}>
+        <List
+          hasDividers
+          density="compact"
+          header={<Heading level={2}>{t("community.featureRequests.title")}</Heading>}
         >
-          {t("community.ceoMusings.cta")} <ExternalLink className="w-3 h-3" />
-        </button>
-      </div>
-    </motion.aside>
+          {featureRequests.map((request) => (
+            <ListItem
+              key={request.name}
+              label={request.name}
+              endContent={
+                <Badge
+                  variant="neutral"
+                  icon={<Icon icon={ThumbsUp} size="xsm" />}
+                  label={String(request.votes)}
+                />
+              }
+            />
+          ))}
+        </List>
+        <HStack>
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={<Icon icon={ArrowRight} size="sm" />}
+            label={t("community.featureRequests.voteCta")}
+          />
+        </HStack>
+      </VStack>
+
+      <VStack gap={2}>
+        <Heading level={2}>{t("community.ceoMusings.title")}</Heading>
+        <Blockquote>&ldquo;{t("community.ceoMusings.quote")}&rdquo;</Blockquote>
+        <HStack>
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={<Icon icon={ExternalLink} size="sm" />}
+            label={t("community.ceoMusings.cta")}
+          />
+        </HStack>
+      </VStack>
+    </MotionVStack>
   );
 }

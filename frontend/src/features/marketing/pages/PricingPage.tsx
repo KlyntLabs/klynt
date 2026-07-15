@@ -1,3 +1,4 @@
+import { VStack } from "@astryxdesign/core/VStack";
 import { useTranslation } from "react-i18next";
 import {
   PricingCalculatorSection,
@@ -13,12 +14,12 @@ export default function PricingPage() {
     t(key as never, options ?? {}) as string;
 
   return (
-    <div className="w-full">
+    <VStack gap={0} width="100%">
       <PricingHeroSection />
       <PricingPlansSection />
       <UsagePricingSection tk={tk} />
       <PricingCalculatorSection tk={tk} />
       <PricingFaqSection />
-    </div>
+    </VStack>
   );
 }

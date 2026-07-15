@@ -1,3 +1,4 @@
+import { Text } from "@astryxdesign/core/Text";
 import { FileText } from "lucide-react";
 import type { AppManifest } from "./apps/types";
 import type { DesktopConfig } from "./factory/types";
@@ -15,7 +16,7 @@ export function createTestApp(overrides: Partial<AppManifest> = {}): AppManifest
     route: overrides.route ?? "/test",
     icon: overrides.icon ?? FileText,
     category: overrides.category ?? "marketing",
-    component: overrides.component ?? (() => <div>Test App</div>),
+    component: overrides.component ?? (() => <Text>Test App</Text>),
     defaultSize: overrides.defaultSize ?? { width: 400, height: 300 },
     ...overrides,
   };

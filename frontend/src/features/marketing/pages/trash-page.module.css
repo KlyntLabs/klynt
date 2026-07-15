@@ -1,0 +1,22 @@
+/*
+ * Structural residue only. Every icon here is now an Astryx `Icon` whose size and colour are
+ * props, so the six colour classes and the 32px/16px/48px CSS sizing they carried are gone.
+ *
+ * What is left expresses no design value: two flex regions that fill the remaining height, and
+ * `white-space: pre-wrap` on the preformatted file contents — Astryx's Text has no prop for it.
+ */
+
+.grid {
+  flex: 1;
+  min-height: 0;
+}
+
+.dialogBody {
+  flex: 1;
+  min-height: 0;
+}
+
+.preformatted {
+  white-space: pre-wrap;
+  word-break: break-word;
+}

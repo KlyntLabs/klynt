@@ -1,11 +1,16 @@
+import { Button } from "@astryxdesign/core/Button";
+import { Center } from "@astryxdesign/core/Center";
+import { CheckboxInput } from "@astryxdesign/core/CheckboxInput";
+import { Divider } from "@astryxdesign/core/Divider";
+import { HStack } from "@astryxdesign/core/HStack";
+import { StackItem } from "@astryxdesign/core/Stack";
+import { Text } from "@astryxdesign/core/Text";
+import { TextInput } from "@astryxdesign/core/TextInput";
+import { VStack } from "@astryxdesign/core/VStack";
 import * as React from "react";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
-
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import styles from "./menu-editor.module.css";
 import {
   type ContextMenuEntry,
   type ContextMenuItem,
@@ -29,6 +34,9 @@ function createUniqueId(): string {
 }
 
 const DEFAULT_CUSTOM_ACTION = "custom:new-action" as const;
+
+/** The empty state's drop-target height. Center's minHeight takes a SizeValue string as-is. */
+const EMPTY_STATE_MIN_HEIGHT = "8rem";
 
 function createDefaultItem(): ContextMenuItem {
   return {
@@ -70,131 +78,151 @@ export function MenuEditor({
   );
 
   return (
-    <div className="space-y-4">
+    <VStack gap={4}>
       {schema.root.length === 0 ? (
-        <div
-          className="flex min-h-[8rem] items-center justify-center rounded-md border border-dashed p-4 text-sm text-muted-foreground"
+        <Center
+          className={styles.emptyState}
+          minHeight={EMPTY_STATE_MIN_HEIGHT}
           data-testid="menu-editor-empty-state"
         >
-          {t("desktop.menuEditor.empty")}
-        </div>
+          <Text type="body" color="secondary">
+            {t("desktop.menuEditor.empty")}
+          </Text>
+        </Center>
       ) : (
-        <ul className="space-y-2" aria-label="Menu entries">
+        <VStack as="ul" className={styles.rows} gap={2} aria-label="Menu entries">
           {schema.root.map((entry, index) => {
             if (isContextMenuItem(entry)) {
               const labelId = `item-label-${index}`;
               const disabledId = `item-disabled-${index}`;
 
               return (
-                <li
+                <HStack
+                  as="li"
                   key={entry.id}
-                  className="flex items-start gap-3 rounded-md border p-3"
+                  className={styles.row}
+                  gap={3}
+                  align="start"
+                  padding={3}
                   data-testid="menu-item"
                 >
-                  <div className="flex-1 space-y-2">
-                    <div>
-                      <Label htmlFor={labelId}>Label</Label>
-                      <Input
+                  {/* StackItem size="fill" is Astryx's own answer to flex:1 + min-width:0 —
+                      "Use StackItem with size='fill' to make one item stretch and fill the
+                      leftover space" — so the .rowMain div is gone. */}
+                  <StackItem size="fill">
+                    <VStack gap={2}>
+                      {/* Astryx's TextInput owns its label, so the separate <Label> is gone. */}
+                      <TextInput
                         id={labelId}
+                        label="Label"
                         value={entry.label}
-                        disabled={readOnly}
-                        onChange={(event) =>
-                          updateRoot((entries) =>
-                            updateItem(entries, entry.id, { label: event.target.value })
-                          )
+                        isDisabled={readOnly}
+                        onChange={(value) =>
+                          updateRoot((entries) => updateItem(entries, entry.id, { label: value }))
                         }
                       />
-                    </div>
-                    <p className="text-sm text-muted-foreground">Action: {entry.action}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Label
-                      htmlFor={disabledId}
-                      className="flex items-center gap-2 text-sm font-normal"
-                    >
-                      <Checkbox
-                        id={disabledId}
-                        checked={entry.disabled ?? false}
-                        disabled={readOnly}
-                        onCheckedChange={(checked) =>
-                          updateRoot((entries) =>
-                            updateItem(entries, entry.id, { disabled: checked === true })
-                          )
-                        }
-                      />
-                      Disabled
-                    </Label>
+                      <Text type="supporting">Action: {entry.action}</Text>
+                    </VStack>
+                  </StackItem>
+                  <HStack gap={2} align="center">
+                    <CheckboxInput
+                      id={disabledId}
+                      label="Disabled"
+                      value={entry.disabled ?? false}
+                      isDisabled={readOnly}
+                      onChange={(checked) =>
+                        updateRoot((entries) =>
+                          updateItem(entries, entry.id, { disabled: checked })
+                        )
+                      }
+                    />
                     {!readOnly && (
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => updateRoot((entries) => removeEntry(entries, index))}
+                        label="Delete"
                         aria-label={`Delete ${entry.label}`}
-                      >
-                        Delete
-                      </Button>
+                        onClick={() => updateRoot((entries) => removeEntry(entries, index))}
+                      />
                     )}
-                  </div>
-                </li>
+                  </HStack>
+                </HStack>
               );
             }
 
             if (isContextMenuSeparator(entry)) {
               return (
-                <li
+                <HStack
+                  as="li"
                   // biome-ignore lint/suspicious/noArrayIndexKey: separators have no stable identifier in the MVP schema
                   key={`separator-${index}`}
-                  className="flex items-center justify-between gap-2 rounded-md border p-3"
+                  className={styles.row}
+                  gap={2}
+                  align="center"
+                  justify="between"
+                  padding={3}
                   data-testid="menu-separator"
                 >
-                  <div className="h-px flex-1 bg-border" />
+                  {/* The Divider takes the slack via StackItem size="fill"; the delete button
+                      keeps its intrinsic width. The old .separatorLine div is gone. */}
+                  <StackItem size="fill">
+                    <Divider />
+                  </StackItem>
                   {!readOnly && (
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => updateRoot((entries) => removeEntry(entries, index))}
+                      label="Delete"
                       aria-label="Delete separator"
-                    >
-                      Delete
-                    </Button>
+                      onClick={() => updateRoot((entries) => removeEntry(entries, index))}
+                    />
                   )}
-                </li>
+                </HStack>
               );
             }
 
             if (isContextMenuGroup(entry)) {
               return (
-                <li key={entry.id} className="rounded-md border p-3" data-testid="menu-group">
-                  <p className="font-medium">{entry.label ?? "Untitled group"}</p>
+                <VStack
+                  as="li"
+                  key={entry.id}
+                  className={styles.row}
+                  gap={1}
+                  align="stretch"
+                  padding={3}
+                  data-testid="menu-group"
+                >
+                  <Text type="body" weight="medium" display="block">
+                    {entry.label ?? "Untitled group"}
+                  </Text>
                   {/* Group children are not editable in this MVP view. */}
-                  <p className="text-sm text-muted-foreground">
+                  <Text type="supporting" display="block">
                     Group editing is not supported in this MVP view.
-                  </p>
-                </li>
+                  </Text>
+                </VStack>
               );
             }
 
             return null;
           })}
-        </ul>
+        </VStack>
       )}
       {!readOnly && (
-        <div className="flex gap-2">
+        <HStack gap={2}>
           <Button
-            onClick={() => updateRoot((entries) => [...entries, createDefaultItem()])}
+            variant="primary"
+            label="Add Item"
             aria-label="Add item"
-          >
-            Add Item
-          </Button>
+            onClick={() => updateRoot((entries) => [...entries, createDefaultItem()])}
+          />
           <Button
             variant="secondary"
-            onClick={() => updateRoot((entries) => [...entries, { type: "separator" }])}
+            label="Add Separator"
             aria-label="Add separator"
-          >
-            Add Separator
-          </Button>
-        </div>
+            onClick={() => updateRoot((entries) => [...entries, { type: "separator" }])}
+          />
+        </HStack>
       )}
-    </div>
+    </VStack>
   );
 }

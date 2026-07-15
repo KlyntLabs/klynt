@@ -1,0 +1,19 @@
+/*
+ * The folder icon grid.
+ *
+ * The track list IS Astryx: `<Grid columns={{minWidth, repeat: "fill"}}>` compiles to the same
+ * auto-fill track list this used to hand-roll, and the items are ClickableCards — so the
+ * native-button reset, the hover/focus/disabled states and the caption's ellipsis are all the
+ * components' now, and the classes that carried them are gone.
+ *
+ * What is left is two gutters, because neither Grid nor Center exposes a padding prop. Both are
+ * tokens.
+ */
+
+.grid {
+  padding: var(--spacing-4);
+}
+
+.emptyState {
+  padding: var(--spacing-4);
+}

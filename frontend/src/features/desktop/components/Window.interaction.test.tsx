@@ -148,7 +148,7 @@ describe("Window interactions", () => {
   it("updates the window position after dragging the title bar", async () => {
     render(<WindowWrapper windowId="win-1">Content</WindowWrapper>);
 
-    const windowEl = screen.getByText("Test Window").closest("div[class*='rounded-lg']");
+    const windowEl = screen.getByText("Test Window").closest('[data-testid="desktop-window"]');
     expect(windowEl).toBeTruthy();
 
     fireEvent.pointerDown(windowEl as HTMLElement, {
@@ -206,7 +206,7 @@ describe("Window interactions", () => {
     it("does not update position when dragged", async () => {
       render(<LockedWindowWrapper windowId="win-1">Content</LockedWindowWrapper>);
 
-      const windowEl = screen.getByText("Test Window").closest("div[class*='rounded-lg']");
+      const windowEl = screen.getByText("Test Window").closest('[data-testid="desktop-window"]');
       expect(windowEl).toBeTruthy();
 
       fireEvent.pointerDown(windowEl as HTMLElement, {

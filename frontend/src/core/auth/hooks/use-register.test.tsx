@@ -1,10 +1,12 @@
+import { LayerProvider } from "@astryxdesign/core/Layer";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, screen, waitFor } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
 import type { ReactNode } from "react";
+import { I18nextProvider } from "react-i18next";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
-import { useToastStore } from "@/core/notifications/toast-store";
+import i18n from "@/core/i18n/test-config";
 import { server } from "@/test/msw/server";
 import { useRegister } from "./use-register";
 
@@ -23,11 +25,17 @@ function createWrapper() {
     },
   });
 
+  // `LayerProvider` mounts Astryx's ToastViewport, which is what `useToast()` inside the hook
+  // feeds; the toast is asserted on screen rather than in a store.
   return function Wrapper({ children }: { children: ReactNode }) {
     return (
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter>{children}</MemoryRouter>
-      </QueryClientProvider>
+      <I18nextProvider i18n={i18n}>
+        <LayerProvider>
+          <QueryClientProvider client={queryClient}>
+            <MemoryRouter>{children}</MemoryRouter>
+          </QueryClientProvider>
+        </LayerProvider>
+      </I18nextProvider>
     );
   };
 }
@@ -52,11 +60,12 @@ describe("useRegister", () => {
   });
 
   it("shows a toast when registration fails", async () => {
-    useToastStore.getState().reset();
-
     server.use(
       http.post("/api/v1/auth/register", () =>
-        HttpResponse.json({ error: { code: "conflict", message: "email exists" } }, { status: 409 })
+        HttpResponse.json(
+          { success: false, code: "conflict", error: "email exists" },
+          { status: 409 }
+        )
       )
     );
 
@@ -71,7 +80,7 @@ describe("useRegister", () => {
     ).rejects.toBeDefined();
     await waitFor(() => expect(result.current.isError).toBe(true));
 
-    expect(useToastStore.getState().toasts).toHaveLength(1);
-    expect(useToastStore.getState().toasts[0].type).toBe("error");
+    const toast = await screen.findByRole("alert");
+    expect(toast).toHaveTextContent("email exists");
   });
 });

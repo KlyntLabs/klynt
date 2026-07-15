@@ -1,0 +1,13 @@
+/*
+ * All that survives for the root frame is one focus affordance. Every layout value is a prop now:
+ * the column is the `VStack`, the 100vh floor is its `minHeight`, and the grow is
+ * `StackItem size="fill"` — `flex: 1` is gone from this file. See root-layout.tsx.
+ *
+ * outline: none suppresses the ring on the *programmatic* focus useFocusOnRouteChange() moves
+ * here after every navigation. <main> is a focus target, never a focus stop (tabIndex={-1}), so
+ * no keyboard user ever tabs onto it — the ring would be noise, not an affordance. That is
+ * behaviour, not a design value, and Astryx exposes no prop for it.
+ */
+.main {
+  outline: none;
+}

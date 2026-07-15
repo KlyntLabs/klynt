@@ -1,0 +1,61 @@
+/*
+ * The desktop context-menu surface.
+ *
+ * The *structure* stays ours rather than moving onto Astryx's <ContextMenu>: that component is
+ * trigger-owned (`children` is the right-click area and it owns its own open state and cursor
+ * positioning), whereas this menu is a *controlled* surface — `use-desktop-context-menu` owns
+ * open/x/y and `DesktopContextMenu` positions it. Astryx exposes no controlled open/position
+ * API, and its `items` model is one flat level of sections, while `ContextMenuSchema` nests
+ * groups recursively.
+ *
+ * But the elements are all Astryx now — VStack for the surface and the groups, Button for the
+ * rows, Divider for the separators — so the layout, padding, gaps and every interaction state
+ * are the components'. The native-button reset and the hand-written :hover / :focus-visible /
+ * disabled rules that used to live here are gone with the `as="button"` stack that needed them:
+ * the ghost Button brings all three.
+ *
+ * What is left is the surface's own skin (all tokens) and one structural rule for the row.
+ *
+ * The hairline is `--border-width`, Astryx's own border token — the same one Card draws with —
+ * not a hand-set width.
+ */
+
+.surface {
+  position: absolute;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-element);
+  background: var(--color-background-popover);
+  box-shadow: var(--shadow-high);
+}
+
+/* Same skin, wider padding — and the padding is a prop on the VStack, not a value here. */
+.emptySurface {
+  composes: surface;
+}
+
+/*
+ * Structure only. Button's content wrapper is `display: contents`, so the label and the shortcut
+ * are direct flex children of the <button> — these two rules make the row fill the menu and push
+ * them to opposite ends. No colour, no spacing, no border: the ghost variant owns all of that.
+ */
+.item {
+  width: 100%;
+  justify-content: space-between;
+}
+
+/* Astryx's horizontal Divider is width:100%, so it only needs the surrounding rhythm. */
+.separator {
+  margin-block: var(--spacing-1);
+}
+
+/* The group is a <fieldset> so the legend can name it; strip the native chrome. */
+.group {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.groupLabel {
+  display: block;
+  padding: var(--spacing-1) var(--spacing-2);
+}

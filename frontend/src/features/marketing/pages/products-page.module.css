@@ -1,0 +1,12 @@
+/*
+ * One rule left: the hero image's intrinsic scaling.
+ *
+ * The hero is a `Grid columns={{minWidth, max: 2}}`, which reflows on the container it is given,
+ * so the 640px breakpoint and the flex mechanics it switched are gone. The mascot's cap is a
+ * `maxWidth` prop on its stack. No hex, no raw px, no breakpoints.
+ */
+
+.heroImage {
+  width: 100%;
+  height: auto;
+}

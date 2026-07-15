@@ -1,0 +1,67 @@
+/*
+ * Structural residue plus the logo tints.
+ *
+ * The filter bar's surface and bottom rule are now a `Section dividers={["bottom"]}`, its padding
+ * rides Section's spacing props, and the table's scroll region is `VStack isScrollable` — so all
+ * of that left this file. `position: sticky` is what stays: Astryx has no positioning prop, and
+ * position expresses no design value.
+ *
+ * The logo plate's 28px square rides `width`/`height` props. Its tint cannot. Astryx's stacks
+ * expose no background prop, and `TextColor` (theme/types.ts) is only
+ * primary | secondary | disabled | placeholder | accent | inherit — it has no categorical hue, so
+ * the initials' colour has no prop either. Both stay here, as tokens. The source data carries a
+ * raw brand hex per company; we do not use it. Each company gets one of Astryx's tinted pairs,
+ * chosen deterministically from its row id, so the column keeps its differentiation with no
+ * hardcoded colour anywhere.
+ */
+
+.filterBar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.logo {
+  flex-shrink: 0;
+  border-radius: var(--radius-inner);
+}
+
+.logoBlue {
+  background: var(--color-background-blue);
+  color: var(--color-text-blue);
+}
+
+.logoCyan {
+  background: var(--color-background-cyan);
+  color: var(--color-text-cyan);
+}
+
+.logoGreen {
+  background: var(--color-background-green);
+  color: var(--color-text-green);
+}
+
+.logoOrange {
+  background: var(--color-background-orange);
+  color: var(--color-text-orange);
+}
+
+.logoPink {
+  background: var(--color-background-pink);
+  color: var(--color-text-pink);
+}
+
+.logoPurple {
+  background: var(--color-background-purple);
+  color: var(--color-text-purple);
+}
+
+.logoTeal {
+  background: var(--color-background-teal);
+  color: var(--color-text-teal);
+}
+
+.logoYellow {
+  background: var(--color-background-yellow);
+  color: var(--color-text-yellow);
+}

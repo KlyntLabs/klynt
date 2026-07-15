@@ -39,3 +39,8 @@ storybook-static
 # Brainstorming mockups
 .superpowers/
 .worktrees/
+
+# Agent tooling — local, not part of the product
+.agents/
+.claude/
+skills-lock.json

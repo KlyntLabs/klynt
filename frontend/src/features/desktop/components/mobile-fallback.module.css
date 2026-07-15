@@ -1,0 +1,8 @@
+/*
+ * The full-viewport shell. Centring and sizing are Center's own props now; Center has no
+ * padding prop, so the gutter stays here — as a token.
+ */
+.screen {
+  padding: var(--spacing-6);
+  background-color: var(--color-background-body);
+}

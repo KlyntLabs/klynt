@@ -32,7 +32,13 @@ describe("TalkToHumanPage interactions", () => {
 
     await user.type(screen.getByLabelText("Your name"), "Alice");
     await user.type(screen.getByLabelText("Email address"), "alice@example.com");
-    await user.selectOptions(screen.getByLabelText("What can we help with?"), "Feature request");
+
+    // The subject control is now an Astryx Selector — a combobox with a listbox popover, not
+    // a native <select> — so user.selectOptions() no longer applies. Same user-facing action
+    // (choose an option), different mechanics: open the combobox, then click the option.
+    await user.click(screen.getByRole("combobox", { name: "What can we help with?" }));
+    await user.click(await screen.findByRole("option", { name: "Feature request" }));
+
     await user.type(screen.getByLabelText("Your message"), "I have a great idea!");
 
     await user.click(screen.getByRole("button", { name: "Send message" }));
@@ -53,9 +59,14 @@ describe("TalkToHumanPage interactions", () => {
     render(<Default />);
 
     const trigger = screen.getByRole("button", { name: "How fast do you actually respond?" });
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+
     await user.click(trigger);
+
+    // aria-expanded, not Radix's data-state: Astryx's Collapsible exposes the standard ARIA
+    // attribute rather than a library-specific data attribute.
     await waitFor(() => {
-      expect(trigger).toHaveAttribute("data-state", "open");
+      expect(trigger).toHaveAttribute("aria-expanded", "true");
     });
     expect(screen.getByText(/Email responses are typically within 24 hours/)).toBeInTheDocument();
   });

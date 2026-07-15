@@ -1,5 +1,10 @@
+import { Center } from "@astryxdesign/core/Center";
+import { Text } from "@astryxdesign/core/Text";
+import { TextInput } from "@astryxdesign/core/TextInput";
+import { VStack } from "@astryxdesign/core/VStack";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import styles from "./video-renderer.module.css";
 
 type VideoRendererProps = {
   content: Record<string, unknown>;
@@ -43,8 +48,7 @@ export function VideoRenderer({
     };
   }, []);
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = event.target.value;
+  const handleChange = (newValue: string) => {
     setDraft(newValue);
 
     if (timeoutRef.current) {
@@ -61,41 +65,44 @@ export function VideoRenderer({
   const showHttpsWarning = draft.startsWith("http://");
 
   return (
-    <div className="flex h-full flex-col gap-3 p-4">
+    <VStack height="100%" gap={3} padding={4}>
       {isValidVideoUrl(src) ? (
         // biome-ignore lint/a11y/useMediaCaption: Video source is user-provided and may not have captions available.
-        <video
-          controls
-          src={src}
-          className="max-w-full rounded-md shadow-elevation-1"
-          data-testid="video-player"
-        />
+        <video controls src={src} className={styles.player} data-testid="video-player" />
       ) : (
-        <div
-          className="flex flex-1 items-center justify-center rounded-md border border-border bg-card p-4 text-sm text-muted-foreground"
-          data-testid="video-empty-state"
-        >
-          {t("video.noUrl")}
-        </div>
+        <Center className={styles.emptyState} data-testid="video-empty-state">
+          <Text type="body" color="secondary">
+            {t("video.noUrl")}
+          </Text>
+        </Center>
       )}
       {!readOnly && (
-        <div className="flex flex-col gap-1">
-          <input
-            type="url"
+        <VStack gap={1}>
+          {/* Astryx's TextInput has no `type="url"`: its type union is text|password|email, and
+              `type` is applied after the rest spread, so it cannot be forced. `inputMode="url"`
+              keeps the URL keyboard the old input gave — spread-cast because Astryx's BaseProps
+              extends React.HTMLAttributes rather than InputHTMLAttributes, so input-only
+              attributes are untyped even though rest props DO reach the <input>. Same rationale
+              as the autoComplete cast in src/components/form/form-text-input.tsx.
+              The warning message stays a sibling rather than TextInput's `status.message` so it
+              keeps its data-testid; `status` still colours the field. */}
+          <TextInput
+            label={t("video.urlLabel")}
+            isLabelHidden
             value={draft}
             onChange={handleChange}
             placeholder="https://"
-            className="w-full rounded-md border border-border bg-background p-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+            status={showHttpsWarning ? { type: "warning" } : undefined}
             data-testid="video-url-input"
-            aria-label={t("video.urlLabel")}
+            {...({ inputMode: "url" } as { inputMode?: "url" })}
           />
           {showHttpsWarning && (
-            <span className="text-xs text-destructive" data-testid="video-https-warning">
+            <Text type="supporting" size="sm" data-testid="video-https-warning">
               {t("video.httpsOnly")}
-            </span>
+            </Text>
           )}
-        </div>
+        </VStack>
       )}
-    </div>
+    </VStack>
   );
 }

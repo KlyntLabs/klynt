@@ -1,3 +1,4 @@
+import { VStack } from "@astryxdesign/core/VStack";
 import * as React from "react";
 import type { ActionContext } from "./action-registry";
 import { ContextMenuRenderer } from "./context-menu-renderer";
@@ -40,7 +41,9 @@ export function DesktopContextMenu({
   const schema = mergeContextMenu(baseSchema, undefined, state.appContentMenu);
 
   return (
-    <div
+    // The offsets are the cursor's, so they are data, not style — `style` is the BaseProps hook
+    // Astryx keeps for exactly that ("Consumer style is spread after StyleX inline styles").
+    <VStack
       data-testid="desktop-context-menu"
       style={{
         position: "absolute",
@@ -49,6 +52,6 @@ export function DesktopContextMenu({
       }}
     >
       <ContextMenuRenderer schema={schema} actionContext={actionContext} onClose={onClose} />
-    </div>
+    </VStack>
   );
 }

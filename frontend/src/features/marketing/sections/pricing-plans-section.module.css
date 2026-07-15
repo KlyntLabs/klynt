@@ -1,0 +1,13 @@
+/*
+ * Structural residue only. The scale card's 512px cap rides `maxWidth` on its VStack, and the
+ * feature ticks are `Icon size="sm" color="green"`. The closing CTA no longer needs a `flex: 1`
+ * class: it sits in a one-column `Grid`, whose tracks stretch by default, so the full-width
+ * button is expressed by an Astryx component rather than by CSS.
+ *
+ * What is left holds no design value: the auto margins that centre the capped card, because
+ * Stack has no prop for self-centring.
+ */
+
+.scalePanel {
+  margin-inline: auto;
+}

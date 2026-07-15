@@ -1,0 +1,13 @@
+/*
+ * The one value in this file, and it genuinely has no prop to ride.
+ *
+ * The free-tier line is deliberately green. Astryx's `TextColor` (core/src/theme/types.ts) is
+ * `primary | secondary | disabled | placeholder | accent | inherit` — no categorical hue and no
+ * status hue, unlike `IconColor`, which does carry them. So a green *Text* cannot be expressed as
+ * a prop. It stays here as the same token the design system uses for success copy, tracking the
+ * theme in both colour modes. No hex, no raw px.
+ */
+
+.freeTier {
+  color: var(--color-text-green);
+}

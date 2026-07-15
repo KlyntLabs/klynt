@@ -1,0 +1,24 @@
+/*
+ * The video pane: the player (or its empty state) takes the slack, the URL field sits below.
+ * The pane is a VStack and the empty state is a Center, so the stacking, height, gap and the
+ * pane's padding are props. What is left is the surfaces' skin (tokens), the empty state's
+ * flex:1 (structural — Center has no "take the slack" prop), and its gutter (Center has no
+ * padding prop).
+ *
+ * The hairline is `--border-width`, Astryx's own border token — the same one Card draws with —
+ * not a hand-set width.
+ */
+
+.player {
+  max-width: 100%;
+  border-radius: var(--radius-element);
+  box-shadow: var(--shadow-low);
+}
+
+.emptyState {
+  flex: 1;
+  padding: var(--spacing-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-element);
+  background: var(--color-background-card);
+}

@@ -26,8 +26,10 @@ describe("OnboardingPage", () => {
     render(<OnboardingRoutes />, { initialEntries: ["/onboarding"] });
 
     expect(screen.getByText(/welcome to klynt/i)).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /create workspace/i })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /join workspace/i })).toBeInTheDocument();
+    // SegmentedControl has radio-group semantics, not tabs: Astryx models it as a single
+    // choice between mutually exclusive modes, so the segments are radios.
+    expect(screen.getByRole("radio", { name: /create workspace/i })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /join workspace/i })).toBeInTheDocument();
   });
 
   it("navigates to admin dashboard after creating a tenant", async () => {
@@ -49,7 +51,7 @@ describe("OnboardingPage", () => {
     const user = userEvent.setup();
     render(<OnboardingRoutes />, { initialEntries: ["/onboarding"] });
 
-    await user.click(screen.getByRole("tab", { name: /join workspace/i }));
+    await user.click(screen.getByRole("radio", { name: /join workspace/i }));
 
     await user.type(screen.getByLabelText(/invite code/i), "invite-123");
     await user.click(screen.getByRole("button", { name: /join workspace/i }));
@@ -65,7 +67,7 @@ describe("OnboardingPage", () => {
     const user = userEvent.setup();
     render(<OnboardingRoutes />, { initialEntries: ["/onboarding"] });
 
-    await user.click(screen.getByRole("tab", { name: /join workspace/i }));
+    await user.click(screen.getByRole("radio", { name: /join workspace/i }));
 
     await user.type(screen.getByLabelText(/invite code/i), "invalid");
     await user.click(screen.getByRole("button", { name: /join workspace/i }));

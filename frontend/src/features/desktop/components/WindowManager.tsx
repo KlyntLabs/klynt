@@ -1,9 +1,11 @@
+import { VStack } from "@astryxdesign/core/VStack";
 import { AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { DynamicAppWindow } from "@/features/desktop/apps/dynamic-app-window";
 import { useWindowManager } from "@/features/desktop/window-manager/window-module";
 import type { DesktopConfig } from "../factory/types";
 import WindowComponent from "./Window";
+import styles from "./window-manager.module.css";
 
 const EMPTY_WINDOWS: [] = [];
 
@@ -17,7 +19,7 @@ export default function WindowManager({ config }: WindowManagerProps) {
   const windows = desktopWindows ?? EMPTY_WINDOWS;
 
   return (
-    <div className="absolute inset-0" style={{ top: 36 }}>
+    <VStack className={styles.layer}>
       <AnimatePresence>
         {windows
           .filter((w) => w.state !== "minimized")
@@ -66,6 +68,6 @@ export default function WindowManager({ config }: WindowManagerProps) {
             return null;
           })}
       </AnimatePresence>
-    </div>
+    </VStack>
   );
 }

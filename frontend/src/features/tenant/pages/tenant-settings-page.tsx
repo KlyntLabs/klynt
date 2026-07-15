@@ -1,31 +1,16 @@
+import { AlertDialog } from "@astryxdesign/core/AlertDialog";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Section } from "@astryxdesign/core/Section";
+import { Spinner } from "@astryxdesign/core/Spinner";
+import { Text } from "@astryxdesign/core/Text";
+import { TextInput } from "@astryxdesign/core/TextInput";
+import { VStack } from "@astryxdesign/core/VStack";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
+import { FormTextInput } from "@/components/form/form-text-input";
 import { createApiError } from "@/core/api/api-error";
 import { navigateExternal } from "@/core/auth/external-redirect";
 import { buildAdminUrl } from "@/core/routing/subdomain-router";
@@ -76,108 +61,94 @@ export default function TenantSettingsPage() {
 
   if (error) {
     return (
-      <Alert variant="destructive">
-        <AlertTitle>{t("settings.loadErrorTitle")}</AlertTitle>
-        <AlertDescription>{t("settings.loadErrorMessage")}</AlertDescription>
-      </Alert>
+      <Banner
+        status="error"
+        title={t("settings.loadErrorTitle")}
+        description={t("settings.loadErrorMessage")}
+      />
     );
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      <h1 className="text-2xl font-bold">{t("settings.title")}</h1>
+    <VStack gap={6} maxWidth={672}>
+      <Heading level={1}>{t("settings.title")}</Heading>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("settings.generalTitle")}</CardTitle>
-          <CardDescription>{t("settings.generalDescription")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-              <FormField
+      {/* Section, not Card: Astryx reserves Card for discrete items (one profile, one
+          notification) and prescribes Section for settings groups and page regions. */}
+      <Section>
+        <VStack gap={4}>
+          <VStack gap={1}>
+            <Heading level={2}>{t("settings.generalTitle")}</Heading>
+            <Text type="supporting">{t("settings.generalDescription")}</Text>
+          </VStack>
+
+          <form onSubmit={form.handleSubmit(handleSubmit)}>
+            <VStack gap={4}>
+              <FormTextInput
                 control={form.control}
                 name="name"
+                label={t("settings.nameLabel")}
                 rules={{ required: t("settings.nameRequired") }}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("settings.nameLabel")}</FormLabel>
-                    <FormControl>
-                      <Input {...field} data-testid="tenant-name-input" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                testId="tenant-name-input"
               />
-              <div className="grid gap-2">
-                <Label htmlFor="tenant-slug">{t("settings.slugLabel")}</Label>
-                <Input
-                  id="tenant-slug"
-                  value={tenantSlug}
-                  disabled
-                  readOnly
-                  data-testid="tenant-slug-input"
-                />
-              </div>
+              {/* The slug is immutable. Astryx models this as EITHER isDisabled (sets
+                  `disabled`) OR disabledMessage (sets `readOnly` + aria-disabled, keeping the
+                  field focusable) — never both: TextInput assigns readOnly AFTER spreading
+                  rest props, so a passed-in readOnly is overwritten. The old markup set both,
+                  but `readonly` is inert on a disabled input, so nothing user-visible changes. */}
+              <TextInput
+                label={t("settings.slugLabel")}
+                value={tenantSlug}
+                isDisabled
+                data-testid="tenant-slug-input"
+              />
               {updateMutation.error && (
-                <Alert variant="destructive">
-                  <AlertDescription>
-                    {t("settings.updateError", {
-                      message: createApiError(updateMutation.error).message,
-                    })}
-                  </AlertDescription>
-                </Alert>
+                <Banner
+                  status="error"
+                  title={t("settings.updateError", {
+                    message: createApiError(updateMutation.error).message,
+                  })}
+                />
               )}
               <Button
                 type="submit"
-                disabled={
-                  !form.formState.isDirty || form.formState.isSubmitting || updateMutation.isPending
-                }
+                variant="primary"
+                label={t("settings.saveButton")}
+                isDisabled={!form.formState.isDirty || updateMutation.isPending}
+                isLoading={form.formState.isSubmitting || updateMutation.isPending}
                 data-testid="save-tenant-button"
-              >
-                {t("settings.saveButton")}
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+              />
+            </VStack>
+          </form>
+        </VStack>
+      </Section>
 
-      <Card className="border-destructive">
-        <CardHeader>
-          <CardTitle className="text-destructive">{t("settings.dangerTitle")}</CardTitle>
-          <CardDescription>{t("settings.dangerDescription")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" data-testid="delete-tenant-button">
-                {t("settings.deleteButton")}
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>{t("settings.deleteConfirmTitle")}</AlertDialogTitle>
-                <AlertDialogDescription>
-                  {t("settings.deleteConfirmMessage")}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel onClick={() => setShowDeleteConfirm(false)}>
-                  {t("settings.cancelButton")}
-                </AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleRemove}
-                  disabled={removeMutation.isPending}
-                  data-testid="confirm-delete-tenant"
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  {t("settings.deleteButton")}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </CardContent>
-      </Card>
-    </div>
+      <Section>
+        <VStack gap={4}>
+          <VStack gap={1}>
+            <Heading level={2}>{t("settings.dangerTitle")}</Heading>
+            <Text type="supporting">{t("settings.dangerDescription")}</Text>
+          </VStack>
+
+          <Button
+            variant="destructive"
+            label={t("settings.deleteButton")}
+            onClick={() => setShowDeleteConfirm(true)}
+            data-testid="delete-tenant-button"
+          />
+
+          <AlertDialog
+            isOpen={showDeleteConfirm}
+            onOpenChange={setShowDeleteConfirm}
+            title={t("settings.deleteConfirmTitle")}
+            description={t("settings.deleteConfirmMessage")}
+            cancelLabel={t("settings.cancelButton")}
+            actionLabel={t("settings.deleteButton")}
+            onAction={handleRemove}
+            isActionLoading={removeMutation.isPending}
+          />
+        </VStack>
+      </Section>
+    </VStack>
   );
 }

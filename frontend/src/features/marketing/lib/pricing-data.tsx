@@ -1,3 +1,4 @@
+import { Icon } from "@astryxdesign/core/Icon";
 import {
   AlertTriangle,
   BarChart3,
@@ -15,7 +16,7 @@ export const productPricings: ProductPricing[] = [
   {
     id: "product-analytics",
     nameKey: "marketing:data.products.productAnalytics",
-    icon: <BarChart3 className="w-5 h-5 text-[#F76E18]" />,
+    icon: <Icon icon={BarChart3} color="accent" />,
     freeLimitKey: "marketing:pricing.productPricing.productAnalytics.freeLimit",
     unitKey: "marketing:pricing.productPricing.productAnalytics.unit",
     freeThreshold: 1_000_000,
@@ -47,7 +48,7 @@ export const productPricings: ProductPricing[] = [
   {
     id: "session-replay",
     nameKey: "marketing:data.products.sessionReplay",
-    icon: <PlayCircle className="w-5 h-5 text-[#DC2626]" />,
+    icon: <Icon icon={PlayCircle} color="error" />,
     freeLimitKey: "marketing:pricing.productPricing.sessionReplay.freeLimit",
     unitKey: "marketing:pricing.productPricing.sessionReplay.unit",
     freeThreshold: 5_000,
@@ -70,7 +71,12 @@ export const productPricings: ProductPricing[] = [
   {
     id: "feature-flags",
     nameKey: "marketing:data.products.featureFlags",
-    icon: <Flag className="w-5 h-5 text-[#2563EB]" />,
+    /*
+     * Icon's colour union carries the categorical hues as well as the semantic ones, and
+     * `color="blue"` resolves to the same `--color-icon-blue` token the old wrapper span set
+     * by hand. The span — and its CSS module — are gone; the hue is a prop.
+     */
+    icon: <Icon icon={Flag} color="blue" />,
     freeLimitKey: "marketing:pricing.productPricing.featureFlags.freeLimit",
     unitKey: "marketing:pricing.productPricing.featureFlags.unit",
     freeThreshold: 1_000_000,
@@ -93,14 +99,14 @@ export const productPricings: ProductPricing[] = [
 ];
 
 export const freeTierIconMap: Record<number, React.ReactNode> = {
-  0: <BarChart3 className="w-5 h-5" />,
-  1: <PlayCircle className="w-5 h-5" />,
-  2: <Flag className="w-5 h-5" />,
-  3: <Beaker className="w-5 h-5" />,
-  4: <ClipboardList className="w-5 h-5" />,
-  5: <Database className="w-5 h-5" />,
-  6: <Globe className="w-5 h-5" />,
-  7: <AlertTriangle className="w-5 h-5" />,
-  8: <Bot className="w-5 h-5" />,
-  9: <Database className="w-5 h-5" />,
+  0: <Icon icon={BarChart3} />,
+  1: <Icon icon={PlayCircle} />,
+  2: <Icon icon={Flag} />,
+  3: <Icon icon={Beaker} />,
+  4: <Icon icon={ClipboardList} />,
+  5: <Icon icon={Database} />,
+  6: <Icon icon={Globe} />,
+  7: <Icon icon={AlertTriangle} />,
+  8: <Icon icon={Bot} />,
+  9: <Icon icon={Database} />,
 };

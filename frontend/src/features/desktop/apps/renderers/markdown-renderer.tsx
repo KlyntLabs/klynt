@@ -1,5 +1,6 @@
-import DOMPurify from "isomorphic-dompurify";
-import { marked } from "marked";
+import { Markdown } from "@astryxdesign/core/Markdown";
+import { TextArea } from "@astryxdesign/core/TextArea";
+import { VStack } from "@astryxdesign/core/VStack";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type MarkdownContent = {
@@ -19,11 +20,6 @@ function toMarkdownContent(content: Record<string, unknown>): MarkdownContent {
   return { text: typeof text === "string" ? text : "" };
 }
 
-function renderMarkdown(text: string): string {
-  const rawHtml = marked.parse(text, { async: false }) as string;
-  return DOMPurify.sanitize(rawHtml, { USE_PROFILES: { html: true } });
-}
-
 export function MarkdownRenderer({
   content,
   readOnly = false,
@@ -33,8 +29,6 @@ export function MarkdownRenderer({
   const [draft, setDraft] = useState(text);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMountedRef = useRef(true);
-
-  const sanitizedHtml = useMemo(() => renderMarkdown(text), [text]);
 
   useEffect(() => {
     setDraft(text);
@@ -50,8 +44,7 @@ export function MarkdownRenderer({
     };
   }, []);
 
-  const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = event.target.value;
+  const handleChange = (newValue: string) => {
     setDraft(newValue);
 
     if (timeoutRef.current) {
@@ -66,22 +59,35 @@ export function MarkdownRenderer({
   };
 
   return (
-    <div className="flex h-full flex-col gap-3 p-4">
-      <div
-        className="flex-1 overflow-auto rounded-md border border-border bg-card p-4 text-foreground shadow-elevation-1"
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is sanitized by DOMPurify before injection.
-        dangerouslySetInnerHTML={{ __html: sanitizedHtml }} // nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml
-        data-testid="markdown-preview"
-      />
+    <VStack height="100%" gap={3} padding={4}>
+      {/*
+       * Astryx's Markdown takes the markdown *string* and renders Astryx components from it.
+       *
+       * This replaced a `marked` -> `DOMPurify.sanitize` -> `dangerouslySetInnerHTML` pipeline,
+       * and it is a security *improvement*, not a like-for-like swap: there is no longer an HTML
+       * injection path to sanitise. Markdown never builds an HTML string and never touches
+       * innerHTML (there is no `dangerouslySetInnerHTML` anywhere in @astryxdesign/core/Markdown,
+       * and it exposes no allowHtml/rawHtml escape), so embedded HTML in the source — a <script>
+       * tag, an onclick= handler — is inert text rather than sanitised markup. Sanitising a thing
+       * you never construct is strictly safer than sanitising it well.
+       *
+       * `marked` and `isomorphic-dompurify` were used only here and are now removed from
+       * package.json.
+       */}
+      <Markdown data-testid="markdown-preview">{text}</Markdown>
       {!readOnly && (
-        <textarea
+        // Astryx's TextArea owns the label, so the old aria-label becomes a hidden `label` —
+        // the accessible name is unchanged. Height is rows-driven here, which suits this
+        // fixed-height source pane (unlike the notes editor, which must fill the window).
+        <TextArea
+          label="Markdown editor"
+          isLabelHidden
+          rows={5}
           value={draft}
           onChange={handleChange}
-          className="h-32 w-full resize-none rounded-md border border-border bg-background p-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
           data-testid="markdown-editor"
-          aria-label="Markdown editor"
         />
       )}
-    </div>
+    </VStack>
   );
 }

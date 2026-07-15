@@ -1,0 +1,28 @@
+/*
+ * Structural residue for the docs page. Sizes and spacing left this file: the banner's height and
+ * the search rail's cap ride Astryx size props, the doc/sidebar split is an HStack + StackItem,
+ * and the copy column's `flex: 1` is now `<StackItem size="fill">`.
+ *
+ * The banner is a muted Astryx surface behind a default Heading. It used to be an accent band with
+ * a `MediaTheme mode="dark"` heading — but `--color-accent` flips near-white in dark mode while the
+ * forced-dark heading stayed white, so the title was white-on-white. A surface token pairs with the
+ * default text colour by design, so contrast holds in both modes with no MediaTheme and no scrim.
+ * The decorative 0.4-opacity background image and its text-shadow are gone. No hex, no raw px, no
+ * gradient, no opacity, no bespoke effect.
+ */
+
+.banner {
+  background-color: var(--color-background-muted);
+}
+
+/* TextInput fills the rail; Astryx exposes no grow prop on inputs, and `flex: 1` / `min-width: 0`
+   are the structural mechanics the styling doc leaves to CSS Modules. */
+.searchInput {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Block-end only, so HStack's symmetric paddingBlock prop cannot carry it. The value is a token. */
+.content {
+  padding-block-end: var(--spacing-8);
+}

@@ -1,7 +1,7 @@
+import { Spinner } from "@astryxdesign/core/Spinner";
 import { lazy, Suspense } from "react";
 import { createBrowserRouter } from "react-router-dom";
 import { RootLayout } from "@/app/layout/root-layout";
-import { Spinner } from "@/components/ui/spinner";
 import { marketingRegistry } from "@/features/desktop/apps";
 import { buildMarketingDesktop } from "@/features/desktop/factory/marketing-desktop";
 import { MarketingShell } from "@/features/marketing/components/MarketingShell";

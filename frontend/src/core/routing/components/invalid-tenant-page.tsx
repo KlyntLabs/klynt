@@ -1,3 +1,5 @@
+import { Center } from "@astryxdesign/core/Center";
+import { EmptyState } from "@astryxdesign/core/EmptyState";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { navigateExternal } from "@/core/auth/external-redirect";
@@ -16,9 +18,12 @@ export function InvalidTenantPage() {
   }, []);
 
   return (
-    <div className="flex h-screen flex-col items-center justify-center gap-4 text-center">
-      <h1 className="text-2xl font-semibold">{t("errors:systemInvalid")}</h1>
-      <p className="text-muted-foreground">{t("errors:systemInvalidRedirect")}</p>
-    </div>
+    <Center height="100vh">
+      <EmptyState
+        headingLevel={1}
+        title={t("errors:systemInvalid")}
+        description={t("errors:systemInvalidRedirect")}
+      />
+    </Center>
   );
 }

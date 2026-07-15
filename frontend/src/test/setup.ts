@@ -1,4 +1,7 @@
 import "@testing-library/jest-dom/vitest";
+import "@/test/dialog-shim";
+import "@/test/popover-shim";
+import "@/test/toast-transition-shim";
 import React from "react";
 import { apiClient } from "@/core/api/api-client";
 import { createAuthInterceptorDeps, registerAuthInterceptor } from "@/core/api/auth-interceptor";
@@ -144,15 +147,27 @@ function createMotionStub(Tag: string | React.ComponentType) {
 
 vi.mock("framer-motion", async (importOriginal) => {
   const actual = (await importOriginal<typeof import("framer-motion")>()) || {};
-  const motionComponentCache = new Map<string, ReturnType<typeof createMotionStub>>();
+  const motionComponentCache = new Map<
+    string | React.ComponentType,
+    ReturnType<typeof createMotionStub>
+  >();
+  const stubFor = (tag: string | React.ComponentType) => {
+    if (!motionComponentCache.has(tag)) {
+      motionComponentCache.set(tag, createMotionStub(tag));
+    }
+    return motionComponentCache.get(tag);
+  };
   const motionProxy = new Proxy(
     {},
     {
       get(_, tag: string) {
-        if (!motionComponentCache.has(tag)) {
-          motionComponentCache.set(tag, createMotionStub(tag));
+        // `motion.create(Component)` is a factory, not a motion component. Without this the Proxy
+        // hands back a stub *component* and the caller invokes it at module scope, so the stub's
+        // hooks run outside a render. Window.tsx wraps Astryx's Card this way.
+        if (tag === "create") {
+          return (Component: React.ComponentType) => stubFor(Component);
         }
-        return motionComponentCache.get(tag);
+        return stubFor(tag);
       },
     }
   );

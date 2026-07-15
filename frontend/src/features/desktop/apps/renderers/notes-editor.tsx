@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import styles from "./notes-renderer.module.css";
 import { getText } from "./notes-utils";
 
 type NotesEditorProps = {
@@ -50,7 +51,7 @@ export function NotesEditor({
     <textarea
       value={draft}
       onChange={handleChange}
-      className="h-full w-full resize-none rounded-md border border-border bg-background p-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+      className={styles.editor}
       data-testid="notes-editor"
       aria-label="Notes editor"
     />

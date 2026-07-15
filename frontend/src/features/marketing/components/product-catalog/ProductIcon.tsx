@@ -1,22 +1,31 @@
+import { HStack } from "@astryxdesign/core/HStack";
+import { Icon } from "@astryxdesign/core/Icon";
 import { BarChart3 } from "lucide-react";
-import { productIconMap } from "./constants";
+import { type ProductIconConfig, productIconMap } from "./constants";
+import styles from "./product-icon.module.css";
 
 interface ProductIconProps {
   name: string;
 }
 
-export function ProductIcon({ name }: ProductIconProps) {
-  const config = productIconMap[name] || {
-    icon: <BarChart3 className="w-4 h-4" />,
-    bg: "bg-[#F3F4F6]",
-    color: "text-[#374151]",
-  };
+const FALLBACK_ICON: ProductIconConfig = { icon: BarChart3, hue: "gray" };
 
+export function ProductIcon({ name }: ProductIconProps) {
+  const { icon, hue } = productIconMap[name] || FALLBACK_ICON;
+
+  /*
+   * The tile is an HStack — it centres the mark with props, not CSS. What stays in the CSS
+   * module is only what Astryx has no prop for: the tinted surface (one class per hue) and the
+   * tile's own geometry, both drawn from tokens.
+   *
+   * The Icon takes no colour prop on purpose: it defaults to `color="inherit"`, so it picks up
+   * the hue class's `--color-text-<hue>` ink, which is the token Astryx pairs with the matching
+   * `--color-background-<hue>` surface. (Icon's own `color="blue"` would resolve to
+   * `--color-icon-blue` — a different token, tuned for an untinted background.)
+   */
   return (
-    <div
-      className={`w-8 h-8 rounded-lg ${config.bg} ${config.color} flex items-center justify-center shrink-0`}
-    >
-      {config.icon}
-    </div>
+    <HStack align="center" justify="center" className={`${styles.tile} ${styles[hue]}`}>
+      <Icon icon={icon} size="sm" />
+    </HStack>
   );
 }

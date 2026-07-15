@@ -1,13 +1,6 @@
+import { BreadcrumbItem, Breadcrumbs } from "@astryxdesign/core/Breadcrumbs";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
 import { type IconTreeNode, useIconTreeStore } from "./icon-tree-module";
 import { useCurrentFolderContents } from "./use-current-folder";
 
@@ -64,32 +57,21 @@ export function FolderBreadcrumb({
   };
 
   return (
-    <Breadcrumb data-testid="folder-breadcrumb">
-      <BreadcrumbList>
-        {crumbs.map((crumb, i) => {
-          const isLast = i === crumbs.length - 1;
-          return (
-            <React.Fragment key={`${crumb.id}-${crumb.index}`}>
-              <BreadcrumbItem>
-                {isLast ? (
-                  <BreadcrumbPage>{crumb.title}</BreadcrumbPage>
-                ) : (
-                  <BreadcrumbLink asChild>
-                    <button
-                      type="button"
-                      onClick={() => handleClick(crumb.index)}
-                      className="cursor-pointer"
-                    >
-                      {crumb.title}
-                    </button>
-                  </BreadcrumbLink>
-                )}
-              </BreadcrumbItem>
-              {!isLast && <BreadcrumbSeparator />}
-            </React.Fragment>
-          );
-        })}
-      </BreadcrumbList>
-    </Breadcrumb>
+    // Astryx's Breadcrumbs owns the separators and the current-page marking (aria-current),
+    // so the List/Link/Page/Separator scaffolding all collapses into BreadcrumbItem.
+    <Breadcrumbs data-testid="folder-breadcrumb">
+      {crumbs.map((crumb, i) => {
+        const isLast = i === crumbs.length - 1;
+        return (
+          <BreadcrumbItem
+            key={`${crumb.id}-${crumb.index}`}
+            isCurrent={isLast}
+            onClick={isLast ? undefined : () => handleClick(crumb.index)}
+          >
+            {crumb.title}
+          </BreadcrumbItem>
+        );
+      })}
+    </Breadcrumbs>
   );
 }

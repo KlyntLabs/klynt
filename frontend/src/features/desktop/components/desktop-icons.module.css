@@ -1,0 +1,36 @@
+/*
+ * Dock and grid placement on the desktop surface. Pinning columns to the viewport edges and
+ * stacking an icon field over the wallpaper is window-manager layout, not page layout, so
+ * Astryx's layout components do not reach it — but the elements themselves are VStacks, so the
+ * stacking, the gaps, the alignment and now the gutters all come from props. What is left here
+ * is placement, and every term of it is a single step off the spacing scale.
+ *
+ * The three off-scale distances this file used to carry — composed as
+ * calc(--spacing-9 + --spacing-4), calc(--spacing-10 * 2) and calc(--spacing-12 * 2) — are gone.
+ * A calc() over two tokens is not a token: it is an arbitrary value with a token's alibi, and it
+ * lands off Astryx's scale by construction. The dock's offset is now one step of the scale; the
+ * field's gutter moved onto a real `padding` prop (ICON_FIELD_PADDING) and the dock clearance
+ * those oversized gutters used to buy is bought by the field's measure instead
+ * (ICON_FIELD_MAX_WIDTH). See DesktopIconGrid.tsx.
+ */
+
+.dock {
+  position: fixed;
+  /* Clear of the menubar, with a breath. One step, on the scale. */
+  top: var(--spacing-12);
+  z-index: 10;
+}
+
+.dockLeft {
+  left: var(--spacing-4);
+}
+
+.dockRight {
+  right: var(--spacing-4);
+}
+
+/* Stacking only — the gutter is the VStack's own `padding` prop. */
+.centerGrid {
+  position: absolute;
+  inset: 0;
+}

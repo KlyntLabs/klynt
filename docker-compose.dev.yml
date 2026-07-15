@@ -53,8 +53,12 @@ services:
       # Note: the backend config loader uses "__" as the nested-key separator.
       - KLYNT_API__HOST=0.0.0.0
       - KLYNT_API__PORT=3001
-      - KLYNT_DATABASE_URL=${KLYNT_DATABASE_URL:-postgresql://klynt:klynt@postgres:5432/klynt}
-      - KLYNT_REDIS_URL=${KLYNT_REDIS_URL:-redis://redis:6379}
+      # Hardcoded on purpose, NOT interpolated from .env. `postgres` and `redis` are Docker
+      # service names and only resolve inside this network, while `.env` has to hold the
+      # host-reachable `localhost` URLs so a native `just dev` works. An `environment:` entry
+      # beats `env_file:`, so this block is what makes both run modes work from one .env.
+      - KLYNT_DATABASE_URL=postgresql://klynt:klynt@postgres:5432/klynt
+      - KLYNT_REDIS_URL=redis://redis:6379
       - KLYNT_BASE_URL=${KLYNT_BASE_URL:-http://lvh.me:5174}
     ports:
       - "127.0.0.1:${KLYNT_BACKEND_PORT:-3001}:3001"

@@ -3,6 +3,7 @@ import { nanoid } from "nanoid";
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
+import { spacingPx } from "@/core/theme/astryx-tokens";
 
 export type WindowState = "normal" | "minimized" | "maximized";
 
@@ -46,7 +47,18 @@ const DEFAULT_WINDOW_WIDTH = 680;
 const DEFAULT_WINDOW_HEIGHT = 520;
 const Z_INDEX_BASE = 100;
 const Z_INDEX_COMPACT_THRESHOLD = 10000;
-const MENUBAR_HEIGHT = 36;
+/*
+ * The menubar's height — the one value every part of the desktop measures the window layer
+ * against (centering offset, maximize origin, maximize height, drag clamp). It is Astryx's
+ * `--spacing-10`, the exact token `menubar.module.css` sets the bar's `height` to, RESOLVED from
+ * the live token via `spacingPx` rather than copied — so it cannot drift from the design system.
+ *
+ * It has to be a JS *number* (not `var(--spacing-10)`) because it feeds arithmetic (`Math.max`,
+ * `innerHeight - …`) where a CSS custom property cannot be used. This is the sole source of truth;
+ * it previously lived as three disagreeing `36` literals that a maximized window overlapped the
+ * 40px bar by 4px.
+ */
+export const MENUBAR_HEIGHT = spacingPx(10);
 
 const EMPTY_WINDOWS: Window[] = [];
 

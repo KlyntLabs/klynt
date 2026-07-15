@@ -1,7 +1,9 @@
+import { Center } from "@astryxdesign/core/Center";
+import { Spinner } from "@astryxdesign/core/Spinner";
+import { useToast } from "@astryxdesign/core/Toast";
+import { VStack } from "@astryxdesign/core/VStack";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Spinner } from "@/components/ui/spinner";
-import { useToastStore } from "@/core/notifications/toast-store";
 import { backgroundPresets, getPresetById } from "@/features/desktop/backgrounds/presets";
 import { DesktopContextMenu } from "@/features/desktop/context-menu/DesktopContextMenu";
 import { NewAppDialog } from "@/features/desktop/context-menu/new-app-dialog";
@@ -12,12 +14,21 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import type { DesktopConfig } from "../factory/types";
 import CookieBanner from "./CookieBanner";
 import DesktopIcons from "./DesktopIcons";
+import styles from "./desktop-environment.module.css";
 import Menubar from "./Menubar";
 import { MobileFallback } from "./MobileFallback";
 import { useDesktopBundle } from "./use-desktop-bundle";
 import { useDesktopEnvironmentActions } from "./use-desktop-environment-actions";
 import { useDesktopLayoutSave } from "./use-desktop-layout-save";
 import WindowManager from "./WindowManager";
+
+/**
+ * The wallpaper texture's tile edge.
+ *
+ * It is far past Astryx's spacing scale (which stops at 48px), and background-size is not a
+ * design-system concern, so it goes through `style`, which BaseProps keeps for exactly this.
+ */
+const WALLPAPER_TILE_SIZE = 512;
 
 interface DesktopEnvironmentProps {
   config: DesktopConfig;
@@ -29,7 +40,7 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
   const [backgroundPresetId, setBackgroundPresetId] = useState(config.background.presetId);
   const [isLoading, setIsLoading] = useState(true);
   const { t } = useTranslation("home");
-  const addToast = useToastStore((state) => state.addToast);
+  const toast = useToast();
   const isBelowLg = useMediaQuery("(max-width: 1023px)");
   const configRef = useRef(config);
   configRef.current = config;
@@ -89,13 +100,14 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
   );
 
   const handleLoadError = useCallback(() => {
-    addToast({
-      message: t("desktop.toast.layoutLoadError"),
+    toast({
+      body: t("desktop.toast.layoutLoadError"),
       type: "error",
-      duration: 5000,
+      isAutoHide: true,
+      autoHideDuration: 5000,
     });
     setIsLoading(false);
-  }, [addToast, t]);
+  }, [toast, t]);
 
   const handleReload = useCallback(async () => {
     const { persistence, id } = configRef.current;
@@ -180,35 +192,23 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
   }
 
   return (
-    <div
-      className="w-screen h-screen overflow-hidden relative"
+    <VStack
+      className={styles.root}
+      width="100vw"
+      height="100vh"
       onContextMenu={handleBackgroundContextMenu}
       role="application"
       aria-label={t("desktop.navLabel")}
     >
-      {/* Wallpaper Background */}
-      <div
-        className="absolute inset-0"
+      {/* Wallpaper Background — the tint and the repeat are tokens/keywords in the module; the
+          image and the tile size are values, so both ride on the component. */}
+      <VStack
+        className={styles.wallpaper}
         style={{
-          backgroundColor: "#D8D2C8",
           backgroundImage: background ? `url(${background.src})` : "url(/wallpaper-texture.webp)",
-          backgroundRepeat: "repeat",
-          backgroundSize: "512px 512px",
+          backgroundSize: `${WALLPAPER_TILE_SIZE}px ${WALLPAPER_TILE_SIZE}px`,
         }}
       />
-
-      {/* Decorative hedgehog garden */}
-      <div className="absolute bottom-4 right-4 opacity-30 pointer-events-none z-0">
-        <img
-          src="/hedgehog-garden.webp"
-          alt=""
-          width={1024}
-          height={1536}
-          loading="lazy"
-          decoding="async"
-          className="w-[280px] h-auto"
-        />
-      </div>
 
       {/* Menubar */}
       <Menubar config={config} />
@@ -241,16 +241,11 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
 
       {/* Persistence loading overlay */}
       {isLoading && (
-        <div
-          className="absolute inset-0 z-50 flex items-center justify-center bg-background/50 backdrop-blur-sm"
-          role="status"
-          aria-live="polite"
-          aria-busy="true"
-        >
+        <Center className={styles.loadingOverlay} role="status" aria-live="polite" aria-busy="true">
           <Spinner />
-        </div>
+        </Center>
       )}
-    </div>
+    </VStack>
   );
 }
 

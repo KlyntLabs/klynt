@@ -1,0 +1,12 @@
+/*
+ * The window layer: a full-bleed positioning context for absolutely-positioned windows,
+ * inset below the menubar so a window can never be dragged under it. Not something Astryx
+ * expresses — see window.module.css for why the frame is ours.
+ */
+.layer {
+  position: absolute;
+  inset: 0;
+  /* Menubar height — `--spacing-10`, the same token menubar.module.css uses and the value of
+     MENUBAR_OFFSET (the y-clamp in Window.tsx's drag handler). All three must stay equal. */
+  top: var(--spacing-10);
+}

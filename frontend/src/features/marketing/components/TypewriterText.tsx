@@ -45,10 +45,10 @@ export function TypewriterText({ text, speed = 80 }: TypewriterTextProps) {
     return () => clearTimeout(timer);
   }, [displayed, isDeleting, text, speed]);
 
-  return (
-    <span>
-      {displayed}
-      <span className="animate-pulse">|</span>
-    </span>
-  );
+  /*
+   * A Fragment, not a wrapper element — the typed text is inline content that flows inside
+   * whatever Text or Heading renders it. The blinking caret is gone: an ambient infinite loop is
+   * a flourish Astryx's motion model doesn't express.
+   */
+  return <>{displayed}</>;
 }

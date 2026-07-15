@@ -1,0 +1,37 @@
+/*
+ * The banner IS the Card (see CookieBanner.tsx) — border, radius, elevation, padding and width
+ * are all Card's. What is left here is the bit Astryx does not express: pinning the card to the
+ * bottom-right of the viewport above the window layer, and floating the dismiss button over the
+ * card's own padding. `position: fixed` also gives the dismiss button its containing block.
+ */
+.banner {
+  position: fixed;
+  right: var(--spacing-4);
+  bottom: var(--spacing-4);
+  /* Above the window layer and the menubar. */
+  z-index: 60;
+}
+
+.dismiss {
+  position: absolute;
+  top: var(--spacing-2);
+  right: var(--spacing-2);
+}
+
+/* Keeps the heading clear of the floating dismiss button. */
+.heading {
+  padding-right: var(--spacing-6);
+}
+
+/* The square is the wrapper's `width`/`height` props; the image just fills it. */
+.mascot {
+  flex-shrink: 0;
+  border-radius: var(--radius-inner);
+  overflow: hidden;
+}
+
+.mascotImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

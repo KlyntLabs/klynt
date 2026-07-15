@@ -1,0 +1,19 @@
+/*
+ * The Gazette masthead. One rule left — a colour token — with no raw px and no breakpoints.
+ *
+ * What went:
+ *  - The masthead's serif (`--font-family-heading: Georgia`). The heading now uses Astryx's stock
+ *    heading typography like every other heading in the app — full design-system alignment, at the
+ *    cost of the newspaper look. There is no serif token in Astryx, so there was nothing to keep.
+ *  - The `3px double` newspaper rule. It is an Astryx `Divider variant="strong"` now.
+ *  - The 768px padding bump and the 640px row switch. Padding is a `padding={6}` prop, and the
+ *    masthead row is a `Grid columns={{minWidth, max: 3}}` that reflows on the container.
+ */
+
+/*
+ * Text has no `success` colour prop, only inherit — so the green comes from the wrapper
+ * and Text opts into it with color="inherit".
+ */
+.operational {
+  color: var(--color-text-green);
+}

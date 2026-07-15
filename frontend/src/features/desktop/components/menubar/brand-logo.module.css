@@ -1,0 +1,7 @@
+/*
+ * The wordmark plate. The row, the gap and the padding pocket all come from HStack's props;
+ * only the corner radius is left, and that is a token.
+ */
+.brand {
+  border-radius: var(--radius-element);
+}

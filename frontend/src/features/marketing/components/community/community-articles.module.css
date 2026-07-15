@@ -1,0 +1,38 @@
+/*
+ * The Gazette's main column: the article media and the uppercase category eyebrow — neither of
+ * which Astryx's components express. Tokens only, no raw px, no breakpoints.
+ *
+ * The column's own responsive width (100% / 50% behind a 1024px media query) is gone: the column
+ * is a Grid track now (see CommunityPage), which reflows on the container instead.
+ */
+
+.featuredMedia {
+  border-radius: var(--radius-container);
+  background: var(--color-background-muted);
+}
+
+.featuredImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/*
+ * The <img> carries its own 80x60 box on its width/height attributes (see CommunityArticles) —
+ * no Astryx component wraps a raw image, so the element's own attributes are the native place
+ * for its size. Only the presentation stays here, all of it token'd.
+ */
+.thumbnail {
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: var(--radius-element);
+  background: var(--color-background-muted);
+}
+
+/*
+ * Category eyebrow. text-transform inherits, so wrapping Astryx's Text restyles it without
+ * fighting the component's own classes.
+ */
+.eyebrow {
+  text-transform: uppercase;
+}

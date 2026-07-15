@@ -88,6 +88,7 @@
       "getStarted": "Get started – free",
       "search": "Tìm kiếm",
       "notifications": "Thông báo",
+      "unreadNotifications": "Thông báo chưa đọc",
       "profile": "Hồ sơ",
       "signIn": "Đăng nhập",
       "signOut": "Đăng xuất",
@@ -197,6 +198,7 @@
       "share": "Share",
       "zoom": "100%",
       "toolbar": {
+        "label": "Thanh công cụ tài liệu",
         "back": "Back",
         "forward": "Forward",
         "bold": "Bold",
