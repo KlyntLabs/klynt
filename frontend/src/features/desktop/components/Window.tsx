@@ -11,6 +11,7 @@ import { ChevronDown, FileText } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
 import { Suspense, useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import { tween } from "@/core/motion/astryx-motion";
 import type { Window } from "@/features/desktop/window-manager/window-module";
 import { MENUBAR_HEIGHT, useWindowManager } from "@/features/desktop/window-manager/window-module";
 import { AppErrorBoundary } from "./AppErrorBoundary";
@@ -117,8 +118,10 @@ export default function WindowComponent({
         x: isMaximized ? 0 : w.x,
       }}
       exit={{ scale: 0.95, opacity: 0 }}
-      // Spring physics has no Astryx token (Astryx motion is tween-only) — documented exception.
-      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+      // Astryx's motion model is tween-only (duration + easing), so the window open/settle is a
+      // token-driven tween, not a spring. Losing the springy overshoot is the cost of using only
+      // what the design system ships.
+      transition={tween("fast")}
       drag={!isMaximized && !isLocked}
       dragMomentum={false}
       onDragEnd={handleDragEnd}

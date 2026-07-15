@@ -30,10 +30,9 @@
 }
 
 /*
- * Category eyebrow. text-transform and letter-spacing inherit, so wrapping Astryx's Text
- * restyles it without fighting the component's own classes.
+ * Category eyebrow. text-transform inherits, so wrapping Astryx's Text restyles it without
+ * fighting the component's own classes.
  */
 .eyebrow {
   text-transform: uppercase;
-  letter-spacing: 0.08em; /* raw tracking — Astryx ships no letter-spacing token — documented exception. */
 }

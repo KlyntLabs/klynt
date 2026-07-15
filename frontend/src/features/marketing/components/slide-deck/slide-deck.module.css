@@ -56,16 +56,10 @@
   background: var(--color-background-surface);
   border: var(--border-width) solid var(--color-border-emphasized);
   border-radius: var(--radius-inner);
-  opacity: 0.7; /* raw opacity (dimmed unselected thumbnail) — Astryx ships no opacity token — documented exception. */
-  transition: opacity var(--duration-fast) var(--ease-standard);
 }
 
-.thumbnail:hover .thumbnailFrame {
-  opacity: 1;
-}
-
+/* The selected thumbnail is distinguished by the accent border and inset ring — no opacity dim. */
 .thumbnail[data-selected="true"] .thumbnailFrame {
-  opacity: 1;
   border-color: var(--color-accent);
   box-shadow: var(--shadow-inset-selected);
 }
@@ -101,7 +95,6 @@
 
 .notesLabel {
   text-transform: uppercase;
-  letter-spacing: 0.08em; /* raw tracking — Astryx ships no letter-spacing token — documented exception. */
 }
 
 /* Navigation bar */

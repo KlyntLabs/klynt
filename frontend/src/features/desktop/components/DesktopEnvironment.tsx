@@ -23,16 +23,12 @@ import { useDesktopLayoutSave } from "./use-desktop-layout-save";
 import WindowManager from "./WindowManager";
 
 /**
- * The wallpaper texture's tile edge, and the hedgehog's on-screen width.
+ * The wallpaper texture's tile edge.
  *
- * Both are far past Astryx's spacing scale (which stops at 48px), so per the sizing contract —
- * `SizeValue`: "numbers are treated as pixels" — they belong on the component, not in CSS.
- * GARDEN_WIDTH rides on the wrapper's `width` prop; WALLPAPER_TILE_SIZE has no prop to ride on
- * (background-size is not a design-system concern), so it goes through `style`, which BaseProps
- * keeps for exactly this.
+ * It is far past Astryx's spacing scale (which stops at 48px), and background-size is not a
+ * design-system concern, so it goes through `style`, which BaseProps keeps for exactly this.
  */
 const WALLPAPER_TILE_SIZE = 512;
-const GARDEN_WIDTH = 280;
 
 interface DesktopEnvironmentProps {
   config: DesktopConfig;
@@ -213,20 +209,6 @@ export function DesktopEnvironment({ config }: DesktopEnvironmentProps) {
           backgroundSize: `${WALLPAPER_TILE_SIZE}px ${WALLPAPER_TILE_SIZE}px`,
         }}
       />
-
-      {/* Decorative hedgehog garden. The width is the wrapper's — a VStack prop, since 280px is
-          far past Astryx's spacing scale — and the image just fills it. */}
-      <VStack className={styles.garden} width={GARDEN_WIDTH}>
-        <img
-          src="/hedgehog-garden.webp"
-          alt=""
-          width={1024}
-          height={1536}
-          loading="lazy"
-          decoding="async"
-          className={styles.gardenImage}
-        />
-      </VStack>
 
       {/* Menubar */}
       <Menubar config={config} />

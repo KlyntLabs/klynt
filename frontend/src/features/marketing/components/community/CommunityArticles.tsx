@@ -66,8 +66,8 @@ export function CommunityArticles() {
           />
         </AspectRatio>
         <VStack gap={1}>
-          {/* text-transform/letter-spacing sit on the Text itself — both inherit, so the wrapper
-              <div> the eyebrow used to need is gone. */}
+          {/* text-transform sits on the Text itself — it inherits, so the wrapper <div> the
+              eyebrow used to need is gone. */}
           <Text type="supporting" size="xsm" display="block" className={styles.eyebrow}>
             {featured?.category}
           </Text>

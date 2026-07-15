@@ -39,8 +39,8 @@ export function SlideTitle() {
         </VStack>
       </VStack>
 
-      {/* The pulse animation sits on the Text itself — the wrapper <div> it needed is gone. */}
-      <Text type="supporting" display="block" justify="center" className={styles.hint}>
+      {/* Static hint — the ambient pulse loop is gone; Astryx's motion model doesn't express it. */}
+      <Text type="supporting" display="block" justify="center">
         {t("productAnalytics.slides.title.hint")}
       </Text>
     </VStack>

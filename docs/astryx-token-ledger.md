@@ -38,20 +38,45 @@ a copy — with the shipped values as a fallback only for environments that can'
 Each of these is a value with no Astryx token *by design*. None is a matter of effort. If a future
 Astryx release adds the token, migrate it and delete the row.
 
-| Family | Why there is no token | Where it lives |
+Only three things remain, and each is **technically impossible** to express as an Astryx token —
+not a matter of taste or effort. Everything that was merely *un-tokenizable-but-decorative* has been
+**deleted** rather than kept (see "Flourishes removed" below).
+
+| Family | Why it is impossible, not just tokenless | Where it lives |
 |---|---|---|
-| **Opacity** | Astryx ships no `--opacity-*` scale. (`0`/`1` inside `@keyframes` are endpoints — "hidden"/"shown" — not design values.) | **4** raw `opacity:` in marketing/desktop CSS. |
-| **Letter-spacing / tracking** | Astryx's typography tokens are size/weight/family only — there is no tracking token. | **5** `letter-spacing: 0.05em`/`0.08em` on eyebrow labels. |
-| **Gradient geometry** | The *colours* of every gradient are `var(--color-*)`; the *angle* (`135deg`) and repeat pattern are geometry, which no design system tokenizes. | 2 marketing gradients. |
-| **z-index** | Astryx ships **no z-index token at all** — its own overlays hardcode `500`/`9999`. Stacking order is compositional; the window manager's `zIndex` is literally application state. | 9 integers in desktop/marketing CSS. |
-| **Breakpoints** | CSS forbids `var()` in a media-query condition, and Astryx ships no breakpoint constant. Container-driven layout (`Grid columns={{minWidth}}`) replaced every CSS `@media (min-width)`; what remains is one JS `useMediaQuery("(max-width: 1023px)")` for the mobile-fallback swap. | `DesktopEnvironment.tsx`. |
-| **Spring physics** | Astryx's motion model is tween-only (duration + easing). There is no stiffness/damping token. | 2 springs: the window drag (`Window.tsx`) and the slide-deck (`SlideDeck.tsx`). |
-| **Ambient-loop timing** | Infinite decorative loops (float, caret-blink, pulse) run 1–3s — beyond Astryx's slowest token (`--duration-slow-max` = 1300ms) — and want symmetric `ease-in-out`, which Astryx does not ship (only `--ease-standard`, an ease-*out* curve for entrances). | 3 CSS `@keyframes` + 1 framer-motion loop. |
-| **Dimensions > 48px** | Astryx's spacing scale stops at 48px and it ships no dimension token above it — its API states "numbers are treated as pixels" and expects dimensions to travel as **component props**. So these are `<Card width={280}>`-style props via named consts, not CSS. | Named consts in marketing/desktop. |
-| **`min-width: 10rem`** | `StackProps` exposes `width`/`maxWidth`/`minHeight` but no `minWidth`, and there is no spacing token at 160px. | Context-menu min width. |
-| **Token values mirrored into JS** | A CSS custom property can't appear in JS arithmetic (`Math.max`, `innerHeight - x`, `100 - 2*p`). Where a spacing/size *token* is needed as a number, it lives as a single named constant that names its token and must stay equal to it — not a free magic number. `MENUBAR_HEIGHT = 40` (`--spacing-10`, exported, one source of truth), `DOC_CARD_PADDING_PX = 16` (`--spacing-4`). The motion module (`astryx-motion.ts`) is the systematic version — it *reads* the live token rather than mirroring it. | `window-module.ts`, `DocSection.tsx`. |
-| **sr-only `1px` clip** | Not a design value — the WAI visually-hidden mechanism. `0` drops the node from the a11y tree; `display:none` drops it from tab order. | `skip-link.module.css`. |
-| Choreography (`delay`, stagger) | Not a token family: *when* a step starts in a sequence, not a reusable design constant. Astryx ships no delay/stagger token. | framer-motion `delay`/`index*n` throughout. |
+| **z-index** | Stacking order is not a design value any system tokenizes — Astryx's own overlays hardcode `500`/`9999`, and it ships no z-index token. Every instance is *compositional or stateful*: the window manager's `zIndex` is per-window application state (`Z_INDEX_BASE + focus order`); the desktop chrome (menubar, cookie banner, icon field) must sit above that dynamic range; the customers filter bar is `position: sticky` over a scrolling table; the skip link must overlay the page when focused. None can be a CSS value. | 9 declarations: `window-module.ts` (state), desktop chrome, `customers-page` (sticky), `skip-link`. |
+| **Viewport breakpoint** | CSS forbids `var()` in a media-query condition, and Astryx ships no breakpoint constant. This is the *last* one: every CSS `@media (min-width)` was replaced by container-driven `Grid columns={{minWidth}}`. What remains is a single **JS** `useMediaQuery("(max-width: 1023px)")` that swaps the whole desktop for a mobile fallback — a control-flow decision, not styling, and a `window.matchMedia` string that cannot hold a token. | `DesktopEnvironment.tsx`. |
+| **sr-only `1px` clip** | The WAI visually-hidden mechanism, explicitly an accessibility requirement. `0×0` drops the node from the accessibility tree; `display:none` / `visibility:hidden` drop it from tab order — both defeat a skip link. The `1px` is the mechanism, not a design value. | `skip-link.module.css`. |
+
+### Not exceptions — these *are* the Astryx pattern
+
+- **Dimensions > 48px** (`<Card width={280}>` via named consts). Astryx's own sizing API states
+  "numbers are treated as pixels" and expects dimensions to travel as component props. Passing a
+  number to a `SizeValue` prop is using Astryx as designed, not deviating from it.
+- **Spacing tokens read into JS.** `MENUBAR_HEIGHT = spacingPx(10)` and
+  `DOC_CARD_PADDING_PX = spacingPx(4)` *read the live `--spacing-*` token* off the root (via
+  `core/theme/astryx-tokens.ts`), the same way the motion module reads `--duration-*`. The value
+  flows from Astryx; only the jsdom fallback is a literal. Needed because JS arithmetic
+  (`Math.max`, `innerHeight - x`) can't contain a `var()`.
+- **Choreography** (`delay`, stagger). *When* a step starts in a sequence — orchestration, not a
+  reusable design value. Durations and easings within each step come from `tween()` tokens.
+
+### Flourishes removed (rather than kept as exceptions)
+
+Per the "strict adherence over the current look" directive, everything Astryx couldn't express and
+that was purely decorative was **deleted**, not documented:
+
+- **Opacity dimming** → gone. The hedgehog garden (desktop) and the faint docs banner image were
+  deleted outright; slide-deck thumbnail dimming now uses an Astryx selected-state border, not a
+  bespoke `opacity`.
+- **Letter-spacing / tracking** (5 eyebrow labels) → removed; the labels keep their uppercase.
+- **Gradients** (2) → the accent-orange plate and the docs barber-pole are solid `--color-*` now.
+- **Spring physics** (2) → the window open/settle and slide-deck transition are `tween()` tokens;
+  the springy overshoot is gone.
+- **Ambient loops** (4) → the hero mascot float, the typewriter blinking caret, the analytics
+  pulse, and the About mascot bob are all deleted; those elements sit still.
+- The docs hero's `MediaTheme mode="dark"` accent band (which went white-on-white in dark mode once
+  the scrim was removed) is now a plain muted surface with a default Heading — a real contrast fix.
 
 ## Audit script
 

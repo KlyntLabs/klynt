@@ -30,30 +30,9 @@
 /* Title slide */
 .brandPlate {
   border-radius: var(--radius-container);
-  background: linear-gradient(135deg, var(--color-accent), var(--color-icon-orange));
+  background-color: var(--color-accent);
   box-shadow: var(--shadow-med);
   color: var(--color-on-accent);
-}
-
-.hint {
-  /* Ambient loop: 2s symmetric ease-in-out is outside Astryx's motion scale/easing — documented exception. */
-  animation: hint-pulse 2s ease-in-out infinite;
-}
-
-@keyframes hint-pulse {
-  0%,
-  100% {
-    opacity: 1; /* keyframe endpoint */
-  }
-  50% {
-    opacity: 0.5; /* raw opacity — Astryx ships no opacity token — documented exception. */
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hint {
-    animation: none;
-  }
 }
 
 /* Track slide — the dot is 20px, which is var(--spacing-5). */

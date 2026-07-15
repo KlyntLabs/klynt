@@ -1,6 +1,4 @@
-import { Text } from "@astryxdesign/core/Text";
 import { useEffect, useState } from "react";
-import styles from "./typewriter-text.module.css";
 
 interface TypewriterTextProps {
   text: string;
@@ -49,19 +47,8 @@ export function TypewriterText({ text, speed = 80 }: TypewriterTextProps) {
 
   /*
    * A Fragment, not a wrapper element — the typed text is inline content that flows inside
-   * whatever Text or Heading renders it.
-   *
-   * The caret is an Astryx `Text`: `as="span"` renders the inline element and `display="inline"`
-   * keeps it in the sentence flow rather than on its own line. `color="inherit"` lets it take the
-   * surrounding Text's colour. The stylesheet keeps only the blink keyframe — an animation is
-   * behaviour, not a design value, and Astryx has no prop for one.
+   * whatever Text or Heading renders it. The blinking caret is gone: an ambient infinite loop is
+   * a flourish Astryx's motion model doesn't express.
    */
-  return (
-    <>
-      {displayed}
-      <Text as="span" display="inline" color="inherit" className={styles.caret}>
-        |
-      </Text>
-    </>
-  );
+  return <>{displayed}</>;
 }

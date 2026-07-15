@@ -8,6 +8,7 @@ import { VStack } from "@astryxdesign/core/VStack";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import { tween } from "@/core/motion/astryx-motion";
+import { spacingPx } from "@/core/theme/astryx-tokens";
 import type { DocCategory, DocItem } from "@/features/marketing/data/docs";
 import styles from "./docs-section.module.css";
 
@@ -39,7 +40,7 @@ const staggerItem = {
  * instead: Stack *does* have `minHeight`, and content + the card's own padding={4} (16px, top and
  * bottom) reproduces the same 100px outer floor the old `.card { min-height: 100px }` set.
  */
-const DOC_CARD_PADDING_PX = 16;
+const DOC_CARD_PADDING_PX = spacingPx(4);
 const DOC_CARD_MIN_HEIGHT = 100;
 const DOC_CARD_CONTENT_MIN_HEIGHT = DOC_CARD_MIN_HEIGHT - 2 * DOC_CARD_PADDING_PX;
 

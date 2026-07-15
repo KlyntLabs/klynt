@@ -22,7 +22,6 @@
 
 .surface {
   position: absolute;
-  min-width: 10rem;
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-element);
   background: var(--color-background-popover);

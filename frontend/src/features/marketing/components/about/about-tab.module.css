@@ -15,7 +15,6 @@
 
 .eyebrow {
   text-transform: uppercase;
-  letter-spacing: 0.08em; /* raw tracking — Astryx ships no letter-spacing token — documented exception. */
 }
 
 .mascot {
@@ -43,10 +42,10 @@
   position: relative;
 }
 
-/* The dot is 32px — var(--spacing-8) — and centres its inner pip with HStack props. */
+/* The dot is 32px — var(--spacing-8) — and centres its inner pip with HStack props. It sits after
+   the Divider rail in DOM order, so it paints above the line without a z-index. */
 .timelineDot {
   position: relative;
-  z-index: 1;
   flex-shrink: 0;
   width: var(--spacing-8);
   height: var(--spacing-8);

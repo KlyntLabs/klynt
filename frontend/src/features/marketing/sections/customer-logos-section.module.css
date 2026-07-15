@@ -6,6 +6,4 @@
 
 .eyebrow {
   text-transform: uppercase;
-  /* Astryx ships no tracking/letter-spacing token — this em value is a documented exception. */
-  letter-spacing: 0.05em;
 }

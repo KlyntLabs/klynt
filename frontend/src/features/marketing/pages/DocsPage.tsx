@@ -5,7 +5,6 @@ import { Icon } from "@astryxdesign/core/Icon";
 import { Section } from "@astryxdesign/core/Section";
 import { StackItem } from "@astryxdesign/core/Stack";
 import { TextInput } from "@astryxdesign/core/TextInput";
-import { MediaTheme } from "@astryxdesign/core/theme";
 import { VStack } from "@astryxdesign/core/VStack";
 import { motion } from "framer-motion";
 import { Search, Sparkles } from "lucide-react";
@@ -45,26 +44,9 @@ export default function DocsPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={tween("medium")}
       >
-        <motion.img
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.4 }}
-          transition={tween("medium-min", { delay: 0.3 })}
-          src="/hedgehog-garden.webp"
-          alt={t("docs.hero.bannerAlt")}
-          width={1024}
-          height={1536}
-          loading="lazy"
-          decoding="async"
-          className={styles.bannerImage}
-        />
-
-        <VStack className={styles.bannerTitle}>
-          <MediaTheme mode="dark">
-            <Heading level={1} type="display-2">
-              {t("docs.hero.title")}
-            </Heading>
-          </MediaTheme>
-        </VStack>
+        <Heading level={1} type="display-2">
+          {t("docs.hero.title")}
+        </Heading>
       </MotionVStack>
 
       <MotionVStack

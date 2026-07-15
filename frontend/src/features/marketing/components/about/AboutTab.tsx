@@ -104,13 +104,8 @@ function FounderLetter() {
       </VStack>
 
       <VStack align="center" gap={2}>
-        <MotionVStack
-          width="100%"
-          maxWidth={MASCOT_MAX_WIDTH}
-          animate={{ y: [0, -6, 0] }}
-          // Ambient loop: 3s exceeds Astryx's motion scale and wants symmetric ease-in-out Astryx doesn't ship — documented exception.
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        >
+        {/* Static mascot — the ambient bob loop is gone; Astryx's motion model is tween-only. */}
+        <VStack width="100%" maxWidth={MASCOT_MAX_WIDTH}>
           <img
             src="/hedgehog-hero.webp"
             alt={t("about.aboutTab.mascotAlt")}
@@ -120,7 +115,7 @@ function FounderLetter() {
             decoding="async"
             className={styles.mascot}
           />
-        </MotionVStack>
+        </VStack>
         <Text type="supporting" justify="center" display="block" className={styles.caption}>
           {t("about.aboutTab.caption")}
         </Text>

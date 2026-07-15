@@ -22,21 +22,6 @@
   background-repeat: repeat;
 }
 
-.garden {
-  position: absolute;
-  right: var(--spacing-4);
-  bottom: var(--spacing-4);
-  z-index: 0;
-  /* no Astryx token for opacity; intentional */
-  opacity: 0.3;
-  pointer-events: none;
-}
-
-.gardenImage {
-  width: 100%;
-  height: auto;
-}
-
 /*
  * The persistence scrim.
  *

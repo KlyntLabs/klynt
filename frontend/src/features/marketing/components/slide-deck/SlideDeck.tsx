@@ -42,8 +42,8 @@ const slideVariants = {
 };
 
 const slideTransition = {
-  // Spring has no Astryx token (motion is tween-only) — documented exception.
-  x: { type: "spring" as const, stiffness: 400, damping: 32 },
+  // Astryx motion is tween-only, so the slide's x travel rides a token tween like everything else.
+  x: tween("fast"),
   opacity: tween("fast"),
 };
 

@@ -1,10 +1,10 @@
 /*
- * All that is left of the hero is the mascot's float.
+ * Structural residue for the hero mascot.
  *
  * The breakpoint that used to flip the column stack to a row is gone: the hero is a
  * `Grid columns={{minWidth, max: 2}}`, which reflows on the container it is actually given rather
  * than on the viewport, so there is nothing left for a media query to decide. The mascot's cap is
- * a `width` prop on its stack. The float's one length is an Astryx spacing token.
+ * a `width` prop on its stack.
  *
  * No hex, no raw px, no breakpoints.
  */
@@ -12,23 +12,4 @@
 .mascot {
   width: 100%;
   height: auto;
-  /* Ambient loop: 3s exceeds Astryx's 1300ms duration scale and its symmetric ease-in-out has no
-     Astryx easing token (only --ease-standard) — documented exception, not tokenizable. */
-  animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(calc(-1 * var(--spacing-2)));
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .mascot {
-    animation: none;
-  }
 }
