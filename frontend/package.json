@@ -27,8 +27,8 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
-    "@astryxdesign/core": "^0.1.4",
-    "@astryxdesign/theme-neutral": "^0.1.4",
+    "@astryxdesign/core": "^0.1.5",
+    "@astryxdesign/theme-neutral": "^0.1.5",
     "@hookform/resolvers": "^5.4.0",
     "@tanstack/react-query": "^5.101.1",
     "@tanstack/react-query-devtools": "^5.74.0",
@@ -52,7 +52,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
-    "@astryxdesign/cli": "^0.1.4",
+    "@astryxdesign/cli": "^0.1.5",
     "@biomejs/biome": "^2.5.1",
     "@chromatic-com/storybook": "^5.2.1",
     "@playwright/test": "^1.61.1",
