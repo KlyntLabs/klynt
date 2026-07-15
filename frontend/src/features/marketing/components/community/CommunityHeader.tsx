@@ -52,9 +52,7 @@ export function CommunityHeader() {
         >
           <Text color="secondary">{getTodayDate(language)}</Text>
 
-          {/* The serif is a token override, so it can sit on the Heading itself — Heading reads
-              `--font-family-heading`, and a custom property set on an element resolves there. */}
-          <Heading level={1} justify="center" className={styles.masthead}>
+          <Heading level={1} justify="center">
             {t("community.header.title")}
           </Heading>
 
