@@ -23,7 +23,7 @@ describe("AuthKioskDesktop", () => {
       Math.max(0, (window.innerWidth - (config.apps[0]?.defaultSize.width ?? 0)) / 2)
     );
     expect(windows?.[0]?.y).toBe(
-      Math.max(36, (window.innerHeight - (config.apps[0]?.defaultSize.height ?? 0)) / 2)
+      Math.max(40, (window.innerHeight - (config.apps[0]?.defaultSize.height ?? 0)) / 2)
     );
   });
 });

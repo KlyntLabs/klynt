@@ -6,6 +6,7 @@
 .layer {
   position: absolute;
   inset: 0;
-  /* Menubar height. Matches MENUBAR_OFFSET, the y-clamp in Window.tsx's drag handler. */
-  top: var(--spacing-9);
+  /* Menubar height — `--spacing-10`, the same token menubar.module.css uses and the value of
+     MENUBAR_OFFSET (the y-clamp in Window.tsx's drag handler). All three must stay equal. */
+  top: var(--spacing-10);
 }

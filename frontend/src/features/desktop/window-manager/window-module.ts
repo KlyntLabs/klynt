@@ -46,7 +46,19 @@ const DEFAULT_WINDOW_WIDTH = 680;
 const DEFAULT_WINDOW_HEIGHT = 520;
 const Z_INDEX_BASE = 100;
 const Z_INDEX_COMPACT_THRESHOLD = 10000;
-const MENUBAR_HEIGHT = 36;
+/*
+ * The menubar's height — the one value every part of the desktop measures the window layer
+ * against (centering offset, maximize origin, maximize height, drag clamp). It is Astryx's
+ * `--spacing-10` (40px), the exact token `menubar.module.css` sets the bar's `height` to.
+ *
+ * It is a JS *number*, not `var(--spacing-10)`, because it feeds arithmetic (`Math.max`,
+ * `innerHeight - …`) where a CSS custom property cannot be used — the sole, exported source of
+ * truth so the number can never drift from the token again. It previously lived as three separate
+ * literals (two `36`s here and in Window.tsx, a bare `36` in AuthKioskDesktop) that disagreed with
+ * the 40px bar, so a maximized window overlapped the menubar by 4px. Keep this equal to
+ * `--spacing-10`.
+ */
+export const MENUBAR_HEIGHT = 40;
 
 const EMPTY_WINDOWS: Window[] = [];
 

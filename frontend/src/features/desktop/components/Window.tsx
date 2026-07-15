@@ -12,7 +12,7 @@ import type { ComponentType, ReactNode } from "react";
 import { Suspense, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import type { Window } from "@/features/desktop/window-manager/window-module";
-import { useWindowManager } from "@/features/desktop/window-manager/window-module";
+import { MENUBAR_HEIGHT, useWindowManager } from "@/features/desktop/window-manager/window-module";
 import { AppErrorBoundary } from "./AppErrorBoundary";
 import styles from "./window.module.css";
 import { WindowControls } from "./window-controls";
@@ -35,9 +35,6 @@ const TITLE_BAR_HEIGHT = 38;
 
 /** Balances the traffic lights so the title stays optically centred. */
 const CONTROLS_SPACER_WIDTH = 52;
-
-/** Menubar height — the window's top clamp. Shared with window-manager.module.css. */
-const MENUBAR_OFFSET = 36;
 
 type ErrorFallbackProps = { error: Error; retry: () => void };
 
@@ -94,7 +91,7 @@ export default function WindowComponent({
       const currentY = w.y + info.offset.y;
       const clampedX = Math.max(0, Math.min(currentX, window.innerWidth - w.width));
       const clampedY = Math.max(
-        MENUBAR_OFFSET,
+        MENUBAR_HEIGHT,
         Math.min(currentY, window.innerHeight - TITLE_BAR_HEIGHT - 2)
       );
       moveWindow(desktopId, w.id, { x: clampedX, y: clampedY, width: w.width, height: w.height });
@@ -116,7 +113,7 @@ export default function WindowComponent({
       animate={{
         scale: 1,
         opacity: 1,
-        y: isMaximized ? MENUBAR_OFFSET : w.y,
+        y: isMaximized ? MENUBAR_HEIGHT : w.y,
         x: isMaximized ? 0 : w.x,
       }}
       exit={{ scale: 0.95, opacity: 0 }}
@@ -132,7 +129,7 @@ export default function WindowComponent({
         top: 0,
         left: 0,
         width: isMaximized ? "100vw" : w.width,
-        height: isMaximized ? `calc(100vh - ${MENUBAR_OFFSET}px)` : w.height,
+        height: isMaximized ? `calc(100vh - ${MENUBAR_HEIGHT}px)` : w.height,
       }}
       data-testid="desktop-window"
     >
