@@ -120,6 +120,7 @@ export default function WindowComponent({
         x: isMaximized ? 0 : w.x,
       }}
       exit={{ scale: 0.95, opacity: 0 }}
+      // Spring physics has no Astryx token (Astryx motion is tween-only) — documented exception.
       transition={{ type: "spring", stiffness: 400, damping: 30 }}
       drag={!isMaximized && !isLocked}
       dragMomentum={false}

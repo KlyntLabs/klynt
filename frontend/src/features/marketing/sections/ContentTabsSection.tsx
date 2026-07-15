@@ -4,6 +4,7 @@ import { VStack } from "@astryxdesign/core/VStack";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { tween } from "@/core/motion/astryx-motion";
 import { TabDataPanel, TabDebugPanel, TabShipPanel, TabUnderstandPanel } from "./ContentTabsPanels";
 
 interface ContentTabsSectionProps {
@@ -17,7 +18,7 @@ const panelMotion = {
   initial: { opacity: 0 },
   animate: { opacity: 1 },
   exit: { opacity: 0 },
-  transition: { duration: 0.2 },
+  transition: tween("fast"),
 };
 
 export function ContentTabsSection({ onOpenApp }: ContentTabsSectionProps) {

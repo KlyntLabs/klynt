@@ -14,6 +14,7 @@ import { Check, Copy, Link as LinkIcon, Play, User } from "lucide-react";
 import type { SVGProps } from "react";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { tween } from "@/core/motion/astryx-motion";
 import { TypewriterText } from "@/features/marketing/components/TypewriterText";
 import styles from "./hero-section.module.css";
 
@@ -86,10 +87,7 @@ export function HeroSection({ onOpenApp }: HeroSectionProps) {
         <MotionVStack
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: 0.4,
-            ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
-          }}
+          transition={tween("medium")}
         >
           <VStack gap={5} align="start">
             <HStack gap={2} align="center">
@@ -130,7 +128,7 @@ export function HeroSection({ onOpenApp }: HeroSectionProps) {
               wrap="wrap"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, duration: 0.4 }}
+              transition={tween("medium", { delay: 0.1 })}
             >
               <Button
                 variant="primary"
@@ -145,7 +143,7 @@ export function HeroSection({ onOpenApp }: HeroSectionProps) {
               align="start"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.4 }}
+              transition={tween("medium", { delay: 0.2 })}
             >
               {/* The command bar is a *surface* — border, radius, muted background — which is
                   exactly what Card is. Padding and gap ride the inner HStack's spacing props. */}
@@ -176,7 +174,7 @@ export function HeroSection({ onOpenApp }: HeroSectionProps) {
               wrap="wrap"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.4 }}
+              transition={tween("medium", { delay: 0.3 })}
             >
               <Button
                 variant="ghost"
@@ -211,7 +209,7 @@ export function HeroSection({ onOpenApp }: HeroSectionProps) {
           width="100%"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
+          transition={tween("medium-max", { delay: 0.2 })}
         >
           <VStack width={MASCOT_WIDTH}>
             <img

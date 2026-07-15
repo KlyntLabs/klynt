@@ -12,6 +12,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { tween } from "@/core/motion/astryx-motion";
 import { FreeTierCard } from "@/features/marketing/components/pricing";
 import { freeTierIconMap } from "@/features/marketing/lib/pricing-data";
 import type { FreeTierItem } from "@/features/marketing/lib/pricing-types";
@@ -37,7 +38,7 @@ const staggerItem = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
+    transition: tween("medium-min"),
   },
 };
 
@@ -45,7 +46,7 @@ const panelMotion = {
   initial: { opacity: 0, y: 8 },
   animate: { opacity: 1, y: 0 },
   exit: { opacity: 0, y: -8 },
-  transition: { duration: 0.2 },
+  transition: tween("fast"),
 };
 
 export function PricingPlansSection() {

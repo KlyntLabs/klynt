@@ -9,6 +9,7 @@ import { VStack } from "@astryxdesign/core/VStack";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, ChevronDown, Copy } from "lucide-react";
 import { Fragment, useCallback, useState } from "react";
+import { tween } from "@/core/motion/astryx-motion";
 import { useMarketingTranslation } from "@/features/marketing/lib/use-marketing-translation";
 import styles from "./install-card.module.css";
 
@@ -90,7 +91,7 @@ export function InstallCard() {
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
+                transition={tween("fast")}
               >
                 <HStack gap={1.5} wrap="wrap" paddingBlock={2}>
                   {frameworks.map((fw) => (

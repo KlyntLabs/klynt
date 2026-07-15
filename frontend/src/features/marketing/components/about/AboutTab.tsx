@@ -13,6 +13,7 @@ import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+import { tween } from "@/core/motion/astryx-motion";
 import { useMarketingTranslation } from "@/features/marketing/lib/use-marketing-translation";
 import styles from "./about-tab.module.css";
 
@@ -107,6 +108,7 @@ function FounderLetter() {
           width="100%"
           maxWidth={MASCOT_MAX_WIDTH}
           animate={{ y: [0, -6, 0] }}
+          // Ambient loop: 3s exceeds Astryx's motion scale and wants symmetric ease-in-out Astryx doesn't ship — documented exception.
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
         >
           <img
@@ -150,7 +152,7 @@ function CompanyStory() {
             className={styles.timelineRow}
             initial={{ opacity: 0, x: -15 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, delay: i * 0.08 }}
+            transition={tween("medium-min", { delay: i * 0.08 })}
           >
             <HStack
               aria-hidden="true"
@@ -174,7 +176,7 @@ function CompanyStory() {
         padding={6}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.4 }}
+        transition={tween("medium-min", { delay: 0.4 })}
       >
         <VStack gap={1} align="center">
           <Text type="display-3" color="accent" weight="bold" display="block">
@@ -197,7 +199,7 @@ export function AboutTab() {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
+      transition={tween("fast")}
     >
       <Section variant="transparent" padding={6}>
         <VStack gap={8} align="stretch">

@@ -8,6 +8,7 @@ import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
 import { motion } from "framer-motion";
 import { BookOpen, ExternalLink, Sparkles, Users } from "lucide-react";
+import { tween } from "@/core/motion/astryx-motion";
 import { useMarketingTranslation } from "@/features/marketing/lib/use-marketing-translation";
 import styles from "./docs-sidebar.module.css";
 
@@ -57,7 +58,7 @@ export function DocsSidebar() {
       className={styles.sidebar}
       initial={{ opacity: 0, x: 10 }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.3, delay: 0.4 }}
+      transition={tween("medium-min", { delay: 0.4 })}
     >
       <Card padding={5}>
         <VStack gap={4} align="stretch">

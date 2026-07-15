@@ -10,6 +10,7 @@ import { VStack } from "@astryxdesign/core/VStack";
 import { motion } from "framer-motion";
 import { BarChart3 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { tween } from "@/core/motion/astryx-motion";
 import { pricingCards } from "@/features/marketing/data/homeData";
 import { getMarketingIcon } from "@/features/marketing/lib/icon-map";
 import styles from "./pricing-cards-section.module.css";
@@ -49,7 +50,7 @@ export function PricingCardsSection({ onOpenApp }: PricingCardsSectionProps) {
               height="100%"
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.075 }}
+              transition={tween("medium-min", { delay: index * 0.075 })}
             >
               <VStack gap={1} align="start">
                 <HStack gap={2} align="center">

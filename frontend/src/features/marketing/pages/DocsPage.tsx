@@ -10,6 +10,7 @@ import { VStack } from "@astryxdesign/core/VStack";
 import { motion } from "framer-motion";
 import { Search, Sparkles } from "lucide-react";
 import { useState } from "react";
+import { tween } from "@/core/motion/astryx-motion";
 import { DocSection } from "@/features/marketing/components/docs/DocSection";
 import { DocsSidebar } from "@/features/marketing/components/docs/DocsSidebar";
 import { allDocCategories } from "@/features/marketing/data/docs";
@@ -42,12 +43,12 @@ export default function DocsPage() {
         className={styles.banner}
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
+        transition={tween("medium")}
       >
         <motion.img
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.4 }}
-          transition={{ duration: 0.3, delay: 0.3 }}
+          transition={tween("medium-min", { delay: 0.3 })}
           src="/hedgehog-garden.webp"
           alt={t("docs.hero.bannerAlt")}
           width={1024}
@@ -69,7 +70,7 @@ export default function DocsPage() {
       <MotionVStack
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.2 }}
+        transition={tween("medium-min", { delay: 0.2 })}
       >
         <Section variant="transparent" paddingBlock={5} padding={6}>
           {/* The Ask-AI affordance used to float inside the input. Astryx's TextInput owns its

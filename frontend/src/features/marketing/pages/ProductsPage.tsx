@@ -10,6 +10,7 @@ import { motion } from "framer-motion";
 import { ExternalLink, Link as LinkIcon, Play, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { tween } from "@/core/motion/astryx-motion";
 import {
   DataPlatformSection,
   InstallCard,
@@ -74,10 +75,7 @@ export default function ProductsPage() {
           <MotionVStack
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.4,
-              ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
-            }}
+            transition={tween("medium")}
           >
             <VStack gap={5} align="stretch">
               <VStack gap={4} align="start">
@@ -124,7 +122,7 @@ export default function ProductsPage() {
             width="100%"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.15, duration: 0.4 }}
+            transition={tween("medium", { delay: 0.15 })}
           >
             <VStack width="100%" maxWidth={HERO_IMAGE_MAX_WIDTH}>
               <img

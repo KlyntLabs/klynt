@@ -7,6 +7,7 @@ import { VStack } from "@astryxdesign/core/VStack";
 import { AnimatePresence, motion } from "framer-motion";
 import { BookOpen, Briefcase, Calendar, Construction, FileText, Globe, Users } from "lucide-react";
 import { useState } from "react";
+import { tween } from "@/core/motion/astryx-motion";
 import { AboutTab } from "@/features/marketing/components/about/AboutTab";
 import { useMarketingTranslation } from "@/features/marketing/lib/use-marketing-translation";
 import styles from "./about-page.module.css";
@@ -41,7 +42,7 @@ function ComingSoonPlaceholder({ tabId }: { tabId: string }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.15 }}
+      transition={tween("fast-min")}
     >
       <EmptyState
         headingLevel={2}

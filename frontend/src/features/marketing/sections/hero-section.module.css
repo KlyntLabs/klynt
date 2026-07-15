@@ -12,6 +12,8 @@
 .mascot {
   width: 100%;
   height: auto;
+  /* Ambient loop: 3s exceeds Astryx's 1300ms duration scale and its symmetric ease-in-out has no
+     Astryx easing token (only --ease-standard) — documented exception, not tokenizable. */
   animation: float 3s ease-in-out infinite;
 }
 

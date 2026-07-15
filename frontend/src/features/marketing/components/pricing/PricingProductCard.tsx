@@ -5,6 +5,7 @@ import { proportional, Table, type TableColumn } from "@astryxdesign/core/Table"
 import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
 import { motion } from "framer-motion";
+import { tween } from "@/core/motion/astryx-motion";
 import { formatNumber } from "@/features/marketing/lib/pricing-helpers";
 import type { ProductPricing } from "@/features/marketing/lib/pricing-types";
 import styles from "./pricing-product-card.module.css";
@@ -17,7 +18,7 @@ const staggerItem = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
+    transition: tween("medium-min"),
   },
 };
 

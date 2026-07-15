@@ -8,6 +8,7 @@ import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
 import { motion } from "framer-motion";
 import { Fragment } from "react";
+import { tween } from "@/core/motion/astryx-motion";
 import { useMarketingTranslation } from "@/features/marketing/lib/use-marketing-translation";
 import styles from "./community-articles.module.css";
 import type { CommunityArticle, CommunityStat, CommunityStats } from "./community-types";
@@ -46,17 +47,14 @@ export function CommunityArticles() {
       variants={columnVariants}
       initial="hidden"
       animate="visible"
-      transition={{
-        duration: 0.4,
-        ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
-      }}
+      transition={tween("medium")}
     >
       <MotionVStack
         as="article"
         gap={4}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+        transition={tween("medium-min")}
       >
         <AspectRatio ratio={16 / 10} className={styles.featuredMedia}>
           <img

@@ -6,6 +6,7 @@ import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
+import { tween } from "@/core/motion/astryx-motion";
 import styles from "./pricing-hero-section.module.css";
 
 /** framer-motion drives the Astryx components directly — no raw motion.div. See Window.tsx. */
@@ -43,10 +44,7 @@ export function PricingHeroSection() {
           align="start"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: 0.4,
-            ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
-          }}
+          transition={tween("medium")}
         >
           <Heading level={1} textWrap="balance">
             {t("pricing.hero.title")}
@@ -62,7 +60,7 @@ export function PricingHeroSection() {
         <MotionVStack
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.4 }}
+          transition={tween("medium", { delay: 0.3 })}
         >
           <VStack gap={2} align="center" justify="center" height="100%">
             {/* The plate is a surface — border, radius, muted background — which is Card. Only its

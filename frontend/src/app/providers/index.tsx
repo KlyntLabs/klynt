@@ -9,6 +9,7 @@ import { Theme } from "@astryxdesign/core/theme";
 import { neutralTheme } from "@astryxdesign/theme-neutral/built";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { MotionConfig } from "framer-motion";
 import { useState } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import { I18nextProvider } from "react-i18next";
@@ -79,19 +80,28 @@ export function AppProviders({ children }: AppProvidersProps) {
        * construction, and there is no number left to pick. Defaults are taken as-is (bottomEnd,
        * 5 visible), which is where the old container sat.
        */}
-      <LayerProvider>
-        <HelmetProvider>
-          <I18nextProvider i18n={i18n}>
-            <HtmlLang />
-            <ErrorBoundary>
-              <QueryProvider>
-                <AuthHydrator>{children}</AuthHydrator>
-                <ReactQueryDevtools initialIsOpen={false} />
-              </QueryProvider>
-            </ErrorBoundary>
-          </I18nextProvider>
-        </HelmetProvider>
-      </LayerProvider>
+      {/*
+       * `reducedMotion="user"` makes every framer-motion animation in the tree honour the OS
+       * "reduce motion" setting — transform/layout animations collapse to instant, opacity is
+       * kept. Astryx's motion doc requires this ("Components should honor the operating system's
+       * reduced motion setting"), and Astryx's own components already do; this extends the same
+       * guarantee to our framer-motion animations, which previously ignored the preference.
+       */}
+      <MotionConfig reducedMotion="user">
+        <LayerProvider>
+          <HelmetProvider>
+            <I18nextProvider i18n={i18n}>
+              <HtmlLang />
+              <ErrorBoundary>
+                <QueryProvider>
+                  <AuthHydrator>{children}</AuthHydrator>
+                  <ReactQueryDevtools initialIsOpen={false} />
+                </QueryProvider>
+              </ErrorBoundary>
+            </I18nextProvider>
+          </HelmetProvider>
+        </LayerProvider>
+      </MotionConfig>
     </Theme>
   );
 }

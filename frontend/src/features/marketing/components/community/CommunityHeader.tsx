@@ -7,6 +7,7 @@ import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
 import { motion } from "framer-motion";
 import { CheckCircle2 } from "lucide-react";
+import { tween } from "@/core/motion/astryx-motion";
 import { useMarketingTranslation } from "@/features/marketing/lib/use-marketing-translation";
 import styles from "./community-header.module.css";
 
@@ -39,7 +40,7 @@ export function CommunityHeader() {
       gap={0}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
+      transition={tween("medium-min")}
     >
       <VStack gap={2} padding={6}>
         {/* Date, masthead and status sit side by side when there is room and stack when there is

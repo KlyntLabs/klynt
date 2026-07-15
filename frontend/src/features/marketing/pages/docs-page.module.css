@@ -16,6 +16,8 @@
   position: relative;
   overflow: hidden;
   background: repeating-linear-gradient(
+    /* Gradient geometry: angle is not a token family in Astryx — documented exception (colours below
+       are var(--color-*) tokens). */
     45deg,
     var(--color-accent),
     var(--color-accent) var(--spacing-3),

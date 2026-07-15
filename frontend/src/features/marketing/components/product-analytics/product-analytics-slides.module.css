@@ -36,16 +36,17 @@
 }
 
 .hint {
+  /* Ambient loop: 2s symmetric ease-in-out is outside Astryx's motion scale/easing — documented exception. */
   animation: hint-pulse 2s ease-in-out infinite;
 }
 
 @keyframes hint-pulse {
   0%,
   100% {
-    opacity: 1;
+    opacity: 1; /* keyframe endpoint */
   }
   50% {
-    opacity: 0.5;
+    opacity: 0.5; /* raw opacity — Astryx ships no opacity token — documented exception. */
   }
 }
 

@@ -4,6 +4,7 @@ import { Section } from "@astryxdesign/core/Section";
 import { VStack } from "@astryxdesign/core/VStack";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
+import { tween } from "@/core/motion/astryx-motion";
 import {
   tab1Products,
   tab3Products,
@@ -36,7 +37,7 @@ function ProductCategory({ title, products, tk }: ProductCategoryProps) {
       initial={{ opacity: 0, y: 12 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.35 }}
+      transition={tween("medium-min")}
     >
       <Heading level={3}>{title}</Heading>
       <MotionGrid

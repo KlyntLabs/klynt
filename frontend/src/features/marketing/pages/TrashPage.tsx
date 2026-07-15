@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { tween } from "@/core/motion/astryx-motion";
 import styles from "./trash-page.module.css";
 
 /*
@@ -107,7 +108,7 @@ export default function TrashPage() {
         paddingBlock={4}
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2 }}
+        transition={tween("fast")}
       >
         <HStack justify="between" align="center" gap={3} wrap="wrap">
           <HStack gap={2} align="center">
@@ -144,7 +145,7 @@ export default function TrashPage() {
               height="100%"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.2, delay: i * 0.03 }}
+              transition={tween("fast", { delay: i * 0.03 })}
               whileHover={{ scale: 1.02 }}
             >
               <VStack gap={1} align="center">

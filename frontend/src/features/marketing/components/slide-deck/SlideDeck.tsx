@@ -6,6 +6,7 @@ import { VStack } from "@astryxdesign/core/VStack";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { tween } from "@/core/motion/astryx-motion";
 import styles from "./slide-deck.module.css";
 
 /* The slide layer is absolutely positioned inside the viewport and cross-fades on change. */
@@ -41,8 +42,9 @@ const slideVariants = {
 };
 
 const slideTransition = {
+  // Spring has no Astryx token (motion is tween-only) — documented exception.
   x: { type: "spring" as const, stiffness: 400, damping: 32 },
-  opacity: { duration: 0.2 },
+  opacity: tween("fast"),
 };
 
 export function SlideDeck({

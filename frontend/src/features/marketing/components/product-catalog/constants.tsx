@@ -23,6 +23,7 @@ import {
   Webhook,
   Workflow,
 } from "lucide-react";
+import { tween } from "@/core/motion/astryx-motion";
 
 export const staggerContainer = {
   hidden: {},
@@ -34,7 +35,7 @@ export const staggerItem = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
+    transition: tween("medium-min"),
   },
 };
 

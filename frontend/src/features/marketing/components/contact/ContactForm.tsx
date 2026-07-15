@@ -10,6 +10,7 @@ import { useForm } from "react-hook-form";
 import { FormSelector } from "@/components/form/form-selector";
 import { FormTextArea } from "@/components/form/form-text-area";
 import { FormTextInput } from "@/components/form/form-text-input";
+import { tween } from "@/core/motion/astryx-motion";
 import { useMarketingTranslation } from "@/features/marketing/lib/use-marketing-translation";
 import { type ContactFormData, createContactSchema } from "./contact-schema";
 
@@ -95,7 +96,7 @@ export function ContactForm() {
           key="form"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1, x: shakeCount > 0 ? [0, -4, 4, -4, 4, 0] : 0 }}
-          transition={{ duration: 0.35 }}
+          transition={tween("medium-min")}
           exit={{ opacity: 0 }}
           onSubmit={form.handleSubmit(onSubmit, onInvalid)}
           noValidate

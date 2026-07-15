@@ -3,6 +3,7 @@ import { Heading } from "@astryxdesign/core/Heading";
 import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
 import { motion } from "framer-motion";
+import { tween } from "@/core/motion/astryx-motion";
 import { useMarketingTranslation } from "@/features/marketing/lib/use-marketing-translation";
 
 /* framer-motion drives the Astryx stack directly rather than a wrapper <div>. */
@@ -22,7 +23,7 @@ export function FaqSection() {
       gap={4}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ delay: 0.5, duration: 0.35 }}
+      transition={tween("medium-min", { delay: 0.5 })}
     >
       <Heading level={2}>{t("talkToHuman.faq.title")}</Heading>
       <CollapsibleGroup type="single">

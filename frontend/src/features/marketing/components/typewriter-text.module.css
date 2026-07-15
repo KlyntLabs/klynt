@@ -5,16 +5,17 @@
  */
 
 .caret {
+  /* Ambient loop: 1s symmetric ease-in-out is outside Astryx's motion scale/easing — documented exception. */
   animation: caret-blink 1s ease-in-out infinite;
 }
 
 @keyframes caret-blink {
   0%,
   100% {
-    opacity: 1;
+    opacity: 1; /* keyframe endpoint */
   }
   50% {
-    opacity: 0.4;
+    opacity: 0.4; /* raw opacity — Astryx ships no opacity token — documented exception. */
   }
 }
 

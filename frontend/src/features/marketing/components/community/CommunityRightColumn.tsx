@@ -12,6 +12,7 @@ import { VStack } from "@astryxdesign/core/VStack";
 import { motion } from "framer-motion";
 import { ArrowRight, ExternalLink, MessageCircle, ThumbsUp } from "lucide-react";
 import { useState } from "react";
+import { tween } from "@/core/motion/astryx-motion";
 import { useMarketingTranslation } from "@/features/marketing/lib/use-marketing-translation";
 import type {
   CommunityChangelogItem,
@@ -44,10 +45,7 @@ export function CommunityRightColumn() {
       variants={columnVariants}
       initial="hidden"
       animate="visible"
-      transition={{
-        duration: 0.4,
-        ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
-      }}
+      transition={tween("medium")}
     >
       <Card variant="muted">
         <VStack gap={3}>

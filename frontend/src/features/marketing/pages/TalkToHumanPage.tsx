@@ -8,6 +8,7 @@ import { VStack } from "@astryxdesign/core/VStack";
 import { motion } from "framer-motion";
 import { Headset } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { tween } from "@/core/motion/astryx-motion";
 import { ContactCards, ContactForm, FaqSection } from "@/features/marketing/components/contact";
 import styles from "./talk-to-human-page.module.css";
 
@@ -28,11 +29,7 @@ const fadeUp = {
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: {
-      delay: i * 0.1,
-      duration: 0.35,
-      ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
-    },
+    transition: tween("medium-min", { delay: i * 0.1 }),
   }),
 };
 
@@ -97,11 +94,7 @@ export default function TalkToHumanPage() {
         paddingBlock={6}
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{
-          delay: 0.4,
-          duration: 0.35,
-          ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
-        }}
+        transition={tween("medium-min", { delay: 0.4 })}
       >
         <VStack gap={5} align="stretch">
           <VStack gap={1} align="start">

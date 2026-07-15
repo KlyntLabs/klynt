@@ -7,6 +7,7 @@ import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
+import { tween } from "@/core/motion/astryx-motion";
 import type { DocCategory, DocItem } from "@/features/marketing/data/docs";
 import styles from "./docs-section.module.css";
 
@@ -51,7 +52,7 @@ function DocCard({ item, tk }: { item: DocItem; tk: DocTranslate }) {
       padding={4}
       height="100%"
       variants={staggerItem}
-      transition={{ duration: 0.2 }}
+      transition={tween("fast")}
     >
       <VStack
         gap={2}
@@ -112,10 +113,7 @@ export function DocSection({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{
-              duration: 0.3,
-              ease: [0.4, 0, 0.2, 1] as [number, number, number, number],
-            }}
+            transition={tween("medium-min")}
           >
             <MotionGrid
               columns={{ minWidth: 150 }}
